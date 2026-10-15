@@ -1,50 +1,90 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Board-a-licious Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Mobile-First & Accessible
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Board-a-licious is a web app used mostly on smartphones, often one-handed on a busy fair floor.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- Every screen MUST be designed for a ~360px-wide viewport first; larger layouts are enhancements.
+- Touch targets MUST be at least 44×44 CSS px; core flows (search, mark a game, change its state)
+  MUST work without hover.
+- UI MUST meet WCAG 2.2 AA: semantic HTML, keyboard operable, labelled controls, sufficient
+  contrast, and state never conveyed by color alone.
+- No horizontal page scrolling at phone width.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Rationale: if it is awkward on a phone at the fair, the app has failed its main purpose.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. Test-First (NON-NEGOTIABLE)
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- Tests MUST be written before the implementation they cover and MUST fail before the code
+  is written (red → green → refactor).
+- All domain logic (collections, game states, list/search result handling) MUST have unit tests.
+- Integration with BoardGameGeek MUST be tested against recorded/fixture responses, not the live
+  site.
+- A change is not done while any test fails.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+Rationale: tests are the spec in executable form and keep a small hobby codebase safe to change.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### III. Domain Logic Separate from UI
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Domain logic (games, collections, states such as "Interested", "Must Have", "Poop") MUST live in
+  a UI-independent module with no imports from the UI framework or browser APIs.
+- Access to BoardGameGeek and to storage MUST go through narrow interfaces so they can be
+  replaced by fakes in tests.
+- The UI MUST only render state and forward user intents to the domain layer.
+
+Rationale: keeps logic unit-testable (Principle II) and lets the UI change without touching rules.
+
+### IV. Simplicity (YAGNI)
+
+- Build the smallest thing that serves a real, current need of the users; no speculative
+  features, settings or abstractions.
+- New dependencies, services or infrastructure MUST be justified in the plan with the simpler
+  alternative that was rejected.
+- The set of game states MUST be easy to extend, but only states actually needed are added.
+
+Rationale: a small group of friends uses this for a concrete event; complexity costs more than it
+earns.
+
+### V. Respectful BoardGameGeek Integration
+
+- BoardGameGeek is the source of truth for game data; the app stores only BGG IDs, the user's own
+  data (collection membership, states) and minimal cached display data.
+- Requests to BGG MUST follow its API terms of use, be rate-limited, and cache responses so
+  repeated views do not re-fetch.
+- BGG being slow or unavailable MUST NOT make the user's collection unreadable; failures MUST be
+  shown with a clear, recoverable message.
+
+Rationale: the app depends on a third-party site it does not control and must not abuse it.
+
+## Product & Technical Constraints
+
+- Platform: responsive web app, usable in current mobile Safari and Chrome; no app-store release.
+- Audience: the author and a small group of friends; no public sign-up, no monetization.
+- Data: the user's collection and states MUST survive page reloads and MUST NOT be lost when
+  a BGG request fails.
+- Secrets (API tokens, credentials) MUST NOT be committed to the repository.
+- Concrete stack choices are made per feature in `/speckit-plan` and MUST comply with this
+  constitution.
+
+## Development Workflow
+
+- Features follow the Spec Kit flow: specify → (clarify) → plan → tasks → implement.
+- Each plan MUST include a Constitution Check against Principles I–V; any violation MUST be
+  listed with its justification in the plan's complexity tracking.
+- Before a feature is considered done: all tests pass and core flows have been checked at
+  phone width.
+- Work happens on feature branches; `main` stays working.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- This constitution supersedes other practices in this repository; where they conflict, it wins.
+- Amendments are made via `/speckit-constitution`, recorded with a version bump and an updated
+  Last Amended date.
+- Versioning follows semantic versioning: MAJOR for removing or redefining a principle, MINOR for
+  adding a principle or materially expanding guidance, PATCH for clarifications and wording.
+- Every plan and review MUST verify compliance; unjustified complexity is grounds to reject a
+  change.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-16
