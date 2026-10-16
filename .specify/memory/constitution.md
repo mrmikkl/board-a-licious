@@ -28,7 +28,7 @@ Rationale: tests are the spec in executable form and keep a small hobby codebase
 
 ### III. Domain Logic Separate from UI
 
-- Domain logic (games, collections, states such as "Interested", "Must Have", "Poop") MUST live in
+- Domain logic (games, collections, marks such as "Must Have" or "Poop", bought state) MUST live in
   a UI-independent module with no imports from the UI framework or browser APIs.
 - Access to BoardGameGeek and to storage MUST go through narrow interfaces so they can be
   replaced by fakes in tests.
@@ -69,6 +69,9 @@ exception bridges the wait for API approval before SPIEL Essen 2026 with bounded
 
 ## Product & Technical Constraints
 
+- Look and feel: the user interface MUST follow the design rules in `docs/design.md`; changing
+  them is a versioned decision like an amendment to this constitution.
+
 - Platform: responsive web app, usable in current mobile Safari and Chrome; no app-store release.
 - Audience: the author and a small group of friends; no public sign-up, no monetization.
 - Data: the user's collection and states MUST survive page reloads and MUST NOT be lost when
@@ -96,4 +99,4 @@ exception bridges the wait for API approval before SPIEL Essen 2026 with bounded
 - Every plan and review MUST verify compliance; unjustified complexity is grounds to reject a
   change.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-16
+**Version**: 1.2.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-17

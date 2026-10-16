@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Board-a-licious is a mobile-first web app for a small group of friends. It searches BoardGameGeek
-(generally or within a geeklist, e.g. the Spiel 26 Preview) and keeps a shared collection of
-marked games, each with a state such as "Interested", "Must Have" or "Poop", for use at the Spiel
-fair. No application code exists yet.
+Board-a-licious is a mobile-first web app for a small group of friends going to SPIEL Essen. Each
+person keeps collections (Essen or standard) of BoardGameGeek games, fills them from geeklists by
+swiping, marks games (Must Have, Interested, Unsure, Poop, Not interested), ticks them off as bought
+with the price paid, and shares lists as text. Vision: `docs/vision.md`. No application code exists
+yet; the clickable prototype is `specs/001-bgg-game-collection/design/prototype.html`.
 
 Planned stack (`specs/001-bgg-game-collection/plan.md`): TypeScript, React + Vite SPA and `/api` in
 one Cloudflare Worker; Neon PostgreSQL via Hyperdrive; IndexedDB + outbox for offline; Cloudflare
@@ -15,6 +16,8 @@ Access (Zitadel login) in front; shared pure domain logic in `src/domain/`.
 
 ## Rules that apply to all work
 
+- Look and feel: `docs/design.md` (design rules v1.0.0) is binding for every UI change; the
+  feature's screens are in `specs/<NNN>/design.md`.
 - Project principles (mobile-first and accessible, test-first, domain logic separate from the UI,
   YAGNI, respectful BGG integration): `.specify/memory/constitution.md`. Plans and reviews check
   compliance against it.
