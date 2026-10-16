@@ -56,7 +56,16 @@ earns.
 - BGG being slow or unavailable MUST NOT make the user's collection unreadable; failures MUST be
   shown with a clear, recoverable message.
 
-Rationale: the app depends on a third-party site it does not control and must not abuse it.
+- **Time-limited exception (until official XML API access is granted, at the latest
+  2027-01-31):** the app MAY read publicly accessible JSON data that BoardGameGeek's own website
+  uses (game details, geeklists) without a token, provided that: requests go only through the
+  server-side BGG adapter and identify the app honestly; responses are cached and loaded only on
+  user demand; no search engine, scraping of HTML pages or login session is used; and the adapter
+  can be switched to the official API without changes outside it. Once a token exists, the
+  official API MUST be used and this exception lapses.
+
+Rationale: the app depends on a third-party site it does not control and must not abuse it. The
+exception bridges the wait for API approval before SPIEL Essen 2026 with bounded, polite use.
 
 ## Product & Technical Constraints
 
@@ -87,4 +96,4 @@ Rationale: the app depends on a third-party site it does not control and must no
 - Every plan and review MUST verify compliance; unjustified complexity is grounds to reject a
   change.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-16
+**Version**: 1.1.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-16
