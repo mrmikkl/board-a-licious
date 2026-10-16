@@ -33,6 +33,9 @@
 
 - Resolved 2026-10-16: FR-012 personal collection per device (Q1: C); FR-013 individual sign-in
   via an external identity provider, invite-only (Q2). Concrete provider is chosen in the plan.
-- Added 2026-10-16: User Story 4 (share as text, backup export/import), FR-016, FR-017.
+- Added 2026-10-16: share/backup story (now User Story 5; share as text, backup export/import), FR-016, FR-017.
+- Added 2026-10-16: User Story 1 add-by-link (stories renumbered), FR-018, FR-019, SC-010;
+  FR-012 changed to per-account server storage with offline copy (plan R1).
+- Added 2026-10-16: Release 0.5 / 1.0 split; geeklist story is now US2 (P2) with search in loaded geeklists (FR-020), full search is US3 (1.0); FR-019 reworded, FR-021 added, SC-010 reworded.
 - All items pass.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`

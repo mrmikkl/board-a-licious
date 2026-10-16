@@ -14,14 +14,76 @@ that we mark — and on them we want to put states which will help us during the
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Search BoardGameGeek and mark a game (Priority: P1)
+### User Story 1 - Add a game from a BoardGameGeek link (Priority: P1)
+
+While browsing BoardGameGeek on their phone (e.g. the Spiel 26 Preview geeklist), a user copies a
+game's link, pastes it into the app and picks a state. The app needs no access to BoardGameGeek's
+data for this, so it works before the app's BoardGameGeek access is approved.
+
+**Why this priority**: The simplest way to add any game, including games on no geeklist, and it
+works even when BoardGameGeek data cannot be loaded at all.
+
+**Independent Test**: Copy the link of a game page on boardgamegeek.com, paste it, assign "Must
+Have", reload, and confirm the game is in the collection with a readable name and a working link.
+
+**Acceptance Scenarios**:
+
+1. **Given** a link like `https://boardgamegeek.com/boardgame/295947/cascadia`, **When** the user
+   pastes it, **Then** the app recognises the game and suggests the name "Cascadia", which the user
+   can edit before saving.
+2. **Given** a recognised link, **When** the user picks a state, **Then** the game is added with
+   that state, a placeholder image and a link to its BoardGameGeek page.
+3. **Given** a link to a game already in the collection, **When** it is pasted, **Then** the app
+   shows the existing entry and its state instead of adding a duplicate.
+4. **Given** text that is not a BoardGameGeek game link (e.g. a geeklist or user page), **When** it
+   is pasted, **Then** the user is told which kind of link is expected.
+5. **Given** games added by link, **When** BoardGameGeek data for them can be loaded,
+   **Then** their names, years and thumbnails are completed from BoardGameGeek without changing
+   their states.
+
+---
+
+### User Story 2 - Browse and search geeklists and mark games (Priority: P2)
+
+Before the fair, the group goes through a large preview geeklist (e.g. "Spiel 26 Preview") on their
+phones, scrolling through its entries and marking the ones they care about.
+
+**Why this priority**: The Spiel preview geeklist is the main source for discovering fair releases
+and contains nearly every game relevant for the fair. Searching inside loaded geeklists is the only
+name search available in Release 0.5 (before official BoardGameGeek data access).
+
+**Independent Test**: Open a known geeklist, mark three of its games with different states, and
+confirm they appear in the collection with those states.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user provides a geeklist link or ID, **When** it loads, **Then** they see the
+   geeklist's title and its game entries in geeklist order.
+2. **Given** a loaded geeklist, **When** the user filters by name, **Then** only entries whose game
+   name matches are shown.
+3. **Given** one or more loaded geeklists, **When** the user searches by game name from the search
+   screen, **Then** matching games from all loaded geeklists are shown once each, also without a
+   network connection.
+4. **Given** a geeklist with hundreds of entries, **When** it is opened the first time, **Then** the
+   first entries appear quickly and the rest load in the background with visible progress.
+5. **Given** a geeklist entry, **When** the user assigns a state, **Then** the game is added to the
+   collection with its name, year and thumbnail.
+6. **Given** a geeklist entry that is already in the collection, **When** the list is shown,
+   **Then** the entry shows its current state.
+7. **Given** a geeklist that the user opened before, **When** they open the app again, **Then** they
+   can reopen it without entering the link again.
+
+---
+
+### User Story 3 - Search all of BoardGameGeek and mark a game (Priority: P3, Release 1.0)
 
 At home or on the fair floor, a user types part of a game's name, sees matching games from
 BoardGameGeek, and marks one with a state ("Interested", "Must Have" or "Poop"). The game then
 appears in the collection with that state.
 
-**Why this priority**: This is the smallest slice that delivers value: without it there is no
-collection at all.
+**Why this priority**: Finds games that are on no loaded geeklist. It depends on official
+BoardGameGeek data access, which may only be granted after the fair, so it ships in Release 1.0;
+until then adding by link (User Story 1) covers such games.
 
 **Independent Test**: Search for a known game title, mark it "Must Have", reload the app, and
 confirm the game is still in the collection with that state.
@@ -39,40 +101,14 @@ confirm the game is still in the collection with that state.
 
 ---
 
-### User Story 2 - Browse a geeklist and mark games (Priority: P2)
-
-Before the fair, the group goes through a large preview geeklist (e.g. "Spiel 26 Preview") on their
-phones, scrolling through its entries and marking the ones they care about.
-
-**Why this priority**: The Spiel preview geeklist is the main source for discovering fair releases,
-but plain search (P1) already makes the collection usable.
-
-**Independent Test**: Open a known geeklist, mark three of its games with different states, and
-confirm they appear in the collection with those states.
-
-**Acceptance Scenarios**:
-
-1. **Given** the user provides a geeklist link or ID, **When** it loads, **Then** they see the
-   geeklist's title and its game entries in geeklist order.
-2. **Given** a loaded geeklist, **When** the user filters by name, **Then** only entries whose game
-   name matches are shown.
-3. **Given** a geeklist entry, **When** the user assigns a state, **Then** the game is added to the
-   collection exactly as in User Story 1.
-4. **Given** a geeklist entry that is already in the collection, **When** the list is shown,
-   **Then** the entry shows its current state.
-5. **Given** a geeklist that the user opened before, **When** they open the app again, **Then** they
-   can reopen it without entering the link again.
-
----
-
-### User Story 3 - Use the collection at the fair (Priority: P3)
+### User Story 4 - Use the collection at the fair (Priority: P4)
 
 On the fair floor, a user opens the collection, filters it to "Must Have", and works through the
 list. They change states as they go (e.g. a game turns out to be "Poop" after a demo) or remove a
 game entirely.
 
 **Why this priority**: This is the payoff during the fair, but it only makes sense once games have
-been collected (P1/P2).
+been collected (P1–P3).
 
 **Independent Test**: With a collection of games in mixed states, filter by each state, change one
 game's state and remove another, then confirm the collection reflects both changes after reload.
@@ -90,15 +126,15 @@ game's state and remove another, then confirm the collection reflects both chang
 
 ---
 
-### User Story 4 - Share, back up and restore the collection (Priority: P4)
+### User Story 5 - Share, back up and restore the collection (Priority: P5)
 
 A user sends their "Must Have" list to the group chat (e.g. WhatsApp) so friends can see what they
 plan to buy. Before the fair they save a backup of their collection, and if they switch phones or
 lose their data they restore it from that backup.
 
-**Why this priority**: Collections live only on one device (FR-012); sharing gives the group a view
-of each other's lists, and backup/restore protects against losing a collection. Both build on an
-existing collection (P1–P3).
+**Why this priority**: Collections are personal (FR-012); sharing gives the group a view of each
+other's lists, and a backup file the user holds protects against losing a collection or the service.
+Both build on an existing collection (P1–P4).
 
 **Independent Test**: With a collection in mixed states, share it to a messaging app and check the
 message is readable; export a backup, clear the app's data, import the backup and confirm the
@@ -133,8 +169,9 @@ collection is identical.
 - A geeklist link is invalid or the geeklist does not exist: the user is told so.
 - The same game appears in several geeklists or searches: it exists only once in the collection.
 - A game has no thumbnail: a neutral placeholder is shown.
-- The user clears their browser data or switches phones: their collection is gone unless they
-  exported a backup, which they can import again.
+- The user clears their browser data or switches phones: after signing in again, their collection
+  is restored from their account.
+- The same person changes the same game on two devices: the most recent change wins.
 - The phone has no share menu (e.g. some desktop browsers): the share text is copied to the
   clipboard instead, and the user is told so.
 - A shared selection or collection is empty: sharing is not offered and the user is told why.
@@ -162,8 +199,10 @@ collection is identical.
   MUST be visible.
 - **FR-011**: The collection MUST survive app reloads and remain readable and editable when
   BoardGameGeek or the network is unavailable.
-- **FR-012**: Each person MUST have their own collection, kept on their own device; collections are
-  not shared or synchronized between people or devices.
+- **FR-012**: Each person MUST have their own collection, stored with their account and available on
+  every device they sign in on; collections are not shared between people. A copy MUST be kept on
+  the device so the collection works offline, and offline changes MUST be synchronized once the
+  device is back online.
 - **FR-013**: Only invited people MUST be able to open the app; each person MUST sign in individually
   through an external identity provider, and the app itself MUST NOT store passwords. Uninvited
   visitors MUST NOT reach any screen or any of the app's access to BoardGameGeek.
@@ -175,6 +214,16 @@ collection is identical.
   with game names and BoardGameGeek links.
 - **FR-017**: Users MUST be able to export their whole collection to a single backup file and import
   such a file on any device; importing MUST NOT silently overwrite existing states.
+- **FR-018**: Users MUST be able to add a game by pasting a BoardGameGeek game or expansion link;
+  the app MUST derive the game's ID and a suggested name from the link alone, without contacting
+  BoardGameGeek, and let the user edit the name.
+- **FR-019**: Search across all of BoardGameGeek (User Story 3) MUST become available once official
+  BoardGameGeek data access is granted (Release 1.0), without changing collections or other
+  features. Until then the search screen MUST search loaded geeklists only and say so.
+- **FR-020**: Users MUST be able to search by game name across all geeklists they have loaded on
+  the device, including without a network connection.
+- **FR-021**: Games added by link MUST be completed with name, year and thumbnail from
+  BoardGameGeek as soon as that data can be loaded, without changing their states.
 
 ### Key Entities
 
@@ -203,13 +252,16 @@ collection is identical.
 - **SC-008**: A user can send their "Must Have" list to a group chat in under 15 seconds.
 - **SC-009**: Exporting a backup and importing it on another device restores 100% of games and
   states.
+- **SC-010**: Before SPIEL Essen 2026 opens (2026-10-22), each user can load the Spiel 26 Preview
+  geeklist, find a game in it by name and set its state in under 15 seconds, without official
+  BoardGameGeek data access.
 
 ## Assumptions
 
 - Users are the author and a small group of friends (fewer than 10 people); no public sign-up. The
   author manages who is invited.
-- Collections live only on the device; backup files (FR-017) are the only way to move a collection
-  between devices. Automatic sync is out of scope.
+- Collections are stored centrally per person and cached on each device; conflicting edits are
+  resolved by "most recent change wins". Opened geeklists (FR-004) are remembered per device.
 - Shared messages are read-only text; importing a friend's shared message into one's own collection
   is out of scope.
 - A game has exactly one state at a time per collection entry; there is no "no state" entry —
@@ -219,6 +271,11 @@ collection is identical.
   this feature.
 - Searching and loading geeklists require a network connection; only the collection must work
   offline.
+- Release 0.5 (before the fair) works without official BoardGameGeek data access; it uses data
+  BoardGameGeek's website exposes publicly, under the time-limited exception in constitution
+  Principle V. Release 1.0 switches to the official access once granted and adds full search.
+- Web search through external search engines, AI models or company infrastructure is out of
+  scope.
 - Writing back to BoardGameGeek (e.g. updating a user's BGG collection) is out of scope.
 - The app relies on BoardGameGeek's public data and follows its terms of use; access to that data
   may require registering the app with BoardGameGeek.
