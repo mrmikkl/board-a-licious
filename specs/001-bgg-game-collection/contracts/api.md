@@ -1,12 +1,7 @@
 # HTTP API contract (`/api/*`, served by the Worker)
 
-> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
-> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
-> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
-
-All routes sit behind Cloudflare Access. The Worker rejects any request without a valid
-`Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. All bodies are JSON
-(`application/json; charset=utf-8`). Errors use:
+Re-planned 2026-10-17. All routes sit behind Cloudflare Access; the Worker rejects requests without a
+valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies are JSON. Errors:
 
 ```json
 { "error": "<code>", "message": "<human-readable>", "retryable": true }
@@ -16,71 +11,68 @@ All routes sit behind Cloudflare Access. The Worker rejects any request without 
 |---|---|---|
 | `unauthenticated` | 401 | missing/invalid Access JWT |
 | `bad_request` | 400 | invalid parameters or body |
-| `not_found` | 404 | e.g. geeklist does not exist |
+| `not_found` | 404 | list or game does not exist |
 | `bgg_unavailable` | 502 | BGG failed or timed out (`retryable: true`) |
-| `bgg_rate_limited` | 503 | BGG answered 429 (`retryable: true`, `Retry-After` header) |
+| `bgg_rate_limited` | 503 | BGG answered 429 (`retryable: true`, `Retry-After`) |
+| `bgg_search_unavailable` | 503 | search before Release 1.0 (`retryable: false`) |
 
 ## Identity
 
 ### `GET /api/me`
 
-`200 {"email": "anna@example.com", "bggSearch": false}`
+`200 {"email": "anna@example.com", "bggSearch": false}` — `bggSearch` is `true` in Release 1.0.
 
-`bggSearch` is `true` in Release 1.0 (official XML API token set). While `false`,
-`/api/bgg/search` answers `503 {"error":"bgg_search_unavailable","retryable":false}` and the search
-screen searches loaded geeklists only (plan: Delivery Order).
+## BoardGameGeek proxy (read-only, cached)
 
-## BoardGameGeek proxy (cached, read-only)
+### `GET /api/bgg/lists/<kind>/<id>?page=<n>`
 
-### `GET /api/bgg/search?q=<text>`
-
-- `q`: 2–100 characters, trimmed; otherwise `400`.
+- `kind`: `preview` | `geeklist`; `id` > 0; `page` ≥ 1 (default 1). The app extracts kind and id
+  from a pasted link (`/geekpreview/<id>…`, `/geeklist/<id>…`).
 - `200`:
   ```json
-  { "games": [ { "bggId": 295947, "name": "Cascadia", "year": 2021,
-                 "thumbnailUrl": "https://cf.geekdo-images.com/…", "kind": "boardgame" } ] }
+  { "kind": "preview", "id": 93, "title": "SPIEL Essen 2026", "isEssen": true,
+    "page": 1, "pageCount": 138,
+    "entries": [ { "position": 1, "bggId": 446453, "name": "…", "thumbnailUrl": "https://…",
+                   "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR",
+                              "publisher": "Inside Up Games" } } ] }
   ```
-- At most 50 results; thumbnails filled from `thing` where available, otherwise `null`.
+- Geeklists: `isEssen: false`, no `facts`, up to 25 entries per page, non-game entries omitted.
+- Previews: 10 entries per page; price = `showprice`, else `msrp`; publisher resolved and cached.
+- Each page cached 1 h at the edge; `404` for unknown lists.
 
-### `GET /api/bgg/geeklist/<id>?page=<n>`
+### `GET /api/bgg/games?ids=<id,id,…>`
 
-- `id`: positive integer (the app extracts it from a pasted geeklist URL); `page` ≥ 1, default 1.
+- 1–50 IDs. `200 { "games": [ { "bggId", "name", "year", "thumbnailUrl", "description", "kind" } ] }`.
+- Served from the `game` table when fresher than 7 days, else from BGG (cached).
+
+### `GET /api/bgg/search?q=<text>` (Release 1.0)
+
+- `q` 2–100 chars. `200 { "games": [Game…] }` (max 50) once `bggSearch` is true; before that `503
+  bgg_search_unavailable`.
+
+## Collections (per signed-in user)
+
+### `GET /api/sync?since=<iso>`
+
+- Without `since`: everything; with `since`: only rows with `updatedAt > since` (incl. tombstones).
 - `200`:
   ```json
-  { "id": 123456, "title": "Spiel 26 Preview", "page": 1, "pageCount": 87, "totalItems": 2163,
-    "entries": [ { "bggId": 295947, "name": "Cascadia", "kind": "boardgame",
-                   "thumbnailUrl": null } ] }
-  ```
-- Up to 25 entries per page in geeklist order; non-game entries omitted (so a page can have fewer);
-  `404` when the geeklist does not exist. Each page is cached for 1 h.
-- The client loads page 1, then the remaining pages sequentially in the background.
-
-### `GET /api/bgg/things?ids=<id,id,…>`
-
-- 1–100 IDs; used to load thumbnails/years for geeklist entries lazily.
-- `200 { "games": [Game, …] }` (shape as in search).
-
-## Collection (per signed-in user)
-
-### `GET /api/collection?since=<iso>`
-
-- Without `since`: all entries incl. tombstones. With `since`: only entries with
-  `updatedAt > since`.
-- `200`:
-  ```json
-  { "entries": [ { "bggId": 295947, "state": "must_have", "name": "Cascadia", "year": 2021,
-                   "thumbnailUrl": "…", "updatedAt": "2026-10-16T09:12:03.120Z",
-                   "deleted": false } ],
-    "serverTime": "2026-10-16T09:12:05.000Z" }
+  { "collections": [ { "id": "c0f…", "name": "Essen 2026", "type": "essen",
+                       "updatedAt": "2026-10-17T09:12:03.120Z", "deleted": false } ],
+    "entries": [ { "collectionId": "c0f…", "bggId": 446453, "mark": "must_have",
+                   "bought": true, "paidCents": 5200,
+                   "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR",
+                              "publisher": "Inside Up Games" },
+                   "factsSource": "preview", "detailsPending": false,
+                   "updatedAt": "2026-10-17T09:14:00.000Z", "deleted": false } ],
+    "serverTime": "2026-10-17T09:14:05.000Z" }
   ```
 
-### `POST /api/collection/changes`
+### `POST /api/sync`
 
-- Body: `{ "changes": [Change, …] }`, 1–500 items (import of a backup uses the same route).
-- `Change`: `{ bggId, state | null, name, year, thumbnailUrl, detailsPending, updatedAt }`;
-  `state: null` = remove. Completing BGG details (FR-019) is a change with the same state, the
-  filled fields and `detailsPending: false`.
-- Validation: known state keys, `bggId > 0`, `updatedAt` not more than 5 minutes in the future.
-- Applies last-write-wins per `bggId` (see data-model.md).
-- `200 { "applied": 3, "ignored": 1 }` — `ignored` = older than the stored version. Idempotent:
-  re-sending the same change is safe.
+- Body: `{ "collections": [Collection…], "entries": [Entry…] }`, together 1–500 items (backup
+  import uses the same route).
+- Validation: collection name 1–60 chars, type `essen|standard`; entry mark known, `bggId > 0`,
+  `paidCents`/`priceCents` ≥ 0, entry's collection belongs to the user; `updatedAt` at most 5 min in
+  the future.
+- Last write wins per collection and per entry. `200 { "applied": 3, "ignored": 1 }`; idempotent.

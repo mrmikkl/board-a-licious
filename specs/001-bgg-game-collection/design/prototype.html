@@ -456,9 +456,9 @@ span.row { box-shadow: none; }
     </button>
     <button class="tab" data-go="geeklists">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 4.8l1.6.9v1.8L4 8.4l-1.6-.9V5.7zM4 10.8l1.6.9v1.8L4 14.4l-1.6-.9v-1.8zM4 16.8l1.6.9v1.8L4 20.4l-1.6-.9v-1.8z"/></svg>
-      Geeklists
+      Lists
     </button>
-    <button class="tab-add" data-go="add" aria-label="Add a collection, geeklist or game">
+    <button class="tab-add" data-go="add" aria-label="Add a collection, BGG list or game">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     </button>
     <button class="tab" data-go="search">
@@ -516,10 +516,10 @@ const GAMES = {
   900112: { name: 'Fjord Fishers', year: 2026, desc: 'Sail fjords, set nets and share the catch. A gentle push-your-luck game about weather and fishing quotas.' },
 };
 
-const KEY = 'bal-prototype-v2';
+const KEY = 'bal-prototype-v3';
 const initial = () => ({
   geeklists: [
-    { id: 371234, title: 'SPIEL Essen 2026 Preview', isEssen: true, pages: 87, loaded: 31, entries: [
+    { id: 93, kind: 'preview', title: 'SPIEL Essen 2026', isEssen: true, pages: 138, loaded: 31, entries: [
       { id: 900101, publisher: 'Harborlight Games', booth: 'Hall 3, B114', price: '€39' },
       { id: 900102, publisher: 'Tidewater', booth: 'Hall 1, A202', price: '€45' },
       { id: 900103, publisher: 'Comet Forge', booth: 'Hall 5, D310', price: '€29' },
@@ -533,7 +533,7 @@ const initial = () => ({
       { id: 900111, publisher: 'Lunar Lane', booth: 'Hall 2, B007', price: '€33' },
       { id: 900112, publisher: 'Nordwind Spiele', booth: 'Hall 6, D222', price: '€38' },
     ] },
-    { id: 365010, title: 'Friends’ picks for Essen', isEssen: false, pages: 2, loaded: 2, entries: [
+    { id: 365010, kind: 'geeklist', title: 'Friends’ picks for Essen', isEssen: false, pages: 2, loaded: 2, entries: [
       { id: 295947 }, { id: 414317 }, { id: 900102 }, { id: 900110 },
     ] },
   ],
@@ -641,7 +641,7 @@ function toast(msg) {
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-/* The rule for Essen facts: they are kept only when an Essen geeklist entry goes into an Essen collection. */
+/* The rule for Essen facts: they are kept only when a game from an Essen list (a BGG preview) goes into an Essen collection. */
 function addToCollection(c, gameId, entry, listIsEssen, state = null) {
   if (c.items[gameId]) return false;
   const keepFacts = isEssen(c) && listIsEssen && entry && entry.booth;
@@ -651,7 +651,7 @@ function addToCollection(c, gameId, entry, listIsEssen, state = null) {
 }
 function factsRule(c, listIsEssen) {
   if (isEssen(c) && listIsEssen) return 'Booth, price and publisher are kept';
-  if (isEssen(c)) return 'Added without booth and price: this geeklist has none';
+  if (isEssen(c)) return 'Added without booth and price: this list has none';
   if (listIsEssen) return 'Added without booth and price: standard collection';
   return '';
 }
@@ -668,7 +668,7 @@ function header(title, backTo, badge = '') {
 function collectionsScreen() {
   header('Collections');
   return `
-    <p class="lead">Each collection is your own. An Essen collection also keeps booth, price and publisher from Essen geeklists.</p>
+    <p class="lead">Each collection is your own. An Essen collection also keeps booth, price and publisher from Essen lists such as the SPIEL preview.</p>
     ${db.collections.map(c => {
       const items = Object.values(c.items);
       const n = k => items.filter(i => groupKey(i) === k).length;
@@ -723,13 +723,13 @@ function collectionScreen(c) {
       </div>` : ''}
     </div>` : '';
   const actions = `
-      <button class="btn btn-primary" data-action="swipe-pick">Add from geeklist</button>
+      <button class="btn btn-primary" data-action="swipe-pick">Add from BGG list</button>
       <button class="btn btn-ghost" data-action="link-into">Add by link</button>`;
   if (!ids.length) return `
     <div class="empty-center">
       <span class="hex deco" aria-hidden="true"></span>
       <strong>No games in ${esc(c.name)} yet</strong>
-      <p>Go through a geeklist and swipe the games you care about into it, or add a single game by its link.</p>
+      <p>Go through a BGG list and swipe the games you care about into it, or add a single game by its link.</p>
       <div class="empty-actions">${actions}</div>
     </div>`;
   return `
@@ -775,7 +775,7 @@ function renderInto() {
     <div class="detail-head" style="margin-top:16px"><span class="hex" style="--size:72px" data-initials="${esc(initials(GAMES[p.id]?.name || p.name || '?'))}"></span>
       <div style="flex:1"><label class="sr" for="cnewname">Name</label>
         <input class="name-input" id="cnewname" value="${esc(GAMES[p.id]?.name || p.name)}" placeholder="Type the game's name">
-        <p>${isEssen(c) ? 'Added without booth and price: they only come from Essen geeklists.' : 'Lands under “Not yet marked”.'}</p></div></div>`;
+        <p>${isEssen(c) ? 'Added without booth and price: they only come from Essen lists.' : 'Lands under “Not yet marked”.'}</p></div></div>`;
   updateInto();
 }
 function updateInto() {
@@ -796,7 +796,7 @@ function swipeScreen() {
       ${hexThumb(e.id, '', 110)}
       <h2>${esc(GAMES[e.id].name)}</h2><div class="yr">${GAMES[e.id].year || ''}</div>
       ${descBlock(e.id, 'clamp')}
-      ${l.isEssen ? factSheet(e) : '<div class="nofacts">No booth or price on this geeklist.</div>'}
+      ${l.isEssen ? factSheet(e) : '<div class="nofacts">No booth or price on this list.</div>'}
     </div>`;
   return `
     <div class="note ${isEssen(c) && l.isEssen ? 'warm' : ''}"><i></i><span>From <b>${esc(l.title)}</b> ${essenBadge(l.isEssen)}${rule ? `<br>${esc(rule)}.` : ''}</span></div>
@@ -849,16 +849,16 @@ function bindSwipe() {
 
 /* ── Geeklists ─────────────────────────────────────────────────── */
 function geeklistsScreen() {
-  header('Geeklists');
+  header('Lists');
   return `
-    <p class="lead">Loaded geeklists stay on this phone for browsing, also offline. Open one to see its games.</p>
+    <p class="lead">Loaded BGG lists stay on this phone for browsing, also offline. Open one to see its games.</p>
     ${db.geeklists.map(l => `
       <button class="card ${l.isEssen ? 'essen' : ''}" data-list="${l.id}">
         <h3>${esc(l.title)} ${essenBadge(l.isEssen)}</h3>
         <p>${l.loaded < l.pages ? `Loading page ${l.loaded} of ${l.pages}. You can already browse.` : `${plural(l.entries.length, 'game', 'games')}, fully loaded`}</p>
         <div class="progress" aria-hidden="true"><span style="width:${Math.round(100 * l.loaded / l.pages)}%"></span></div>
       </button>`).join('')}
-    <button class="card new-card" data-go="add" data-kind="geeklist"><span class="hex" aria-hidden="true"></span>Load a geeklist</button>`;
+    <button class="card new-card" data-go="add" data-kind="geeklist"><span class="hex" aria-hidden="true"></span>Load a BGG list</button>`;
 }
 
 function geeklistScreen(l) {
@@ -867,7 +867,7 @@ function geeklistScreen(l) {
   const entries = l.entries.filter(e => GAMES[e.id].name.toLowerCase().includes(q));
   const inAny = id => db.collections.some(c => c.items[id]);
   return `
-    <label class="field"><span class="sr">Filter this geeklist</span>
+    <label class="field"><span class="sr">Filter this list</span>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
       <input id="lfilter" value="${esc(listFilter)}" placeholder="Filter by name">
     </label>
@@ -887,7 +887,7 @@ function geeklistScreen(l) {
 let addTarget = null, addKind = null;
 const KINDS = [
   { key: 'collection', label: 'Collection', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z"/><path d="M12 12l8-4.6M12 12v9.5M12 12L4 7.4"/></svg>' },
-  { key: 'geeklist', label: 'Geeklist', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="12" r="1.2"/><circle cx="4" cy="18" r="1.2"/></svg>' },
+  { key: 'geeklist', label: 'BGG list', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="12" r="1.2"/><circle cx="4" cy="18" r="1.2"/></svg>' },
   { key: 'game', label: 'Game', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.3"/><circle cx="15" cy="15" r="1.3"/><circle cx="15" cy="9" r="1.3"/><circle cx="9" cy="15" r="1.3"/></svg>' },
 ];
 const LINK_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>';
@@ -906,20 +906,20 @@ function addForm() {
   if (addKind === 'collection') return `
     <h2 class="section-title">New collection</h2>
     <label class="field"><span class="sr">Name</span><input id="cname" placeholder="Name, e.g. Essen 2026" autocomplete="off"></label>
-    <label class="toggle"><span class="txt">Essen collection<small>Games from Essen geeklists keep booth, price and publisher.</small></span>
+    <label class="toggle"><span class="txt">Essen collection<small>Games from Essen lists (BGG previews) keep booth, price and publisher.</small></span>
       <span class="switch"><input type="checkbox" id="cessen" checked><span></span></span></label>
     <button class="btn btn-primary btn-block" data-action="create-collection" id="createbtn" disabled>Create collection</button>`;
   if (addKind === 'geeklist') return `
-    <h2 class="section-title">Load a geeklist</h2>
-    <label class="field"><span class="sr">Geeklist link</span>${LINK_SVG}
-      <input id="glink" inputmode="url" placeholder="Paste a geeklist link"></label>
-    <label class="toggle"><span class="txt">Essen geeklist<small>Its entries carry booth, price and publisher.</small></span>
-      <span class="switch"><input type="checkbox" id="gessen" checked><span></span></span></label>
-    <button class="btn btn-primary btn-block" data-action="load-list" id="loadbtn" disabled>Load geeklist</button>
+    <h2 class="section-title">Load a BGG list</h2>
+    <p class="lead">Paste the link of a BoardGameGeek preview (like SPIEL Essen 2026, with booth, price and publisher) or a geeklist.</p>
+    <label class="field"><span class="sr">BGG list link</span>${LINK_SVG}
+      <input id="glink" inputmode="url" placeholder="boardgamegeek.com/geekpreview/… or /geeklist/…"></label>
+    <p class="lead" id="glinkhint" style="margin:8px 2px 0"></p>
+    <button class="btn btn-primary btn-block" data-action="load-list" id="loadbtn" disabled style="margin-top:10px">Load list</button>
     <button class="link-btn" data-action="paste-geeklist">Paste example link</button>`;
   if (addKind === 'game') return `
     <h2 class="section-title">Add a single game</h2>
-    <p class="lead">For games on none of your geeklists: copy the game's link on boardgamegeek.com and paste it here.</p>
+    <p class="lead">For games on none of your lists: copy the game's link on boardgamegeek.com and paste it here.</p>
     <label class="field"><span class="sr">Game link</span>${LINK_SVG}
       <input id="link" inputmode="url" autocomplete="off" placeholder="boardgamegeek.com/boardgame/…"></label>
     <button class="link-btn" data-action="paste-sample">Paste example link</button>
@@ -929,6 +929,18 @@ function addForm() {
     <p class="lead" id="linkhint" style="margin:8px 2px 14px"></p>
     <button class="btn btn-primary btn-block" data-action="add-link" id="addgamebtn" disabled>Add game</button>`;
   return '<p class="foot">Pick one of the three above.</p>';
+}
+
+/* a BGG list link: a preview (Essen list with booth, price, publisher) or a geeklist */
+function listRef(text) {
+  const m = /boardgamegeek\.com\/(geekpreview|geeklist)\/(\d+)/i.exec(text);
+  return m ? { kind: m[1].toLowerCase() === 'geekpreview' ? 'preview' : 'geeklist', id: Number(m[2]) } : null;
+}
+function updateListLink() {
+  const v = ($('#glink')?.value || '').trim(), ref = listRef(v);
+  $('#loadbtn').disabled = !ref;
+  $('#glinkhint').textContent = !v ? '' : !ref ? 'Paste a link to a BoardGameGeek preview or geeklist.'
+    : ref.kind === 'preview' ? 'Preview: an Essen list with booth, price and publisher.' : 'Geeklist: games without booth and price.';
 }
 
 function parseLink(text) {
@@ -978,7 +990,7 @@ function pickTarget(gameId) {
 function linkHint(gameId) {
   const c = col($('#linkcol')?.value || (gameId && pickTarget(gameId)));
   if (!c) return '';
-  return isEssen(c) ? 'Added without booth and price: they only come from Essen geeklists.' : 'Lands under “Not yet marked”.';
+  return isEssen(c) ? 'Added without booth and price: they only come from Essen lists.' : 'Lands under “Not yet marked”.';
 }
 
 /* ── Search (needs the BGG API token) ──────────────────────────── */
@@ -987,7 +999,7 @@ function searchScreen() {
   return `
     <div class="soon-card"><span class="hex" aria-hidden="true" data-initials="BGG"></span>
       <strong>Searching all of BoardGameGeek comes soon</strong>
-      <p>It switches on once BoardGameGeek grants our API access. Until then, add games from a geeklist or by link.</p></div>
+      <p>It switches on once BoardGameGeek grants our API access. Until then, add games from a BGG list or by link.</p></div>
     <div class="locked" aria-hidden="true">
       <label class="field disabled"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
         <input disabled placeholder="Search BoardGameGeek, e.g. Cascadia"></label>
@@ -1088,7 +1100,7 @@ function newCollectionSheet() {
     <h2 class="section-title" style="margin-top:0">New collection</h2>
     <label class="field"><span class="sr">Name</span><input id="cname" placeholder="Name, e.g. Essen 2026" autocomplete="off"></label>
     <div class="choice" role="group" aria-label="Type">
-      <button data-ctype="essen" aria-pressed="true"><b>Essen ${essenBadge(true)}</b><small>For the fair: games from Essen geeklists keep booth, price and publisher.</small></button>
+      <button data-ctype="essen" aria-pressed="true"><b>Essen ${essenBadge(true)}</b><small>For the fair: games from Essen lists keep booth, price and publisher.</small></button>
       <button data-ctype="standard" aria-pressed="false"><b>Standard</b><small>A plain list of games and how you rate them.</small></button>
     </div>
     <button class="btn btn-primary btn-block" data-action="create-collection">Create collection</button>`);
@@ -1097,7 +1109,7 @@ function newCollectionSheet() {
 function swipePickSheet() {
   const c = col(openCol);
   openSheet(`
-    <h2 class="section-title" style="margin-top:0">Add from which geeklist?</h2>
+    <h2 class="section-title" style="margin-top:0">Add from which list?</h2>
     <div class="pick-list">${db.geeklists.map(l => {
       const left = l.entries.filter(e => !c.items[e.id]).length;
       return `<button class="pick" data-swipelist="${l.id}" ${left ? '' : 'disabled'}>
@@ -1216,7 +1228,7 @@ document.addEventListener('click', e => {
         <label class="paid-label" for="paid">What did you pay?</label>
         <div class="field paid-field"><span class="euro" aria-hidden="true">€</span>
           <input id="paid" type="number" inputmode="decimal" min="0" step="0.5" value="${lp || ''}" placeholder="0"></div>
-        ${lp ? `<p class="lead" style="margin:6px 2px 4px">Listed at ${money(lp)} on the geeklist.</p>` : ''}
+        ${lp ? `<p class="lead" style="margin:6px 2px 4px">Listed at ${money(lp)} on the SPIEL preview.</p>` : ''}
         <button class="btn btn-bought btn-block" data-action="confirm-bought">✅ Save, got it</button>
         <button class="btn btn-ghost btn-block" data-action="confirm-bought" data-noprice="1">Don't track the price</button>`;
       $('#paid').focus(); $('#paid').select();
@@ -1267,15 +1279,15 @@ document.addEventListener('click', e => {
     case 'swipe-pick': swipePickSheet(); break;
     case 'remove': { const c = col($('#sheet').dataset.col), id = Number($('#sheet').dataset.id); delete c.items[id]; persist(); closeSheet(); render(); toast(`Removed ${GAMES[id].name}`); break; }
     case 'load-list': {
-      const link = ($('#glink').value || '').trim(), m = /geeklist\/(\d+)/.exec(link);
-      if (!m) { toast('Paste a geeklist link first'); $('#glink').focus(); return; }
-      if (list(Number(m[1]))) { toast('This geeklist is already loaded'); return; }
-      const essen = $('#gessen').checked;
-      db.geeklists.push({ id: Number(m[1]), title: `Geeklist ${m[1]}`, isEssen: essen, pages: 3, loaded: 1,
+      const ref = listRef(($('#glink').value || '').trim());
+      if (!ref) { toast('Paste a preview or geeklist link first'); $('#glink').focus(); return; }
+      if (list(ref.id)) { toast('This list is already loaded'); return; }
+      const essen = ref.kind === 'preview';
+      db.geeklists.push({ id: ref.id, kind: ref.kind, title: essen ? `Preview ${ref.id}` : `Geeklist ${ref.id}`, isEssen: essen, pages: 3, loaded: 1,
         entries: [900104, 900106, 900108].map(id => essen ? { ...db.geeklists[0].entries.find(e => e.id === id) } : { id }) });
-      persist(); route = 'geeklists'; openList = Number(m[1]); render(); toast(essen ? 'Loading Essen geeklist' : 'Loading geeklist'); break;
+      persist(); route = 'geeklists'; openList = ref.id; render(); toast(essen ? 'Loading preview: an Essen list' : 'Loading geeklist'); break;
     }
-    case 'paste-geeklist': $('#glink').value = 'https://boardgamegeek.com/geeklist/388888/my-essen-picks'; $('#loadbtn').disabled = false; break;
+    case 'paste-geeklist': $('#glink').value = 'https://boardgamegeek.com/geekpreview/94/pax-unplugged-2026-preview'; updateListLink(); break;
     case 'paste-sample': $('#link').value = 'https://boardgamegeek.com/boardgame/342942/ark-nova'; renderParsed(); break;
     case 'share': { const text = shareText(); if (navigator.share) navigator.share({ text }).catch(() => {}); else navigator.clipboard?.writeText(text).then(() => toast('Copied. Paste it into your chat.'), () => toast('Select the preview text to copy it')); break; }
     case 'export': {
@@ -1295,7 +1307,7 @@ document.addEventListener('input', e => {
   if (['f-booth', 'f-price', 'f-pub'].includes(e.target.id)) { updateFactsSave(); return; }
   if (e.target.dataset.group) { e.target.checked ? shownGroups.add(e.target.dataset.group) : shownGroups.delete(e.target.dataset.group); render(); return; }
   if (e.target.id === 'cname') $('#createbtn').disabled = !e.target.value.trim();
-  if (e.target.id === 'glink') $('#loadbtn').disabled = !e.target.value.trim();
+  if (e.target.id === 'glink') updateListLink();
   if (e.target.id === 'newname') updateAddGame();
   if (e.target.id === 'clink') renderInto();
   if (e.target.id === 'cnewname') updateInto();
@@ -1442,7 +1454,7 @@ function gotIt() {
 /* ── Onboarding: three swipeable cards on first start ── */
 const INTRO = [
   { art: ['⭐', '👀', '🤔', '💩'], title: 'Collections', text: 'Make one for Essen and one for anything else. Every game gets a mark: Must Have, Interested, Unsure or Poop.' },
-  { art: ['📋', '📍', '💶', '🏷️'], title: 'Geeklists', text: 'Load the SPIEL preview list once. In Essen collections, booth, price and publisher come along.' },
+  { art: ['📋', '📍', '💶', '🏷️'], title: 'BGG lists', text: 'Load the SPIEL preview once. In Essen collections, booth, price and publisher come along.' },
   { art: ['👉', '🛑', '✅', '🎲'], title: 'Swipe, then hunt', text: 'Swipe right to add, left for not interested. At the fair, filter to “Must Have, not bought” and tick off what you got.' },
 ];
 function showIntro() {

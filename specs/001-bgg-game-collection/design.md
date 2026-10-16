@@ -8,32 +8,32 @@ It uses sample data; invented games get generated covers.
 
 ## Navigation
 
-Tab bar: **Collections**, **Geeklists**, **+** (add), **Search** (switched off until Release 1.0),
+Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until Release 1.0),
 **Share**. Every screen has the 🔊/🔇 sound toggle in its header.
 
 ## Screens and flows
 
 | Screen | Content | Leads to |
 |---|---|---|
-| **Intro** (first start) | 3 swipeable cards: Collections, Geeklists, Swipe then hunt; Skip / Next / Let's go | Collections |
+| **Intro** (first start) | 3 swipeable cards: Collections, BGG lists, Swipe then hunt; Skip / Next / Let's go | Collections |
 | **Collections** | one card per collection (name, Essen badge, counts per mark and bought, hexagon cluster); "Create a collection" card; "Show the intro again" | Collection, Add (collection) |
-| **Collection** | "Add from geeklist" (primary), "Add by link"; filter button + panel (presets, Bought segment, group checkboxes); bought summary line ("✅ 1 game bought, €52 spent"); separator; groups in mark order, unmarked first, Not interested collapsed. Empty collection: centred empty state with both add buttons. | Game details, Swipe, Add by link (in collection) |
+| **Collection** | "Add from BGG list" (primary), "Add by link"; filter button + panel (presets, Bought segment, group checkboxes); bought summary line ("✅ 1 game bought, €52 spent"); separator; groups in mark order, unmarked first, Not interested collapsed. Empty collection: centred empty state with both add buttons. | Game details, Swipe, Add by link (in collection) |
 | **Game details** (sheet) | cover, name, year, BGG link, description, booth/price/publisher (or "➕ Add booth, price and publisher" / "✎ Edit"), mark picker (4 hexagons), "✅ Bought it" → "What did you pay?" (prefilled with the listed price) → "Save, got it" / "Don't track the price"; "🛑 Not interested" / "Mark as not yet decided"; "Remove from collection" | – |
-| **Swipe** | source note (which geeklist, whether facts are kept); card stack; ✓ / ✕; games left; arrow keys | back to Collection |
+| **Swipe** | source note (which list, whether facts are kept); card stack; ✓ / ✕; games left; arrow keys | back to Collection |
 | **Add by link (in collection)** | link field, recognised game with editable name, "Add to ‹collection›" | back to Collection |
-| **Add (+)** | three hexagons: Collection, Geeklist, Game | – |
+| **Add (+)** | three hexagons: Collection, BGG list, Game | – |
 | ↳ Collection | name, "Essen collection" switch (on), "Create collection" (enabled once a name is typed) | the new Collection |
-| ↳ Geeklist | link, "Essen geeklist" switch (on), "Load geeklist" (enabled once a link is pasted) | the Geeklist |
+| ↳ BGG list | link (preview or geeklist), "Load list" (enabled once a link is pasted); previews are Essen automatically | the list |
 | ↳ Game | link, recognised game, collection dropdown (always visible), hint, "Add game" | the chosen Collection |
-| **Geeklists** | one card per loaded geeklist (Essen badge, loading progress); "Load a geeklist" card | Geeklist, Add (geeklist) |
-| **Geeklist** | name filter; rows with facts (Essen) and "in a collection" hint; **+** per row | Geeklist game sheet |
-| **Geeklist game** (sheet) | cover, description, facts; "In collections": one tick per collection showing where the game is; Done applies adds and removals, Cancel discards | – |
+| **Lists** | one card per loaded BGG list (Essen badge for previews, loading progress); "Load a BGG list" card | List, Add (BGG list) |
+| **List** | name filter; rows with facts (Essen) and "in a collection" hint; **+** per row | List game sheet |
+| **List game** (sheet) | cover, description, facts; "In collections": one tick per collection showing where the game is; Done applies adds and removals, Cancel discards | – |
 | **Search** | "Searching all of BoardGameGeek comes soon" card; disabled search field and sample results; "Add a game by link instead" | Add (game) |
 | **Share & backup** | pick a collection, pick groups, message preview (Essen: booth and price; bought games marked ✅), "Share list"; export / import backup | – |
 
 ## Rules shown in the UI
 
-- Booth, price and publisher are kept only when a game comes from an **Essen geeklist** into an
+- Booth, price and publisher are kept only when a game comes from an **Essen list** (a BGG preview) into an
   **Essen collection**; every other combination adds the game without them, and the UI says so
   before adding. They can always be typed in by hand ("Added by you").
 - Swipe right adds a game as "Not yet marked"; swipe left adds it as "Not interested". Games

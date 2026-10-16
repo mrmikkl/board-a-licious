@@ -1,109 +1,144 @@
 # Data Model: BGG Game Collection
 
-> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
-> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
-> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
+Re-planned 2026-10-17. Domain types live in `src/domain/` and are shared by app and Worker.
 
-## Domain entities (shared by app and Worker, `src/domain/`)
+## Domain entities
 
-### State
+### Mark
 
-| Key | Label | Share emoji |
-|---|---|---|
-| `interested` | Interested | 👀 |
-| `must_have` | Must Have | ⭐ |
-| `poop` | Poop | 💩 |
+| Key | Label | Emoji | Order |
+|---|---|---|---|
+| `new` | Not yet marked | ⬡ | 1 (default) |
+| `must_have` | Must Have | ⭐ | 2 |
+| `interested` | Interested | 👀 | 3 |
+| `unsure` | Unsure | 🤔 | 4 |
+| `poop` | Poop | 💩 | 5 |
+| `skip` | Not interested | 🛑 | 6 (collapsed by default) |
 
-- Defined once in `src/domain/states.ts` as an ordered list; display order = list order.
-- Stored as the key string. Adding a state = adding a list item; no stored data changes (FR-006).
-- Unknown keys (e.g. from a newer backup) are rejected on import with a clear message.
+Defined once in `src/domain/marks.ts`; stored as the key. New marks = new list items, no data change
+(FR-004). Unknown keys from a newer backup are rejected on import.
 
-### Game (from BGG, not owned by the app)
+### Game (from BGG, shared cache)
 
 | Field | Type | Notes |
 |---|---|---|
-| `bggId` | positive integer | BGG thing ID; identity |
-| `name` | string, non-empty | primary name |
+| `bggId` | positive integer | identity |
+| `name` | string | primary name |
 | `year` | integer \| null | year published |
-| `thumbnailUrl` | https URL \| null | BGG CDN URL; placeholder when null |
+| `thumbnailUrl` | https URL \| null | BGG image CDN |
+| `description` | string \| null | BGG `short_description` |
 | `kind` | `boardgame` \| `expansion` | |
+| `fetchedAt` | timestamp | refresh after 7 days |
 
-Link to BGG is derived: `https://boardgamegeek.com/boardgame/{bggId}`.
+Link derived: `https://boardgamegeek.com/boardgame/{bggId}`.
 
-### CollectionEntry (owned by the user)
+### Collection
 
 | Field | Type | Rules |
 |---|---|---|
-| `bggId` | integer | unique per user |
-| `state` | State key | required while not deleted |
-| `name`, `year`, `thumbnailUrl` | from Game | cached display data (Principle V) |
-| `updatedAt` | ISO-8601 UTC, ms precision | set by the client on every change |
-| `deleted` | boolean | tombstone; hidden in UI, kept for sync |
-| `detailsPending` | boolean | true when added by link; cleared once BGG details are filled (FR-019) |
+| `id` | UUID (client-generated) | identity, works offline |
+| `name` | string, 1–60 chars, trimmed | required |
+| `type` | `essen` \| `standard` | fixed after creation |
+| `updatedAt` | ISO timestamp (ms) | set by client |
+| `deleted` | boolean | tombstone for sync |
 
-State transitions:
+### Collection entry
 
-```
-(not in collection) --set state--> active(state)
-active(s1)          --set state--> active(s2)
-active(s)           --remove-----> deleted (tombstone)
-deleted             --set state--> active(state)
-```
+| Field | Type | Rules |
+|---|---|---|
+| `collectionId` + `bggId` | key | a game once per collection (FR-003) |
+| `mark` | Mark key | default `new` |
+| `bought` | boolean | independent of `mark` (FR-007) |
+| `paidCents` | integer ≥ 0 \| null | price paid; null = not tracked |
+| `facts` | `{ booth, priceCents, currency, publisher }` \| null | each part optional |
+| `factsSource` | `preview` \| `manual` \| null | `manual` shows "Added by you" (FR-011) |
+| `detailsPending` | boolean | added by link, BGG details not loaded yet (FR-017) |
+| `updatedAt` | ISO timestamp (ms) | set by client on every change |
+| `deleted` | boolean | tombstone for sync |
 
-Merge rule (sync, import with "backup wins"): for the same `bggId`, the entry with the later
-`updatedAt` wins; equal timestamps keep the server copy.
+Rules (all in `src/domain/`):
 
-### Change (outbox item, client only)
+- **Facts rule (FR-010)**: when adding from a list, `facts` are copied only if the list is a preview
+  and the collection is `essen`; otherwise `facts = null`. `facts.ts` also returns the reason text
+  the UI shows ("Booth, price and publisher are kept" / "Added without booth and price: …").
+- **Swipe (FR-015)**: right → entry with `mark = new`; left → `mark = skip`. Games that already
+  have an entry in the collection (including `skip`) are not offered.
+- **Membership choice (FR-014)**: input = collection IDs before and after; output = adds and
+  removals; a removal sets `deleted = true` (mark, bought and price go with it).
+- **Bought (FR-007/008)**: marking bought suggests `paidCents` from `facts.priceCents`; un-buying
+  clears `paidCents`. Spent = Σ `paidCents` of bought entries.
+- **Filter (FR-009)**: `{ groups: Set<Mark>, bought: 'all' | 'no' | 'yes' }`; presets `all` and
+  `hunt` = `{ groups: {must_have}, bought: 'no' }`.
+- **Merge**: per entry (and per collection) the later `updatedAt` wins; equal → server copy.
 
-`{ bggId, state | null, name, year, thumbnailUrl, detailsPending, updatedAt }`; `state: null` means
-remove.
-Removed from the outbox when the server acknowledges it.
+### BGG list (per device)
 
-### Game link (pasted, FR-018)
+| Field | Type | Notes |
+|---|---|---|
+| `kind` + `id` | `preview` \| `geeklist`, integer | identity, from the pasted link |
+| `title` | string | from BGG |
+| `isEssen` | boolean | `true` for previews (research R9) |
+| `pageCount`, `loadedPages` | integers | background loading progress |
+| `entries` | `{ position, bggId, facts? }[]` | facts only for previews |
+| `openedAt` | timestamp | |
 
-Accepted: `https://(www.)boardgamegeek.com/(boardgame|boardgameexpansion)/<id>[/<slug>][?…]`, with or
-without `https://`, plus surrounding text (e.g. a shared message). Suggested name = slug with `-`
-replaced by spaces, each word capitalised (`ark-nova` → `Ark Nova`); empty when there is no slug,
-then the user must type a name. Other BGG links (geeklist, user, thread) are rejected with a hint.
-
-### Geeklist (transient, from BGG)
-
-`{ id, title, entries: [{ bggId, name, kind, thumbnailUrl? }] }`, in geeklist order; non-game
-entries are dropped (from `api.geekdo.com`: keep items whose `href` starts with `/boardgame/` or
-`/boardgameexpansion/`). Opened geeklists (`id`, `title`, `openedAt`, `loadedPages`, `pageCount`)
-and all their loaded entries are stored per device in IndexedDB (FR-004, FR-020); the search screen
-searches these entries (name contains query, case- and accent-insensitive), one result per game.
+Publishers: `{ companyId → name }` cache.
 
 ## PostgreSQL schema (Neon)
 
 ```sql
+CREATE TABLE collection (
+  id          uuid        PRIMARY KEY,
+  user_email  text        NOT NULL,            -- verified Access email, lowercased
+  name        text        NOT NULL CHECK (length(name) BETWEEN 1 AND 60),
+  type        text        NOT NULL CHECK (type IN ('essen', 'standard')),
+  updated_at  timestamptz NOT NULL,
+  deleted     boolean     NOT NULL DEFAULT false
+);
+CREATE INDEX ON collection (user_email);
+
 CREATE TABLE collection_entry (
-  user_email     text        NOT NULL,          -- verified email from the Access JWT, lowercased
-  bgg_id         integer     NOT NULL CHECK (bgg_id > 0),
-  state          text,                           -- NULL only when deleted
-  name           text        NOT NULL,
-  year           integer,
-  thumbnail_url  text,
-  updated_at     timestamptz NOT NULL,
-  deleted        boolean     NOT NULL DEFAULT false,
-  details_pending boolean    NOT NULL DEFAULT false,  -- added by link, BGG details not yet loaded
-  PRIMARY KEY (user_email, bgg_id),
-  CHECK (deleted OR state IS NOT NULL)
+  collection_id   uuid        NOT NULL REFERENCES collection (id),
+  bgg_id          integer     NOT NULL CHECK (bgg_id > 0),
+  user_email      text        NOT NULL,        -- denormalised for the per-user filter
+  mark            text        NOT NULL DEFAULT 'new',
+  bought          boolean     NOT NULL DEFAULT false,
+  paid_cents      integer     CHECK (paid_cents >= 0),
+  booth           text,
+  price_cents     integer     CHECK (price_cents >= 0),
+  currency        text,
+  publisher       text,
+  facts_source    text        CHECK (facts_source IN ('preview', 'manual')),
+  details_pending boolean     NOT NULL DEFAULT false,
+  updated_at      timestamptz NOT NULL,
+  deleted         boolean     NOT NULL DEFAULT false,
+  PRIMARY KEY (collection_id, bgg_id)
+);
+CREATE INDEX ON collection_entry (user_email, updated_at);
+
+CREATE TABLE game (                            -- public BGG display data, shared by all users
+  bgg_id        integer PRIMARY KEY,
+  name          text NOT NULL,
+  year          integer,
+  thumbnail_url text,
+  description   text,
+  kind          text NOT NULL DEFAULT 'boardgame',
+  fetched_at    timestamptz NOT NULL
 );
 ```
 
-- Every query filters by `user_email` from the verified JWT; it is never taken from the request
-  body or URL.
-- Upsert applies the merge rule in SQL:
-  `ON CONFLICT (user_email, bgg_id) DO UPDATE … WHERE excluded.updated_at > collection_entry.updated_at`.
-- Migrations: plain numbered SQL files in `migrations/`.
+- Every collection and entry query filters by `user_email` from the verified JWT, never from input.
+- Upserts apply last-write-wins in SQL (`… DO UPDATE … WHERE excluded.updated_at > t.updated_at`).
+- Marks are validated in the domain, not by a CHECK, so new marks need no migration.
 
-## Browser storage (IndexedDB, database `board-a-licious`)
+## Browser storage (IndexedDB `board-a-licious`)
 
 | Store | Key | Content |
 |---|---|---|
-| `entries` | `bggId` | CollectionEntry (incl. tombstones) |
-| `outbox` | auto-increment | Change |
-| `geeklists` | `id` | opened geeklists with load progress |
-| `geeklistEntries` | `[geeklistId, position]` | loaded entries; index on `bggId` and normalised name |
-| `meta` | name | `lastSyncAt`, `userEmail` (clears local data if a different user signs in) |
+| `collections` | `id` | Collection (incl. tombstones) |
+| `entries` | `[collectionId, bggId]` | Collection entry; index on `collectionId` |
+| `outbox` | auto-increment | pending changes (collection or entry) |
+| `games` | `bggId` | Game cache |
+| `lists` | `[kind, id]` | BGG list incl. entries; index on normalised game name |
+| `publishers` | `companyId` | name |
+| `meta` | name | `lastSyncAt`, `userEmail`, `soundOn`, `introSeen`, `activeFilter` |

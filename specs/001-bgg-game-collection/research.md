@@ -1,10 +1,6 @@
 # Research: BGG Game Collection
 
-> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
-> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
-> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
-
-Decisions taken during `/speckit-plan` (2026-10-16). Project-wide decisions are recorded as ADRs in `docs/adr/`:
+Decisions taken during `/speckit-plan` (2026-10-16, re-planned 2026-10-17 after the design session; R9–R13 are new). Project-wide decisions are recorded as ADRs in `docs/adr/`:
 R1/R2 → [0004](../../docs/adr/0004-storage-neon-local-first.md), R3 → [0003](../../docs/adr/0003-access-control-cloudflare-access.md),
 R4/R4a → [0005](../../docs/adr/0005-bgg-adapter-and-bridge.md), R5 → [0002](../../docs/adr/0002-single-cloudflare-worker.md), R6/R8 → [0006](../../docs/adr/0006-typescript-react-shared-domain.md). Items marked **verify** rest on secondary
 sources or on knowledge that could not be checked against the vendor's own page.
@@ -31,7 +27,8 @@ sources or on knowledge that could not be checked against the vendor's own page.
 
 ## R2. Offline behaviour and sync
 
-- **Decision**: Local-first. Every state change is written to IndexedDB immediately and appended to
+- **Decision**: Local-first. Every change (collection created/renamed/deleted; entry added, marked,
+  bought, priced, facts edited, removed) is written to IndexedDB immediately and appended to
   an outbox; the outbox is sent to the server when online (on change, on `online`, on app start).
   Conflicts are resolved per game by **last write wins** on the client's `updatedAt`; removals are
   tombstones so they sync like any other change. A service worker caches the app shell.
@@ -149,6 +146,61 @@ sources or on knowledge that could not be checked against the vendor's own page.
   Access is bypassed in local dev by a dev-only fixed identity; the JWT check itself is unit-tested.
 - **Rationale**: Principle II (test-first, BGG via fixtures, never live) and Principle I (phone
   width, WCAG 2.2 AA).
+
+## R9. Where Essen facts come from: BGG GeekPreview (new 2026-10-17)
+
+- **Finding** (checked 2026-10-17 against `api.geekdo.com`, no token):
+  - `GET /api/geekpreviews/93` → "SPIEL Essen 2026", start 2026-10-22 (no. 92 is Gen Con 2026, 94
+    PAX Unplugged 2026).
+  - `GET /api/geekpreviewitems?previewid=93&pageid=<n>` → 10 items per page, 138 pages (~1,376
+    games). Per item: `objectid` (BGG game ID), `location` (booth, e.g. "3-R400"), `showprice` +
+    `showprice_currency` (fair price, e.g. 60 EUR), `msrp`, `availability_status` ("forsale" …),
+    `links[]` with `objecttype: company` (publisher ID), a thumbnail.
+  - Publisher names: `GET /api/geekitems?objectid=<id>&objecttype=company` (e.g. "Inside Up Games").
+- **Decision**: "Essen lists" are BGG **previews**. Facts = booth (`location`), price (`showprice`,
+  falling back to `msrp`, with currency), publisher (company name, cached). Geeklists stay supported
+  for other lists (friends' picks) but carry no facts. A pasted link decides the kind:
+  `/geekpreview/<id>…` → preview, `/geeklist/<id>…` → geeklist.
+- **Loading**: page 1 at once, the remaining pages sequentially in the background through the Worker
+  (throttled to 1 request/s, each page cached 1 h at the edge); stored in IndexedDB for offline use
+  and search by name. Publisher names resolved once per company and cached.
+- **Release 1.0**: the XML API has no preview endpoint; previews keep using this source under the
+  constitution exception until BGG offers an official way, or the exception's end date is reviewed.
+  **Verify** with BGG once the token is granted.
+- **Alternatives considered**: free-text parsing of geeklist posts (unreliable); asking users to type
+  facts (kept only as the manual fallback, FR-011).
+
+## R10. Game details and covers (new)
+
+- **Decision**: a shared `game` cache (server + IndexedDB) holds name, year, cover thumbnail URL and
+  the short description from `geekitems` (`short_description`, e.g. "Create the most harmonious
+  ecosystem as you puzzle together habitats and wildlife."). Filled on first sight of a game; games
+  added by link start with `detailsPending` and are completed in the background (FR-017/018).
+- Covers are shown from BGG's image CDN (`cf.geekdo-images.com`); no images are copied.
+
+## R11. Marks, bought and filtering (new)
+
+- **Decision**: mark and bought are two independent fields on an entry (spec FR-004/007). The
+  filter is a pure function `filter(entries, { groups: Set<Mark>, bought: 'all'|'no'|'yes' })` in
+  `src/domain/filter.ts`; presets are data. Money spent = sum of `paid` (cents) of bought entries.
+  "Not interested" is a mark (left swipe), collapsed by default in the UI.
+
+## R12. Sound and vibration (new)
+
+- **Decision**: Web Audio API synthesises the dice roll (filtered noise bursts) and the bought chime
+  (two triangle tones); no audio files. Vibration via `navigator.vibrate` where available (Android);
+  iOS Safari has no web vibration and is silently skipped. Mute state in IndexedDB `meta`; motion
+  and sound helpers in `src/client/feedback.ts` behind an interface (faked in tests).
+
+## R13. Implementing the design rules (new)
+
+- **Decision**: `docs/design.md` tokens become CSS custom properties in `src/app/theme/tokens.css`;
+  hexagons via `clip-path`; the animated hexagon background is a `<canvas>` component (~30 fps,
+  paused when hidden, one still frame with reduced motion); springs as CSS
+  `cubic-bezier(.34, 1.56, .64, 1)`. Fonts Chakra Petch and Manrope self-hosted with the build (no
+  third-party font requests at runtime, works offline).
+- Visual checks: Playwright screenshots at 360×740 compared against the prototype screens by eye
+  during review; axe for accessibility.
 
 ## Sources
 

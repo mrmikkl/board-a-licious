@@ -33,7 +33,7 @@ confirm the collection, the game and its mark are still there.
 
 1. **Given** no collections, **When** the user creates one with a name and the Essen switch on,
    **Then** it appears in the collections list with an Essen badge and opens empty, offering
-   "Add from geeklist" and "Add by link".
+   "Add from BGG list" and "Add by link".
 2. **Given** an open collection, **When** the user pastes a link like
    `https://boardgamegeek.com/boardgame/295947/cascadia` and confirms, **Then** the game is added
    under "Not yet marked" with the suggested, editable name "Cascadia", and the user is back in
@@ -48,49 +48,50 @@ confirm the collection, the game and its mark are still there.
 
 ---
 
-### User Story 2 - Load geeklists and put their games into collections (Priority: P2)
+### User Story 2 - Load BGG lists and put their games into collections (Priority: P2)
 
-Before the fair the user loads the SPIEL preview geeklist, switching on "Essen geeklist". They
+Before the fair the user loads a BGG list by its link: the SPIEL Essen 2026 preview. They
 browse its games with booth, price and publisher, open one, tick the collections it should be in,
 and press Done.
 
-**Why this priority**: The preview geeklist is where fair releases are found; it also brings the
+**Why this priority**: The SPIEL preview is where fair releases are found; it also brings the
 booth, price and publisher needed at the fair.
 
-**Independent Test**: Load an Essen geeklist, open a game, tick an Essen and a standard collection,
+**Independent Test**: Load the SPIEL preview, open a game, tick an Essen and a standard collection,
 press Done, and confirm the game is in both, with booth, price and publisher only in the Essen one.
 
 **Acceptance Scenarios**:
 
-1. **Given** a geeklist link, **When** the user loads it with "Essen geeklist" on, **Then** it is
-   listed with an Essen badge and its games show booth, price and publisher.
-2. **Given** a large geeklist, **When** it is opened the first time, **Then** the first games appear
+1. **Given** a BGG list link, **When** the user loads it, **Then** it is listed; a BGG preview (such
+   as SPIEL Essen 2026) gets an Essen badge and its games show booth, price and publisher, a
+   geeklist shows its games without them.
+2. **Given** a large list, **When** it is opened the first time, **Then** the first games appear
    quickly and the rest load in the background with visible progress; it stays available offline.
-3. **Given** a loaded geeklist, **When** the user filters by name, **Then** only matching games show.
-4. **Given** a geeklist game, **When** the user opens it, **Then** the collections it is already in
+3. **Given** a loaded list, **When** the user filters by name, **Then** only matching games show.
+4. **Given** a game in a list, **When** the user opens it, **Then** the collections it is already in
    are ticked; ticking or unticking changes nothing until Done, and Done adds and removes exactly
    as ticked; Cancel discards.
-5. **Given** an Essen geeklist game ticked into a standard collection, or a non-Essen geeklist game
+5. **Given** a game from an Essen list ticked into a standard collection, or a game from a geeklist
    ticked into an Essen collection, **When** the user looks at the tick, **Then** it says the game is
    added without booth and price.
 
 ---
 
-### User Story 3 - Swipe through a geeklist (Priority: P3)
+### User Story 3 - Swipe through a BGG list (Priority: P3)
 
-In a collection the user chooses "Add from geeklist", picks the preview list, and swipes: right
+In a collection the user chooses "Add from BGG list", picks the SPIEL preview, and swipes: right
 adds a game, left marks it "Not interested". Each card shows cover, name, year, a short
 description and, for Essen lists, booth, price and publisher.
 
 **Why this priority**: The fastest way through hundreds of preview games; builds on US1 and US2.
 
-**Independent Test**: Swipe ten games of a geeklist into a collection and confirm the right-swiped
+**Independent Test**: Swipe ten games of a list into a collection and confirm the right-swiped
 ones are under "Not yet marked", the left-swiped ones under "Not interested", and none of them is
 offered again.
 
 **Acceptance Scenarios**:
 
-1. **Given** a collection and a geeklist, **When** the user swipes right (or presses ✓ or →),
+1. **Given** a collection and a list, **When** the user swipes right (or presses ✓ or →),
    **Then** the game is added unmarked and the next card appears.
 2. **When** the user swipes left (or presses ✕ or ←), **Then** the game is added as Not interested.
 3. **Given** games already in the collection, **When** swiping, **Then** they are not shown again;
@@ -120,7 +121,7 @@ group in "All games", shows the price, and the total spent is correct.
 3. **Given** bought games, **When** the collection is shown, **Then** each keeps its group, shows a
    bought badge with the price paid, and a line shows the number bought and the money spent.
 4. **Given** a game without booth, price or publisher, **When** the user opens its details, **Then**
-   they can add or edit them by hand, and the game shows them like geeklist data, marked as added by
+   they can add or edit them by hand, and the game shows them like data from an Essen list, marked as added by
    the user.
 5. **Given** a game, **When** the user opens its details, **Then** they see its cover, a short
    description and a link to its BoardGameGeek page.
@@ -169,16 +170,16 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 ### Edge Cases
 
-- BoardGameGeek is slow or unavailable: geeklists and search show a clear, retryable message;
+- BoardGameGeek is slow or unavailable: lists and search show a clear, retryable message;
   collections stay fully usable.
-- No network at the fair: collections, loaded geeklists and all marking work offline; changes sync
+- No network at the fair: collections, loaded lists and all marking work offline; changes sync
   later.
-- Huge geeklists (thousands of entries) stay scrollable and filterable on a phone.
-- Geeklist entries that are not games are skipped; expansions are shown like games.
+- Huge lists (thousands of entries) stay scrollable and filterable on a phone.
+- List entries that are not games are skipped; expansions are shown like games.
 - Invalid or non-game links are rejected with a message saying which link is expected.
 - A game already in a collection is never added twice; it can be in several collections, with a
   separate mark in each.
-- Unticking a collection in the geeklist game sheet removes the game there, including its mark and
+- Unticking a collection in a list game's sheet removes the game there, including its mark and
   bought state; the sheet says so before Done.
 - A collection is empty: a centred empty state offers both ways to add games.
 - The selected filter shows nothing: the user is told so; with the "Must Have, not bought" preset
@@ -221,21 +222,21 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 **Booth, price and publisher ("facts")**
 
-- **FR-010**: Facts MUST be kept when a game comes from an Essen geeklist into an Essen collection,
+- **FR-010**: Facts MUST be kept when a game comes from an Essen list into an Essen collection,
   and only then; the UI MUST say so before adding in every other combination.
 - **FR-011**: Users MUST be able to add or edit facts of a game in a collection by hand; such facts
   are shown as added by the user.
 
-**Geeklists**
+**BGG lists**
 
-- **FR-012**: Users MUST be able to load a BoardGameGeek geeklist by link, marking it as Essen or
-  not; loaded geeklists are remembered on the device, load page by page with visible progress and
-  are available offline.
-- **FR-013**: Users MUST be able to browse a loaded geeklist, filter it by name and see each game's
+- **FR-012**: Users MUST be able to load a BGG list by its link: a BoardGameGeek preview (an
+  Essen list, with booth, price and publisher) or a geeklist (no facts); loaded lists are
+  remembered on the device, load page by page with visible progress and are available offline.
+- **FR-013**: Users MUST be able to browse a loaded list, filter it by name and see each game's
   facts (Essen lists) and whether it is in a collection.
-- **FR-014**: From a geeklist game, users MUST be able to choose the collections the game belongs to;
+- **FR-014**: From a game in a list, users MUST be able to choose the collections the game belongs to;
   the choice MUST start from the current memberships and apply only on confirmation.
-- **FR-015**: Inside a collection, users MUST be able to go through a geeklist card by card, adding
+- **FR-015**: Inside a collection, users MUST be able to go through a list card by card, adding
   (right) or marking Not interested (left); games already in the collection MUST NOT be offered.
 
 **Adding single games**
@@ -286,9 +287,10 @@ the fair. Until then the search tab is visible but switched off and points to ad
   link come from BGG.
 - **Collection**: a person's named list, type Essen or standard.
 - **Collection entry**: a game in a collection: mark, bought (yes/no), price paid (optional), facts
-  (booth, price, publisher; from an Essen geeklist or added by hand), when it last changed.
+  (booth, price, publisher; from an Essen list or added by hand), when it last changed.
 - **Mark**: Not yet marked, Must Have, Interested, Unsure, Poop, Not interested.
-- **Geeklist**: a BGG list identified by its ID, with title, Essen flag, load progress and ordered
+- **BGG list**: a BoardGameGeek preview or geeklist identified by kind and ID, with title, Essen
+  flag (previews), load progress and ordered
   entries (game + facts for Essen lists).
 
 ## Success Criteria *(mandatory)*
@@ -296,10 +298,10 @@ the fair. Until then the search tab is visible but switched off and points to ad
 ### Measurable Outcomes
 
 - **SC-001**: A user can add a game by link and mark it in under 20 seconds on a phone.
-- **SC-002**: A user can load the Spiel 26 Preview geeklist and see its first games in under 10
+- **SC-002**: A user can load the SPIEL Essen 2026 preview and see its first games in under 10
   seconds on a typical mobile connection.
 - **SC-003**: Changing a game's mark takes at most 2 taps from the collection.
-- **SC-004**: With no network connection, 100% of collections and loaded geeklists remain usable and
+- **SC-004**: With no network connection, 100% of collections and loaded lists remain usable and
   no change made offline is lost.
 - **SC-005**: During the fair, every member of the group uses the app instead of paper or chat lists.
 - **SC-006**: Every flow is completable on a 360px-wide screen without horizontal scrolling or zooming.
@@ -307,7 +309,7 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - **SC-008**: A user can send their Must Haves to a group chat in under 15 seconds.
 - **SC-009**: Exporting a backup and importing it on another device restores 100% of collections,
   marks, bought states, prices and facts.
-- **SC-010**: Before SPIEL Essen 2026 opens (2026-10-22), each user can load the preview geeklist and
+- **SC-010**: Before SPIEL Essen 2026 opens (2026-10-22), each user can load the SPIEL preview and
   swipe through it without official BoardGameGeek data access.
 - **SC-011**: Swiping, a user decides on at least 15 games per minute.
 - **SC-012**: From opening the app, the "Must Have, not bought" list of a collection is reached in at
@@ -320,7 +322,7 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - Collections are personal; sharing happens as text or backup files. Seeing friends' marks in the
   app is out of scope for this feature.
 - Collections are stored centrally per person and cached on each device; conflicting edits are
-  resolved by "most recent change wins". Loaded geeklists are stored per device.
+  resolved by "most recent change wins". Loaded lists are stored per device.
 - Release 0.5 (before the fair) works without official BoardGameGeek data access, using data BGG's
   website exposes publicly under the time-limited exception in constitution Principle V. Release 1.0
   switches to the official access and adds full search.

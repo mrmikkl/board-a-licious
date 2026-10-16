@@ -1,55 +1,52 @@
 # Share text and backup file formats
 
-> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
-> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
-> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
+Re-planned 2026-10-17.
 
-## Share text (FR-016)
+## Share text (FR-020)
 
-Plain text, built by `src/domain/share.ts`, passed to `navigator.share({ text })` or copied to the
-clipboard. States in display order; only selected, non-empty states; games sorted by name.
+Built by `src/domain/share.ts` for one collection and the chosen groups; passed to
+`navigator.share({ text })`, else copied to the clipboard. Groups in mark order; games by name;
+empty groups left out; bought games get ✅; Essen collections add booth and price.
 
 ```text
-🎲 Anna's Spiel 26 list
+🎲 Essen 2026
 
 ⭐ Must Have (2)
-• Cascadia (2021) – https://boardgamegeek.com/boardgame/295947
-• Ark Nova (2021) – https://boardgamegeek.com/boardgame/342942
+• ✅ Example Game – 3-R400, €60 – https://boardgamegeek.com/boardgame/446453
+• Another Game – 1-A202, €45 – https://boardgamegeek.com/boardgame/123456
 
 👀 Interested (1)
-• Harmonies (2024) – https://boardgamegeek.com/boardgame/414317
-
-💩 Poop (1)
-• Some Game – https://boardgamegeek.com/boardgame/12345
+• Harmonies – https://boardgamegeek.com/boardgame/414317
 ```
 
-- Header uses the part of the email before `@`; year omitted when unknown.
-- Full URLs so messaging apps turn them into links.
-- Empty selection: share is not offered (spec edge case).
+- Full URLs so chat apps link them; "Not yet marked" uses ⬡.
+- Nothing selected or all selected groups empty: sharing is not offered and the UI says why.
 
-## Backup file (FR-017)
+## Backup file (FR-021)
 
-- File name: `board-a-licious-backup-YYYY-MM-DD.json`, media type `application/json`.
-- Contains active entries only (no tombstones).
+- Name `board-a-licious-backup-YYYY-MM-DD.json`, type `application/json`, active rows only.
 
 ```json
 {
   "format": "board-a-licious-backup",
-  "version": 1,
-  "exportedAt": "2026-10-16T09:30:00.000Z",
-  "entries": [
-    { "bggId": 295947, "name": "Cascadia", "year": 2021,
-      "thumbnailUrl": "https://cf.geekdo-images.com/…",
-      "state": "must_have", "updatedAt": "2026-10-16T09:12:03.120Z" }
-  ]
+  "version": 2,
+  "exportedAt": "2026-10-17T09:30:00.000Z",
+  "collections": [
+    { "id": "c0f…", "name": "Essen 2026", "type": "essen", "updatedAt": "…",
+      "entries": [
+        { "bggId": 446453, "name": "…", "year": 2026, "mark": "must_have",
+          "bought": true, "paidCents": 5200,
+          "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR", "publisher": "…" },
+          "factsSource": "preview", "updatedAt": "…" } ] } ]
 }
 ```
 
 Import rules:
 
-- Reject (collection unchanged) if: not JSON, `format` differs, `version` > 1, or any entry fails
-  validation (unknown state, bad `bggId`). The message names the first problem.
-- Games not in the collection are added.
-- Games already in the collection: the user picks once for all conflicts — **Keep current** or
-  **Use backup**. "Use backup" writes the backup's state with a fresh `updatedAt` so it wins sync.
-- Imported changes go through the normal outbox, so they sync to the server like manual edits.
+- Reject the whole file (nothing changes) if it is not JSON, `format` differs, `version` is newer
+  than 2, or any row fails validation; the message names the first problem.
+- Version 1 files (single collection, before the design session) are imported as one standard
+  collection named "Imported".
+- Collections not present are added; for present ones, missing entries are added and conflicts are
+  resolved once for all: **Keep current** or **Use backup** (backup rows get a fresh `updatedAt`).
+- Imported rows go through the normal outbox and sync like manual edits.
