@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Board-a-licious prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Design tokens ─────────────────────────────────────────────── */
+:root {
+  --ink: #0D0F1F;          /* page */
+  --deck: #151831;         /* surfaces */
+  --deck-2: #1D2142;       /* raised */
+  --rim: #2C3160;          /* lines */
+  --text: #ECEEFF;
+  --muted: #9AA0C8;
+  --orange: #FF7A1A;       /* the one highlight */
+  --orange-2: #FFB020;
+  --indigo: #4C5BFF;
+  --teal: #14C8C8;
+  --violet: #8B5CF6;
+  --mud: #9C7B5B;
+  --danger: #FF5C6C;
+
+  --grad-hot: linear-gradient(135deg, var(--orange) 0%, var(--orange-2) 100%);
+  --grad-cool: linear-gradient(135deg, var(--indigo) 0%, var(--teal) 100%);
+  --grad-dusk: linear-gradient(135deg, var(--violet) 0%, var(--indigo) 55%, var(--teal) 100%);
+  --grad-mud: linear-gradient(135deg, #7A6046 0%, #B0916E 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --hex-flat: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+
+  --font-display: "Chakra Petch", "Avenir Next Condensed", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --tap: 44px;
+  --gutter: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ── Frame: phone-sized column, centred on desktop ─────────────── */
+.app {
+  position: relative;
+  max-width: 440px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+  background:
+    radial-gradient(120% 60% at 110% -10%, rgba(76, 91, 255, .35), transparent 60%),
+    radial-gradient(90% 50% at -20% 30%, rgba(20, 200, 200, .16), transparent 60%),
+    var(--ink);
+}
+.app::before { /* honeycomb texture, fading out downwards */
+  content: "";
+  position: absolute; inset: 0 0 auto 0; height: 340px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 0l28 16v32L28 64 0 48V16zM28 64l28 16v32M28 64L0 80v32' fill='none' stroke='%238B5CF6' stroke-opacity='.18' stroke-width='1'/%3E%3C/svg%3E");
+  mask-image: linear-gradient(#000, transparent);
+  -webkit-mask-image: linear-gradient(#000, transparent);
+  pointer-events: none;
+}
+
+/* ── Top bar ───────────────────────────────────────────────────── */
+.top {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px var(--gutter) 8px;
+}
+.logo {
+  width: 34px; height: 38px; flex: none;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  display: grid; place-items: center;
+  font: 700 15px var(--font-display); color: var(--ink);
+}
+.top h1 {
+  margin: 0; flex: 1;
+  font: 700 26px/1.1 var(--font-display);
+  letter-spacing: .01em;
+}
+.sync {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--muted);
+  background: none; border: 0; padding: 6px 0; min-height: var(--tap);
+}
+.sync i { width: 8px; height: 9px; clip-path: var(--hex); background: var(--teal); }
+.sync.offline i { background: var(--orange); }
+
+main { position: relative; padding: 0 var(--gutter); }
+
+/* ── Building blocks ───────────────────────────────────────────── */
+.lead { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+.field {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--deck); border: 1px solid var(--rim);
+  border-radius: var(--r-md); padding: 0 14px; min-height: 50px;
+}
+.field:focus-within { border-color: var(--orange); }
+.field input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; padding: 12px 0; }
+.field input::placeholder { color: #6E74A0; }
+.field svg { flex: none; opacity: .7; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 20px; border: 0; border-radius: var(--r-md);
+  font: 600 15px var(--font-body);
+}
+.btn-primary { background: var(--grad-hot); color: #1B1005; }
+.btn-ghost { background: var(--deck-2); color: var(--text); border: 1px solid var(--rim); }
+.btn-block { width: 100%; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.link-btn { background: none; border: 0; color: var(--orange); padding: 10px 0; min-height: var(--tap); font-weight: 600; }
+
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 14px; margin: 0 calc(-1 * var(--gutter)); padding-left: var(--gutter); scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 0 14px; border-radius: 999px;
+  background: var(--deck); border: 1px solid var(--rim); color: var(--muted);
+  font-weight: 600; font-size: 14px;
+}
+.chip b { font: 600 13px var(--font-display); color: var(--text); }
+.chip[aria-pressed="true"] { background: var(--deck-2); color: var(--text); border-color: var(--orange); }
+
+/* ── Hexagon thumbnail: the signature element ──────────────────── */
+.hex {
+  --size: 54px;
+  position: relative; flex: none;
+  width: var(--size); height: calc(var(--size) * 1.12);
+  clip-path: var(--hex);
+  background: var(--grad-dusk);
+  display: grid; place-items: center;
+}
+.hex::after { /* inner face, leaves a 2px gradient rim */
+  content: attr(data-initials);
+  position: absolute; inset: 2px;
+  clip-path: var(--hex);
+  display: grid; place-items: center;
+  background: var(--face, #1D2142);
+  font: 700 calc(var(--size) * .3) var(--font-display); color: rgba(236, 238, 255, .9);
+}
+.hex[data-state="must_have"] { background: var(--grad-hot); }
+.hex[data-state="interested"] { background: var(--grad-cool); }
+.hex[data-state="poop"] { background: var(--grad-mud); }
+
+/* ── Game rows ─────────────────────────────────────────────────── */
+.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.row {
+  display: flex; align-items: center; gap: 14px;
+  width: 100%; text-align: left;
+  padding: 10px 8px 10px 4px; min-height: 72px;
+  background: none; border: 0; border-radius: var(--r-md);
+}
+.row:hover { background: rgba(29, 33, 66, .6); }
+.row .meta { flex: 1; min-width: 0; }
+.row .name { display: block; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .sub { display: block; font-size: 13px; color: var(--muted); }
+.pill {
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  min-height: 34px; padding: 0 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; border: 1px solid var(--rim); color: var(--muted); background: var(--deck);
+}
+.pill[data-state="must_have"] { color: #1B1005; background: var(--grad-hot); border-color: transparent; }
+.pill[data-state="interested"] { color: #04161A; background: var(--grad-cool); border-color: transparent; }
+.pill[data-state="poop"] { color: #1A120A; background: var(--grad-mud); border-color: transparent; }
+
+.section-title { font: 600 18px var(--font-display); margin: 22px 0 8px; display: flex; justify-content: space-between; align-items: baseline; }
+.section-title small { font: 500 13px var(--font-body); color: var(--muted); }
+
+.empty { text-align: center; padding: 36px 12px; color: var(--muted); }
+.empty .hex { --size: 72px; margin: 0 auto 14px; }
+.empty strong { display: block; color: var(--text); font-size: 17px; margin-bottom: 4px; }
+
+.note {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: linear-gradient(135deg, rgba(76, 91, 255, .18), rgba(20, 200, 200, .10));
+  border: 1px solid rgba(76, 91, 255, .35); border-radius: var(--r-md);
+  padding: 12px 14px; font-size: 13px; color: #C9CDF0; margin-bottom: 14px;
+}
+.note i { width: 12px; height: 14px; flex: none; margin-top: 3px; clip-path: var(--hex); background: var(--grad-cool); }
+
+/* geeklist cards */
+.list-card {
+  display: block; width: 100%; text-align: left;
+  background: var(--deck); border: 1px solid var(--rim); border-radius: var(--r-lg);
+  padding: 16px; margin-bottom: 10px; position: relative; overflow: hidden;
+}
+.list-card::after { /* one large faint hexagon as abstract form, cut by the right edge */
+  content: ""; position: absolute; right: -34px; top: 50%; transform: translateY(-50%); width: 96px; height: 108px;
+  clip-path: var(--hex); background: var(--grad-dusk); opacity: .22;
+}
+.list-card > * { position: relative; z-index: 1; }
+.list-card h3 { margin: 0 0 4px; font: 600 17px var(--font-display); position: relative; }
+.list-card p { margin: 0; color: var(--muted); font-size: 13px; position: relative; }
+.progress { height: 6px; border-radius: 6px; background: var(--deck-2); margin-top: 12px; overflow: hidden; position: relative; }
+.progress span { display: block; height: 100%; background: var(--grad-hot); border-radius: 6px; transition: width .4s; }
+
+/* ── Tab bar with the hexagon add button ───────────────────────── */
+.tabbar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 440px; z-index: 20;
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, .98) 70%, rgba(13, 15, 31, 0));
+}
+.tab {
+  display: grid; justify-items: center; gap: 3px;
+  min-height: 52px; padding: 6px 0; background: none; border: 0;
+  color: var(--muted); font-size: 11px; font-weight: 600;
+}
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-current="page"] { color: var(--text); }
+.tab[aria-current="page"] svg { color: var(--orange); }
+.tab-add {
+  justify-self: center; width: 62px; height: 68px; margin-top: -26px; border: 0;
+  clip-path: var(--hex); background: var(--grad-hot); color: #1B1005;
+  display: grid; place-items: center;
+  box-shadow: none;
+}
+.tab-add svg { width: 26px; height: 26px; }
+
+/* ── Bottom sheet ──────────────────────────────────────────────── */
+.scrim { position: fixed; inset: 0; background: rgba(5, 6, 14, .6); z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+.sheet {
+  position: fixed; left: 50%; bottom: 0; z-index: 31;
+  width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto;
+  transform: translate(-50%, 100%); visibility: hidden;
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1), visibility 0s .28s;
+  background: linear-gradient(180deg, #1A1E3E 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0; border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+}
+.sheet.open { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
+.grabber { width: 40px; height: 4px; border-radius: 4px; background: var(--rim); margin: 0 auto 14px; }
+.detail-head { display: flex; gap: 16px; align-items: center; margin-bottom: 6px; }
+.detail-head .hex { --size: 84px; }
+.detail-head h2 { margin: 0; font: 700 24px/1.15 var(--font-display); }
+.detail-head p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.name-input { background: none; border: 0; border-bottom: 1px dashed var(--rim); font: 700 22px var(--font-display); width: 100%; padding: 2px 0; }
+.name-input:focus { outline: 0; border-bottom-color: var(--orange); }
+
+/* state picker: three hexagons in a honeycomb */
+.picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 18px 0 10px; }
+.state-hex {
+  aspect-ratio: 1 / 1.1; border: 0; padding: 0;
+  clip-path: var(--hex); background: var(--rim);
+  display: grid; place-items: center; position: relative;
+}
+.state-hex:nth-child(2) { transform: translateY(26px); }
+.state-hex span {
+  position: absolute; inset: 2px; clip-path: var(--hex); background: var(--deck-2);
+  display: grid; place-content: center; justify-items: center; gap: 4px;
+  font-weight: 700; font-size: 14px; color: var(--text);
+}
+.state-hex em { font-style: normal; font-size: 26px; line-height: 1; }
+.state-hex[data-state="must_have"][aria-pressed="true"] { background: var(--grad-hot); }
+.state-hex[data-state="interested"][aria-pressed="true"] { background: var(--grad-cool); }
+.state-hex[data-state="poop"][aria-pressed="true"] { background: var(--grad-mud); }
+.state-hex[aria-pressed="true"] span { background: transparent; color: #12100C; }
+.picker-pad { height: 30px; }
+.sheet-actions { display: grid; gap: 8px; margin-top: 8px; }
+.danger { color: var(--danger); }
+
+/* share */
+.check { display: flex; align-items: center; gap: 12px; min-height: var(--tap); padding: 4px 0; font-weight: 600; }
+.check input { width: 22px; height: 22px; accent-color: var(--orange); }
+.check small { color: var(--muted); font-weight: 500; margin-left: auto; }
+.preview {
+  white-space: pre-wrap; font: 400 13px/1.55 var(--font-body);
+  background: #0F2B22; border: 1px solid #1E4A3C; border-radius: var(--r-md) var(--r-md) var(--r-md) 4px;
+  padding: 12px 14px; margin: 10px 0 14px; color: #E2F5EC; max-height: 230px; overflow: auto;
+}
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* toast */
+.toast {
+  position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom)); z-index: 40;
+  transform: translate(-50%, 20px); opacity: 0; transition: .2s;
+  background: var(--deck-2); border: 1px solid var(--rim); border-radius: 999px;
+  padding: 10px 16px; font-size: 14px; font-weight: 600; max-width: calc(100% - 32px);
+  display: flex; gap: 10px; align-items: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast i { width: 10px; height: 11px; clip-path: var(--hex); background: var(--orange); flex: none; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.foot { color: #5E6390; font-size: 12px; text-align: center; margin: 28px 0 8px; }
+.err { color: var(--danger); font-size: 13px; margin: 8px 2px 0; }
+.ok { color: var(--teal); font-size: 13px; margin: 8px 2px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="logo" aria-hidden="true">B</div>
+    <h1 id="title">My collection</h1>
+    <button class="sync" id="sync" title="Toggle offline to try the offline state">
+      <i></i><span>Synced</span>
+    </button>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <nav class="tabbar" aria-label="Main">
+    <button class="tab" data-go="collection">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z"/><path d="M12 12l8-4.6M12 12v9.5M12 12L4 7.4"/></svg>
+      Collection
+    </button>
+    <button class="tab" data-go="geeklists">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 4.8l1.6.9v1.8L4 8.4l-1.6-.9V5.7zM4 10.8l1.6.9v1.8L4 14.4l-1.6-.9v-1.8zM4 16.8l1.6.9v1.8L4 20.4l-1.6-.9v-1.8z"/></svg>
+      Geeklists
+    </button>
+    <button class="tab-add" data-go="add" aria-label="Add a game by link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="tab" data-go="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      Search
+    </button>
+    <button class="tab" data-go="share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 12.5V19a1.5 1.5 0 001.5 1.5h11A1.5 1.5 0 0019 19v-6.5"/></svg>
+      Share
+    </button>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Game"></section>
+<div class="toast" id="toast" role="status" aria-live="polite"><i></i><span></span></div>
+
+<script>
+/* ── Sample data (prototype only) ─────────────────────────────────
+   Three real BGG games with verified IDs; the rest are invented titles
+   standing in for a SPIEL preview geeklist. */
+const STATES = [
+  { key: 'must_have', label: 'Must Have', emoji: '⭐' },
+  { key: 'interested', label: 'Interested', emoji: '👀' },
+  { key: 'poop', label: 'Poop', emoji: '💩' },
+];
+const stateOf = k => STATES.find(s => s.key === k);
+
+const GAMES = {
+  295947: { name: 'Cascadia', year: 2021 },
+  342942: { name: 'Ark Nova', year: 2021 },
+  414317: { name: 'Harmonies', year: 2024 },
+  900101: { name: 'Hexfall Harbor', year: 2026 },
+  900102: { name: 'Lantern Tide', year: 2026 },
+  900103: { name: 'Copper & Comet', year: 2026 },
+  900104: { name: 'The Saltmarsh Guild', year: 2026 },
+  900105: { name: 'Pocket Volcano', year: 2026 },
+  900106: { name: 'Orchard of Owls', year: 2026 },
+  900107: { name: 'Night Train to Riga', year: 2026 },
+  900108: { name: 'Beekeepers of Ys', year: 2026 },
+  900109: { name: 'Tiny Tectonics', year: 2026 },
+  900110: { name: 'Glasswing', year: 2026 },
+  900111: { name: 'Moonmarket', year: 2026 },
+  900112: { name: 'Fjord Fishers', year: 2026 },
+};
+const GEEKLISTS = [
+  { id: 371234, title: 'SPIEL Essen 2026 Preview', pages: 87, loaded: 31,
+    entries: [900101, 900102, 900103, 900104, 900105, 900106, 900107, 900108, 900109, 900110, 900111, 900112] },
+  { id: 365010, title: 'Friends’ picks for Essen', pages: 2, loaded: 2, entries: [295947, 414317, 900102, 900110] },
+];
+
+const KEY = 'bal-prototype';
+let store = { collection: { 295947: 'must_have', 900102: 'interested', 900105: 'poop', 900110: 'must_have' } };
+try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved) store = saved; } catch (_) {}
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (_) {} };
+
+let route = 'collection', filter = 'all', query = '', openList = null, listFilter = '', offline = false;
+const shareStates = new Set(['must_have', 'interested']);
+
+const $ = s => document.querySelector(s);
+const view = $('#view');
+const plural = n => `${n} ${n === 1 ? 'game' : 'games'}`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const initials = n => n.replace(/^the /i, '').split(/[\s&]+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const hexThumb = (id, size) => {
+  const g = GAMES[id]; const st = store.collection[id] || '';
+  return `<span class="hex" style="${size ? `--size:${size}px` : ''}" data-state="${st}" data-initials="${esc(initials(g.name))}" aria-hidden="true"></span>`;
+};
+const pill = id => {
+  const st = store.collection[id];
+  return st ? `<span class="pill" data-state="${st}">${stateOf(st).emoji} ${stateOf(st).label}</span>`
+            : `<span class="pill">+ Mark</span>`;
+};
+const row = id => {
+  const g = GAMES[id];
+  return `<li><button class="row" data-open="${id}">${hexThumb(id)}
+    <span class="meta"><span class="name">${esc(g.name)}</span><span class="sub">${g.year || 'Year unknown'}</span></span>
+    ${pill(id)}</button></li>`;
+};
+
+function toast(msg) {
+  const t = $('#toast'); t.querySelector('span').textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ── Screens ───────────────────────────────────────────────────── */
+function collectionScreen() {
+  const ids = Object.keys(store.collection).map(Number);
+  const count = k => ids.filter(id => store.collection[id] === k).length;
+  const shown = ids
+    .filter(id => filter === 'all' || store.collection[id] === filter)
+    .sort((a, b) => GAMES[a].name.localeCompare(GAMES[b].name));
+  return `
+    <div class="chips" role="group" aria-label="Filter by state">
+      <button class="chip" data-filter="all" aria-pressed="${filter === 'all'}">All <b>${ids.length}</b></button>
+      ${STATES.map(s => `<button class="chip" data-filter="${s.key}" aria-pressed="${filter === s.key}">${s.emoji} ${s.label} <b>${count(s.key)}</b></button>`).join('')}
+    </div>
+    ${shown.length ? `<ul class="rows">${shown.map(row).join('')}</ul>` : `
+      <div class="empty"><span class="hex" data-initials="?"></span>
+        <strong>${ids.length ? 'No games with this state' : 'Your collection is empty'}</strong>
+        ${ids.length ? 'Pick another filter above.' : 'Add a game from a BoardGameGeek link, or browse a geeklist.'}
+      </div>`}
+    <p class="foot">Prototype with sample data. Changes stay in this browser.</p>`;
+}
+
+function addScreen() {
+  return `
+    <p class="lead">Copy a game's link on boardgamegeek.com and paste it here.</p>
+    <label class="field"><span class="sr">Game link</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>
+      <input id="link" inputmode="url" autocomplete="off" placeholder="boardgamegeek.com/boardgame/…">
+    </label>
+    <button class="link-btn" data-action="paste-sample">Paste example link</button>
+    <div id="parsed"></div>`;
+}
+
+function parseLink(text) {
+  const m = /boardgamegeek\.com\/(boardgame|boardgameexpansion)\/(\d+)(?:\/([\w-]+))?/i.exec(text);
+  if (!m) return /boardgamegeek\.com\//i.test(text) ? { error: 'This is a BoardGameGeek link, but not to a game. Open the game itself and copy that link.' }
+    : text.trim() ? { error: 'That is not a BoardGameGeek link. It should look like boardgamegeek.com/boardgame/295947/cascadia.' } : null;
+  const id = Number(m[2]);
+  const name = (m[3] || '').split('-').filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+  return { id, name };
+}
+
+function renderParsed() {
+  const out = $('#parsed'); if (!out) return;
+  const p = parseLink($('#link').value);
+  if (!p) { out.innerHTML = ''; return; }
+  if (p.error) { out.innerHTML = `<p class="err">${esc(p.error)}</p>`; return; }
+  if (store.collection[p.id] && GAMES[p.id]) {
+    out.innerHTML = `<p class="ok">Already in your collection as ${stateOf(store.collection[p.id]).label}.</p>
+      <button class="btn btn-ghost btn-block" data-open="${p.id}">Open ${esc(GAMES[p.id].name)}</button>`;
+    return;
+  }
+  out.innerHTML = `
+    <h2 class="section-title">Found game <small>ID ${p.id}</small></h2>
+    <div class="detail-head">
+      <span class="hex" style="--size:72px" data-initials="${esc(initials(p.name || '?'))}"></span>
+      <div style="flex:1">
+        <label class="sr" for="newname">Name</label>
+        <input class="name-input" id="newname" value="${esc(p.name)}" placeholder="Type the game's name">
+        <p>Name and picture are filled in from BoardGameGeek later.</p>
+      </div>
+    </div>
+    <h2 class="section-title">Add it as</h2>
+    <div class="picker" role="group" aria-label="Pick a state to add it">
+      ${STATES.map(s => `<button class="state-hex" data-add-state="${s.key}" data-state="${s.key}" aria-pressed="false"><span><em>${s.emoji}</em>${s.label}</span></button>`).join('')}
+    </div><div class="picker-pad"></div>`;
+  out.dataset.id = p.id;
+}
+
+function geeklistsScreen() {
+  if (openList) return geeklistDetail(openList);
+  return `
+    <p class="lead">Load a geeklist once; it stays on this phone for searching, also offline.</p>
+    <label class="field"><span class="sr">Geeklist link</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <input id="glink" inputmode="url" placeholder="Paste a geeklist link">
+    </label>
+    <h2 class="section-title">Loaded geeklists <small>${GEEKLISTS.length}</small></h2>
+    ${GEEKLISTS.map(l => `
+      <button class="list-card" data-list="${l.id}">
+        <h3>${esc(l.title)}</h3>
+        <p>${l.loaded < l.pages ? `Loading page ${l.loaded} of ${l.pages}. You can already browse and search.` : `${plural(l.entries.length)}, fully loaded`}</p>
+        <div class="progress" aria-hidden="true"><span style="width:${Math.round(100 * l.loaded / l.pages)}%"></span></div>
+      </button>`).join('')}`;
+}
+
+function geeklistDetail(id) {
+  const l = GEEKLISTS.find(x => x.id === id);
+  const q = listFilter.toLowerCase();
+  const ids = l.entries.filter(e => GAMES[e].name.toLowerCase().includes(q));
+  return `
+    <button class="link-btn" data-action="back">‹ All geeklists</button>
+    <h2 class="section-title" style="margin-top:4px">${esc(l.title)} <small>${l.entries.length} games</small></h2>
+    <label class="field"><span class="sr">Filter this geeklist</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="lfilter" value="${esc(listFilter)}" placeholder="Filter by name">
+    </label>
+    <ul class="rows" style="margin-top:10px">${ids.map(row).join('') || '<li class="empty">No game in this list matches.</li>'}</ul>
+    ${l.loaded < l.pages ? `<p class="foot">Still loading pages ${l.loaded + 1}–${l.pages} in the background.</p>` : ''}`;
+}
+
+function searchScreen() {
+  const q = query.trim().toLowerCase();
+  const pool = [...new Set(GEEKLISTS.flatMap(l => l.entries))];
+  const hits = q.length >= 2 ? pool.filter(id => GAMES[id].name.toLowerCase().includes(q)) : [];
+  return `
+    <div class="note"><i></i><span>Searching your ${GEEKLISTS.length} loaded geeklists. Searching all of BoardGameGeek comes in a later version; until then, add other games by link.</span></div>
+    <label class="field"><span class="sr">Search games</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="q" value="${esc(query)}" placeholder="Game name, e.g. lantern" autocomplete="off">
+    </label>
+    ${q.length < 2 ? `<div class="empty"><span class="hex" data-initials="?"></span><strong>Type at least two letters</strong>Results show up as you type, also without a connection.</div>`
+      : hits.length ? `<h2 class="section-title">Results <small>${hits.length}</small></h2><ul class="rows">${hits.map(row).join('')}</ul>`
+      : `<div class="empty"><span class="hex" data-initials="0"></span><strong>No game named “${esc(query)}” in your geeklists</strong>Add it by its BoardGameGeek link instead.<br><button class="link-btn" data-go="add">Add by link</button></div>`}`;
+}
+
+function shareText() {
+  const parts = ['🎲 Maik’s Spiel 26 list'];
+  STATES.filter(s => shareStates.has(s.key)).forEach(s => {
+    const ids = Object.keys(store.collection).map(Number).filter(id => store.collection[id] === s.key)
+      .sort((a, b) => GAMES[a].name.localeCompare(GAMES[b].name));
+    if (!ids.length) return;
+    parts.push('', `${s.emoji} ${s.label} (${ids.length})`,
+      ...ids.map(id => `• ${GAMES[id].name}${GAMES[id].year ? ` (${GAMES[id].year})` : ''} – https://boardgamegeek.com/boardgame/${id}`));
+  });
+  return parts.length > 1 ? parts.join('\n') : '';
+}
+
+function shareScreen() {
+  const ids = Object.keys(store.collection).map(Number);
+  const text = shareText();
+  return `
+    <h2 class="section-title" style="margin-top:4px">Share your list</h2>
+    <p class="lead">Sends plain text to WhatsApp, Signal or any app on your phone.</p>
+    ${STATES.map(s => `<label class="check"><input type="checkbox" data-share="${s.key}" ${shareStates.has(s.key) ? 'checked' : ''}>
+      ${s.emoji} ${s.label}<small>${plural(ids.filter(id => store.collection[id] === s.key).length)}</small></label>`).join('')}
+    ${text ? `<div class="preview" aria-label="Message preview">${esc(text)}</div>
+      <button class="btn btn-primary btn-block" data-action="share">Share list</button>`
+      : `<p class="err">Pick at least one state that has games.</p>`}
+
+    <h2 class="section-title">Backup</h2>
+    <p class="lead">Your collection is saved to your account. A backup file is your own extra copy.</p>
+    <div class="split">
+      <button class="btn btn-ghost" data-action="export">Export backup</button>
+      <button class="btn btn-ghost" data-action="import">Import backup</button>
+    </div>
+    <input type="file" id="file" accept="application/json" hidden>`;
+}
+
+const SCREENS = {
+  collection: ['My collection', collectionScreen],
+  add: ['Add by link', addScreen],
+  geeklists: ['Geeklists', geeklistsScreen],
+  search: ['Search', searchScreen],
+  share: ['Share & backup', shareScreen],
+};
+
+function render(focusId) {
+  const [title, fn] = SCREENS[route];
+  $('#title').textContent = title;
+  view.innerHTML = fn();
+  document.querySelectorAll('[data-go]').forEach(b => {
+    if (b.classList.contains('tab')) b.setAttribute('aria-current', b.dataset.go === route ? 'page' : 'false');
+  });
+  if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); el.setSelectionRange?.(el.value.length, el.value.length); } }
+}
+
+/* ── Detail sheet with the hexagon state picker ────────────────── */
+function openSheet(id) {
+  const g = GAMES[id]; const st = store.collection[id];
+  $('#sheet').innerHTML = `
+    <div class="grabber"></div>
+    <div class="detail-head">${hexThumb(id, 84)}
+      <div><h2>${esc(g.name)}</h2><p>${g.year || 'Year unknown'}</p>
+        <a class="link-btn" style="display:inline-flex;align-items:center;text-decoration:none" href="https://boardgamegeek.com/boardgame/${id}" target="_blank" rel="noopener">Open on BoardGameGeek</a></div>
+    </div>
+    <div class="picker" role="group" aria-label="State">
+      ${STATES.map(s => `<button class="state-hex" data-set="${s.key}" data-state="${s.key}" aria-pressed="${st === s.key}"><span><em>${s.emoji}</em>${s.label}</span></button>`).join('')}
+    </div><div class="picker-pad"></div>
+    <div class="sheet-actions">
+      ${st ? `<button class="btn btn-ghost btn-block danger" data-action="remove">Remove from collection</button>` : ''}
+      <button class="btn btn-ghost btn-block" data-action="close">Done</button>
+    </div>`;
+  $('#sheet').dataset.id = id;
+  $('#scrim').classList.add('open'); $('#sheet').classList.add('open');
+  $('#sheet').querySelector('.state-hex').focus();
+}
+function closeSheet() { $('#scrim').classList.remove('open'); $('#sheet').classList.remove('open'); }
+
+function setState(id, st) {
+  store.collection[id] = st; persist();
+  toast(`${GAMES[id].name}: ${stateOf(st).label}`);
+}
+
+/* ── Events ────────────────────────────────────────────────────── */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-go]'); if (!t) return;
+  if (t.dataset.go) { route = t.dataset.go; openList = null; closeSheet(); render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.filter) { filter = t.dataset.filter; render(); return; }
+  if (t.dataset.open) { openSheet(Number(t.dataset.open)); return; }
+  if (t.dataset.list) { openList = Number(t.dataset.list); listFilter = ''; render(); return; }
+  if (t.dataset.set) {
+    const id = Number($('#sheet').dataset.id); setState(id, t.dataset.set);
+    $('#sheet').querySelectorAll('.state-hex').forEach(b => b.setAttribute('aria-pressed', b === t));
+    $('#sheet').querySelector('.detail-head .hex').dataset.state = t.dataset.set;
+    render(); setTimeout(closeSheet, 350); return;
+  }
+  if (t.dataset.addState) {
+    const id = Number($('#parsed').dataset.id);
+    const name = ($('#newname').value || '').trim();
+    if (!name) { $('#newname').focus(); toast('Type a name first'); return; }
+    if (!GAMES[id]) GAMES[id] = { name, year: null };
+    setState(id, t.dataset.addState); route = 'collection'; filter = 'all'; render(); return;
+  }
+  switch (t.dataset.action) {
+    case 'close': closeSheet(); break;
+    case 'remove': { const id = Number($('#sheet').dataset.id); const n = GAMES[id].name; delete store.collection[id]; persist(); closeSheet(); render(); toast(`Removed ${n}`); break; }
+    case 'back': openList = null; render(); break;
+    case 'paste-sample': $('#link').value = 'https://boardgamegeek.com/boardgame/414317/harmonies'; renderParsed(); break;
+    case 'share': {
+      const text = shareText();
+      if (navigator.share) navigator.share({ text }).catch(() => {});
+      else navigator.clipboard?.writeText(text).then(() => toast('Copied. Paste it into your chat.'), () => toast('Select the preview text to copy it'));
+      break;
+    }
+    case 'export': {
+      const data = { format: 'board-a-licious-backup', version: 1, exportedAt: new Date().toISOString(),
+        entries: Object.entries(store.collection).map(([id, state]) => ({ bggId: Number(id), name: GAMES[id].name, year: GAMES[id].year, thumbnailUrl: null, state, updatedAt: new Date().toISOString() })) };
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      a.download = `board-a-licious-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+      toast('Backup exported'); break;
+    }
+    case 'import': $('#file').click(); break;
+  }
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'link') renderParsed();
+  if (e.target.id === 'q') { query = e.target.value; render('q'); }
+  if (e.target.id === 'lfilter') { listFilter = e.target.value; render('lfilter'); }
+  if (e.target.id === 'newname') { const h = $('#parsed .hex'); if (h) h.dataset.initials = initials(e.target.value || '?'); }
+  if (e.target.dataset.share) { e.target.checked ? shareStates.add(e.target.dataset.share) : shareStates.delete(e.target.dataset.share); render(); }
+});
+
+document.addEventListener('change', e => {
+  if (e.target.id !== 'file' || !e.target.files[0]) return;
+  e.target.files[0].text().then(txt => {
+    let data; try { data = JSON.parse(txt); } catch (_) { toast('This file is not a backup. Nothing was changed.'); return; }
+    if (data.format !== 'board-a-licious-backup') { toast('This file is not a Board-a-licious backup. Nothing was changed.'); return; }
+    const conflicts = data.entries.filter(x => store.collection[x.bggId] && store.collection[x.bggId] !== x.state).length;
+    const useBackup = conflicts ? confirm(`${conflicts} game(s) have a different state in the backup.\nOK = use the backup, Cancel = keep current.`) : true;
+    let added = 0;
+    data.entries.forEach(x => {
+      if (!GAMES[x.bggId]) GAMES[x.bggId] = { name: x.name, year: x.year };
+      if (!store.collection[x.bggId]) added++;
+      if (!store.collection[x.bggId] || useBackup) store.collection[x.bggId] = x.state;
+    });
+    persist(); render(); toast(`Imported: ${added} new game(s)`);
+  });
+  e.target.value = '';
+});
+
+$('#scrim').addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+$('#sync').addEventListener('click', () => {
+  offline = !offline;
+  $('#sync').classList.toggle('offline', offline);
+  $('#sync span').textContent = offline ? 'Offline, saved on phone' : 'Synced';
+  toast(offline ? 'Offline: changes are kept and synced later' : 'Back online: changes synced');
+});
+
+render();
+</script>
+</body>
+</html>

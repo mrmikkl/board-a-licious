@@ -1,5 +1,9 @@
 # Share text and backup file formats
 
+> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
+> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
+> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
+
 ## Share text (FR-016)
 
 Plain text, built by `src/domain/share.ts`, passed to `navigator.share({ text })` or copied to the

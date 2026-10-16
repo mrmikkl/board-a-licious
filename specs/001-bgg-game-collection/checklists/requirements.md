@@ -37,5 +37,9 @@
 - Added 2026-10-16: User Story 1 add-by-link (stories renumbered), FR-018, FR-019, SC-010;
   FR-012 changed to per-account server storage with offline copy (plan R1).
 - Added 2026-10-16: Release 0.5 / 1.0 split; geeklist story is now US2 (P2) with search in loaded geeklists (FR-020), full search is US3 (1.0); FR-019 reworded, FR-021 added, SC-010 reworded.
+- Rewritten 2026-10-17 after the design session (Spec Kit extension 2): six user stories
+  (collections and marks; geeklists; swipe; at the fair with bought/price/filter/facts; share and
+  backup; search in 1.0), FR-001 to FR-027, SC-001 to SC-012. Search inside loaded geeklists was
+  dropped in favour of the geeklist name filter; the Search tab is BoardGameGeek search (1.0).
 - All items pass.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`

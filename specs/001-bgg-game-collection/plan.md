@@ -1,5 +1,9 @@
 # Implementation Plan: BGG Game Collection
 
+> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
+> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
+> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
+
 **Branch**: `001-bgg-game-collection` | **Date**: 2026-10-16 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/001-bgg-game-collection/spec.md`

@@ -1,5 +1,9 @@
 # HTTP API contract (`/api/*`, served by the Worker)
 
+> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
+> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
+> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
+
 All routes sit behind Cloudflare Access. The Worker rejects any request without a valid
 `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. All bodies are JSON
 (`application/json; charset=utf-8`). Errors use:

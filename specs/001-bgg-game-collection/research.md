@@ -1,5 +1,9 @@
 # Research: BGG Game Collection
 
+> **Status**: Outdated. Written before the design session of 2026-10-17, which reshaped the spec
+> (several collections, Essen type, facts, swiping, marks incl. Unsure / Not interested, bought with
+> price, filter). Re-run `/speckit-plan`; accepted ADRs in `docs/adr/` stay valid.
+
 Decisions taken during `/speckit-plan` (2026-10-16). Project-wide decisions are recorded as ADRs in `docs/adr/`:
 R1/R2 → [0004](../../docs/adr/0004-storage-neon-local-first.md), R3 → [0003](../../docs/adr/0003-access-control-cloudflare-access.md),
 R4/R4a → [0005](../../docs/adr/0005-bgg-adapter-and-bridge.md), R5 → [0002](../../docs/adr/0002-single-cloudflare-worker.md), R6/R8 → [0006](../../docs/adr/0006-typescript-react-shared-domain.md). Items marked **verify** rest on secondary
