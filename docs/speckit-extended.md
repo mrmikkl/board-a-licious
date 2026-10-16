@@ -18,23 +18,28 @@ flowchart TD
     D["<b>Ext 2: Design</b><br/>prototype → review → design rules"]
     P["/speckit-plan"]
     ADR["<b>Ext 1: ADRs</b><br/>read accepted ADRs,<br/>write new ones"]
+    CH["/speckit-checklist<br/><i>optional</i>"]
     T["/speckit-tasks"]
     A["/speckit-analyze<br/><i>optional</i>"]
     I["/speckit-implement"]
+    CO["/speckit-converge<br/><i>optional</i>"]
 
     C --> S --> CL --> D
     S --> D
     D --> P
     ADR <--> P
-    P --> T --> A --> I
+    P --> CH --> T
+    P --> T
+    T --> A --> I
     T --> I
+    I --> CO --> I
     I -->|next feature| S
 
     classDef ext fill:#fff3cd,stroke:#d4a017,color:#000;
     class D,ADR ext;
 ```
 
-Everything else from the basic flow (checklist, converge, the three levels, task phases) stays as
+All other steps of the basic flow appear unchanged; the three levels and the task phases stay as
 described in [speckit.md](speckit.md).
 
 ## Extension 1: Architecture Decision Records
