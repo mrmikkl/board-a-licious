@@ -1,0 +1,13 @@
+{
+  "kind": "preview",
+  "id": 93,
+  "title": "SPIEL Essen 2026",
+  "isEssen": true,
+  "page": 1,
+  "pageCount": 3,
+  "entries": [
+    { "position": 1, "bggId": 446453, "name": "Kalypso", "thumbnailUrl": null, "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR", "publisherId": 34183, "publisher": null } },
+    { "position": 2, "bggId": 467581, "name": "Tricky Traps", "thumbnailUrl": null, "facts": { "booth": "3-R400", "priceCents": 2000, "currency": "EUR", "publisherId": 34183, "publisher": null } },
+    { "position": 3, "bggId": 405769, "name": "The Mix", "thumbnailUrl": null, "facts": { "booth": "4-E400", "priceCents": null, "currency": null, "publisherId": 54509, "publisher": null } }
+  ]
+}
