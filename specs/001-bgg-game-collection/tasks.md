@@ -112,16 +112,16 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [X] T041 [P] [US2] Unit tests in `tests/unit/membership.test.ts`: before/after sets → adds and removals; removal = tombstone incl. mark, bought and price
 - [X] T042 [P] [US2] Worker tests in `tests/worker/bgg-lists.test.ts` with fixtures `tests/fixtures/bgg/preview-93-page-1.json`, `preview-93-page-138.json`, `geeklist-page-1.json`, `company-34183.json`: preview entries carry booth (`location`), price (`showprice`, else `msrp`, with currency) and `publisherId`; page 1 responds without company lookups (`publisher` null when not cached); `GET /api/bgg/companies?ids=` (1–10 IDs) returns names; geeklist entries have no facts and skip non-games; `pageCount`; 404 for unknown lists
 - [X] T042a [P] [US2] Unit tests in `tests/unit/list-loader.test.ts` (fake clock, fake API): page 1 at once, the rest sequentially at ≤ 1 request/s; progress stored; resumes after a reload; pauses when the list is closed or the app is in the background; stops with a retryable error when a page fails; missing publishers resolved afterwards; preview facts in collections updated on reload, manual facts untouched
-- [ ] T043 [US2] End-to-end test in `tests/e2e/us2-lists.spec.ts`: load preview link, Essen badge, first page fast, progress, name filter, membership ticks applied on Done, Cancel discards
+- [X] T043 [US2] End-to-end test in `tests/e2e/us2-lists.spec.ts`: load preview link, Essen badge, first page fast, progress, name filter, membership ticks applied on Done, Cancel discards
 
 ### Implementation for User Story 2
 
 - [X] T044 [P] [US2] Implement `src/domain/lists.ts`, `src/domain/facts.ts` and `src/domain/membership.ts`
 - [X] T045 [US2] Implement `GeekdoSource.getListPage` in `worker/bgg/geekdo.ts` (preview items returned without waiting for publisher names, `publisher` from the company cache or null; geeklist items), `GET /api/bgg/lists/:kind/:id?page=` in `worker/routes/lists.ts` and `GET /api/bgg/companies?ids=` in `worker/routes/companies.ts` per contracts/api.md
 - [X] T046 [US2] Implement the background list loader in `src/client/lists.ts` (page 1 at once, remaining pages sequentially at ≤ 1 request/s, progress stored in `lists`, resumable after reload; loads only while the list is open or the app is in the foreground — constitution V "on user demand"; then resolves missing publishers via `/api/bgg/companies` and updates the stored entries; on a reload after 1 h, updates booth and price of collection entries with `factsSource: 'preview'`, never `manual`; a failed page pauses with "BoardGameGeek is not reachable. Retry")
-- [ ] T047 [US2] Build the BGG list form in `src/app/screens/Add.tsx` (link field, hint "Preview: an Essen list …" / "Geeklist: …", "Load list" disabled until a valid link)
-- [ ] T048 [US2] Build `src/app/screens/Lists.tsx` (cards with Essen badge and progress, "Load a BGG list" card) and `src/app/screens/List.tsx` (name filter, rows with facts and "in a collection", + per row)
-- [ ] T049 [US2] Build `src/app/components/MembershipSheet.tsx` (cover, description, facts, one hexagon tick per collection showing current membership and the effect of a change; Done / Cancel)
+- [X] T047 [US2] Build the BGG list form in `src/app/screens/Add.tsx` (link field, hint "Preview: an Essen list …" / "Geeklist: …", "Load list" disabled until a valid link)
+- [X] T048 [US2] Build `src/app/screens/Lists.tsx` (cards with Essen badge and progress, "Load a BGG list" card) and `src/app/screens/List.tsx` (name filter, rows with facts and "in a collection", + per row)
+- [X] T049 [US2] Build `src/app/components/MembershipSheet.tsx` (cover, description, facts, one hexagon tick per collection showing current membership and the effect of a change; Done / Cancel)
 
 **Checkpoint**: US1 + US2 work independently.
 
