@@ -153,17 +153,17 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ### Tests for User Story 4
 
-- [ ] T054 [P] [US4] Unit tests in `tests/unit/filter.test.ts`: groups × bought (`all` / `no` / `yes`), presets `all` and `hunt` = `{ groups: {must_have}, bought: 'no' }`, label text for the filter button; price parsing (`52`, `12,50`, `12.50` → cents) and display ("€52", "€12.50")
-- [ ] T055 [P] [US4] Unit tests in `tests/unit/bought.test.ts`: suggested price from `facts.priceCents`, skip price, currency from `facts.currency`, else `EUR`; undo clears `paidCents` and `paidCurrency`; spent = sum of `paidCents` of bought entries per currency ("€152 + $40") (FR-008)
-- [ ] T056 [US4] End-to-end test in `tests/e2e/us4-fair.spec.ts`: filter panel, preset, "Bought it" with price, badge "✅ €52", "€52 spent", game stays in its group, manual facts "Added by you"
+- [X] T054 [P] [US4] Unit tests in `tests/unit/filter.test.ts`: groups × bought (`all` / `no` / `yes`), presets `all` and `hunt` = `{ groups: {must_have}, bought: 'no' }`, label text for the filter button; price parsing (`52`, `12,50`, `12.50` → cents) and display ("€52", "€12.50")
+- [X] T055 [P] [US4] Unit tests in `tests/unit/bought.test.ts`: suggested price from `facts.priceCents`, skip price, currency from `facts.currency`, else `EUR`; undo clears `paidCents` and `paidCurrency`; spent = sum of `paidCents` of bought entries per currency ("€152 + $40") (FR-008)
+- [X] T056 [US4] End-to-end test in `tests/e2e/us4-fair.spec.ts`: filter panel, preset, "Bought it" with price, badge "✅ €52", "€52 spent", game stays in its group, manual facts "Added by you"
 
 ### Implementation for User Story 4
 
-- [ ] T057 [P] [US4] Implement `src/domain/filter.ts` and the bought rules in `src/domain/collection.ts`
-- [ ] T058 [US4] Build `src/app/components/FilterPanel.tsx` (button with selection and count; presets; Bought segment; group checkboxes with counts; closes on Done or outside tap; selection stored per collection in `meta.activeFilter`)
-- [ ] T059 [US4] Extend `GameSheet.tsx`: "✅ Bought it" → "What did you pay?" (prefilled, comma or point, 0–9,999, Enter saves, "Don't track the price"), "Not bought after all"; bought ✓ on the cover and price badge in `GameRow.tsx`; bought line under the filter in `Collection.tsx` with the money spent per currency
-- [ ] T060 [US4] Add manual facts to `GameSheet.tsx`: "➕ Add booth, price and publisher" / "✎ Edit", form with Booth, Price with a currency choice (default EUR), Publisher, Save enabled once one field is filled (FR-011)
-- [ ] T061 [US4] Show the game description in `GameSheet.tsx` and `MembershipSheet.tsx`, with "The description is filled in from BoardGameGeek later." when missing (FR-018)
+- [X] T057 [P] [US4] Implement `src/domain/filter.ts` and the bought rules in `src/domain/collection.ts`
+- [X] T058 [US4] Build `src/app/components/FilterPanel.tsx` (button with selection and count; presets; Bought segment; group checkboxes with counts; closes on Done or outside tap; selection stored per collection in `meta.activeFilter`)
+- [X] T059 [US4] Extend `GameSheet.tsx`: "✅ Bought it" → "What did you pay?" (prefilled, comma or point, 0–9,999, Enter saves, "Don't track the price"), "Not bought after all"; bought ✓ on the cover and price badge in `GameRow.tsx`; bought line under the filter in `Collection.tsx` with the money spent per currency
+- [X] T060 [US4] Add manual facts to `GameSheet.tsx`: "➕ Add booth, price and publisher" / "✎ Edit", form with Booth, Price with a currency choice (default EUR), Publisher, Save enabled once one field is filled (FR-011)
+- [X] T061 [US4] Show the game description in `GameSheet.tsx` and `MembershipSheet.tsx`, with "The description is filled in from BoardGameGeek later." when missing (FR-018)
 
 **Checkpoint**: US1–US4 work independently.
 
