@@ -19,11 +19,14 @@ function fakeServer(handler: Handler) {
   return { calls, fetch }
 }
 
-let store: Store
+let store: Store | undefined
 afterEach(async () => {
+  if (!store) return
   store.close()
   await deleteStore(store.email)
+  store = undefined
 })
+const track = (s: Store) => void (store = s)
 
 describe('api', () => {
   it('maps error bodies to ApiError and network failures to offline', async () => {
@@ -38,7 +41,8 @@ describe('api', () => {
 
 describe('sync', () => {
   it('pushes the outbox, acknowledges it, then pulls since the last sync', async () => {
-    store = await openStore('anna@example.com')
+    const store = await openStore('anna@example.com')
+    track(store)
     await store.saveEntry({ ...newEntry('c1', 1, T1), mark: 'must_have' })
     const server = fakeServer((url, init) =>
       init?.method === 'POST'
@@ -59,7 +63,8 @@ describe('sync', () => {
   })
 
   it('merges pulled rows last-write-wins', async () => {
-    store = await openStore('anna@example.com')
+    const store = await openStore('anna@example.com')
+    track(store)
     await store.applyRemote({ collections: [], entries: [{ ...newEntry('c1', 1, T2), mark: 'must_have' }] })
     const server = fakeServer(() =>
       Response.json({ collections: [], entries: [{ ...newEntry('c1', 1, T1), mark: 'poop' }], serverTime: T2 }),
@@ -69,7 +74,8 @@ describe('sync', () => {
   })
 
   it('keeps the outbox after a network error and retries when back online', async () => {
-    store = await openStore('anna@example.com')
+    const store = await openStore('anna@example.com')
+    track(store)
     await store.saveEntry(newEntry('c1', 1, T1))
     let online = false
     const server = fakeServer((_, init) => {
@@ -93,7 +99,8 @@ describe('sync', () => {
   })
 
   it('pushes in chunks of at most 500 items', async () => {
-    store = await openStore('anna@example.com')
+    const store = await openStore('anna@example.com')
+    track(store)
     for (let i = 1; i <= 501; i++) await store.saveEntry(newEntry('c1', i, T1))
     const server = fakeServer((_, init) =>
       init?.method === 'POST'
