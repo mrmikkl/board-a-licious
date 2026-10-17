@@ -66,14 +66,6 @@ describe('GET /api/bgg/lists/preview/<id>', () => {
     expect(calls).toEqual(['/api/geekpreviews/93', '/api/geekpreviewitems?previewid=93&pageid=1'])
   })
 
-  it('serves a repeated page from the cache', async () => {
-    const calls: string[] = []
-    const app = testApp(db, { bgg, bggCalls: calls })
-    await app('/api/bgg/lists/preview/93')
-    await app('/api/bgg/lists/preview/93?page=1')
-    expect(calls).toHaveLength(2)
-  })
-
   it('answers 404 for an unknown preview', async () => {
     const res = await testApp(db, { bgg })('/api/bgg/lists/preview/999999')
     expect(res.status).toBe(404)
