@@ -53,6 +53,18 @@ sync between devices and as a backup. Losing the server would lose nothing a pho
 | **Cache API** | caches BGG answers at the edge (lists 1 h, games 7 days, publishers 30 days) | in code, `worker/bgg/cache.ts` |
 | **Zero Trust / Access** | login wall in front of the whole address; only listed emails get a one-time PIN | Zero Trust dashboard; team domain and AUD tag in `wrangler.jsonc` vars |
 
+- **The Worker in the dashboard** (Workers & Pages → `board-a-licious` → Overview) is drawn as a
+  flow from left to right:
+  - **Domains**: the addresses that lead to the Worker. Here only the `workers.dev` address;
+    *custom domains* (an own domain like `app.example.com`) and *routes* (paths on a domain you
+    own) are unused.
+  - **The Worker** in the middle, with **Observability**: *Workers Logs* (stored `console`
+    output and errors) and *Workers Traces* (timing of each request). Both are off; they help
+    when something breaks in production and can be switched on in `wrangler.jsonc`.
+  - **Bindings**: what the Worker may use besides the internet. Here one: `HYPERDRIVE`, the
+    connection to the Neon database (`board-a-licious-db`).
+  - The tabs above (**Access**, **Settings**, …) hold the rest, e.g. the login wall for the
+    `workers.dev` address.
 - **What "Zero Trust" means**: Cloudflare's name for its products that decide who may reach what,
   trusting no one by default: every request must prove who sent it (unlike a classic company
   network, where being inside is enough). Of it the app uses only **Access**, a login wall in front
