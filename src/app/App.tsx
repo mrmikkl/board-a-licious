@@ -1,4 +1,5 @@
 import { AppProvider, useServices } from './context.tsx'
+import { Celebrate } from './components/Celebrate.tsx'
 import { Header } from './components/Header.tsx'
 import { TabBar } from './components/TabBar.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
@@ -89,6 +90,7 @@ export function App() {
   return (
     <ToastProvider>
       <TapPulse />
+      <Celebrate />
       <AppProvider
         fallback={boot =>
           boot.state === 'loading' ? (

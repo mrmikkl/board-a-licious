@@ -1,8 +1,9 @@
 import { type FormEvent, useCallback, useId, useState } from 'react'
 
-import { type Collection as CollectionRow, NAME_MAX, boughtLine, groupByMark } from '../../domain/collection.ts'
+import { type Collection as CollectionRow, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
 import { type Filter, applyFilter, fromStored, groupCounts, presetOf } from '../../domain/filter.ts'
 import { deleteCollection, renameCollection, saveFilter } from '../actions.ts'
+import { Counter } from '../components/Counter.tsx'
 import { EssenBadge } from '../components/EssenBadge.tsx'
 import { FilterPanel } from '../components/FilterPanel.tsx'
 import { GameRow } from '../components/GameRow.tsx'
@@ -68,6 +69,7 @@ export function Collection({ id }: { id: string }) {
   const shown = applyFilter(entries, filter)
   const groups = groupByMark(shown, e => games.get(e.bggId)?.name ?? '')
   const bought = boughtLine(entries)
+  const boughtCount = countMarks(entries).bought
   const current = entries.find(e => e.bggId === openGame)
   const actions = (
     <>
@@ -106,7 +108,12 @@ export function Collection({ id }: { id: string }) {
           <>
             <div className="row-actions">{actions}</div>
             <FilterPanel filter={filter} shown={shown.length} counts={groupCounts(entries, filter.bought)} onChange={changeFilter} />
-            {bought && <p className="bought-line">{bought}</p>}
+            {bought && (
+              <p className="bought-line">
+                ✅ <Counter value={boughtCount} />
+                {bought.slice(`✅ ${boughtCount}`.length)}
+              </p>
+            )}
             <hr className="separator" />
             {shown.length === 0 && <FilterEmpty filter={filter} name={collection.name} hasMustHave={entries.some(e => e.mark === 'must_have')} />}
             {groups.map(group => {
