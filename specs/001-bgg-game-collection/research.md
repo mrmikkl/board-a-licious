@@ -176,6 +176,11 @@ sources or on knowledge that could not be checked against the vendor's own page.
 - **Alternatives considered**: free-text parsing of geeklist posts (unreliable); asking users to type
   facts (kept only as the manual fallback, FR-011).
 
+- **Spike result (T006, 2026-10-17)**: a Worker deployed on `workers.dev` fetched
+  `geekpreviewitems?previewid=93&pageid=1` (200, ~240 ms, 10 items with `location` and `showprice`)
+  and `geekitems?objectid=295947&objecttype=thing` (200, ~130 ms) with an honest User-Agent and no
+  token. BGG lists stay in scope for Release 0.5; no fallback needed. The spike route was removed.
+
 ## R10. Game details and covers (new)
 
 - **Decision**: a shared `game` cache (server + IndexedDB) holds name, year, cover thumbnail URL and
