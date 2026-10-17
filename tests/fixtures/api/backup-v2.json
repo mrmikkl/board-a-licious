@@ -1,0 +1,51 @@
+{
+  "format": "board-a-licious-backup",
+  "version": 2,
+  "exportedAt": "2026-10-17T09:30:00.000Z",
+  "collections": [
+    {
+      "id": "COLLECTION_ID",
+      "name": "COLLECTION_NAME",
+      "type": "essen",
+      "updatedAt": "2026-10-17T09:00:00.000Z",
+      "entries": [
+        {
+          "bggId": 295947,
+          "name": "Cascadia",
+          "year": 2021,
+          "mark": "must_have",
+          "bought": true,
+          "paidCents": 5200,
+          "paidCurrency": "EUR",
+          "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR", "publisher": "Flatout Games" },
+          "factsSource": "preview",
+          "updatedAt": "2026-10-17T09:00:00.000Z"
+        },
+        {
+          "bggId": 414317,
+          "name": "Harmonies",
+          "year": 2024,
+          "mark": "interested",
+          "bought": false,
+          "paidCents": null,
+          "paidCurrency": null,
+          "facts": null,
+          "factsSource": null,
+          "updatedAt": "2026-10-17T09:00:00.000Z"
+        },
+        {
+          "bggId": 446453,
+          "name": "Fjord Fishers",
+          "year": 2026,
+          "mark": "unsure",
+          "bought": false,
+          "paidCents": null,
+          "paidCurrency": null,
+          "facts": null,
+          "factsSource": null,
+          "updatedAt": "2026-10-17T09:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

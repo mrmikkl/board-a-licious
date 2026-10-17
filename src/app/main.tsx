@@ -11,6 +11,7 @@ import './theme/fair.css'
 import './theme/swipe.css'
 import './theme/lists.css'
 import './theme/interaction.css'
+import './theme/share.css'
 
 const root = document.getElementById('root')
 if (root) {

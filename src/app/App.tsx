@@ -11,6 +11,7 @@ import { Collections } from './screens/Collections.tsx'
 import { List } from './screens/List.tsx'
 import { Lists } from './screens/Lists.tsx'
 import { Search } from './screens/Search.tsx'
+import { Share } from './screens/Share.tsx'
 import { Swipe } from './screens/Swipe.tsx'
 
 function Screen({ route }: { route: Route }) {
@@ -31,6 +32,8 @@ function Screen({ route }: { route: Route }) {
       return <Add what={route.what} />
     case 'search':
       return <Search />
+    case 'share':
+      return <Share />
     default:
       return <Placeholder route={route} />
   }
