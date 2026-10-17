@@ -1,0 +1,12 @@
+{
+  "kind": "preview",
+  "id": 9093,
+  "title": "SPIEL Essen 2026 Preview",
+  "isEssen": true,
+  "page": 2,
+  "pageCount": 2,
+  "entries": [
+    { "position": 4, "bggId": 359871, "name": "Arcs", "thumbnailUrl": null, "facts": { "booth": "5-D20", "priceCents": 9000, "currency": "EUR", "publisherId": 6, "publisher": "Leder Games" } },
+    { "position": 5, "bggId": 385761, "name": "Faraway", "thumbnailUrl": null, "facts": { "booth": "1-B12", "priceCents": 2500, "currency": "EUR", "publisherId": 7, "publisher": "Catch Up Games" } }
+  ]
+}
