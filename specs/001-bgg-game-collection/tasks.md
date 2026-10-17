@@ -134,13 +134,13 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ### Tests for User Story 3
 
-- [ ] T050 [P] [US3] Unit tests in `tests/unit/swipe.test.ts`: queue in list order starting at the first undecided game, without games already in the collection (incl. `skip`); right → `mark = new`; left → `mark = skip`; works while pages are still loading
-- [ ] T051 [US3] End-to-end test in `tests/e2e/us3-swipe.spec.ts`: drag, ✓/✕ buttons, arrow keys, "all decided" message; screen reader announces the card and the decision
+- [X] T050 [P] [US3] Unit tests in `tests/unit/swipe.test.ts`: queue in list order starting at the first undecided game, without games already in the collection (incl. `skip`); right → `mark = new`; left → `mark = skip`; works while pages are still loading
+- [X] T051 [US3] End-to-end test in `tests/e2e/us3-swipe.spec.ts`: drag, ✓/✕ buttons, arrow keys, "all decided" message; screen reader announces the card and the decision
 
 ### Implementation for User Story 3
 
-- [ ] T052 [P] [US3] Implement `src/domain/swipe.ts`
-- [ ] T053 [US3] Build the list picker sheet and `src/app/screens/Swipe.tsx` with `src/app/components/SwipeCard.tsx`: cover, name, year, description (3 lines), facts or "No booth or price on this list", source note with the facts rule, "Loading more games…" card while pages load, drag with tilt and growing ADD/NOPE stamps, spring back, fling, next card pops in, `aria-live` announcement
+- [X] T052 [P] [US3] Implement `src/domain/swipe.ts`
+- [X] T053 [US3] Build the list picker sheet and `src/app/screens/Swipe.tsx` with `src/app/components/SwipeCard.tsx`: cover, name, year, description (3 lines), facts or "No booth or price on this list", source note with the facts rule, "Loading more games…" card while pages load, drag with tilt and growing ADD/NOPE stamps, spring back, fling, next card pops in, `aria-live` announcement
 
 **Checkpoint**: US1–US3 work independently.
 
