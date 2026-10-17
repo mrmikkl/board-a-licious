@@ -27,6 +27,8 @@ export type StoredListEntry = {
 export type StoredList = {
   /** Every item as BGG lists it (one per edition or publisher); `entries` merges them per game. */
   items?: StoredListEntry[]
+  /** The list was sent to the person's other devices (or came from one). */
+  shared?: boolean
   kind: ListKind
   id: number
   title: string

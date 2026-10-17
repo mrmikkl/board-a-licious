@@ -118,7 +118,7 @@ export async function openStore(rawEmail: string) {
       const lists = tx.objectStore('lists')
       for (const ref of changes.lists ?? []) {
         if (ref.deleted || (await lists.get([ref.kind, ref.id]))) continue
-        void lists.put({ kind: ref.kind, id: ref.id, title: ref.title, isEssen: ref.isEssen, pageCount: 0, loadedPages: 0, entries: [], openedAt: ref.updatedAt })
+        void lists.put({ kind: ref.kind, id: ref.id, title: ref.title, isEssen: ref.isEssen, pageCount: 0, loadedPages: 0, entries: [], openedAt: ref.updatedAt, shared: true })
       }
       await tx.done
       changed()

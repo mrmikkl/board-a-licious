@@ -70,6 +70,13 @@ export function createListLoader(deps: {
     return run
   }
 
+  /** Queues the list for the person's other devices once, and asks for a sync right away. */
+  async function share(list: StoredList): Promise<StoredList> {
+    await store.saveListRef({ kind: list.kind, id: list.id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
+    deps.onQueued?.()
+    return update(list.kind, list.id, old => ({ ...(old ?? list), shared: true }))
+  }
+
   /** Publisher names: those BGG sent are remembered, missing ones filled from the device. */
   async function withPublishers(entries: StoredListEntry[]) {
     const named: Record<number, string> = {}
@@ -114,6 +121,7 @@ export function createListLoader(deps: {
       entries,
       openedAt: old?.openedAt ?? iso(),
       loadedAt: old?.loadedAt,
+      shared: old?.shared,
       }
     })
     await refreshCollections(list, entries.filter(e => fresh.some(f => f.bggId === e.bggId)))
@@ -202,16 +210,10 @@ export function createListLoader(deps: {
           const known = Boolean(list)
           const page = await throttled(null, () => api.listPage(kind, id, 1))
           list = await storePage(kind, id, page as ListPage)
-          if (!known) {
-            await store.saveListRef({ kind, id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
-            deps.onQueued?.()
-          }
+          if (!known) list = await share(list)
         } else {
-          // lists loaded before lists were synced (no `items`) are queued once for the other devices
-          if (list.items === undefined) {
-            await store.saveListRef({ kind, id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
-            deps.onQueued?.()
-          }
+          // lists loaded before lists were synced are sent once to the other devices
+          if (!list.shared) list = await share(list)
           list = await update(kind, id, old => {
             const current = old ?? list!
             // lists stored before editions were merged (no `items`) reload once, to drop their duplicates

@@ -143,14 +143,14 @@
 }
 
 /* Hexagon picker: honeycomb, every second hexagon offset down */
-/* equal columns: every hexagon the same size whatever its label and the phone's text scaling */
+/* one straight, centred row of equal hexagons, whatever their labels and the phone's text scaling */
 .picker {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 80px));
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 84px));
   justify-content: center;
-  gap: 4px;
-  padding-bottom: 40px;
-  margin: 8px 0 12px;
+  align-items: start;
+  gap: 8px;
+  margin: 12px 0 16px;
 }
 .picker-btn {
   min-width: 0;
@@ -158,9 +158,6 @@
   border: 0;
   background: none;
   border-radius: 12px;
-}
-.picker-btn:nth-child(even) {
-  transform: translateY(40px);
 }
 .picker-hex {
   display: block;

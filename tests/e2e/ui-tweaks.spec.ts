@@ -46,7 +46,21 @@ test('Config: sound is switched here and nowhere else, and stays switched', asyn
   const sw = page.getByRole('switch', { name: /sound and vibration/i })
   await expect(sw).toBeChecked()
   await sw.uncheck()
-  await page.waitForTimeout(300) // the choice is written to the device's database
+  // wait until the choice is in the device's database before reloading
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise(resolve => {
+            const open = indexedDB.open('board-a-licious-you@example.com')
+            open.onsuccess = () => {
+              const get = open.result.transaction('meta').objectStore('meta').get('soundOn')
+              get.onsuccess = () => resolve(get.result)
+            }
+          }),
+      ),
+    )
+    .toBe(false)
   await page.reload()
   await expect(page.getByRole('switch', { name: /sound and vibration/i })).not.toBeChecked()
   await page.getByRole('switch', { name: /sound and vibration/i }).check()

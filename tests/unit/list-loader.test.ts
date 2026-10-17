@@ -160,6 +160,19 @@ describe('list loader', () => {
     expect(asked).toBe(1)
   })
 
+  it('queues a list once that was fully loaded but never shared, and not again', async () => {
+    const opened = new Date(START).toISOString()
+    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, pageCount: 3, loadedPages: 3, items: [], entries: [], openedAt: opened, loadedAt: opened })
+    let asked = 0
+    const loader = createListLoader({ store, api: fakeApi(clock).api, now: clock.now, sleep: clock.sleep, foreground: () => true, events, onQueued: () => asked++ })
+    await loader.open('preview', 93)
+    loader.close('preview', 93)
+    await loader.open('preview', 93)
+    await loader.idle()
+    expect((await store.pending()).filter(p => p.kind === 'list')).toHaveLength(1)
+    expect(asked).toBe(1)
+  })
+
   it('resumes after a reload where it stopped', async () => {
     const first = fakeApi(clock)
     const before = loaderFor(first.api)
