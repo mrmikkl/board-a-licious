@@ -91,6 +91,26 @@ export async function openStore(rawEmail: string) {
       await db.add('outbox', { kind: 'list', row })
     },
 
+    /**
+     * Read-modify-write of entries in ONE transaction: `change` returns the new entry or null to
+     * leave it. Background work (details, list facts) uses this, so a mark saved at the same moment
+     * is never overwritten by an older copy. Returns the changed entries.
+     */
+    async updateEntries(change: (entry: Entry) => Entry | null): Promise<Entry[]> {
+      const tx = db.transaction(['entries', 'outbox'], 'readwrite')
+      const changed: Entry[] = []
+      for (let cursor = await tx.objectStore('entries').openCursor(); cursor; cursor = await cursor.continue()) {
+        const next = change(cursor.value)
+        if (!next) continue
+        void cursor.update(next)
+        void tx.objectStore('outbox').add({ kind: 'entry', row: next })
+        changed.push(next)
+      }
+      await tx.done
+      if (changed.length > 0) listeners.forEach(listener => listener())
+      return changed
+    },
+
     async pending(): Promise<PendingChange[]> {
       const tx = db.transaction('outbox')
       const out: PendingChange[] = []

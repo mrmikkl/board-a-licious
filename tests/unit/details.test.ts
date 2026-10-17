@@ -57,4 +57,24 @@ describe('completing link-added games (FR-017)', () => {
     expect(asked.map(ids => ids.length)).toEqual([50, 10])
     expect(asked.flat()).not.toContain(61)
   })
+
+  it('never loses a mark made while it completes the details (no lost update)', async () => {
+    store = await openStore('anna@example.com')
+    for (let round = 0; round < 25; round++) {
+      const id = 1000 + round
+      await store.saveEntry({ ...newEntry('c1', id, T1), detailsPending: true })
+      const api = { games: async (ids: number[]) => ids.map(bggId => ({ ...cascadia, bggId })) }
+      // the person marks the game while BGG's answer is being stored
+      await Promise.all([
+        completeDetails({ store, api, now: () => T2 }),
+        (async () => {
+          for (let i = 0; i < round % 5; i++) await Promise.resolve()
+          const [current] = (await store.entries('c1')).filter(e => e.bggId === id)
+          await store.saveEntry({ ...current!, mark: 'must_have', updatedAt: '2026-10-17T11:00:00.000Z' })
+        })(),
+      ])
+      const [after] = (await store.entries('c1')).filter(e => e.bggId === id)
+      expect(after?.mark, `round ${round}`).toBe('must_have')
+    }
+  })
 })

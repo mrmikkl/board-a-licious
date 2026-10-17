@@ -99,8 +99,9 @@ export function createListLoader(deps: {
   async function refreshCollections(list: StoredList, entries: StoredListEntry[]) {
     if (!list.isEssen) return
     const fresh = new Map(entries.filter(e => e.facts).map(e => [e.bggId, e.facts!]))
-    const changed = refreshPreviewFacts(await store.allEntries(), fresh, iso())
-    if (changed.length > 0) await store.saveEntries(changed)
+    // one transaction: a mark made while the list loads is never overwritten by an older copy
+    const at = iso()
+    await store.updateEntries(entry => refreshPreviewFacts([entry], fresh, at)[0] ?? null)
   }
 
   async function storePage(kind: ListKind, id: number, page: ListPage) {

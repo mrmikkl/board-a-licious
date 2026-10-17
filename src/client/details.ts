@@ -27,11 +27,10 @@ export async function completeDetails(deps: { store: Store; api: { games(ids: nu
     if (games.length === 0) continue
     await store.putGames(games)
     const found = new Set(games.map(g => g.bggId))
-    // re-read: the person may have changed a mark while BGG answered
-    const done = (await store.allEntries())
-      .filter(e => e.detailsPending && !e.deleted && found.has(e.bggId))
-      .map(e => ({ ...e, detailsPending: false, updatedAt: now() }))
-    if (done.length > 0) await store.saveEntries(done)
+    // read and write in one transaction: a mark made meanwhile is kept
+    const done = await store.updateEntries(e =>
+      e.detailsPending && !e.deleted && found.has(e.bggId) ? { ...e, detailsPending: false, updatedAt: now() } : null,
+    )
     completed += done.length
   }
   return completed
