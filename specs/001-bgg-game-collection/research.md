@@ -157,6 +157,13 @@ sources or on knowledge that could not be checked against the vendor's own page.
     `showprice_currency` (fair price, e.g. 60 EUR), `msrp`, `availability_status` ("forsale" …),
     `links[]` with `objecttype: company` (publisher ID), a thumbnail.
   - Publisher names: `GET /api/geekitems?objectid=<id>&objecttype=company` (e.g. "Inside Up Games").
+  - Title and page count (T045, 2026-10-17): `geekpreviews/93` → `title`, `config.numpages` (138),
+    `config.showcount` (10). Previews embed publisher names (`publishers[].item.primaryname.name`,
+    same id as the `links[]` company), so the companies endpoint is only a fallback.
+  - Geeklists (T045, 2026-10-17): `GET /api/geeklists/<id>` → `name`; `GET
+    /api/listitems?listid=<id>&page=<n>` → `data[]` (25 per page; `item.type` `things` with a
+    `/boardgame…` href are games, others are threads, geeklists, RPGs …) and `pagination.total`.
+    Unknown ids answer 404 on both previews and geeklists.
 - **Decision**: "Essen lists" are BGG **previews**. Facts = booth (`location`), price (`showprice`,
   falling back to `msrp`, with currency), publisher (company name, cached). Geeklists stay supported
   for other lists (friends' picks) but carry no facts. A pasted link decides the kind:
