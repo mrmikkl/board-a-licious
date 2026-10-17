@@ -209,7 +209,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [X] T074 [P] Build the intro `src/app/screens/Intro.tsx` (3 swipeable cards, Skip, Next / "Let's go", `meta.introSeen`, "Show the intro again" on the Collections screen) — FR-027; end-to-end check in `tests/e2e/intro.spec.ts`: shown on first start, Skip lands on Collections, not shown after a reload, "Show the intro again" brings it back
 - [X] T075 Offline: precache app shell, fonts and loaded data; end-to-end test `tests/e2e/offline.spec.ts` (airplane mode: mark, buy, reload; online: synced) — SC-004
 - [X] T076 Accessibility and reduced-motion pass over all screens at 360×740 in `tests/e2e/a11y.spec.ts` (axe, no horizontal scroll, focus order, labels) — FR-024, FR-026, SC-006
-- [ ] T077 Production setup: Neon migration, Hyperdrive, Access application (one-time PIN), secrets; setup steps in `README.md`
+- [X] T077 Production setup: Neon migration, Hyperdrive, Access application (one-time PIN), secrets; setup steps in `README.md`
 - [ ] T078 Run the 19 validation scenarios of `quickstart.md` on the deployed app (phone), note results in `specs/001-bgg-game-collection/quickstart.md`
 
 ---
