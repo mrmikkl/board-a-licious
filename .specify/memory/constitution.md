@@ -62,7 +62,9 @@ earns.
   server-side BGG adapter and identify the app honestly; responses are cached and loaded only on
   user demand; no search engine, scraping of HTML pages or login session is used; and the adapter
   can be switched to the official API without changes outside it. Once a token exists, the
-  official API MUST be used and this exception lapses.
+  official API MUST be used for every kind of data it offers and this exception lapses for that
+  data. Data the official API does not offer (BGG previews) MAY continue under this exception
+  until BoardGameGeek provides an official way or until 2027-01-31, whichever comes first.
 
 Rationale: the app depends on a third-party site it does not control and must not abuse it. The
 exception bridges the wait for API approval before SPIEL Essen 2026 with bounded, polite use.
@@ -99,4 +101,4 @@ exception bridges the wait for API approval before SPIEL Essen 2026 with bounded
 - Every plan and review MUST verify compliance; unjustified complexity is grounds to reject a
   change.
 
-**Version**: 1.2.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-17
+**Version**: 1.3.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-17
