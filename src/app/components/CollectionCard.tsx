@@ -5,8 +5,6 @@ import { href } from '../router.ts'
 import { Counter } from './Counter.tsx'
 import { EssenBadge } from './EssenBadge.tsx'
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
 /** A collection with its type and the number of games per mark and bought (FR-002). */
 export function CollectionCard({ collection, entries }: { collection: Collection; entries: Entry[] }) {
   const counts = countMarks(entries)
@@ -21,10 +19,7 @@ export function CollectionCard({ collection, entries }: { collection: Collection
       <h2 className="card-title">
         <span className="card-name">{collection.name}</span> {essen && <EssenBadge />}
       </h2>
-      <p className="card-sub">
-        {plural(counts.total, 'game', 'games')}
-        {counts.byMark.new > 0 && `, ${counts.byMark.new} not yet marked`}
-      </p>
+      <p className="card-sub">{counts.total === 0 ? 'No games yet' : counts.byMark.new > 0 ? `${counts.byMark.new} not marked` : 'All marked'}</p>
       <p className="counts">
         {MARKS.filter(m => m.key !== 'new' && m.key !== 'skip').map(m => (
           <span key={m.key}>

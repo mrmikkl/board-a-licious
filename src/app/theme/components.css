@@ -228,12 +228,14 @@
   color: var(--muted);
   font-size: 14px;
 }
+/* the six counts always in one row; the text shrinks on narrow phones instead of wrapping */
 .counts {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
+  justify-content: space-between;
+  gap: 4px;
   margin: 10px 0 0;
-  font: 700 15px var(--font-display);
+  font: 700 clamp(12px, 3.7vw, 15px) var(--font-display);
+  white-space: nowrap;
 }
 .cluster {
   position: absolute;
