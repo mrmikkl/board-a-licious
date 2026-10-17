@@ -77,8 +77,10 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
 
 ### `POST /api/sync`
 
-- Body: `{ "collections": [Collection…], "entries": [Entry…] }`, together 1–500 items (backup
-  import uses the same route).
+- Body: `{ "collections": [Collection…], "entries": [Entry…], "lists": [LoadedList…] }` (`lists`
+  optional), together 1–500 items (backup import uses the same route). `LoadedList` =
+  `{ "kind": "preview", "id": 93, "title": "SPIEL Essen 2026", "isEssen": true, "updatedAt", "deleted" }`;
+  `GET /api/sync` returns `lists` too.
 - Validation: collection name 1–60 chars, type `essen|standard`; entry mark known, `bggId > 0`,
   `paidCents`/`priceCents` ≥ 0, entry's collection belongs to the user; `updatedAt` at most 5 min in
   the future.

@@ -68,7 +68,7 @@ describe('repository', () => {
 
   it('limits every query to the caller', async () => {
     await applyChanges(db, ANNA, { collections: [collection()], entries: [entry()] })
-    expect(await listChanges(db, BEN)).toEqual({ collections: [], entries: [] })
+    expect(await listChanges(db, BEN)).toEqual({ collections: [], entries: [], lists: [] })
     // Ben cannot overwrite Anna's collection or add entries to it
     const attempt = await applyChanges(db, BEN, { collections: [collection({ name: 'Mine', updatedAt: T2 })], entries: [] })
     expect(attempt).toEqual({ applied: 0, ignored: 1 })
@@ -98,6 +98,19 @@ describe('repository', () => {
     await bad(entrySql, [collection().id, 1, ANNA, -1, 'EUR'])
     await bad(entrySql, [collection().id, 1, ANNA, 100, 'euro'])
     await bad(entrySql, [collection().id, 1, ANNA, null, 'EUR'])
+  })
+
+  it('keeps the BGG lists a person loaded, last write wins, per person', async () => {
+    const spiel = { kind: 'preview' as const, id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: T1, deleted: false }
+    expect(await applyChanges(db, ANNA, { collections: [], entries: [], lists: [spiel] })).toEqual({ applied: 1, ignored: 0 })
+    expect((await listChanges(db, ANNA)).lists).toEqual([spiel])
+    expect((await listChanges(db, BEN)).lists).toEqual([])
+    expect(await applyChanges(db, ANNA, { collections: [], entries: [], lists: [{ ...spiel, title: 'old' }] })).toEqual({ applied: 0, ignored: 1 })
+    await applyChanges(db, ANNA, { collections: [], entries: [], lists: [{ ...spiel, deleted: true, updatedAt: T2 }] })
+    expect((await listChanges(db, ANNA, '2026-10-17T09:30:00.000Z')).lists).toEqual([{ ...spiel, deleted: true, updatedAt: T2 }])
+    // Ben's copy of the same list is his own row
+    await applyChanges(db, BEN, { collections: [], entries: [], lists: [spiel] })
+    expect((await listChanges(db, BEN)).lists).toHaveLength(1)
   })
 
   it('caches games and returns only fresh ones', async () => {

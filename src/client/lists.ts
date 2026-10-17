@@ -195,10 +195,17 @@ export function createListLoader(deps: {
       opened.set(key, (opened.get(key) ?? 0) + 1)
       try {
         let list = await store.list(kind, id)
-        if (!list) {
+        // not loaded yet, or only known from another device (no pages yet): page 1 now
+        if (!list || list.pageCount === 0) {
+          const known = Boolean(list)
           const page = await throttled(null, () => api.listPage(kind, id, 1))
           list = await storePage(kind, id, page as ListPage)
+          if (!known) await store.saveListRef({ kind, id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
         } else {
+          // lists loaded before lists were synced (no `items`) are queued once for the other devices
+          if (list.items === undefined) {
+            await store.saveListRef({ kind, id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
+          }
           list = await update(kind, id, old => {
             const current = old ?? list!
             // lists stored before editions were merged (no `items`) reload once, to drop their duplicates

@@ -1,9 +1,10 @@
 import { type DBSchema, type IDBPDatabase, deleteDB, openDB } from 'idb'
 
 import { type Collection, type Entry, entryKey, merge } from '../domain/collection.ts'
+import type { LoadedList } from '../domain/lists.ts'
 import type { Game, ListKind, StoredList } from './types.ts'
 
-export type Change = { kind: 'collection'; row: Collection } | { kind: 'entry'; row: Entry }
+export type Change = { kind: 'collection'; row: Collection } | { kind: 'entry'; row: Entry } | { kind: 'list'; row: LoadedList }
 export type PendingChange = Change & { key: number }
 
 export type MetaValues = {
@@ -85,6 +86,11 @@ export async function openStore(rawEmail: string) {
       changed()
     },
 
+    /** A list loaded on this device, queued so the person's other devices show it too. */
+    async saveListRef(row: LoadedList) {
+      await db.add('outbox', { kind: 'list', row })
+    },
+
     async pending(): Promise<PendingChange[]> {
       const tx = db.transaction('outbox')
       const out: PendingChange[] = []
@@ -100,13 +106,19 @@ export async function openStore(rawEmail: string) {
     },
 
     /** Rows from the server, merged last-write-wins; not queued again. */
-    async applyRemote(changes: { collections: Collection[]; entries: Entry[] }) {
-      const tx = db.transaction(['collections', 'entries'], 'readwrite')
+    async applyRemote(changes: { collections: Collection[]; entries: Entry[]; lists?: LoadedList[] }) {
+      const tx = db.transaction(['collections', 'entries', 'lists'], 'readwrite')
       const collections = tx.objectStore('collections')
       const entries = tx.objectStore('entries')
       for (const remote of changes.collections) void collections.put(merge(await collections.get(remote.id), remote))
       for (const remote of changes.entries) {
         void entries.put(merge(await entries.get([remote.collectionId, remote.bggId]), remote))
+      }
+      // lists loaded on another device appear here, empty, and load their games when opened
+      const lists = tx.objectStore('lists')
+      for (const ref of changes.lists ?? []) {
+        if (ref.deleted || (await lists.get([ref.kind, ref.id]))) continue
+        void lists.put({ kind: ref.kind, id: ref.id, title: ref.title, isEssen: ref.isEssen, pageCount: 0, loadedPages: 0, entries: [], openedAt: ref.updatedAt })
       }
       await tx.done
       changed()

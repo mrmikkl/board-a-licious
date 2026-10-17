@@ -7,6 +7,7 @@ import { href } from '../router.ts'
 const EXAMPLE = 'boardgamegeek.com/geekpreview/93'
 
 function progress(list: StoredList) {
+  if (list.pageCount === 0) return 'Loaded on another device. Open it to load the games here.'
   if (list.loadedPages >= list.pageCount) return `${list.entries.length} ${list.entries.length === 1 ? 'game' : 'games'}`
   // pages load only while the list is open (constitution V), so the card says how to go on
   return `Loading ${list.loadedPages} of ${list.pageCount} pages. Open the list to load the rest.`

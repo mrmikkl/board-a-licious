@@ -1,4 +1,5 @@
 import type { Collection, Entry } from '../domain/collection.ts'
+import type { LoadedList } from '../domain/lists.ts'
 import type { Game, ListKind, StoredListEntry } from './types.ts'
 
 export type ApiErrorCode =
@@ -31,7 +32,7 @@ export type ListPage = {
   entries: StoredListEntry[]
 }
 
-export type SyncPull = { collections: Collection[]; entries: Entry[]; serverTime: string }
+export type SyncPull = { collections: Collection[]; entries: Entry[]; lists?: LoadedList[]; serverTime: string }
 
 /** Thin fetch wrapper for /api (contracts/api.md); every failure becomes an ApiError. */
 export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthenticated?: () => void } = {}) {
@@ -70,7 +71,7 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
   return {
     me: () => call<{ email: string; bggSearch: boolean }>('/api/me'),
     pull: (since?: string) => call<SyncPull>(`/api/sync${since ? `?since=${encodeURIComponent(since)}` : ''}`),
-    push: (changes: { collections: Collection[]; entries: Entry[] }) =>
+    push: (changes: { collections: Collection[]; entries: Entry[]; lists?: LoadedList[] }) =>
       call<{ applied: number; ignored: number }>('/api/sync', post(changes)),
     games: (ids: number[]) => call<{ games: Game[] }>(`/api/bgg/games?ids=${ids.join(',')}`).then(r => r.games),
     listPage: (kind: ListKind, id: number, page: number) => call<ListPage>(`/api/bgg/lists/${kind}/${id}?page=${page}`),

@@ -257,7 +257,8 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 - **FR-012**: Users MUST be able to load a BGG list by its link: a BoardGameGeek preview (an
   Essen list, with booth, price and publisher) or a geeklist (no facts); loaded lists are
-  remembered on the device, load page by page with visible progress and are available offline.
+  remembered per person (they appear on every device the person signs in on; the games load per
+  device), load page by page with visible progress and are available offline.
 - **FR-013**: Users MUST be able to browse a loaded list, filter it by name and see each game's
   facts (Essen lists) and whether it is in a collection.
 - **FR-014**: From a game in a list, users MUST be able to choose the collections the game belongs to;
@@ -361,7 +362,8 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - Collections are personal; sharing happens as text or backup files. Seeing friends' marks in the
   app is out of scope for this feature.
 - Collections are stored centrally per person and cached on each device; conflicting edits are
-  resolved by "most recent change wins". Loaded lists are stored per device.
+  resolved by "most recent change wins". Which BGG lists a person loaded is synced; the lists'
+  games are stored per device.
 - Release 0.5 (before the fair) works without official BoardGameGeek data access, using data BGG's
   website exposes publicly under the time-limited exception in constitution Principle V. Release 1.0
   switches to the official access and adds full search.

@@ -1,4 +1,5 @@
 import type { Collection, Entry } from '../../src/domain/collection.ts'
+import type { LoadedList } from '../../src/domain/lists.ts'
 import type { Mark } from '../../src/domain/marks.ts'
 import type { Db } from './db.ts'
 
@@ -11,7 +12,7 @@ export type Game = {
   kind: 'boardgame' | 'expansion'
 }
 
-export type Changes = { collections: Collection[]; entries: Entry[] }
+export type Changes = { collections: Collection[]; entries: Entry[]; lists?: LoadedList[] }
 
 /** An entry points at a collection that does not exist for this user. */
 export class ForeignCollectionError extends Error {}
@@ -78,7 +79,16 @@ export async function listChanges(db: Db, email: string, since?: string): Promis
      FROM collection_entry WHERE user_email = $1 AND updated_at > $2 ORDER BY updated_at`,
     [email, after],
   )
-  return { collections: collections.map(toCollection), entries: entries.map(toEntry) }
+  const lists = await db.query<ListRow>(
+    `SELECT kind, list_id, title, is_essen, updated_at, deleted FROM loaded_list
+     WHERE user_email = $1 AND updated_at > $2 ORDER BY updated_at`,
+    [email, after],
+  )
+  return {
+    collections: collections.map(toCollection),
+    entries: entries.map(toEntry),
+    lists: lists.map(r => ({ kind: r.kind, id: r.list_id, title: r.title, isEssen: r.is_essen, updatedAt: iso(r.updated_at), deleted: r.deleted })),
+  }
 }
 
 /**
@@ -143,8 +153,23 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
     )
     applied += rows.length
   }
-  return { applied, ignored: changes.collections.length + changes.entries.length - applied }
+  for (const l of changes.lists ?? []) {
+    const rows = await db.query(
+      `INSERT INTO loaded_list AS t (user_email, kind, list_id, title, is_essen, updated_at, deleted)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (user_email, kind, list_id) DO UPDATE SET title = excluded.title, is_essen = excluded.is_essen,
+         updated_at = excluded.updated_at, deleted = excluded.deleted
+       WHERE excluded.updated_at > t.updated_at
+       RETURNING list_id`,
+      [email, l.kind, l.id, l.title, l.isEssen, l.updatedAt, l.deleted],
+    )
+    applied += rows.length
+  }
+  const total = changes.collections.length + changes.entries.length + (changes.lists?.length ?? 0)
+  return { applied, ignored: total - applied }
 }
+
+type ListRow = { kind: 'preview' | 'geeklist'; list_id: number; title: string; is_essen: boolean; updated_at: Date | string; deleted: boolean }
 
 type GameRow = {
   bgg_id: number

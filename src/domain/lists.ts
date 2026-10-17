@@ -56,3 +56,25 @@ export function mergeListEntries<E extends { position: number; bggId: number; fa
     }
   })
 }
+
+/** A BGG list someone loaded; synced so their other devices show it too (the games load per device). */
+export type LoadedList = {
+  kind: ListKind
+  id: number
+  title: string
+  isEssen: boolean
+  updatedAt: string
+  deleted: boolean
+}
+
+/** Null when valid, else the first problem. */
+export function validateLoadedList(l: LoadedList): string | null {
+  if (!l || typeof l !== 'object') return 'A list must be an object.'
+  if (l.kind !== 'preview' && l.kind !== 'geeklist') return 'The list kind must be "preview" or "geeklist".'
+  if (!Number.isSafeInteger(l.id) || l.id <= 0) return 'The list id must be a positive whole number.'
+  if (typeof l.title !== 'string' || l.title.trim().length === 0 || l.title.length > 300) return 'The list needs a title of up to 300 characters.'
+  if (typeof l.isEssen !== 'boolean') return 'isEssen must be true or false.'
+  if (typeof l.updatedAt !== 'string' || Number.isNaN(Date.parse(l.updatedAt))) return 'updatedAt must be a timestamp.'
+  if (typeof l.deleted !== 'boolean') return 'deleted must be true or false.'
+  return null
+}

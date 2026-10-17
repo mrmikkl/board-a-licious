@@ -123,6 +123,35 @@ describe('list loader', () => {
     expect(stored.entries[0]?.facts?.booth).toBe(`${bgg.booth(1, 0)} / 9-Z999`)
   })
 
+  it('remembers a newly loaded list for the other devices (outbox)', async () => {
+    const loader = loaderFor(fakeApi(clock).api)
+    await loader.open('preview', 93)
+    await loader.idle()
+    const refs = (await store.pending()).filter(p => p.kind === 'list')
+    expect(refs.map(p => p.row)).toEqual([
+      { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: new Date(START).toISOString(), deleted: false },
+    ])
+    await loader.open('preview', 93)
+    expect((await store.pending()).filter(p => p.kind === 'list')).toHaveLength(1)
+  })
+
+  it('loads a list that arrived from another device (0 pages yet) when it is opened', async () => {
+    await store.applyRemote({ collections: [], entries: [], lists: [{ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: new Date(START).toISOString(), deleted: false }] })
+    const bgg = fakeApi(clock)
+    const loader = loaderFor(bgg.api)
+    const list = await loader.open('preview', 93)
+    expect(list.pageCount).toBe(3)
+    await loader.idle()
+    expect(bgg.calls.map(c => c.what)).toEqual(['page 1', 'page 2', 'page 3'])
+    expect((await store.list('preview', 93))?.entries).toHaveLength(6)
+  })
+
+  it('queues lists loaded before lists were synced, so they reach the other devices', async () => {
+    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, pageCount: 3, loadedPages: 3, entries: [], openedAt: new Date(START).toISOString() })
+    await loaderFor(fakeApi(clock).api).open('preview', 93)
+    expect((await store.pending()).filter(p => p.kind === 'list').map(p => p.row)).toMatchObject([{ kind: 'preview', id: 93 }])
+  })
+
   it('resumes after a reload where it stopped', async () => {
     const first = fakeApi(clock)
     const before = loaderFor(first.api)

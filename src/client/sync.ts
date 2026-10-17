@@ -1,4 +1,5 @@
 import type { Collection, Entry } from '../domain/collection.ts'
+import type { LoadedList } from '../domain/lists.ts'
 import type { Api } from './api.ts'
 import type { Store } from './store.ts'
 
@@ -19,11 +20,13 @@ export function createSync(deps: { store: Store; api: Api; events?: EventTarget 
       const chunk = pending.slice(i, i + CHUNK)
       const collections: Collection[] = []
       const entries: Entry[] = []
+      const lists: LoadedList[] = []
       for (const change of chunk) {
         if (change.kind === 'collection') collections.push(change.row)
-        else entries.push(change.row)
+        else if (change.kind === 'entry') entries.push(change.row)
+        else lists.push(change.row)
       }
-      await api.push({ collections, entries })
+      await api.push(lists.length > 0 ? { collections, entries, lists } : { collections, entries })
       await store.acknowledge(chunk.map(c => c.key))
     }
     const since = await store.meta('lastSyncAt')

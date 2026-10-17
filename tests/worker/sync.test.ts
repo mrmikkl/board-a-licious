@@ -52,7 +52,7 @@ describe('/api/sync', () => {
     const call = testApp(db)
     await call('/api/sync', json({ collections: [collection], entries: [entry] }))
     const all = await (await call('/api/sync')).json()
-    expect(all).toEqual({ collections: [collection], entries: [entry], serverTime: '2026-10-17T12:00:00.000Z' })
+    expect(all).toEqual({ collections: [collection], entries: [entry], lists: [], serverTime: '2026-10-17T12:00:00.000Z' })
     const since = await (await call(`/api/sync?since=${encodeURIComponent('2026-10-17T09:30:00.000Z')}`)).json()
     expect(since).toMatchObject({ collections: [], entries: [] })
   })
@@ -73,6 +73,16 @@ describe('/api/sync', () => {
     })
     expect(res.status).toBe(400)
     expect(await res.json()).toMatchObject({ error: 'bad_request', retryable: false })
+  })
+
+  it('syncs the loaded BGG lists and rejects invalid ones', async () => {
+    const call = testApp(db)
+    const spiel = { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: T1, deleted: false }
+    expect(await (await call('/api/sync', json({ lists: [spiel] }))).json()).toEqual({ applied: 1, ignored: 0 })
+    expect((await (await call('/api/sync')).json()).lists).toEqual([spiel])
+    for (const bad of [{ ...spiel, kind: 'other' }, { ...spiel, id: 0 }, { ...spiel, title: '' }]) {
+      expect((await call('/api/sync', json({ lists: [bad] }))).status).toBe(400)
+    }
   })
 
   it("rejects entries for another user's collection", async () => {

@@ -74,7 +74,11 @@ Rules (all in `src/domain/`):
   `hunt` = `{ groups: {must_have}, bought: 'no' }`.
 - **Merge**: per entry (and per collection) the later `updatedAt` wins; equal → server copy.
 
-### BGG list (per device)
+### BGG list (games per device; the list itself per person)
+
+Which lists a person loaded syncs to their other devices as a `LoadedList` (`kind`, `id`,
+`title`, `isEssen`, `updatedAt`, `deleted`; table `loaded_list`, last write wins). A device that
+gets one from sync shows it with `pageCount: 0` and loads the pages when it is opened.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -82,7 +86,8 @@ Rules (all in `src/domain/`):
 | `title` | string | from BGG |
 | `isEssen` | boolean | `true` for previews (research R9) |
 | `pageCount`, `loadedPages` | integers | background loading progress |
-| `entries` | `{ position, bggId, facts? }[]` | facts only for previews |
+| `items` | `{ position, bggId, facts?, page }[]` | every item as BGG lists it (one per edition or publisher) |
+| `entries` | same shape | one per game, editions merged (`mergeListEntries`: all booths and publishers) |
 | `openedAt` | timestamp | |
 
 Publishers: `{ companyId → name }` cache.
