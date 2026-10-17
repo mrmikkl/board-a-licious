@@ -1,5 +1,6 @@
 import { type FormEvent, useId, useState } from 'react'
 
+import { parseListLink } from '../../domain/lists.ts'
 import { type LinkState, GameLinkFields, emptyLink } from '../components/GameLinkFields.tsx'
 import { Header } from '../components/Header.tsx'
 import { HexPicker } from '../components/HexPicker.tsx'
@@ -52,14 +53,58 @@ function CollectionForm() {
   )
 }
 
-/** The BGG list form arrives with User Story 2 (T047). */
+/** Load a BGG list by its link (FR-012): previews are Essen lists, geeklists have no facts. */
 function ListForm() {
+  const linkId = useId()
+  const hintId = useId()
+  const [text, setText] = useState('')
+  const list = parseListLink(text)
+  const hint = !text.trim()
+    ? null
+    : !list
+      ? 'Paste a link to a BoardGameGeek preview or geeklist, like boardgamegeek.com/geekpreview/93.'
+      : list.kind === 'preview'
+        ? 'Preview: an Essen list with booth, price and publisher.'
+        : 'Geeklist: games without booth and price.'
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    if (list) navigate({ name: 'list', kind: list.kind, listId: list.id })
+  }
+
   return (
     <section aria-labelledby="add-list">
       <h2 className="section-title" id="add-list">
         Load a BGG list
       </h2>
-      <p className="lead">Loading BoardGameGeek previews and geeklists comes next. Until then, add single games by their link.</p>
+      <form className="form" onSubmit={submit}>
+        <p className="lead">Paste the link of a BoardGameGeek preview (like SPIEL Essen 2026, with booth, price and publisher) or a geeklist.</p>
+        <div>
+          <label className="label" htmlFor={linkId}>
+            BGG list link
+          </label>
+          <div className="field">
+            <input
+              id={linkId}
+              inputMode="url"
+              autoComplete="off"
+              placeholder="boardgamegeek.com/geekpreview/…"
+              value={text}
+              aria-describedby={hint ? hintId : undefined}
+              aria-invalid={hint ? !list : undefined}
+              onChange={e => setText(e.target.value)}
+            />
+          </div>
+          {hint && (
+            <p className={`hint${list ? '' : ' error'}`} id={hintId}>
+              {hint}
+            </p>
+          )}
+        </div>
+        <button type="submit" className="btn btn-primary btn-block" disabled={!list}>
+          Load list
+        </button>
+      </form>
     </section>
   )
 }
