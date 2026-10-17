@@ -84,17 +84,17 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ### Implementation for User Story 1
 
-- [ ] T029 [P] [US1] Implement `src/domain/bgg-link.ts`
-- [ ] T030 [US1] Implement `GeekdoSource.getGames` in `worker/bgg/geekdo.ts` and `GET /api/bgg/games` in `worker/routes/games.ts`
-- [ ] T031 [P] [US1] Build `src/app/components/HexCover.tsx` (cover in a hexagon, initials while `detailsPending` or without cover) and `src/app/components/HexPicker.tsx` (honeycomb of 3–4 hexagons, docs/design.md §7)
-- [ ] T032 [US1] Build the Collections screen `src/app/screens/Collections.tsx` with `src/app/components/CollectionCard.tsx` (Essen badge, counts per mark and bought, top-right hexagon cluster, "Create a collection" card)
-- [ ] T033 [US1] Build the Add screen `src/app/screens/Add.tsx`: hexagons Collection / BGG list / Game; New collection form (name, "Essen collection" switch on by default, "Create collection" disabled until a name is typed)
-- [ ] T034 [US1] Build the Collection screen `src/app/screens/Collection.tsx` with `GameRow.tsx` and `GroupHeading.tsx`: groups in mark order, "Not yet marked" first, "Not interested" collapsed; centred empty state with "Add from BGG list" and "Add by link"; separator line
-- [ ] T035 [US1] Build the game details sheet `src/app/components/GameSheet.tsx`: cover, name, year, BGG link, mark picker (4 hexagons), "🛑 Not interested" / "Mark as not yet decided", "Remove from collection"
-- [ ] T036 [US1] Build add-by-link inside a collection `src/app/screens/AddByLink.tsx` (link only, "Add to ‹collection›", back to the collection) and the Game form in `Add.tsx` (collection dropdown always visible, "Add game" enabled only with a valid link, a name and a free collection; with no collection yet, offer "Create a collection" first — name prefilled "SPIEL 2026", Essen — and then continue with the game, FR-016)
-- [ ] T037 [US1] Complete link-added games in the background in `src/client/details.ts` (FR-017: fetch details for `detailsPending` entries, keep marks)
-- [ ] T037a [US1] Rename and delete a collection from a header menu in `src/app/screens/Collection.tsx` (rename: 1–60 chars; delete: confirmation "Delete ‹name› and its N games?", tombstones the collection and all its entries via the outbox; type stays fixed) and the rules in `src/domain/collection.ts`, covered by T008 (FR-001a)
-- [ ] T038 [US1] Build the switched-off Search screen `src/app/screens/Search.tsx` ("Searching all of BoardGameGeek comes soon", disabled field, "Add a game by link instead") — FR-019 for Release 0.5
+- [X] T029 [P] [US1] Implement `src/domain/bgg-link.ts`
+- [X] T030 [US1] Implement `GeekdoSource.getGames` in `worker/bgg/geekdo.ts` and `GET /api/bgg/games` in `worker/routes/games.ts`
+- [X] T031 [P] [US1] Build `src/app/components/HexCover.tsx` (cover in a hexagon, initials while `detailsPending` or without cover) and `src/app/components/HexPicker.tsx` (honeycomb of 3–4 hexagons, docs/design.md §7)
+- [X] T032 [US1] Build the Collections screen `src/app/screens/Collections.tsx` with `src/app/components/CollectionCard.tsx` (Essen badge, counts per mark and bought, top-right hexagon cluster, "Create a collection" card)
+- [X] T033 [US1] Build the Add screen `src/app/screens/Add.tsx`: hexagons Collection / BGG list / Game; New collection form (name, "Essen collection" switch on by default, "Create collection" disabled until a name is typed)
+- [X] T034 [US1] Build the Collection screen `src/app/screens/Collection.tsx` with `GameRow.tsx` and `GroupHeading.tsx`: groups in mark order, "Not yet marked" first, "Not interested" collapsed; centred empty state with "Add from BGG list" and "Add by link"; separator line
+- [X] T035 [US1] Build the game details sheet `src/app/components/GameSheet.tsx`: cover, name, year, BGG link, mark picker (4 hexagons), "🛑 Not interested" / "Mark as not yet decided", "Remove from collection"
+- [X] T036 [US1] Build add-by-link inside a collection `src/app/screens/AddByLink.tsx` (link only, "Add to ‹collection›", back to the collection) and the Game form in `Add.tsx` (collection dropdown always visible, "Add game" enabled only with a valid link, a name and a free collection; with no collection yet, offer "Create a collection" first — name prefilled "SPIEL 2026", Essen — and then continue with the game, FR-016)
+- [X] T037 [US1] Complete link-added games in the background in `src/client/details.ts` (FR-017: fetch details for `detailsPending` entries, keep marks)
+- [X] T037a [US1] Rename and delete a collection from a header menu in `src/app/screens/Collection.tsx` (rename: 1–60 chars; delete: confirmation "Delete ‹name› and its N games?", tombstones the collection and all its entries via the outbox; type stays fixed) and the rules in `src/domain/collection.ts`, covered by T008 (FR-001a)
+- [X] T038 [US1] Build the switched-off Search screen `src/app/screens/Search.tsx` ("Searching all of BoardGameGeek comes soon", disabled field, "Add a game by link instead") — FR-019 for Release 0.5
 
 **Checkpoint**: US1 works on its own (MVP).
 
