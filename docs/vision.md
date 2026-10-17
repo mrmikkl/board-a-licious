@@ -29,8 +29,8 @@ already use.
    marks it as not interesting.
 4. **Marks** say how much you like a game: Must Have, Interested, Unsure, Poop, or Not interested.
    **Bought** is a separate tick on top, with the price you paid.
-5. **At the fair**: filter to "Must Have, not bought", walk to the booth, tick it off, and see what
-   you have spent.
+5. **At the fair**: filter to "Must Have, not bought", group by hall, walk to the booth, tick it
+   off, and see what you have spent.
 6. **Share** a collection as plain text into any chat, with booths and prices for Essen.
 
 ## What makes it feel right
@@ -62,7 +62,7 @@ already use.
 |---|---|
 | Release 0.5 (before SPIEL Essen 2026, 22 Oct) | Collections, Essen facts, geeklists, swipe, marks, bought with price, filter, share/backup, offline; adding single games by link |
 | Release 1.0 (once BGG grants API access) | Search across all of BoardGameGeek; data from the official API |
-| Later ideas | Hall view (Must Haves sorted by hall and booth), seeing friends' marks from shared lists, sharing straight from BGG into the app (Android) |
+| Later ideas | Seeing friends' marks from shared lists, sharing straight from BGG into the app (Android) |
 
 ## Decisions from the design session (2026-10-17)
 

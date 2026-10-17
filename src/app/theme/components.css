@@ -36,6 +36,15 @@
   --tone: var(--grad-got);
   --tone-text: var(--ink);
 }
+/* hall groups (group by booth): halls in the hot gradient, "No booth yet" muted */
+[data-mark='hall'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='none'] {
+  --tone: linear-gradient(135deg, #6e74a0, #9aa0c8);
+  --tone-text: var(--ink);
+}
 
 .section-title {
   font-size: 18px;
@@ -482,5 +491,10 @@
 .sheet-actions {
   display: grid;
   gap: var(--gap);
+  margin-top: 12px;
+}
+
+/* "Group by" under the filter in a collection */
+.group-by {
   margin-top: 12px;
 }

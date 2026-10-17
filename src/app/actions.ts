@@ -96,3 +96,9 @@ export async function saveFilter(services: AppServices, collectionId: string, fi
   const all = (await services.store.meta('activeFilter')) ?? {}
   await services.store.setMeta('activeFilter', { ...all, [collectionId]: toStored(filter) })
 }
+
+/** "Group by" (marks or booth/hall) is remembered per collection on this device, like the filter. */
+export async function saveGroupBy(services: AppServices, collectionId: string, groupBy: 'mark' | 'booth') {
+  const all = (await services.store.meta('groupBy')) ?? {}
+  await services.store.setMeta('groupBy', { ...all, [collectionId]: groupBy })
+}

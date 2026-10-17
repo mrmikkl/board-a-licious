@@ -246,6 +246,11 @@ the fair. Until then the search tab is visible but switched off and points to ad
   state (all / not bought / bought), with presets "All" and "Must Have, not bought". The selection
   is remembered per collection on the device, also after closing the app.
 
+- **FR-009a**: Users MUST be able to group a collection by mark (default) or by fair hall, taken
+  from the booth (e.g. "3-R400" is hall 3): halls in order, inside a hall by booth; a game with
+  booths in several halls appears in each, games without a booth last. The choice is remembered per
+  collection on the device.
+
 **Booth, price and publisher ("facts")**
 
 - **FR-010**: Facts MUST be kept when a game comes from an Essen list into an Essen collection,

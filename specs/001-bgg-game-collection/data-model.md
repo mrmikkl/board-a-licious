@@ -151,4 +151,4 @@ CREATE TABLE game (                            -- public BGG display data, share
 | `games` | `bggId` | Game cache |
 | `lists` | `[kind, id]` | BGG list incl. entries; index on normalised game name |
 | `publishers` | `companyId` | name |
-| `meta` | name | `lastSyncAt`, `userEmail`, `soundOn` (default true), `introSeen`, `activeFilter` (per collection ID) |
+| `meta` | name | `lastSyncAt`, `userEmail`, `soundOn` (default true), `introSeen`, `activeFilter` and `groupBy` (`mark` \| `booth`), each per collection ID |

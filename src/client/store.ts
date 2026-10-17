@@ -12,6 +12,8 @@ export type MetaValues = {
   userEmail: string
   soundOn: boolean
   activeFilter: Record<string, unknown>
+  /** How each collection's games are grouped: by mark (default) or by fair hall. */
+  groupBy: Record<string, 'mark' | 'booth'>
 }
 
 interface Schema extends DBSchema {

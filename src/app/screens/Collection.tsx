@@ -1,8 +1,9 @@
 import { type FormEvent, useCallback, useId, useState } from 'react'
 
+import { groupByHall } from '../../domain/booths.ts'
 import { type Collection as CollectionRow, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
 import { type Filter, applyFilter, fromStored, groupCounts, presetOf } from '../../domain/filter.ts'
-import { deleteCollection, renameCollection, saveFilter } from '../actions.ts'
+import { deleteCollection, renameCollection, saveFilter, saveGroupBy } from '../actions.ts'
 import { Counter } from '../components/Counter.tsx'
 import { EssenBadge } from '../components/EssenBadge.tsx'
 import { FilterPanel } from '../components/FilterPanel.tsx'
@@ -26,6 +27,7 @@ export function Collection({ id }: { id: string }) {
   const [chosen, setChosen] = useState<{ id: string; filter: Filter }>()
   const [showSkip, setShowSkip] = useState(false)
   const [menu, setMenu] = useState(false)
+  const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: 'mark' | 'booth' }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
   const closeMenu = useCallback(() => setMenu(false), [])
   const data = useStoreData(
@@ -34,13 +36,14 @@ export function Collection({ id }: { id: string }) {
       const entries = (await store.entries(id)).filter(e => !e.deleted)
       const games = new Map((await store.games(entries.map(e => e.bggId))).map(g => [g.bggId, g]))
       const storedFilter = (await store.meta('activeFilter'))?.[id]
-      return { id, collection, entries, games, storedFilter }
+      const storedGroupBy = (await store.meta('groupBy'))?.[id]
+      return { id, collection, entries, games, storedFilter, storedGroupBy }
     },
     [id],
   )
   const back = href({ name: 'collections' })
   if (!data || data.id !== id) return <Header title="" back={back} />
-  const { collection, entries, games, storedFilter } = data
+  const { collection, entries, games, storedFilter, storedGroupBy } = data
   if (!collection) {
     return (
       <>
@@ -67,7 +70,17 @@ export function Collection({ id }: { id: string }) {
     void saveFilter(services, id, next)
   }
   const shown = applyFilter(entries, filter)
-  const groups = groupByMark(shown, e => games.get(e.bggId)?.name ?? '')
+  const nameOf = (e: { bggId: number }) => games.get(e.bggId)?.name ?? ''
+  const groupBy = groupChoice?.id === id ? groupChoice.groupBy : (storedGroupBy ?? 'mark')
+  const changeGroupBy = (next: 'mark' | 'booth') => {
+    setGroupChoice({ id, groupBy: next })
+    void saveGroupBy(services, id, next)
+  }
+  // by mark (FR-005) or by fair hall, taken from the booth (hall view)
+  const groups =
+    groupBy === 'booth'
+      ? groupByHall(shown, nameOf).map(g => ({ id: `group-hall-${g.key}`, heading: { key: g.key === 'none' ? 'none' : 'hall', label: g.label }, folds: false, entries: g.entries }))
+      : groupByMark(shown, nameOf).map(g => ({ id: `group-${g.mark.key}`, heading: g.mark, folds: g.mark.key === 'skip', entries: g.entries }))
   const bought = boughtLine(entries)
   const boughtCount = countMarks(entries).bought
   const current = entries.find(e => e.bggId === openGame)
@@ -107,6 +120,17 @@ export function Collection({ id }: { id: string }) {
             <div className="row-actions">{actions}</div>
             <hr className="separator" />
             <FilterPanel filter={filter} shown={shown.length} counts={groupCounts(entries, filter.bought)} onChange={changeFilter} />
+            <div className="group-by">
+              <label className="label" htmlFor="group-by">
+                Group by
+              </label>
+              <div className="field select">
+                <select id="group-by" value={groupBy} onChange={e => changeGroupBy(e.target.value as 'mark' | 'booth')}>
+                  <option value="mark">Marks</option>
+                  <option value="booth">Booth (hall)</option>
+                </select>
+              </div>
+            </div>
             {bought && (
               <p className="bought-line">
                 ✅ <Counter value={boughtCount} />
@@ -116,13 +140,13 @@ export function Collection({ id }: { id: string }) {
             <hr className="separator" />
             {shown.length === 0 && <FilterEmpty filter={filter} name={collection.name} hasMustHave={entries.some(e => e.mark === 'must_have')} />}
             {groups.map(group => {
-              const headingId = `group-${group.mark.key}`
-              const folds = group.mark.key === 'skip'
+              const headingId = group.id
+              const folds = group.folds
               return (
-                <section key={group.mark.key} className="group" aria-labelledby={headingId}>
+                <section key={group.id} className="group" aria-labelledby={headingId}>
                   <GroupHeading
                     id={headingId}
-                    mark={group.mark}
+                    mark={group.heading}
                     count={group.entries.length}
                     open={folds ? showSkip : undefined}
                     onToggle={folds ? () => setShowSkip(open => !open) : undefined}

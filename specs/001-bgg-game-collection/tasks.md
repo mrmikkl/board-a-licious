@@ -165,6 +165,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [X] T059 [US4] Extend `GameSheet.tsx`: "✅ Bought it" → "What did you pay?" (prefilled, comma or point, 0–9,999, Enter saves, "Don't track the price"), "Not bought after all"; bought ✓ on the cover and price badge in `GameRow.tsx`; bought line under the filter in `Collection.tsx` with the money spent per currency
 - [X] T060 [US4] Add manual facts to `GameSheet.tsx`: "➕ Add booth, price and publisher" / "✎ Edit", form with Booth, Price with a currency choice (default EUR), Publisher, Save enabled once one field is filled (FR-011)
 - [X] T061 [US4] Show the game description in `GameSheet.tsx` and `MembershipSheet.tsx`, with "The description is filled in from BoardGameGeek later." when missing (FR-018)
+- [X] T061a [US4] Group a collection by mark or by fair hall (FR-009a): `src/domain/booths.ts` (`hallsOf`, `groupByHall`) with `tests/unit/booths.test.ts`, "Group by" dropdown in `Collection.tsx`, choice stored per collection in `meta.groupBy`, `tests/e2e/group-by.spec.ts`
 
 **Checkpoint**: US1–US4 work independently.
 
