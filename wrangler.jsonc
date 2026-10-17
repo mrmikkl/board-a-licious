@@ -12,8 +12,8 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      // replaced with the real ID when Hyperdrive is set up (T077)
-      "id": "00000000000000000000000000000000",
+      // Neon project "Board-a-licious" (Frankfurt), direct connection (T077)
+      "id": "fe856b6ea9814a788872db3a9ff9ef89",
       "localConnectionString": "postgres://postgres:postgres@localhost:5432/boardalicious"
     }
   ],
