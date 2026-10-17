@@ -193,7 +193,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 **Goal**: official XML API with token; search.
 **Independent Test**: spec US6 — with a token, search "Cascadia" and add it.
 
-- [ ] T066 [US6] Keep the 0.5 Search screen (T038) wired to `GET /api/me` `bggSearch`; ship 0.5 with it switched off
+- [X] T066 [US6] Keep the 0.5 Search screen (T038) wired to `GET /api/me` `bggSearch`; ship 0.5 with it switched off
 - [ ] T067 [P] [US6] Worker tests in `tests/worker/bgg-xml.test.ts` with recorded XML fixtures (`search`, `thing`, geeklist): mapping to `Game`, 202/429 handling
 - [ ] T068 [US6] Implement `worker/bgg/xmlapi.ts` (`XmlApiSource`, `fast-xml-parser`, `Authorization: Bearer <BGG_TOKEN>`), selected in `worker/bgg/source.ts` when `BGG_TOKEN` is set; previews stay on `GeekdoSource` (research R9)
 - [ ] T069 [US6] Implement `GET /api/bgg/search` in `worker/routes/search.ts` (`q` 2–100 chars, max 50 results)
