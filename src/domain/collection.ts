@@ -1,4 +1,5 @@
 import { MARKS, type Mark, type MarkInfo, isMark } from './marks.ts'
+import { formatSpent } from './money.ts'
 
 export type CollectionType = 'essen' | 'standard'
 
@@ -83,6 +84,44 @@ export const markEntry = (entry: Entry, mark: Mark, now: string): Entry => ({ ..
 
 /** Removing a game from a collection tombstones its entry, so other devices drop it too. */
 export const removeEntry = (entry: Entry, now: string): Entry => ({ ...entry, deleted: true, updatedAt: now })
+
+export type Paid = { cents: number; currency: string }
+
+/** FR-007/008: the price paid is suggested from the listed price, in its currency; EUR without one. */
+export function suggestPaid(entry: Entry): { cents: number | null; currency: string } {
+  return { cents: entry.facts?.priceCents ?? null, currency: entry.facts?.currency ?? 'EUR' }
+}
+
+/** Bought is independent of the mark; without a price paid nothing counts towards the money spent. */
+export const markBought = (entry: Entry, paid: Paid | null, now: string): Entry => ({
+  ...entry,
+  bought: true,
+  paidCents: paid?.cents ?? null,
+  paidCurrency: paid ? paid.currency : null,
+  updatedAt: now,
+})
+
+/** Undoing bought also removes the price paid. */
+export const unmarkBought = (entry: Entry, now: string): Entry => ({ ...entry, bought: false, paidCents: null, paidCurrency: null, updatedAt: now })
+
+/** Money spent per currency: the prices paid of live bought games, by currency code (FR-008). */
+export function spentByCurrency(entries: Entry[]): { currency: string; cents: number }[] {
+  const totals = new Map<string, number>()
+  for (const e of entries) {
+    if (e.deleted || !e.bought || e.paidCents == null) continue
+    const currency = e.paidCurrency ?? 'EUR'
+    totals.set(currency, (totals.get(currency) ?? 0) + e.paidCents)
+  }
+  return [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([currency, cents]) => ({ currency, cents }))
+}
+
+/** "✅ 1 game bought, €52 spent" under a collection's filter; null while nothing is bought. */
+export function boughtLine(entries: Entry[]): string | null {
+  const count = entries.filter(e => !e.deleted && e.bought).length
+  if (count === 0) return null
+  const spent = spentByCurrency(entries)
+  return `✅ ${count} ${count === 1 ? 'game' : 'games'} bought${spent.length > 0 ? `, ${formatSpent(spent)} spent` : ''}`
+}
 
 /** Live entries grouped by mark in mark order (FR-005), empty groups left out, games sorted by name. */
 export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string): { mark: MarkInfo; entries: Entry[] }[] {
