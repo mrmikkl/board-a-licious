@@ -1,8 +1,10 @@
 import { type FormEvent, useCallback, useId, useState } from 'react'
 
-import { type Collection as CollectionRow, NAME_MAX, groupByMark } from '../../domain/collection.ts'
-import { deleteCollection, renameCollection } from '../actions.ts'
+import { type Collection as CollectionRow, NAME_MAX, boughtLine, groupByMark } from '../../domain/collection.ts'
+import { type Filter, applyFilter, fromStored, groupCounts, presetOf } from '../../domain/filter.ts'
+import { deleteCollection, renameCollection, saveFilter } from '../actions.ts'
 import { EssenBadge } from '../components/EssenBadge.tsx'
+import { FilterPanel } from '../components/FilterPanel.tsx'
 import { GameRow } from '../components/GameRow.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { GroupHeading } from '../components/GroupHeading.tsx'
@@ -12,9 +14,15 @@ import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
 import { href, navigate } from '../router.ts'
 
-/** One collection: games grouped by mark, Not yet marked first, Not interested collapsed (FR-005). */
+/**
+ * One collection: games grouped by mark, Not yet marked first, Not interested collapsed (FR-005);
+ * filtered by groups and bought (FR-009), with the games bought and the money spent (FR-008).
+ */
 export function Collection({ id }: { id: string }) {
+  const services = useServices()
   const [openGame, setOpenGame] = useState<number>()
+  // the filter picked on this screen, shown at once while it is saved to the device
+  const [chosen, setChosen] = useState<{ id: string; filter: Filter }>()
   const [showSkip, setShowSkip] = useState(false)
   const [menu, setMenu] = useState(false)
   const closeGame = useCallback(() => setOpenGame(undefined), [])
@@ -24,13 +32,14 @@ export function Collection({ id }: { id: string }) {
       const collection = (await store.collections()).find(c => c.id === id && !c.deleted)
       const entries = (await store.entries(id)).filter(e => !e.deleted)
       const games = new Map((await store.games(entries.map(e => e.bggId))).map(g => [g.bggId, g]))
-      return { id, collection, entries, games }
+      const storedFilter = (await store.meta('activeFilter'))?.[id]
+      return { id, collection, entries, games, storedFilter }
     },
     [id],
   )
   const back = href({ name: 'collections' })
   if (!data || data.id !== id) return <Header title="" back={back} />
-  const { collection, entries, games } = data
+  const { collection, entries, games, storedFilter } = data
   if (!collection) {
     return (
       <>
@@ -51,7 +60,14 @@ export function Collection({ id }: { id: string }) {
     )
   }
 
-  const groups = groupByMark(entries, e => games.get(e.bggId)?.name ?? '')
+  const filter = chosen?.id === id ? chosen.filter : fromStored(storedFilter)
+  const changeFilter = (next: Filter) => {
+    setChosen({ id, filter: next })
+    void saveFilter(services, id, next)
+  }
+  const shown = applyFilter(entries, filter)
+  const groups = groupByMark(shown, e => games.get(e.bggId)?.name ?? '')
+  const bought = boughtLine(entries)
   const current = entries.find(e => e.bggId === openGame)
   const actions = (
     <>
@@ -89,7 +105,10 @@ export function Collection({ id }: { id: string }) {
         ) : (
           <>
             <div className="row-actions">{actions}</div>
+            <FilterPanel filter={filter} shown={shown.length} counts={groupCounts(entries, filter.bought)} onChange={changeFilter} />
+            {bought && <p className="bought-line">{bought}</p>}
             <hr className="separator" />
+            {shown.length === 0 && <FilterEmpty filter={filter} name={collection.name} hasMustHave={entries.some(e => e.mark === 'must_have')} />}
             {groups.map(group => {
               const headingId = `group-${group.mark.key}`
               const folds = group.mark.key === 'skip'
@@ -118,6 +137,18 @@ export function Collection({ id }: { id: string }) {
       {current && <GameSheet entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
       {menu && <CollectionMenu collection={collection} gameCount={entries.length} onClose={closeMenu} />}
     </>
+  )
+}
+
+/** The filter shows nothing (spec Edge Cases); the hunt preset celebrates that nothing is left. */
+function FilterEmpty({ filter, name, hasMustHave }: { filter: Filter; name: string; hasMustHave: boolean }) {
+  const hunt = presetOf(filter) === 'hunt'
+  return (
+    <div className="empty">
+      <div className="hex" />
+      <h2>{hunt ? 'Nothing left to hunt 🎉' : 'No games match this filter'}</h2>
+      <p>{hunt ? (hasMustHave ? `Every Must Have in ${name} is bought.` : `No game in ${name} is marked Must Have yet.`) : 'Open the filter to show more games.'}</p>
+    </div>
   )
 }
 

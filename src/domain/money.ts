@@ -1,5 +1,11 @@
 const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', GBP: '£' }
 
+/** Currencies offered when typing in a price; EUR first, the default (FR-008). */
+export const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'] as const
+
+/** "€", "$", "£", or the code itself ("CHF"). */
+export const currencySymbol = (code: string) => SYMBOLS[code] ?? code
+
 /** "€52", "€12.50", "CHF 30": no cents when whole (FR-007); no currency means EUR (FR-008). */
 export function formatMoney(cents: number, currency: string | null | undefined): string {
   const code = currency ?? 'EUR'
