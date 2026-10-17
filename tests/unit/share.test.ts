@@ -32,6 +32,7 @@ describe('share text', () => {
     expect(DEFAULT_SHARE_MARKS).toEqual(['must_have', 'interested'])
   })
 
+  // The contract example lists Example Game first; its rule "games by name" wins.
   it('matches the contract example for an Essen collection', () => {
     const result = shareText(essen, entries, DEFAULT_SHARE_MARKS, games)
     expect(result).toEqual({
@@ -40,8 +41,8 @@ describe('share text', () => {
         '🎲 Essen 2026',
         '',
         '⭐ Must Have (2)',
-        '• ✅ Example Game – 3-R400, €60 – https://boardgamegeek.com/boardgame/446453',
         '• Another Game – 1-A202, €45 – https://boardgamegeek.com/boardgame/123456',
+        '• ✅ Example Game – 3-R400, €60 – https://boardgamegeek.com/boardgame/446453',
         '',
         '👀 Interested (1)',
         '• Harmonies – https://boardgamegeek.com/boardgame/414317',

@@ -22,20 +22,21 @@ const entry = (collectionId: string, bggId: number, patch: Partial<Entry> = {}):
   ...patch,
 })
 
-const entries: Entry[] = [
-  entry('c1', 446453, {
+const bought = entry('c1', 446453, {
     mark: 'must_have',
     bought: true,
     paidCents: 5200,
     paidCurrency: 'EUR',
     facts: { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisher: 'Example Press' },
     factsSource: 'preview',
-  }),
-  entry('c1', 414317, { mark: 'interested' }),
-  entry('c1', 1, { mark: 'poop', deleted: true }),
-  entry('c2', 295947, { mark: 'unsure', facts: { booth: null, priceCents: null, currency: null, publisher: null }, factsSource: 'manual' }),
-  entry('c3', 2, { deleted: true }),
-]
+})
+const harmonies = entry('c1', 414317, { mark: 'interested' })
+const cascadia = entry('c2', 295947, {
+  mark: 'unsure',
+  facts: { booth: null, priceCents: null, currency: null, publisher: null },
+  factsSource: 'manual',
+})
+const entries: Entry[] = [bought, harmonies, entry('c1', 1, { mark: 'poop', deleted: true }), cascadia, entry('c3', 2, { deleted: true })]
 
 const games = new Map([
   [446453, { name: 'Example Game', year: 2026 }],
@@ -115,7 +116,7 @@ describe('backup export', () => {
 
   it('writes null name and year for games missing from the lookup', () => {
     const file = exportBackup({ collections: [essen], entries: [entry('c1', 7)], games: new Map(), now: T2 })
-    expect(file.collections[0].entries[0]).toMatchObject({ bggId: 7, name: null, year: null })
+    expect(file.collections[0]?.entries[0]).toMatchObject({ bggId: 7, name: null, year: null })
   })
 })
 
@@ -156,8 +157,8 @@ describe('backup conflicts', () => {
   const current = {
     collections: [{ ...essen, name: 'Essen!', updatedAt: T2 }, wishlist],
     entries: [
-      { ...entries[0], mark: 'interested' as const, bought: false, paidCents: null, paidCurrency: null, updatedAt: T2 },
-      entries[1],
+      { ...bought, mark: 'interested' as const, bought: false, paidCents: null, paidCurrency: null, updatedAt: T2 },
+      harmonies,
       entry('c1', 555, { mark: 'unsure' }),
     ],
   }
@@ -169,15 +170,15 @@ describe('backup conflicts', () => {
       { collectionId: 'c1', bggId: 446453 },
     ])
     expect(plan.collections).toEqual([])
-    expect(plan.entries).toEqual([{ ...entries[3], updatedAt: NOW }])
+    expect(plan.entries).toEqual([{ ...cascadia, updatedAt: NOW }])
   })
 
   it('"Use backup" writes the backup rows with a fresh updatedAt', () => {
     const plan = planImport({ current, backup: parsed(fileV2()), resolution: 'backup', now: NOW, newId: ids() })
     expect(plan.collections).toEqual([{ ...essen, updatedAt: NOW }])
     expect(plan.entries).toEqual([
-      { ...entries[0], updatedAt: NOW },
-      { ...entries[3], updatedAt: NOW },
+      { ...bought, updatedAt: NOW },
+      { ...cascadia, updatedAt: NOW },
     ])
   })
 
