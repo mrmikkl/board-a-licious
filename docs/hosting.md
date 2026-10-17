@@ -15,6 +15,11 @@ Decisions behind this: [ADR 0002](adr/0002-single-cloudflare-worker.md) (one Wor
 
 ## How a request travels
 
+![Hosting overview: phone, Cloudflare Access, Worker, Hyperdrive, Neon and BoardGameGeek](hosting.svg)
+
+Editable drawing: [hosting.excalidraw](hosting.excalidraw) (open at excalidraw.com or with the
+VS Code Excalidraw extension; after editing, export it again as `hosting.svg`).
+
 ```text
 phone ──► Cloudflare Access ──► Worker "board-a-licious" ──► Hyperdrive ──► Neon (Frankfurt)
           (PIN login,            ├─ static app (HTML, JS,                   collections,
