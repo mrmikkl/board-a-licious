@@ -74,7 +74,7 @@ export function Collection({ id }: { id: string }) {
   const actions = (
     <>
       <a className="btn btn-primary" href={href({ name: 'swipe', id })}>
-        Add from BGG list
+        Add by list
       </a>
       <a className="btn" href={href({ name: 'add-link', id })}>
         Add by link

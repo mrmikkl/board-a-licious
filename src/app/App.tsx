@@ -36,7 +36,7 @@ function Screen({ route }: { route: Route }) {
       return <Add what={route.what} />
     case 'search':
       return <Search />
-    case 'share':
+    case 'config':
       return <Share />
     default:
       return <Placeholder route={route} />
@@ -54,7 +54,7 @@ function Placeholder({ route }: { route: Route }) {
     list: 'BGG list',
     add: 'Add',
     search: 'Search',
-    share: 'Share & backup',
+    config: 'Config',
   }
   return (
     <>
@@ -79,12 +79,11 @@ function SignInBanner() {
 
 function Shell() {
   const route = useRoute()
-  const { bggSearch } = useServices()
   return (
     <div className="app">
       <SignInBanner />
       <Screen route={route} />
-      <TabBar route={route} searchSoon={!bggSearch} />
+      <TabBar route={route} />
     </div>
   )
 }

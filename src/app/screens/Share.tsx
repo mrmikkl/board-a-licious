@@ -3,7 +3,7 @@ import { type ChangeEvent, useCallback, useId, useRef, useState } from 'react'
 import type { Backup, Resolution } from '../../domain/backup.ts'
 import type { Mark } from '../../domain/marks.ts'
 import { DEFAULT_SHARE_MARKS, shareGroups, shareText } from '../../domain/share.ts'
-import { Header } from '../components/Header.tsx'
+import { Header, useSoundOn } from '../components/Header.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
@@ -82,13 +82,14 @@ export function Share() {
     setQuestion(checked)
   }
 
-  if (!data) return <Header title="Share & backup" />
+  if (!data) return <Header title="Config" />
   const groups = collection ? shareGroups(collection.id, data.entries) : []
 
   return (
     <>
-      <Header title="Share & backup" />
+      <Header title="Config" />
       <main className="screen share">
+        <SoundSetting />
         <h2 className="section-title">Share a list</h2>
         {collection ? (
           <>
@@ -183,5 +184,23 @@ function ImportQuestion({ question, onAnswer, onClose }: { question: Question; o
         </button>
       </div>
     </Sheet>
+  )
+}
+
+/** Sound and vibration on marking (FR-026); the same choice as the 🔊/🔇 button in the header. */
+function SoundSetting() {
+  const { feedback } = useServices()
+  const on = useSoundOn()
+  return (
+    <>
+      <h2 className="section-title">Sound</h2>
+      <label className="toggle">
+        <span className="toggle-text">
+          Sound and vibration
+          <small>A dice roll when you mark a game, a chime when you buy one.</small>
+        </span>
+        <input type="checkbox" role="switch" className="switch" checked={on} aria-checked={on} onChange={e => void feedback.setOn(e.target.checked)} />
+      </label>
+    </>
   )
 }

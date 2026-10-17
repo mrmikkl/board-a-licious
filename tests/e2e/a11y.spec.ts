@@ -91,7 +91,7 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   await page.keyboard.press('Escape')
 
   // swipe: list picker, then the card stack
-  await page.getByRole('link', { name: /add from bgg list/i }).click()
+  await page.getByRole('link', { name: /^add by list$/i }).click()
   const picker = page.getByRole('dialog', { name: /add from which list/i })
   await expect(picker).toBeVisible()
   await check(page, testInfo)

@@ -2,19 +2,47 @@
 .top {
   position: relative;
   z-index: 2;
+  display: grid;
+  gap: 10px;
+  padding: 16px var(--gutter) 10px;
+}
+.top-main {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px var(--gutter) 12px;
+  min-width: 0;
 }
 .top h1 {
   flex: 1;
   min-width: 0;
-  font-size: 26px;
-  line-height: 1.1;
-  white-space: nowrap;
+  font-size: 22px;
+  line-height: 1.15;
+  /* at most two lines, then "…" */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+.top-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+/* a badge (e.g. Essen) sits left, the buttons right */
+.top-tools > .badge-essen,
+.top-tools > .pill {
+  margin-right: auto;
+}
+@media (min-width: 600px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .top h1 {
+    font-size: 26px;
+  }
 }
 .logo {
   flex: none;
@@ -70,11 +98,6 @@
 }
 .tab:active svg {
   transform: scale(0.85);
-}
-.tab .soon {
-  font-size: 10px;
-  color: #b9a4ff;
-  margin-top: -2px;
 }
 @media (hover: hover) and (pointer: fine) {
   .tab:hover {
@@ -147,11 +170,12 @@
   outline: none;
 }
 .sheet-grip {
-  width: 44px;
-  height: 5px;
-  margin: 0 auto 12px;
+  /* a 5px bar with a 44px tall touch area around it */
+  width: 88px;
+  height: 25px;
+  margin: -10px auto 2px;
+  background: linear-gradient(var(--rim), var(--rim)) center / 44px 5px no-repeat;
   border-radius: 3px;
-  background: var(--rim);
 }
 .sheet-title {
   font-size: 23px;
@@ -215,4 +239,54 @@
 .signin-banner p {
   margin: 0;
   font-size: 14px;
+}
+
+.top-tools:empty {
+  display: none;
+}
+
+/* Tablets and laptops use more of the screen (docs/design.md §6): a wider column, cards and game
+   rows in a grid; sheets and the swipe card keep a readable width. */
+@media (min-width: 768px) {
+  :root {
+    --column: 1040px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .rows {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .sheet {
+    max-width: 560px;
+  }
+  .hexboard {
+    max-width: none;
+  }
+  .tabbar {
+    max-width: 560px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  .swipe-screen,
+  .intro {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .form,
+  .share {
+    max-width: 640px;
+  }
+}
+
+/* Dragging a sheet down to close it follows the finger; it springs back if let go early */
+.sheet.is-dragging {
+  transition: none;
+  animation: none;
+}
+.sheet.is-settling {
+  transition: transform 0.2s ease-out;
+}
+.sheet-grip {
+  touch-action: none;
 }

@@ -1,6 +1,6 @@
 # Feature design: BGG Game Collection
 
-**Design rules**: [docs/design.md](../../docs/design.md) v1.0.1 | **Prototype**: [design/prototype.html](design/prototype.html)
+**Design rules**: [docs/design.md](../../docs/design.md) v1.1.0 | **Prototype**: [design/prototype.html](design/prototype.html)
 (first iteration kept as [design/prototype-v1.html](design/prototype-v1.html)) | **Agreed**: 2026-10-17
 
 Open the prototype in a desktop browser and switch the developer tools to device mode (phone size).
@@ -8,8 +8,9 @@ It uses sample data; invented games get generated covers.
 
 ## Navigation
 
-Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until Release 1.0),
-**Share**. Every screen has the 🔊/🔇 sound toggle in its header.
+Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until Release 1.0,
+without a "soon" label), **Config**. Every screen has the 🔊/🔇 sound toggle in its header (second
+header row on phones).
 
 ## Screens and flows
 
@@ -17,7 +18,7 @@ Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until
 |---|---|---|
 | **Intro** (first start) | 3 swipeable cards: Collections, BGG lists, Swipe then hunt; Skip / Next / Let's go | Collections |
 | **Collections** | one card per collection (name, Essen badge, counts per mark and bought, hexagon cluster); "Create a collection" card; "Show the intro again" | Collection, Add (collection) |
-| **Collection** | "Add from BGG list" (primary), "Add by link"; filter button + panel (presets, Bought segment, group checkboxes); bought summary line ("✅ 1 game bought, €52 spent"); separator; groups in mark order, unmarked first, Not interested collapsed. Empty collection: centred empty state with both add buttons. | Game details, Swipe, Add by link (in collection) |
+| **Collection** | "Add by list" (primary), "Add by link"; filter button + panel (presets, Bought segment, group checkboxes); bought summary line ("✅ 1 game bought, €52 spent"); separator; groups in mark order, unmarked first, Not interested collapsed. Empty collection: centred empty state with both add buttons. | Game details, Swipe, Add by link (in collection) |
 | **Game details** (sheet) | cover, name, year, BGG link, description, booth/price/publisher (or "➕ Add booth, price and publisher" / "✎ Edit"), mark picker (4 hexagons), "✅ Bought it" → "What did you pay?" (prefilled with the listed price) → "Save, got it" / "Don't track the price"; "🛑 Not interested" / "Mark as not yet decided"; "Remove from collection" | – |
 | **Swipe** | source note (which list, whether facts are kept); card stack; ✓ / ✕; games left; arrow keys | back to Collection |
 | **Add by link (in collection)** | link field, recognised game with editable name, "Add to ‹collection›" | back to Collection |
@@ -29,7 +30,7 @@ Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until
 | **List** | name filter; rows with facts (Essen) and "in a collection" hint; **+** per row | List game sheet |
 | **List game** (sheet) | cover, description, facts; "In collections": one tick per collection showing where the game is; Done applies adds and removals, Cancel discards | – |
 | **Search** | "Searching all of BoardGameGeek comes soon" card; disabled search field and sample results; "Add a game by link instead" | Add (game) |
-| **Share & backup** | pick a collection, pick groups, message preview (Essen: booth and price; bought games marked ✅), "Share list"; export / import backup | – |
+| **Config** | Sound ("Sound and vibration" switch, same setting as the header toggle); Share: pick a collection, pick groups, message preview (Essen: booth and price; bought games marked ✅), "Share list"; export / import backup | – |
 
 ## Rules shown in the UI
 

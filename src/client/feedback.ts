@@ -24,9 +24,14 @@ const VOLUME = 0.25
 export function createFeedback({ audio, vibrate, store }: Deps) {
   let on = true
   let ctx: AudioContext | null | undefined
+  const listeners = new Set<() => void>()
+  const notify = () => listeners.forEach(listener => listener())
 
   const ready = store.meta('soundOn').then(
-    stored => void (on = stored ?? true),
+    stored => {
+      on = stored ?? true
+      notify()
+    },
     () => undefined,
   )
 
@@ -111,7 +116,13 @@ export function createFeedback({ audio, vibrate, store }: Deps) {
     isOn: () => on,
     async setOn(value: boolean) {
       on = value
+      notify()
       await store.setMeta('soundOn', value)
+    },
+    /** Called whenever sound is switched (header button and the Config switch stay in step). */
+    subscribe(listener: () => void) {
+      listeners.add(listener)
+      return () => void listeners.delete(listener)
     },
     mark(mark: Mark) {
       if (!on) return

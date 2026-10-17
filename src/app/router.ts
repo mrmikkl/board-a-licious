@@ -10,7 +10,7 @@ export type Route =
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
   | { name: 'add'; what?: 'collection' | 'list' | 'game' }
   | { name: 'search' }
-  | { name: 'share' }
+  | { name: 'config' }
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent)
@@ -28,8 +28,9 @@ export function parseRoute(hash: string): Route {
       return second === 'collection' || second === 'list' || second === 'game' ? { name: 'add', what: second } : { name: 'add' }
     case 'search':
       return { name: 'search' }
-    case 'share':
-      return { name: 'share' }
+    case 'config':
+    case 'share': // old links
+      return { name: 'config' }
     default:
       return { name: 'collections' }
   }
@@ -53,8 +54,8 @@ export function href(route: Route): string {
       return route.what ? `#/add/${route.what}` : '#/add'
     case 'search':
       return '#/search'
-    case 'share':
-      return '#/share'
+    case 'config':
+      return '#/config'
   }
 }
 

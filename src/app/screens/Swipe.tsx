@@ -134,7 +134,7 @@ export function Swipe({ id }: { id: string }) {
   if (!collection) {
     return (
       <>
-        <Header title="Add from BGG list" back={href({ name: 'collections' })} />
+        <Header title="Add by list" back={href({ name: 'collections' })} />
         <main className="screen">
           <div className="empty">
             <div className="hex" />

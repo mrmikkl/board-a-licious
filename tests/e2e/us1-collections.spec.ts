@@ -14,7 +14,7 @@ test('US1: create an Essen collection, add a game by link, mark it, reload', asy
   await page.getByRole('button', { name: 'Create collection' }).click()
 
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-  await expect(page.getByRole('link', { name: /add from bgg list/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /^add by list$/i })).toBeVisible()
   await expectAccessible(page)
 
   await page.getByRole('link', { name: /add by link/i }).click()
