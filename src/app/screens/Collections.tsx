@@ -1,6 +1,7 @@
 import { CollectionCard } from '../components/CollectionCard.tsx'
 import { Header } from '../components/Header.tsx'
 import { useStoreData } from '../context.tsx'
+import { showIntro } from '../intro.ts'
 import { href } from '../router.ts'
 
 /** All collections of the signed-in person (FR-002) and the "Create a collection" card. */
@@ -26,6 +27,11 @@ export function Collections() {
             </a>
           </div>
         )}
+        <p className="intro-again">
+          <button type="button" className="link-btn" onClick={showIntro}>
+            Show the intro again
+          </button>
+        </p>
       </main>
     </>
   )

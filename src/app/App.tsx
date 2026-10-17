@@ -3,11 +3,13 @@ import { Header } from './components/Header.tsx'
 import { TabBar } from './components/TabBar.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
 import { ToastProvider } from './components/Toast.tsx'
+import { useIntroOpen } from './intro.ts'
 import { type Route, useRoute } from './router.ts'
 import { Add } from './screens/Add.tsx'
 import { AddByLink } from './screens/AddByLink.tsx'
 import { Collection } from './screens/Collection.tsx'
 import { Collections } from './screens/Collections.tsx'
+import { Intro } from './screens/Intro.tsx'
 import { List } from './screens/List.tsx'
 import { Lists } from './screens/Lists.tsx'
 import { Search } from './screens/Search.tsx'
@@ -86,12 +88,15 @@ function Boot({ message }: { message?: string }) {
 }
 
 export function App() {
+  // the intro comes before the shell; the store boots behind it
+  const intro = useIntroOpen()
   return (
     <ToastProvider>
       <TapPulse />
+      {intro && <Intro />}
       <AppProvider
         fallback={boot =>
-          boot.state === 'loading' ? (
+          intro ? null : boot.state === 'loading' ? (
             <Boot />
           ) : boot.state === 'signed-out' ? (
             <Boot message="Your sign-in has expired. Reload the page to sign in again." />
@@ -100,7 +105,7 @@ export function App() {
           )
         }
       >
-        <Shell />
+        {!intro && <Shell />}
       </AppProvider>
     </ToastProvider>
   )
