@@ -51,6 +51,8 @@ export async function addGameByLink(services: AppServices, collectionId: string,
 }
 
 export async function setMark(services: AppServices, entry: Entry, mark: Mark) {
+  // sound first, while the tap still counts as a user gesture for Web Audio
+  services.feedback.mark(mark)
   await services.store.saveEntry(markEntry(entry, mark, now()))
   void services.sync.schedule()
 }

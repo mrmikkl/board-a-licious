@@ -2,6 +2,8 @@ import { type ReactNode, createContext, useContext, useEffect, useState, useSync
 
 import { type Api, ApiError, createApi } from '../client/api.ts'
 import { completeDetails } from '../client/details.ts'
+import { type Feedback, createFeedback } from '../client/feedback.ts'
+import { type ListLoader, createListLoader } from '../client/lists.ts'
 import { type Store, openStore } from '../client/store.ts'
 import { type Sync, createSync } from '../client/sync.ts'
 
@@ -13,6 +15,10 @@ export type AppServices = {
   bggSearch: boolean
   /** Fetches BGG details for link-added games and games new on this device (FR-017); never throws. */
   completeDetails: () => Promise<void>
+  /** Loads BGG lists page by page in the background while they are open (FR-012). */
+  lists: ListLoader
+  /** Dice sound, chime and vibration; muted by the header toggle (FR-026). */
+  feedback: Feedback
 }
 
 const Services = createContext<AppServices | null>(null)
@@ -67,7 +73,18 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
         stopSync()
         window.removeEventListener('online', afterSync)
       }
-      setBoot({ state: 'ready', services: { store, api, sync, email, bggSearch, completeDetails: details } })
+      const lists = createListLoader({ store, api })
+      const feedback = createFeedback({
+        audio: () => (typeof AudioContext === 'undefined' ? null : new AudioContext()),
+        vibrate: typeof navigator.vibrate === 'function' ? pattern => navigator.vibrate(pattern) : undefined,
+        store,
+      })
+      const previousStop = stop
+      stop = () => {
+        previousStop?.()
+        lists.dispose()
+      }
+      setBoot({ state: 'ready', services: { store, api, sync, email, bggSearch, completeDetails: details, lists, feedback } })
     })().catch(error => setBoot({ state: 'error', message: String(error) }))
     return () => {
       cancelled = true
@@ -101,6 +118,11 @@ function detailsRunner(store: Store, api: Api, sync: Sync) {
     })
     return running
   }
+}
+
+/** The services, or null outside the provider (e.g. the boot screen). */
+export function useOptionalServices(): AppServices | null {
+  return useContext(Services)
 }
 
 export function useServices(): AppServices {
