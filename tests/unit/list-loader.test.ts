@@ -83,15 +83,19 @@ describe('list loader', () => {
     expect(list).toMatchObject({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, pageCount: 3, loadedPages: 1 })
     expect(list.entries.map(e => e.bggId)).toEqual([100, 101])
     expect(list.openedAt).toBe(new Date(START).toISOString())
+    await loader.idle()
   })
 
   it('loads the remaining pages one by one, at most one request per second, storing progress', async () => {
     const bgg = fakeApi(clock)
     const loader = loaderFor(bgg.api)
     const progress: number[] = []
-    store.subscribe(() => void store.list('preview', 93).then(l => l && progress.push(l.loadedPages)))
+    const reads: Promise<unknown>[] = []
+    const stop = store.subscribe(() => void reads.push(store.list('preview', 93).then(l => l && progress.push(l.loadedPages))))
     await loader.open('preview', 93)
     await loader.idle()
+    stop()
+    await Promise.all(reads)
     expect(bgg.calls.map(c => c.what)).toEqual(['page 1', 'page 2', 'page 3'])
     const gaps = bgg.calls.slice(1).map((c, i) => c.at - bgg.calls[i]!.at)
     expect(gaps.every(gap => gap >= 1000)).toBe(true)

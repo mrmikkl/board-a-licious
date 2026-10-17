@@ -19,6 +19,8 @@ export type StoredListEntry = {
   name: string
   thumbnailUrl: string | null
   facts?: ListEntryFacts
+  /** The list page the entry came from; a reload replaces entries page by page. */
+  page?: number
 }
 
 /** A BGG list loaded on this device (data-model.md, "BGG list"). */
