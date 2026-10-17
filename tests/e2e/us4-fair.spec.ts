@@ -28,7 +28,7 @@ test('US4: manual facts, bought with a price, money spent, filter presets', asyn
   const sheet = page.getByRole('dialog')
 
   // FR-018: description from BGG; FR-011: booth, price and publisher typed in by hand
-  await expect(sheet.getByText(/pacific northwest/i)).toBeVisible()
+  await expect(sheet.getByText(/harmonious ecosystem/i)).toBeVisible()
   await sheet.getByRole('button', { name: /add booth, price and publisher/i }).click()
   const save = sheet.getByRole('button', { name: /^save$/i })
   await expect(save).toBeDisabled()
@@ -85,6 +85,8 @@ test('US4: manual facts, bought with a price, money spent, filter presets', asyn
   await sheet.getByRole('button', { name: /don't track the price/i }).click()
   await expect(page.getByRole('heading', { name: /nothing left to hunt/i })).toBeVisible()
   await expect(page.getByText('✅ 2 games bought, €52 spent')).toBeVisible()
+  // the toast fades in; check contrast once it is fully shown
+  await expect(page.getByRole('status')).toHaveCSS('opacity', '1')
   await expectAccessible(page)
 
   // un-buying from "All games": back in the hunt, the price paid is gone
