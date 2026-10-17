@@ -18,8 +18,8 @@
     }
   ],
   "vars": {
-    "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": "",
+    "ACCESS_TEAM_DOMAIN": "boardalicious.cloudflareaccess.com",
+    "ACCESS_AUD": "c59f4fd36f07b0246a4a493e292cccceea6c3eb579fb0437d92db1458f018fa5",
     "ENVIRONMENT": "production"
   }
 }
