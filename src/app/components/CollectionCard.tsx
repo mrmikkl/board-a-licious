@@ -2,6 +2,7 @@ import type { Collection, Entry } from '../../domain/collection.ts'
 import { countMarks } from '../../domain/collection.ts'
 import { MARKS } from '../../domain/marks.ts'
 import { href } from '../router.ts'
+import { Counter } from './Counter.tsx'
 import { EssenBadge } from './EssenBadge.tsx'
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
@@ -27,16 +28,16 @@ export function CollectionCard({ collection, entries }: { collection: Collection
       <p className="counts">
         {MARKS.filter(m => m.key !== 'new' && m.key !== 'skip').map(m => (
           <span key={m.key}>
-            <span aria-hidden="true">{m.emoji}</span> {counts.byMark[m.key]}
+            <span aria-hidden="true">{m.emoji}</span> <Counter value={counts.byMark[m.key]} />
             <span className="visually-hidden"> {m.label}</span>
           </span>
         ))}
         <span>
-          <span aria-hidden="true">✅</span> {counts.bought}
+          <span aria-hidden="true">✅</span> <Counter value={counts.bought} />
           <span className="visually-hidden"> bought</span>
         </span>
         <span>
-          <span aria-hidden="true">🛑</span> {counts.byMark.skip}
+          <span aria-hidden="true">🛑</span> <Counter value={counts.byMark.skip} />
           <span className="visually-hidden"> not interested</span>
         </span>
       </p>

@@ -16,6 +16,7 @@ import {
 import { setManualFacts } from '../domain/facts.ts'
 import { type Filter, toStored } from '../domain/filter.ts'
 import type { Mark } from '../domain/marks.ts'
+import { type Point, celebrate } from './celebrate.ts'
 import type { AppServices } from './context.tsx'
 
 /** Local changes: saved on the device (with the outbox), then a sync is scheduled. */
@@ -56,9 +57,11 @@ export async function addGameByLink(services: AppServices, collectionId: string,
   void services.completeDetails()
 }
 
-export async function setMark(services: AppServices, entry: Entry, mark: Mark) {
+/** `from`: where the tapped button is, for the Must Have burst (screen centre otherwise). */
+export async function setMark(services: AppServices, entry: Entry, mark: Mark, from?: Point) {
   // sound first, while the tap still counts as a user gesture for Web Audio
   services.feedback.mark(mark)
+  if (mark === 'must_have' && entry.mark !== 'must_have') celebrate({ kind: 'must_have', from })
   await services.store.saveEntry(markEntry(entry, mark, now()))
   void services.sync.schedule()
 }
@@ -69,9 +72,10 @@ export async function removeGame(services: AppServices, entry: Entry) {
 }
 
 /** Bought with the price paid, or without one (FR-007). */
-export async function buyGame(services: AppServices, entry: Entry, paid: Paid | null) {
+export async function buyGame(services: AppServices, entry: Entry, paid: Paid | null, from?: Point) {
   // chime first, while the tap still counts as a user gesture for Web Audio
   services.feedback.bought()
+  celebrate({ kind: 'bought', from })
   await services.store.saveEntry(markBought(entry, paid, now()))
   void services.sync.schedule()
 }

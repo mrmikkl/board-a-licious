@@ -1,4 +1,5 @@
 import type { MarkInfo } from '../../domain/marks.ts'
+import { Counter } from './Counter.tsx'
 
 /** Small coloured hexagon, label and count; "Not interested" folds with a chevron (docs/design.md §7). */
 export function GroupHeading({ id, mark, count, open, onToggle }: { id: string; mark: MarkInfo; count: number; open?: boolean; onToggle?: () => void }) {
@@ -6,7 +7,9 @@ export function GroupHeading({ id, mark, count, open, onToggle }: { id: string; 
     <>
       <i className="hex" aria-hidden="true" />
       <span>{mark.label}</span>
-      <b className="group-count">{count}</b>
+      <b className="group-count">
+        <Counter value={count} />
+      </b>
     </>
   )
   return (

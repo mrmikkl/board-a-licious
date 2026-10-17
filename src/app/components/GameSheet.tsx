@@ -6,6 +6,7 @@ import { type Collection, type Entry, type Facts, type Paid, suggestPaid } from 
 import { MARKS, type Mark } from '../../domain/marks.ts'
 import { CURRENCIES, currencySymbol, formatMoney, parsePrice, priceInput } from '../../domain/money.ts'
 import { buyGame, removeGame, saveFacts, setMark, unbuyGame } from '../actions.ts'
+import { type Point, centreOf } from '../celebrate.ts'
 import { useServices } from '../context.tsx'
 import { HexCover } from './HexCover.tsx'
 import { HexPicker } from './HexPicker.tsx'
@@ -34,14 +35,16 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
   const toast = useToast()
   const [step, setStep] = useState<'details' | 'paid' | 'facts'>('details')
   const name = game?.name ?? `Game ${entry.bggId}`
-  const mark = (key: Mark) => void setMark(services, entry, key)
+  // the tapped picker button, where the Must Have burst starts
+  const tapped = useRef<Element | null>(null)
+  const mark = (key: Mark) => void setMark(services, entry, key, centreOf(tapped.current))
   const remove = async () => {
     await removeGame(services, entry)
     onClose()
     toast(`Removed ${name} from ${collection.name}`)
   }
-  const buy = async (paid: Paid | null) => {
-    await buyGame(services, entry, paid)
+  const buy = async (paid: Paid | null, from?: Point) => {
+    await buyGame(services, entry, paid, from)
     onClose()
     toast(paid ? `${name}: got it for ${formatMoney(paid.cents, paid.currency)}!` : `${name}: got it!`)
   }
@@ -79,9 +82,11 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
       ) : (
         <FactsBox entry={entry} onEdit={() => setStep('facts')} />
       )}
-      <HexPicker label="Mark as" options={PICKER} value={entry.mark} onPick={mark} />
+      <div style={{ display: 'contents' }} onClickCapture={e => (tapped.current = (e.target as Element).closest('button'))}>
+        <HexPicker label="Mark as" options={PICKER} value={entry.mark} onPick={mark} />
+      </div>
       {step === 'paid' ? (
-        <PaidForm entry={entry} onSave={paid => void buy(paid)} onCancel={() => setStep('details')} />
+        <PaidForm entry={entry} onSave={(paid, from) => void buy(paid, from)} onCancel={() => setStep('details')} />
       ) : (
         <div className="sheet-actions">
           {entry.bought ? (
@@ -226,7 +231,7 @@ function FactsForm({ facts, onSave, onCancel }: { facts: Facts | null; onSave: (
 }
 
 /** "What did you pay?", prefilled with the listed price; comma or point, 0–9,999; Enter saves (FR-007). */
-function PaidForm({ entry, onSave, onCancel }: { entry: Entry; onSave: (paid: Paid | null) => void; onCancel: () => void }) {
+function PaidForm({ entry, onSave, onCancel }: { entry: Entry; onSave: (paid: Paid | null, from?: Point) => void; onCancel: () => void }) {
   const id = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestion = suggestPaid(entry)
@@ -239,7 +244,8 @@ function PaidForm({ entry, onSave, onCancel }: { entry: Entry; onSave: (paid: Pa
   const invalid = text.trim() !== '' && cents === null
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    if (cents !== null) onSave({ cents, currency: suggestion.currency })
+    const submitter = (event.nativeEvent as SubmitEvent).submitter
+    if (cents !== null) onSave({ cents, currency: suggestion.currency }, centreOf(submitter))
   }
   return (
     <form className="form sheet-actions" onSubmit={submit}>
@@ -274,7 +280,7 @@ function PaidForm({ entry, onSave, onCancel }: { entry: Entry; onSave: (paid: Pa
       <button type="submit" className="btn btn-block btn-bought" disabled={cents === null}>
         ✅ Save, got it
       </button>
-      <button type="button" className="btn btn-block" onClick={() => onSave(null)}>
+      <button type="button" className="btn btn-block" onClick={e => onSave(null, centreOf(e.currentTarget))}>
         Don't track the price
       </button>
       <button type="button" className="btn btn-block" onClick={onCancel}>

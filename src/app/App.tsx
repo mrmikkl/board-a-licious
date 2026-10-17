@@ -1,4 +1,5 @@
 import { AppProvider, useServices } from './context.tsx'
+import { Celebrate } from './components/Celebrate.tsx'
 import { Header } from './components/Header.tsx'
 import { HexBoard } from './components/HexBoard.tsx'
 import { TabBar } from './components/TabBar.tsx'
@@ -96,6 +97,7 @@ export function App() {
       <HexBoard />
       <TapPulse />
       {intro && <Intro />}
+      <Celebrate />
       <AppProvider
         fallback={boot =>
           intro ? null : boot.state === 'loading' ? (
