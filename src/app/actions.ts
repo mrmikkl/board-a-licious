@@ -2,13 +2,19 @@ import {
   type Collection,
   type CollectionType,
   type Entry,
+  type Facts,
+  type Paid,
   deleteCollection as tombstoneCollection,
+  markBought,
   markEntry,
   newCollection,
   newEntry,
   removeEntry,
   renameCollection as renamed,
+  unmarkBought,
 } from '../domain/collection.ts'
+import { setManualFacts } from '../domain/facts.ts'
+import { type Filter, toStored } from '../domain/filter.ts'
 import type { Mark } from '../domain/marks.ts'
 import type { AppServices } from './context.tsx'
 
@@ -60,4 +66,29 @@ export async function setMark(services: AppServices, entry: Entry, mark: Mark) {
 export async function removeGame(services: AppServices, entry: Entry) {
   await services.store.saveEntry(removeEntry(entry, now()))
   void services.sync.schedule()
+}
+
+/** Bought with the price paid, or without one (FR-007). */
+export async function buyGame(services: AppServices, entry: Entry, paid: Paid | null) {
+  // chime first, while the tap still counts as a user gesture for Web Audio
+  services.feedback.bought()
+  await services.store.saveEntry(markBought(entry, paid, now()))
+  void services.sync.schedule()
+}
+
+export async function unbuyGame(services: AppServices, entry: Entry) {
+  await services.store.saveEntry(unmarkBought(entry, now()))
+  void services.sync.schedule()
+}
+
+/** Booth, price and publisher typed in by hand (FR-011). */
+export async function saveFacts(services: AppServices, entry: Entry, facts: Facts) {
+  await services.store.saveEntry(setManualFacts(entry, facts, now()))
+  void services.sync.schedule()
+}
+
+/** The filter is remembered per collection on this device, also after closing the app (FR-009). */
+export async function saveFilter(services: AppServices, collectionId: string, filter: Filter) {
+  const all = (await services.store.meta('activeFilter')) ?? {}
+  await services.store.setMeta('activeFilter', { ...all, [collectionId]: toStored(filter) })
 }

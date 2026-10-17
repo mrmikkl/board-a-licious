@@ -1,15 +1,13 @@
 import type { Game } from '../../client/types.ts'
 import type { Entry } from '../../domain/collection.ts'
 import { markInfo } from '../../domain/marks.ts'
+import { formatMoney } from '../../domain/money.ts'
 import { HexCover } from './HexCover.tsx'
-
-const money = (cents: number, currency: string | null) =>
-  new Intl.NumberFormat('en', { style: 'currency', currency: currency ?? 'EUR', minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100)
 
 function subline(entry: Entry, game?: Game) {
   const facts = entry.facts
   if (facts && (facts.booth || facts.priceCents != null || facts.publisher)) {
-    return [facts.booth, facts.priceCents != null ? money(facts.priceCents, facts.currency ?? null) : null, facts.publisher].filter(Boolean).join(' · ')
+    return [facts.booth, facts.priceCents != null ? formatMoney(facts.priceCents, facts.currency) : null, facts.publisher].filter(Boolean).join(' · ')
   }
   if (entry.detailsPending && !game?.year) return 'Details follow from BoardGameGeek'
   return game?.year ? String(game.year) : 'Year unknown'
@@ -28,7 +26,8 @@ export function GameRow({ entry, game, onOpen }: { entry: Entry; game?: Game; on
       </span>
       {entry.bought && (
         <span className="pill" data-mark="bought">
-          ✅{entry.paidCents ? ` ${money(entry.paidCents, entry.paidCurrency)}` : ''}
+          ✅{entry.paidCents != null ? ` ${formatMoney(entry.paidCents, entry.paidCurrency)}` : ''}
+          <span className="visually-hidden"> bought</span>
         </span>
       )}
       {entry.mark !== 'new' && entry.mark !== 'skip' && (

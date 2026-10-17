@@ -1,0 +1,240 @@
+/* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
+
+/* Filter: one full-width button, a panel below it */
+.filter {
+  position: relative;
+  z-index: 20;
+  margin-top: 12px;
+}
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  font-weight: 600;
+  text-align: left;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.25s;
+}
+.filter-ico {
+  flex: none;
+  width: 16px;
+  height: 18px;
+  background: var(--grad-hot);
+}
+.filter-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filter-count {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+.filter-btn .chev {
+  font-size: 22px;
+  color: var(--muted);
+  transform: rotate(90deg);
+  transition: transform 0.2s;
+}
+.filter-btn[aria-expanded='true'] {
+  border-color: var(--orange);
+}
+.filter-btn[aria-expanded='true'] .chev {
+  transform: rotate(-90deg);
+}
+.filter-panel {
+  /* in the page flow, not floating: on a 740px phone Done would hide behind the tab bar */
+  margin-top: 8px;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-lg);
+  background: var(--deck-2);
+  box-shadow: 0 18px 40px rgba(3, 4, 12, 0.75);
+  animation: filter-drop 0.2s var(--spring);
+}
+@keyframes filter-drop {
+  /* no fade: the panel is readable (and checkable for contrast) from the first frame */
+  from {
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+.filter-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--raised);
+  box-shadow: var(--glow);
+}
+.seg-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.seg button {
+  min-height: 40px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  border-top: 1px solid var(--rim);
+  cursor: pointer;
+}
+.filter-row:first-child {
+  border-top: 0;
+}
+.filter-row input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+}
+.filter-row span {
+  flex: 1;
+}
+.filter-row small {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+.filter-panel > .btn {
+  margin-top: 10px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .filter-btn:hover,
+  .chip:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+.chip:active,
+.seg button:active {
+  scale: 0.96;
+}
+
+/* "✅ 1 game bought, €52 spent" under the filter */
+.bought-line {
+  margin: 10px 2px 0;
+  font-weight: 700;
+  color: #7cf0c5;
+}
+
+/* Game details: description, facts, price question */
+.detail-head .pill {
+  margin-top: 4px;
+}
+.desc {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+.muted {
+  color: var(--muted);
+}
+.facts-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.factsheet {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+}
+.factsheet dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.factsheet dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.facts-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.facts-by {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.link-btn {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-2);
+  font-weight: 700;
+  text-align: left;
+}
+.facts-add {
+  margin-bottom: 8px;
+}
+.facts-form {
+  margin-bottom: 12px;
+}
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: var(--gap);
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.currency {
+  font-weight: 700;
+  color: var(--muted);
+}
