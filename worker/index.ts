@@ -3,8 +3,12 @@ import { type Db, connect } from './db/db.ts'
 import { HttpError, errorResponse } from './http.ts'
 import { getSync, postSync } from './routes/sync.ts'
 
+/** The two Workers-only shapes the Worker uses (kept local so app and Worker share one type program). */
+type HyperdriveBinding = { connectionString: string }
+type ExecutionContext = { waitUntil(promise: Promise<unknown>): void }
+
 export type Env = AuthEnv & {
-  HYPERDRIVE?: Hyperdrive
+  HYPERDRIVE?: HyperdriveBinding
   DATABASE_URL?: string
   BGG_TOKEN?: string
 }
@@ -64,4 +68,4 @@ export default {
     void ctx
     return app.fetch(request, env)
   },
-} satisfies ExportedHandler<Env>
+}

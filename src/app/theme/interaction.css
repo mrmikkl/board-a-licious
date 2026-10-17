@@ -1,0 +1,113 @@
+/* Interaction states: docs/design.md §8. Nothing moves on hover; press squishes; focus is orange. */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn,
+.icon-btn,
+.card,
+.row,
+.tile {
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    scale 0.25s var(--spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not([aria-disabled='true']):hover,
+  .row:hover,
+  .tile:hover,
+  .field:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .btn:not(:disabled):not(.btn-primary):not(.btn-bought):hover,
+  .icon-btn:hover {
+    background: var(--grad-hot);
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--grad-red);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover,
+  .btn-bought:not(:disabled):hover {
+    box-shadow: var(--lift), 0 0 22px rgba(255, 176, 32, 0.55);
+  }
+  .hex-btn:hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Press: a short squish that springs back (touch and pointer) */
+.card:active,
+.row:active,
+.tile:active {
+  scale: 0.98;
+  transition-duration: 0.08s;
+}
+.btn:not(:disabled):active,
+.icon-btn:active {
+  scale: 0.96;
+  transition-duration: 0.08s;
+}
+.hex-btn {
+  transition:
+    scale 0.25s var(--spring),
+    filter 0.2s;
+}
+.hex-btn:active {
+  scale: 0.9;
+  transition-duration: 0.08s;
+}
+
+/* Tap pulse: an orange hexagon expanding from the tap point */
+.tap-pulse {
+  position: fixed;
+  z-index: 60;
+  width: 56px;
+  height: 64px;
+  margin: -32px 0 0 -28px;
+  clip-path: var(--hex);
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.55), rgba(255, 122, 26, 0) 70%);
+  pointer-events: none;
+  animation: tap-pulse 0.5s ease-out forwards;
+}
+@keyframes tap-pulse {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion (docs/design.md §9): every animation and press squish off */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .card:active,
+  .row:active,
+  .tile:active,
+  .btn:active,
+  .icon-btn:active,
+  .hex-btn:active,
+  .hex-btn:hover {
+    scale: none;
+  }
+  .tap-pulse {
+    display: none;
+  }
+}

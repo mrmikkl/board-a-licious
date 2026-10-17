@@ -62,9 +62,9 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [X] T020 [P] Define `BggSource` (`getGames`, `getListPage`, `getCompanies`, `search`) and the edge cache + 1 request/s throttle in `worker/bgg/source.ts` and `worker/bgg/cache.ts` (constitution V)
 - [X] T021 Implement IndexedDB access in `src/client/store.ts` (one database per signed-in email, `board-a-licious-<email>`; `introSeen` kept in a device-wide key)
 - [X] T022 Implement `src/client/api.ts` (fetch wrapper, error mapping) and `src/client/sync.ts` (push outbox, pull `since`; on start, on `online`, after each change)
-- [ ] T023 [P] Translate design tokens into `src/app/theme/tokens.css` (colours, gradients, radii, `--lift`, hexagon `clip-path`) and base styles in `src/app/theme/base.css` per docs/design.md §3–§6
-- [ ] T024 [P] Implement interaction states in `src/app/theme/interaction.css` (hover: no movement, orange border + outer glow, outlined buttons fill orange; press squish; focus outline) and the tap pulse in `src/app/components/TapPulse.tsx` per docs/design.md §8
-- [ ] T025 Build the app shell in `src/app/App.tsx` with `src/app/components/{TabBar,Header,Sheet,Toast}.tsx`: tabs Collections, Lists, + (hexagon, shimmer), Search, Share; header with back button and sound toggle slot
+- [X] T023 [P] Translate design tokens into `src/app/theme/tokens.css` (colours, gradients, radii, `--lift`, hexagon `clip-path`) and base styles in `src/app/theme/base.css` per docs/design.md §3–§6
+- [X] T024 [P] Implement interaction states in `src/app/theme/interaction.css` (hover: no movement, orange border + outer glow, outlined buttons fill orange; press squish; focus outline) and the tap pulse in `src/app/components/TapPulse.tsx` per docs/design.md §8
+- [X] T025 Build the app shell in `src/app/App.tsx` with `src/app/components/{TabBar,Header,Sheet,Toast}.tsx`: tabs Collections, Lists, + (hexagon, shimmer), Search, Share; header with back button and sound toggle slot
 
 **Checkpoint**: signed-in user, empty app shell, sync round-trip works offline and online.
 

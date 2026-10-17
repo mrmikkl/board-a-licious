@@ -1,0 +1,200 @@
+/* App shell: header, tab bar, sheet, toast (docs/design.md §7) */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px var(--gutter) 12px;
+}
+.top h1 {
+  flex: 1;
+  min-width: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logo {
+  flex: none;
+  width: 34px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 15px var(--font-display);
+}
+.back {
+  font-size: 26px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--column);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.tab {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.tab[aria-current='page'] {
+  color: var(--text);
+}
+.tab[aria-current='page'] svg {
+  color: var(--orange);
+}
+.tab svg {
+  transition:
+    transform 0.25s var(--spring),
+    color 0.2s;
+}
+.tab:active svg {
+  transform: scale(0.85);
+}
+.tab .soon {
+  font-size: 10px;
+  color: #b9a4ff;
+  margin-top: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover {
+    color: var(--text);
+  }
+  .tab:hover svg {
+    color: var(--orange-2);
+  }
+}
+.tab-add {
+  position: relative;
+  justify-self: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.tab-add svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+.tab-add::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: shimmer 5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 6, 14, 0.6);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 31;
+  width: 100%;
+  max-width: var(--column);
+  max-height: 88dvh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1e3e 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-grip {
+  width: 44px;
+  height: 5px;
+  margin: 0 auto 12px;
+  border-radius: 3px;
+  background: var(--rim);
+}
+.sheet-title {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+@keyframes sheet-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(100px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast i {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: var(--orange);
+}

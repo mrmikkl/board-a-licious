@@ -36,6 +36,9 @@ type EntryRow = {
 
 const iso = (value: Date | string) => new Date(value).toISOString()
 
+/** A PostgreSQL array literal; both the postgres driver and PGlite accept it for `$n::type[]`. */
+const pgArray = (values: (string | number)[]) => `{${values.map(v => String(v).replace(/[^\w-]/g, '')).join(',')}}`
+
 const toCollection = (r: CollectionRow): Collection => ({
   id: r.id,
   name: r.name,
@@ -101,7 +104,7 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
   if (collectionIds.length > 0) {
     const owned = await db.query<{ id: string }>(
       `SELECT id FROM collection WHERE user_email = $1 AND id = ANY($2::uuid[])`,
-      [email, collectionIds],
+      [email, pgArray(collectionIds)],
     )
     const ownedIds = new Set(owned.map(r => r.id))
     const foreign = collectionIds.find(id => !ownedIds.has(id))
@@ -158,7 +161,7 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
   const rows = await db.query<GameRow>(
     `SELECT bgg_id, name, year, thumbnail_url, description, kind FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
-    [ids, freshAfter],
+    [pgArray(ids), freshAfter],
   )
   return rows.map(r => ({
     bggId: r.bgg_id,

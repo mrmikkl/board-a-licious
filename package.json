@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:migrate": "tsx scripts/migrate.ts",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "db:local": "tsx scripts/local-db.ts"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.3.0",
@@ -24,8 +25,8 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@cloudflare/vite-plugin": "^1.64.0",
-    "@cloudflare/workers-types": "^5.20261016.1",
     "@electric-sql/pglite": "^0.5.10",
+    "@electric-sql/pglite-socket": "^0.2.13",
     "@playwright/test": "^1.64.1",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
@@ -42,6 +43,7 @@
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
-    "workerd@1.20261012.1": true
+    "workerd@1.20261012.1": true,
+    "fsevents": false
   }
 }

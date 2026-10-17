@@ -16,8 +16,8 @@ Re-planned 2026-10-17. Commands become real once the corresponding tasks exist.
 ```bash
 npm install
 cp .dev.vars.example .dev.vars        # DEV_USER_EMAIL, DATABASE_URL (local), BGG_TOKEN (optional)
-npm run db:migrate                    # migrations/*.sql
-npm run dev                           # Vite + Worker on http://localhost:5173
+npm run db:local                      # local PostgreSQL (PGlite) on :5432, migrations applied; keep it running
+npm run dev                           # in a second terminal: Vite + Worker on http://localhost:5173
 ```
 
 Locally there is no Access; the Worker uses `DEV_USER_EMAIL` only when `ENVIRONMENT=development`.

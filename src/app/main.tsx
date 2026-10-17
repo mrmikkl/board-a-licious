@@ -1,11 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
+import { App } from './App.tsx'
 import './theme/fonts.css'
-
-function App() {
-  return <h1>Board-a-licious</h1>
-}
+import './theme/tokens.css'
+import './theme/base.css'
+import './theme/shell.css'
+import './theme/interaction.css'
 
 const root = document.getElementById('root')
-if (root) createRoot(root).render(<StrictMode><App /></StrictMode>)
+if (root) {
+  createRoot(root).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+}
