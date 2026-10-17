@@ -182,7 +182,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 ### Implementation for User Story 5
 
 - [X] T064 [P] [US5] Implement `src/domain/share.ts` and `src/domain/backup.ts`
-- [ ] T065 [US5] Build `src/app/screens/Share.tsx`: collection choice, group checkboxes with counts, message preview, "Share list" (Web Share API, clipboard fallback), Export / Import with conflict dialog; end-to-end test in `tests/e2e/us5-share.spec.ts`
+- [X] T065 [US5] Build `src/app/screens/Share.tsx`: collection choice, group checkboxes with counts, message preview, "Share list" (Web Share API, clipboard fallback), Export / Import with conflict dialog; end-to-end test in `tests/e2e/us5-share.spec.ts`
 
 **Checkpoint**: Release 0.5 features complete except polish.
 
