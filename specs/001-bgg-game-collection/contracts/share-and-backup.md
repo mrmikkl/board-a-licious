@@ -12,8 +12,8 @@ empty groups left out; bought games get ✅; Essen collections add booth and pri
 🎲 Essen 2026
 
 ⭐ Must Have (2)
-• ✅ Example Game – 3-R400, €60 – https://boardgamegeek.com/boardgame/446453
 • Another Game – 1-A202, €45 – https://boardgamegeek.com/boardgame/123456
+• ✅ Example Game – 3-R400, €60 – https://boardgamegeek.com/boardgame/446453
 
 👀 Interested (1)
 • Harmonies – https://boardgamegeek.com/boardgame/414317

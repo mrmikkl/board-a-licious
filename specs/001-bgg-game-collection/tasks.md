@@ -176,12 +176,12 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ### Tests for User Story 5
 
-- [ ] T062 [P] [US5] Unit tests in `tests/unit/share.test.ts` per contracts/share-and-backup.md: default groups Must Have and Interested, Not yet marked selectable, groups in mark order, names sorted, ✅ for bought, booth and price for Essen, full URLs, empty selection not shareable
-- [ ] T063 [P] [US5] Unit tests in `tests/unit/backup.test.ts`: version 2 round trip, version 1 imported as standard collection "Imported", invalid files rejected without changes, conflict choice "Keep current" / "Use backup"
+- [X] T062 [P] [US5] Unit tests in `tests/unit/share.test.ts` per contracts/share-and-backup.md: default groups Must Have and Interested, Not yet marked selectable, groups in mark order, names sorted, ✅ for bought, booth and price for Essen, full URLs, empty selection not shareable
+- [X] T063 [P] [US5] Unit tests in `tests/unit/backup.test.ts`: version 2 round trip, version 1 imported as standard collection "Imported", invalid files rejected without changes, conflict choice "Keep current" / "Use backup"
 
 ### Implementation for User Story 5
 
-- [ ] T064 [P] [US5] Implement `src/domain/share.ts` and `src/domain/backup.ts`
+- [X] T064 [P] [US5] Implement `src/domain/share.ts` and `src/domain/backup.ts`
 - [ ] T065 [US5] Build `src/app/screens/Share.tsx`: collection choice, group checkboxes with counts, message preview, "Share list" (Web Share API, clipboard fallback), Export / Import with conflict dialog; end-to-end test in `tests/e2e/us5-share.spec.ts`
 
 **Checkpoint**: Release 0.5 features complete except polish.
