@@ -172,7 +172,7 @@ export function Swipe({ id }: { id: string }) {
 
   return (
     <>
-      <Header title={`Add to ${collection.name}`} back={back} actions={collection.type === 'essen' ? <EssenBadge /> : undefined} />
+      <Header title={`Add to ${collection.name}`} back={back} badge={collection.type === 'essen' ? <EssenBadge /> : undefined} />
       <main className="screen swipe-screen">
         <p className="visually-hidden" aria-live="polite" aria-atomic="true">
           {announcement}

@@ -95,7 +95,7 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   const current = list.entries.find(e => e.bggId === openGame)
   return (
     <>
-      <Header title={list.title} back={back} actions={list.isEssen ? <EssenBadge /> : undefined} />
+      <Header title={list.title} back={back} badge={list.isEssen ? <EssenBadge /> : undefined} />
       <main className="screen">
         <ListProgress list={list} onRetry={() => void services.lists.retry(kind, listId)} />
         <label className="visually-hidden" htmlFor={filterId}>

@@ -2,7 +2,7 @@
 
 **Input**: Design documents from `/specs/001-bgg-game-collection/`
 **Prerequisites**: plan.md, spec.md, design.md, research.md, data-model.md, contracts/, quickstart.md;
-design rules `docs/design.md` v1.2.0; ADRs 0001–0006.
+design rules `docs/design.md` v1.3.0; ADRs 0001–0006.
 
 **Tests**: Required. Constitution II (test-first, NON-NEGOTIABLE): every test task comes before
 the code it covers and must fail first. BGG is only ever tested against recorded fixtures.

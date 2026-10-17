@@ -87,13 +87,11 @@ export function Collection({ id }: { id: string }) {
       <Header
         title={collection.name}
         back={back}
+        badge={collection.type === 'essen' ? <EssenBadge /> : undefined}
         actions={
-          <>
-            {collection.type === 'essen' && <EssenBadge />}
-            <button type="button" className="icon-btn" aria-label="Collection options" aria-haspopup="dialog" onClick={() => setMenu(true)}>
-              ⋯
-            </button>
-          </>
+          <button type="button" className="icon-btn" aria-label="Collection options" aria-haspopup="dialog" onClick={() => setMenu(true)}>
+            ⋯
+          </button>
         }
       />
       <main className="screen">
@@ -107,6 +105,7 @@ export function Collection({ id }: { id: string }) {
         ) : (
           <>
             <div className="row-actions">{actions}</div>
+            <hr className="separator" />
             <FilterPanel filter={filter} shown={shown.length} counts={groupCounts(entries, filter.bought)} onChange={changeFilter} />
             {bought && (
               <p className="bought-line">
