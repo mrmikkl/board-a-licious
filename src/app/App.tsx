@@ -1,5 +1,6 @@
 import { AppProvider, useServices } from './context.tsx'
 import { Header } from './components/Header.tsx'
+import { HexBoard } from './components/HexBoard.tsx'
 import { TabBar } from './components/TabBar.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
 import { ToastProvider } from './components/Toast.tsx'
@@ -88,6 +89,7 @@ function Boot({ message }: { message?: string }) {
 export function App() {
   return (
     <ToastProvider>
+      <HexBoard />
       <TapPulse />
       <AppProvider
         fallback={boot =>
