@@ -1,0 +1,45 @@
+import type { Collection, Entry } from '../../domain/collection.ts'
+import { countMarks } from '../../domain/collection.ts'
+import { MARKS } from '../../domain/marks.ts'
+import { href } from '../router.ts'
+import { EssenBadge } from './EssenBadge.tsx'
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+/** A collection with its type and the number of games per mark and bought (FR-002). */
+export function CollectionCard({ collection, entries }: { collection: Collection; entries: Entry[] }) {
+  const counts = countMarks(entries)
+  const essen = collection.type === 'essen'
+  return (
+    <a className={`card collection-card${essen ? ' essen' : ''}`} href={href({ name: 'collection', id: collection.id })}>
+      <span className="cluster" aria-hidden="true">
+        <i className="hex" />
+        <i className="hex" />
+        <i className="hex" />
+      </span>
+      <h2 className="card-title">
+        <span className="card-name">{collection.name}</span> {essen && <EssenBadge />}
+      </h2>
+      <p className="card-sub">
+        {plural(counts.total, 'game', 'games')}
+        {counts.byMark.new > 0 && `, ${counts.byMark.new} not yet marked`}
+      </p>
+      <p className="counts">
+        {MARKS.filter(m => m.key !== 'new' && m.key !== 'skip').map(m => (
+          <span key={m.key}>
+            <span aria-hidden="true">{m.emoji}</span> {counts.byMark[m.key]}
+            <span className="visually-hidden"> {m.label}</span>
+          </span>
+        ))}
+        <span>
+          <span aria-hidden="true">✅</span> {counts.bought}
+          <span className="visually-hidden"> bought</span>
+        </span>
+        <span>
+          <span aria-hidden="true">🛑</span> {counts.byMark.skip}
+          <span className="visually-hidden"> not interested</span>
+        </span>
+      </p>
+    </a>
+  )
+}

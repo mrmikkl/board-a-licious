@@ -1,0 +1,188 @@
+import { type FormEvent, useCallback, useId, useState } from 'react'
+
+import { type Collection as CollectionRow, NAME_MAX, groupByMark } from '../../domain/collection.ts'
+import { deleteCollection, renameCollection } from '../actions.ts'
+import { EssenBadge } from '../components/EssenBadge.tsx'
+import { GameRow } from '../components/GameRow.tsx'
+import { GameSheet } from '../components/GameSheet.tsx'
+import { GroupHeading } from '../components/GroupHeading.tsx'
+import { Header } from '../components/Header.tsx'
+import { Sheet } from '../components/Sheet.tsx'
+import { useToast } from '../components/Toast.tsx'
+import { useServices, useStoreData } from '../context.tsx'
+import { href, navigate } from '../router.ts'
+
+/** One collection: games grouped by mark, Not yet marked first, Not interested collapsed (FR-005). */
+export function Collection({ id }: { id: string }) {
+  const [openGame, setOpenGame] = useState<number>()
+  const [showSkip, setShowSkip] = useState(false)
+  const [menu, setMenu] = useState(false)
+  const closeGame = useCallback(() => setOpenGame(undefined), [])
+  const closeMenu = useCallback(() => setMenu(false), [])
+  const data = useStoreData(
+    async store => {
+      const collection = (await store.collections()).find(c => c.id === id && !c.deleted)
+      const entries = (await store.entries(id)).filter(e => !e.deleted)
+      const games = new Map((await store.games(entries.map(e => e.bggId))).map(g => [g.bggId, g]))
+      return { id, collection, entries, games }
+    },
+    [id],
+  )
+  const back = href({ name: 'collections' })
+  if (!data || data.id !== id) return <Header title="" back={back} />
+  const { collection, entries, games } = data
+  if (!collection) {
+    return (
+      <>
+        <Header title="Collection" back={back} />
+        <main className="screen">
+          <div className="empty">
+            <div className="hex" />
+            <h2>This collection does not exist anymore</h2>
+            <p>It may have been deleted on another device.</p>
+            <div className="actions">
+              <a className="btn btn-primary" href={back}>
+                Go to your collections
+              </a>
+            </div>
+          </div>
+        </main>
+      </>
+    )
+  }
+
+  const groups = groupByMark(entries, e => games.get(e.bggId)?.name ?? '')
+  const current = entries.find(e => e.bggId === openGame)
+  const actions = (
+    <>
+      <a className="btn btn-primary" href={href({ name: 'lists' })}>
+        Add from BGG list
+      </a>
+      <a className="btn" href={href({ name: 'add-link', id })}>
+        Add by link
+      </a>
+    </>
+  )
+
+  return (
+    <>
+      <Header
+        title={collection.name}
+        back={back}
+        actions={
+          <>
+            {collection.type === 'essen' && <EssenBadge />}
+            <button type="button" className="icon-btn" aria-label="Collection options" aria-haspopup="dialog" onClick={() => setMenu(true)}>
+              ⋯
+            </button>
+          </>
+        }
+      />
+      <main className="screen">
+        {entries.length === 0 ? (
+          <div className="empty">
+            <div className="hex" />
+            <h2>No games in {collection.name} yet</h2>
+            <p>Go through a BGG list and swipe the games you care about into it, or add a single game by its link.</p>
+            <div className="actions">{actions}</div>
+          </div>
+        ) : (
+          <>
+            <div className="row-actions">{actions}</div>
+            <hr className="separator" />
+            {groups.map(group => {
+              const headingId = `group-${group.mark.key}`
+              const folds = group.mark.key === 'skip'
+              return (
+                <section key={group.mark.key} className="group" aria-labelledby={headingId}>
+                  <GroupHeading
+                    id={headingId}
+                    mark={group.mark}
+                    count={group.entries.length}
+                    open={folds ? showSkip : undefined}
+                    onToggle={folds ? () => setShowSkip(open => !open) : undefined}
+                  />
+                  <ul className="rows" hidden={folds && !showSkip}>
+                    {group.entries.map(entry => (
+                      <li key={entry.bggId}>
+                        <GameRow entry={entry} game={games.get(entry.bggId)} onOpen={() => setOpenGame(entry.bggId)} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )
+            })}
+          </>
+        )}
+      </main>
+      {current && <GameSheet entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
+      {menu && <CollectionMenu collection={collection} gameCount={entries.length} onClose={closeMenu} />}
+    </>
+  )
+}
+
+/** Rename (1–60 characters) or delete with confirmation; the type stays fixed (FR-001a). */
+function CollectionMenu({ collection, gameCount, onClose }: { collection: CollectionRow; gameCount: number; onClose: () => void }) {
+  const services = useServices()
+  const toast = useToast()
+  const nameId = useId()
+  const [name, setName] = useState(collection.name)
+  const [confirm, setConfirm] = useState(false)
+  const trimmed = name.trim()
+  const canRename = trimmed.length > 0 && trimmed.length <= NAME_MAX && trimmed !== collection.name
+
+  const rename = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!canRename) return
+    await renameCollection(services, collection, name)
+    onClose()
+    toast(`Renamed to ${trimmed}`)
+  }
+  const remove = async () => {
+    await deleteCollection(services, collection)
+    toast(`Deleted ${collection.name}`)
+    navigate({ name: 'collections' })
+  }
+
+  if (confirm) {
+    return (
+      <Sheet open title={`Delete ${collection.name} and its ${gameCount} ${gameCount === 1 ? 'game' : 'games'}?`} onClose={onClose}>
+        <p className="lead">Marks, bought games and prices in it are deleted too, on all your devices.</p>
+        <div className="sheet-actions">
+          <button type="button" className="btn btn-block btn-danger" onClick={() => void remove()}>
+            Delete collection
+          </button>
+          <button type="button" className="btn btn-block" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </Sheet>
+    )
+  }
+  return (
+    <Sheet open title="Collection" onClose={onClose}>
+      <form className="form" onSubmit={rename}>
+        <div>
+          <label className="label" htmlFor={nameId}>
+            Name
+          </label>
+          <div className="field">
+            <input id={nameId} value={name} maxLength={NAME_MAX} autoComplete="off" onChange={e => setName(e.target.value)} />
+          </div>
+          <p className="hint">{collection.type === 'essen' ? 'Essen collection' : 'Standard collection'}; the type cannot change.</p>
+        </div>
+        <button type="submit" className="btn btn-primary btn-block" disabled={!canRename}>
+          Save name
+        </button>
+      </form>
+      <div className="sheet-actions">
+        <button type="button" className="btn btn-block btn-danger" onClick={() => setConfirm(true)}>
+          Delete collection…
+        </button>
+        <button type="button" className="btn btn-block" onClick={onClose}>
+          Cancel
+        </button>
+      </div>
+    </Sheet>
+  )
+}

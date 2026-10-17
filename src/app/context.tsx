@@ -1,10 +1,19 @@
 import { type ReactNode, createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react'
 
 import { type Api, ApiError, createApi } from '../client/api.ts'
+import { completeDetails } from '../client/details.ts'
 import { type Store, openStore } from '../client/store.ts'
 import { type Sync, createSync } from '../client/sync.ts'
 
-export type AppServices = { store: Store; api: Api; sync: Sync; email: string; bggSearch: boolean }
+export type AppServices = {
+  store: Store
+  api: Api
+  sync: Sync
+  email: string
+  bggSearch: boolean
+  /** Fetches BGG details for link-added games and games new on this device (FR-017); never throws. */
+  completeDetails: () => Promise<void>
+}
 
 const Services = createContext<AppServices | null>(null)
 const LAST_EMAIL = 'bal-last-email'
@@ -48,8 +57,17 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
       store = await openStore(email)
       if (cancelled) return store.close()
       const sync = createSync({ store, api })
-      stop = sync.start()
-      setBoot({ state: 'ready', services: { store, api, sync, email, bggSearch } })
+      const details = detailsRunner(store, api, sync)
+      const stopSync = sync.start()
+      // after the first sync and after coming back online, so games from other devices get details too
+      const afterSync = () => void sync.idle().then(details)
+      afterSync()
+      window.addEventListener('online', afterSync)
+      stop = () => {
+        stopSync()
+        window.removeEventListener('online', afterSync)
+      }
+      setBoot({ state: 'ready', services: { store, api, sync, email, bggSearch, completeDetails: details } })
     })().catch(error => setBoot({ state: 'error', message: String(error) }))
     return () => {
       cancelled = true
@@ -60,6 +78,29 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
 
   if (boot.state !== 'ready') return <>{fallback(boot)}</>
   return <Services.Provider value={boot.services}>{children}</Services.Provider>
+}
+
+/** One run at a time; a call during a run starts one more run afterwards, so new entries are not missed. */
+function detailsRunner(store: Store, api: Api, sync: Sync) {
+  let running: Promise<void> | undefined
+  let again = false
+  const run = async () => {
+    do {
+      again = false
+      const completed = await completeDetails({ store, api, now: () => new Date().toISOString() }).catch(() => 0)
+      if (completed > 0) void sync.schedule()
+    } while (again)
+  }
+  return () => {
+    if (running) {
+      again = true
+      return running
+    }
+    running = run().finally(() => {
+      running = undefined
+    })
+    return running
+  }
 }
 
 export function useServices(): AppServices {
