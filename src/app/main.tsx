@@ -8,6 +8,7 @@ import './theme/base.css'
 import './theme/shell.css'
 import './theme/components.css'
 import './theme/interaction.css'
+import './theme/share.css'
 
 const root = document.getElementById('root')
 if (root) {
