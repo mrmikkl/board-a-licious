@@ -145,7 +145,8 @@ a {
   color: var(--ink);
 }
 .btn-danger {
-  color: var(--danger);
+  /* --danger itself reaches only 4.4:1 on the raised surface; text needs 4.5:1 (docs/design.md §3) */
+  color: #ff6b78;
 }
 .btn:disabled {
   opacity: 0.45;

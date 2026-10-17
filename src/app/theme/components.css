@@ -1,0 +1,481 @@
+/* Feature components: docs/design.md §7 (collection card, game row, group heading, hexagon picker, forms) */
+
+/* Mark gradients (docs/design.md §4), used by pickers, pills and group dots */
+[data-mark='new'],
+[data-tone='new'] {
+  --tone: var(--grad-white);
+  --tone-text: var(--ink);
+}
+[data-mark='must_have'],
+[data-tone='must_have'],
+[data-tone='hot'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='interested'],
+[data-tone='interested'] {
+  --tone: var(--grad-cool);
+  --tone-text: var(--ink);
+}
+[data-mark='unsure'],
+[data-tone='unsure'] {
+  --tone: var(--grad-violet);
+  --tone-text: #fff;
+}
+[data-mark='poop'],
+[data-tone='poop'] {
+  --tone: var(--grad-mud);
+  --tone-text: #fff;
+}
+[data-mark='skip'],
+[data-tone='skip'] {
+  --tone: var(--grad-red);
+  --tone-text: #fff;
+}
+[data-mark='bought'] {
+  --tone: var(--grad-got);
+  --tone-text: var(--ink);
+}
+
+.section-title {
+  font-size: 18px;
+  margin: 20px 0 10px;
+}
+.section-title small {
+  font: 600 13px var(--font-body);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hint.error {
+  color: #ff8a95;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field.is-disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.field svg {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Dropdown: field look with an orange hexagon as arrow */
+.field.select {
+  position: relative;
+}
+.field.select select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.field.select select option {
+  background: var(--deck);
+}
+.field.select::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  pointer-events: none;
+}
+
+/* Switch ("Essen collection") */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.toggle-text {
+  flex: 1;
+  font-weight: 600;
+}
+.toggle-text small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 6px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  clip-path: var(--hex);
+  background: var(--muted);
+  transition: transform 0.25s var(--spring);
+}
+.switch:checked {
+  background: var(--grad-hot);
+  border-color: transparent;
+}
+.switch:checked::after {
+  background: var(--ink);
+  transform: translateX(20px);
+}
+
+/* Hexagon picker: honeycomb, every second hexagon offset down */
+.picker {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding-bottom: 40px;
+  margin: 8px 0 12px;
+}
+.picker-btn {
+  flex: 0 1 80px;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+.picker-btn:nth-child(even) {
+  transform: translateY(40px);
+}
+.picker-hex {
+  display: block;
+  aspect-ratio: 0.88;
+  padding: 2px;
+  background: var(--border-2);
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.picker-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.picker-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.picker-btn[aria-pressed='true'] .picker-hex {
+  background: var(--orange);
+}
+.picker-btn[aria-pressed='true'] .picker-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.picker-btn:is([data-tone='unsure'], [data-tone='poop'])[aria-pressed='true'] .picker-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Collection cards with the hexagon cluster in the top-right corner */
+.cards {
+  display: grid;
+  gap: var(--gap);
+}
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  padding-right: 64px;
+}
+.card-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 10px 0 0;
+  font: 700 15px var(--font-display);
+}
+.cluster {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 58px;
+  height: 52px;
+  animation: sway 6s ease-in-out infinite;
+}
+.cluster i {
+  position: absolute;
+  width: 22px;
+  height: 25px;
+  background: var(--grad-dusk);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+.collection-card.essen .cluster i {
+  background: var(--grad-hot);
+  filter: drop-shadow(0 0 6px rgba(255, 122, 26, 0.6));
+}
+.cluster i:nth-child(1) {
+  top: 0;
+  right: 0;
+}
+.cluster i:nth-child(2) {
+  top: 0;
+  right: 24px;
+  opacity: 0.7;
+}
+.cluster i:nth-child(3) {
+  top: 20px;
+  right: 12px;
+  opacity: 0.85;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.new-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  border: 1px dashed var(--orange);
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.new-card .hex {
+  width: 22px;
+  height: 25px;
+  background: var(--grad-hot);
+}
+@media (hover: hover) and (pointer: fine) {
+  .new-card:hover {
+    background: var(--grad-hot);
+    color: var(--ink);
+  }
+}
+.soon-card {
+  margin-bottom: 16px;
+}
+.soon-card .card-title {
+  padding-right: 0;
+}
+
+/* Collection screen: long names wrap to two lines instead of being cut after a few letters */
+.top h1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.top .badge-essen {
+  flex: none;
+}
+.row-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.row-actions .btn {
+  padding-inline: 10px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.group-title i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  background: var(--tone);
+}
+.group-count {
+  color: var(--muted);
+  font-weight: 700;
+}
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.chev {
+  margin-left: auto;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.fold[aria-expanded='true'] .chev {
+  transform: rotate(90deg);
+}
+
+.rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows[hidden] {
+  display: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+.row-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-sub {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row.skip .row-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.row.skip .cover {
+  opacity: 0.5;
+}
+.row .pill,
+.detail-head .pill {
+  flex: none;
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.mark-pill {
+  padding: 4px 8px;
+}
+
+/* Hexagon covers */
+.cover {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.cover-hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--grad-dusk);
+}
+.cover-hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-initials {
+  font: 700 17px var(--font-display);
+  color: var(--ink);
+}
+.cover-got {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Game details sheet */
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.detail-sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+.sheet-actions {
+  display: grid;
+  gap: var(--gap);
+  margin-top: 12px;
+}

@@ -6,6 +6,7 @@ import './theme/fonts.css'
 import './theme/tokens.css'
 import './theme/base.css'
 import './theme/shell.css'
+import './theme/components.css'
 import './theme/interaction.css'
 
 const root = document.getElementById('root')
