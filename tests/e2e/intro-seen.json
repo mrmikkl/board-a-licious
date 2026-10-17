@@ -3,7 +3,21 @@
   "origins": [
     {
       "origin": "http://localhost:5173",
-      "localStorage": [{ "name": "bal-intro-seen", "value": "1" }]
+      "localStorage": [
+        {
+          "name": "bal-intro-seen",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "origin": "http://localhost:4173",
+      "localStorage": [
+        {
+          "name": "bal-intro-seen",
+          "value": "1"
+        }
+      ]
     }
   ]
 }
