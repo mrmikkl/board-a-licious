@@ -109,11 +109,11 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await expectAccessible(page)
   await sheet.getByRole('button', { name: 'Cancel' }).click()
   await expect(sheet).toBeHidden()
-  await expect(kalypso).not.toContainText('in a collection')
 
-  // Done adds exactly as ticked
+  // Done adds exactly as ticked (other test runs share the dev database, so only these two collections count)
   await kalypso.click()
   await expect(essenTick).not.toBeChecked()
+  await expect(standardTick).not.toBeChecked()
   await essenTick.check()
   await standardTick.check()
   await sheet.getByRole('button', { name: 'Done' }).click()
