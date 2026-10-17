@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "board-a-licious",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  // the postgres driver needs Node's net/tls APIs
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // replaced with the real ID when Hyperdrive is set up (T077)
+      "id": "00000000000000000000000000000000",
+      "localConnectionString": "postgres://postgres:postgres@localhost:5432/boardalicious"
+    }
+  ],
+  "vars": {
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": "",
+    "ENVIRONMENT": "production"
+  }
+}

@@ -24,11 +24,11 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Initialise the package: `package.json` (scripts `dev`, `test`, `test:e2e`, `db:migrate`, `deploy`), `tsconfig.json` (strict), `.gitignore` (`node_modules`, `dist`, `.dev.vars`)
-- [ ] T002 [P] Create the Vite + React 19 app entry `index.html`, `src/app/main.tsx`, `vite.config.ts` with `vite-plugin-pwa` (app shell and fonts precached)
-- [ ] T003 [P] Create `wrangler.jsonc`: static assets from `dist`, `/api/*` → `worker/index.ts`, Hyperdrive binding `HYPERDRIVE`, vars `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ENVIRONMENT`; add `.dev.vars.example` (`DEV_USER_EMAIL`, `DATABASE_URL`, optional `BGG_TOKEN`)
-- [ ] T004 [P] Configure tests: `vitest.config.ts` (projects: unit with fake-indexeddb, worker with `@cloudflare/vitest-pool-workers`), `playwright.config.ts` (viewport 360×740, a second project with `reducedMotion: 'reduce'`, `@axe-core/playwright`)
-- [ ] T005 [P] Self-host fonts Chakra Petch (500/600/700) and Manrope (400–700) in `src/app/theme/fonts/` with `@font-face` in `src/app/theme/fonts.css` (research R13: no third-party font requests)
+- [X] T001 Initialise the package: `package.json` (scripts `dev`, `test`, `test:e2e`, `db:migrate`, `deploy`), `tsconfig.json` (strict), `.gitignore` (`node_modules`, `dist`, `.dev.vars`)
+- [X] T002 [P] Create the Vite + React 19 app entry `index.html`, `src/app/main.tsx`, `vite.config.ts` with `vite-plugin-pwa` (app shell and fonts precached)
+- [X] T003 [P] Create `wrangler.jsonc`: static assets from `dist`, `/api/*` → `worker/index.ts`, Hyperdrive binding `HYPERDRIVE`, vars `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ENVIRONMENT`; add `.dev.vars.example` (`DEV_USER_EMAIL`, `DATABASE_URL`, optional `BGG_TOKEN`)
+- [X] T004 [P] Configure tests: `vitest.config.ts` (projects: unit with fake-indexeddb, worker with `@cloudflare/vitest-pool-workers`), `playwright.config.ts` (viewport 360×740, a second project with `reducedMotion: 'reduce'`, `@axe-core/playwright`)
+- [X] T005 [P] Self-host fonts Chakra Petch (500/600/700) and Manrope (400–700), bundled from `@fontsource` packages via `src/app/theme/fonts.css` (research R13: no third-party font requests)
 - [ ] T006 Spike (decision gate, research R9/R4a): temporary route `GET /api/_spike` in `worker/spike.ts` that fetches `api.geekdo.com/api/geekpreviewitems?previewid=93&pageid=1` and `api/geekitems?objectid=295947&objecttype=thing` with an honest User-Agent; deploy, record the result in `specs/001-bgg-game-collection/research.md` (R9 "Spike result"), then delete the route. If blocked from Cloudflare: lists fall back to add-by-link only (note in plan.md)
 
 **Checkpoint**: project builds, empty tests run, BGG reachability decided.

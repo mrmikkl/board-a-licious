@@ -32,7 +32,8 @@ which have no facts. The spec says "load a BGG list"; the kind follows from the 
 **Storage**: Neon PostgreSQL via Hyperdrive (collections, entries, shared game cache); IndexedDB on
 the device (mirror, outbox, loaded lists), per ADR 0004
 
-**Testing**: Vitest, @cloudflare/vitest-pool-workers, PGlite, Playwright + @axe-core/playwright
+**Testing**: Vitest (Worker code tested in Node with injected fakes for fetch, cache and database instead of
+@cloudflare/vitest-pool-workers), PGlite, Playwright + @axe-core/playwright
 
 **Target Platform**: current mobile Safari and Chrome; Cloudflare Workers runtime
 
