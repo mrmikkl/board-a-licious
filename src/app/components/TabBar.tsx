@@ -2,7 +2,7 @@ import { type Route, href } from '../router.ts'
 import { IconCollections, IconConfig, IconLists, IconPlus, IconSearch } from './icons.tsx'
 
 const section = (route: Route) =>
-  route.name === 'collection' || route.name === 'swipe' || route.name === 'add-link' ? 'collections' : route.name === 'list' ? 'lists' : route.name
+  route.name === 'collection' || route.name === 'swipe' || route.name === 'add-link' ? 'collections' : route.name === 'list' ? 'lists' : route.name === 'share' ? 'config' : route.name
 
 /** Tabs: Collections, Lists, + (hexagon), Search, Config (docs/design.md v1.1.0 "Navigation"). */
 export function TabBar({ route }: { route: Route }) {

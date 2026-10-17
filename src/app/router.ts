@@ -11,6 +11,7 @@ export type Route =
   | { name: 'add'; what?: 'collection' | 'list' | 'game' }
   | { name: 'search' }
   | { name: 'config' }
+  | { name: 'share' }
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent)
@@ -29,8 +30,9 @@ export function parseRoute(hash: string): Route {
     case 'search':
       return { name: 'search' }
     case 'config':
+      return second === 'share' ? { name: 'share' } : { name: 'config' }
     case 'share': // old links
-      return { name: 'config' }
+      return { name: 'share' }
     default:
       return { name: 'collections' }
   }
@@ -56,6 +58,8 @@ export function href(route: Route): string {
       return '#/search'
     case 'config':
       return '#/config'
+    case 'share':
+      return '#/config/share'
   }
 }
 

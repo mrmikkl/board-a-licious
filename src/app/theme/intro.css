@@ -122,8 +122,3 @@
   min-width: 140px;
 }
 
-/* "Show the intro again" at the end of the Collections screen */
-.intro-again {
-  margin: 16px 0 0;
-  text-align: center;
-}

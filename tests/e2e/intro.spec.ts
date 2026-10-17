@@ -33,6 +33,8 @@ test('intro: shown on first start, Skip lands on Collections, not shown again un
   await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
   await expect(intro).toBeHidden()
 
+  // the intro can be shown again from Config
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Config' }).click()
   await page.getByRole('button', { name: 'Show the intro again' }).click()
   await expect(intro.getByRole('group', { name: '1 of 3' })).toBeVisible()
   await intro.getByRole('button', { name: 'Skip' }).click()

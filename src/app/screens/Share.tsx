@@ -1,4 +1,4 @@
-import { type ChangeEvent, useCallback, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { type ChangeEvent, useCallback, useId, useRef, useState } from 'react'
 
 import type { Backup, Resolution } from '../../domain/backup.ts'
 import type { Mark } from '../../domain/marks.ts'
@@ -82,14 +82,14 @@ export function Share() {
     setQuestion(checked)
   }
 
-  if (!data) return <Header title="Config" />
+  const back = href({ name: 'config' })
+  if (!data) return <Header title="Share and backup" back={back} />
   const groups = collection ? shareGroups(collection.id, data.entries) : []
 
   return (
     <>
-      <Header title="Config" />
+      <Header title="Share and backup" back={back} />
       <main className="screen share">
-        <SoundSetting />
         <h2 className="section-title">Share a list</h2>
         {collection ? (
           <>
@@ -184,26 +184,5 @@ function ImportQuestion({ question, onAnswer, onClose }: { question: Question; o
         </button>
       </div>
     </Sheet>
-  )
-}
-
-/** Sound and vibration on marking (FR-026); switched only here. */
-function SoundSetting() {
-  const { feedback } = useServices()
-  const on = useSyncExternalStore(
-    listener => feedback.subscribe(listener),
-    () => feedback.isOn(),
-  )
-  return (
-    <>
-      <h2 className="section-title">Sound</h2>
-      <label className="toggle">
-        <span className="toggle-text">
-          Sound and vibration
-          <small>A dice roll when you mark a game, a chime when you buy one.</small>
-        </span>
-        <input type="checkbox" role="switch" className="switch" checked={on} aria-checked={on} onChange={e => void feedback.setOn(e.target.checked)} />
-      </label>
-    </>
   )
 }

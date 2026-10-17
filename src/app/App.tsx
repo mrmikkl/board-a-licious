@@ -15,6 +15,7 @@ import { Intro } from './screens/Intro.tsx'
 import { List } from './screens/List.tsx'
 import { Lists } from './screens/Lists.tsx'
 import { Search } from './screens/Search.tsx'
+import { Config } from './screens/Config.tsx'
 import { Share } from './screens/Share.tsx'
 import { Swipe } from './screens/Swipe.tsx'
 
@@ -36,8 +37,10 @@ function Screen({ route }: { route: Route }) {
       return <Add what={route.what} />
     case 'search':
       return <Search />
-    case 'config':
+    case 'share':
       return <Share />
+    case 'config':
+      return <Config />
     default:
       return <Placeholder route={route} />
   }
@@ -55,6 +58,7 @@ function Placeholder({ route }: { route: Route }) {
     add: 'Add',
     search: 'Search',
     config: 'Config',
+    share: 'Share and backup',
   }
   return (
     <>
