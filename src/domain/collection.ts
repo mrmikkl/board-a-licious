@@ -1,4 +1,4 @@
-import { type Mark, isMark } from './marks.ts'
+import { MARKS, type Mark, type MarkInfo, isMark } from './marks.ts'
 
 export type CollectionType = 'essen' | 'standard'
 
@@ -77,6 +77,28 @@ export function newEntry(collectionId: string, bggId: number, now: string): Entr
     updatedAt: now,
     deleted: false,
   }
+}
+
+export const markEntry = (entry: Entry, mark: Mark, now: string): Entry => ({ ...entry, mark, updatedAt: now })
+
+/** Removing a game from a collection tombstones its entry, so other devices drop it too. */
+export const removeEntry = (entry: Entry, now: string): Entry => ({ ...entry, deleted: true, updatedAt: now })
+
+/** Live entries grouped by mark in mark order (FR-005), empty groups left out, games sorted by name. */
+export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string): { mark: MarkInfo; entries: Entry[] }[] {
+  const live = entries.filter(e => !e.deleted)
+  return MARKS.map(mark => ({
+    mark,
+    entries: live.filter(e => e.mark === mark.key).sort((a, b) => nameOf(a).localeCompare(nameOf(b))),
+  })).filter(group => group.entries.length > 0)
+}
+
+/** Games per mark and bought, for the collection card (FR-002). */
+export function countMarks(entries: Entry[]) {
+  const live = entries.filter(e => !e.deleted)
+  const byMark = Object.fromEntries(MARKS.map(m => [m.key, 0])) as Record<Mark, number>
+  for (const e of live) byMark[e.mark] += 1
+  return { total: live.length, bought: live.filter(e => e.bought).length, byMark }
 }
 
 const isTimestamp = (value: unknown) => typeof value === 'string' && !Number.isNaN(Date.parse(value))

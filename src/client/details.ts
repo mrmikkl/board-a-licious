@@ -5,13 +5,17 @@ const CHUNK = 50
 
 /**
  * Completes games added by link (FR-017): fetches BGG details for entries with `detailsPending` and
- * clears the flag; mark, bought and price stay as they are. Failures keep the entries pending for the
- * next run. Returns how many entries were completed.
+ * clears the flag; mark, bought and price stay as they are. Games this device has no details for yet
+ * (entries synced from another device) are fetched too. Failures keep the entries pending for the next
+ * run. Returns how many pending entries were completed.
  */
 export async function completeDetails(deps: { store: Store; api: { games(ids: number[]): Promise<Game[]> }; now: () => string }) {
   const { store, api, now } = deps
-  const pending = (await store.allEntries()).filter(e => e.detailsPending && !e.deleted)
-  const ids = [...new Set(pending.map(e => e.bggId))]
+  const live = (await store.allEntries()).filter(e => !e.deleted)
+  const allIds = [...new Set(live.map(e => e.bggId))]
+  const known = new Set((await store.games(allIds)).map(g => g.bggId))
+  const pendingIds = new Set(live.filter(e => e.detailsPending).map(e => e.bggId))
+  const ids = allIds.filter(id => pendingIds.has(id) || !known.has(id))
   let completed = 0
   for (let i = 0; i < ids.length; i += CHUNK) {
     let games: Game[]
@@ -23,8 +27,11 @@ export async function completeDetails(deps: { store: Store; api: { games(ids: nu
     if (games.length === 0) continue
     await store.putGames(games)
     const found = new Set(games.map(g => g.bggId))
-    const done = pending.filter(e => found.has(e.bggId)).map(e => ({ ...e, detailsPending: false, updatedAt: now() }))
-    await store.saveEntries(done)
+    // re-read: the person may have changed a mark while BGG answered
+    const done = (await store.allEntries())
+      .filter(e => e.detailsPending && !e.deleted && found.has(e.bggId))
+      .map(e => ({ ...e, detailsPending: false, updatedAt: now() }))
+    if (done.length > 0) await store.saveEntries(done)
     completed += done.length
   }
   return completed
