@@ -84,8 +84,8 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
   flow into a grid; sheets (560px), the swipe card, the intro and forms keep a readable width; the
   tab bar stays phone-sized and centred.
 - **Header**: on phones two rows: back button (or logo) and the screen title (22px, at most two
-  lines), then a row with the badge (e.g. Essen) on the left and the screen's buttons and the
-  🔊/🔇 toggle on the right. From 600px one row (title 26px).
+  lines), then, if the screen has any, a row with the badge (e.g. Essen) on the left and the
+  screen's buttons on the right. From 600px one row (title 26px).
 
 ## 7. Components
 
@@ -139,9 +139,8 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 
 ## 10. Sound and haptics
 
-- A short synthesised **dice roll** on every mark; bought adds a two-note chime. A 🔊/🔇 button in
-  the header and the "Sound and vibration" switch in Config mute it (one setting); the choice is
-  remembered.
+- A short synthesised **dice roll** on every mark; bought adds a two-note chime. The "Sound and
+  vibration" switch in Config mutes it; the choice is remembered.
 - **Vibration** (Android browsers): short tick per mark or swipe, double for Must Have, longer
   pattern for bought. iPhone browsers offer no web vibration; nothing happens there.
 

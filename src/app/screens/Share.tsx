@@ -1,9 +1,9 @@
-import { type ChangeEvent, useCallback, useId, useRef, useState } from 'react'
+import { type ChangeEvent, useCallback, useId, useRef, useState, useSyncExternalStore } from 'react'
 
 import type { Backup, Resolution } from '../../domain/backup.ts'
 import type { Mark } from '../../domain/marks.ts'
 import { DEFAULT_SHARE_MARKS, shareGroups, shareText } from '../../domain/share.ts'
-import { Header, useSoundOn } from '../components/Header.tsx'
+import { Header } from '../components/Header.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
@@ -187,10 +187,13 @@ function ImportQuestion({ question, onAnswer, onClose }: { question: Question; o
   )
 }
 
-/** Sound and vibration on marking (FR-026); the same choice as the 🔊/🔇 button in the header. */
+/** Sound and vibration on marking (FR-026); switched only here. */
 function SoundSetting() {
   const { feedback } = useServices()
-  const on = useSoundOn()
+  const on = useSyncExternalStore(
+    listener => feedback.subscribe(listener),
+    () => feedback.isOn(),
+  )
   return (
     <>
       <h2 className="section-title">Sound</h2>

@@ -56,7 +56,7 @@ export function createApp(deps: Deps) {
           case 'GET /api/me':
             return Response.json({ email, bggSearch: Boolean(env.BGG_TOKEN) })
           case 'GET /api/sync':
-            return await getSync(database(), email, url, deps.now())
+            return await getSync(database(), email, url)
           case 'POST /api/sync':
             return await postSync(database(), email, request, deps.now())
           default:

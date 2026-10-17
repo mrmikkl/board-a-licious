@@ -3,7 +3,7 @@ import { type FormEvent, useEffect, useId, useRef, useState } from 'react'
 import type { Game } from '../../client/types.ts'
 import { gameUrl } from '../../domain/bgg-link.ts'
 import { type Collection, type Entry, type Facts, type Paid, suggestPaid } from '../../domain/collection.ts'
-import { MARKS, type Mark } from '../../domain/marks.ts'
+import { MARKS, type Mark, markInfo } from '../../domain/marks.ts'
 import { CURRENCIES, currencySymbol, formatMoney, parsePrice, priceInput } from '../../domain/money.ts'
 import { buyGame, removeGame, saveFacts, setMark, unbuyGame } from '../actions.ts'
 import { type Point, centreOf } from '../celebrate.ts'
@@ -37,7 +37,12 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
   const name = game?.name ?? `Game ${entry.bggId}`
   // the tapped picker button, where the Must Have burst starts
   const tapped = useRef<Element | null>(null)
-  const mark = (key: Mark) => void setMark(services, entry, key, centreOf(tapped.current))
+  // choosing a mark is the answer: the sheet closes and the game moves to its group
+  const mark = (key: Mark) => {
+    void setMark(services, entry, key, centreOf(tapped.current))
+    onClose()
+    toast(`${name}: ${markInfo(key).emoji} ${markInfo(key).label}`)
+  }
   const remove = async () => {
     await removeGame(services, entry)
     onClose()

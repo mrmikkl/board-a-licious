@@ -39,17 +39,20 @@ test('game details close when pulled down, stay on a short pull', async ({ page 
   await expect(sheet).toBeHidden()
 })
 
-test('Config: the sound switch and the header button are the same setting', async ({ page }) => {
+test('Config: sound is switched here and nowhere else, and stays switched', async ({ page }) => {
   await page.goto('/#/config')
   await expect(page.getByRole('heading', { level: 1, name: 'Config' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Config' })).toHaveAttribute('aria-current', 'page')
   const sw = page.getByRole('switch', { name: /sound and vibration/i })
   await expect(sw).toBeChecked()
-  await expect(page.getByRole('button', { name: 'Sound on' })).toBeVisible()
   await sw.uncheck()
-  await expect(page.getByRole('button', { name: 'Sound off' })).toBeVisible()
-  await page.getByRole('button', { name: 'Sound off' }).click()
-  await expect(sw).toBeChecked()
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Config' })).toHaveAttribute('aria-current', 'page')
+  await page.waitForTimeout(300) // the choice is written to the device's database
+  await page.reload()
+  await expect(page.getByRole('switch', { name: /sound and vibration/i })).not.toBeChecked()
+  await page.getByRole('switch', { name: /sound and vibration/i }).check()
+  await page.goto('/#/collections')
+  await expect(page.getByRole('button', { name: /^sound (on|off)$/i })).toHaveCount(0)
   await expect(page.getByText('soon')).toHaveCount(0)
+  await page.goto('/#/config')
   await expectAccessible(page)
 })

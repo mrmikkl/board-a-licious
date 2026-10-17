@@ -152,6 +152,14 @@ describe('list loader', () => {
     expect((await store.pending()).filter(p => p.kind === 'list').map(p => p.row)).toMatchObject([{ kind: 'preview', id: 93 }])
   })
 
+  it('asks for a sync as soon as a list is queued for the other devices', async () => {
+    let asked = 0
+    const loader = createListLoader({ store, api: fakeApi(clock).api, now: clock.now, sleep: clock.sleep, foreground: () => true, events, onQueued: () => asked++ })
+    await loader.open('preview', 93)
+    await loader.idle()
+    expect(asked).toBe(1)
+  })
+
   it('resumes after a reload where it stopped', async () => {
     const first = fakeApi(clock)
     const before = loaderFor(first.api)

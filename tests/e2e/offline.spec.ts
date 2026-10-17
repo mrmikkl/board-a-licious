@@ -29,6 +29,8 @@ test('offline: mark and buy in airplane mode, reload, then sync when back online
   await context.setOffline(true)
   await game().click()
   await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await game().click()
   await page.getByRole('dialog').getByRole('button', { name: /bought it/i }).click()
   await page.getByRole('dialog').getByLabel('What did you pay?').fill('45')
   await page.getByRole('dialog').getByLabel('What did you pay?').press('Enter')

@@ -137,7 +137,8 @@ CREATE TABLE game (                            -- public BGG display data, share
 ```
 
 - Every collection and entry query filters by `user_email` from the verified JWT, never from input.
-- Upserts apply last-write-wins in SQL (`… DO UPDATE … WHERE excluded.updated_at > t.updated_at`).
+- Upserts apply last-write-wins in SQL (`… DO UPDATE … WHERE excluded.updated_at > t.updated_at`)
+  and set `synced_at = now()` (migration 0003); pulls filter by `synced_at`, the server's receive time.
 - Marks are validated in the domain, not by a CHECK, so new marks need no migration.
 
 ## Browser storage (IndexedDB `board-a-licious-<userEmail>`, one database per signed-in person)

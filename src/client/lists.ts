@@ -25,6 +25,8 @@ export function createListLoader(deps: {
   sleep?: (ms: number) => Promise<void>
   foreground?: () => boolean
   events?: EventTarget
+  /** Called when a list was queued for the person's other devices, so it is sent right away. */
+  onQueued?: () => void
 }) {
   const { store, api } = deps
   const now = deps.now ?? Date.now
@@ -200,11 +202,15 @@ export function createListLoader(deps: {
           const known = Boolean(list)
           const page = await throttled(null, () => api.listPage(kind, id, 1))
           list = await storePage(kind, id, page as ListPage)
-          if (!known) await store.saveListRef({ kind, id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
+          if (!known) {
+            await store.saveListRef({ kind, id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
+            deps.onQueued?.()
+          }
         } else {
           // lists loaded before lists were synced (no `items`) are queued once for the other devices
           if (list.items === undefined) {
             await store.saveListRef({ kind, id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
+            deps.onQueued?.()
           }
           list = await update(kind, id, old => {
             const current = old ?? list!

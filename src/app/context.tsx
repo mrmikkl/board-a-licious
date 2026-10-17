@@ -80,7 +80,7 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
         stopSync()
         window.removeEventListener('online', afterSync)
       }
-      const lists = createListLoader({ store, api })
+      const lists = createListLoader({ store, api, onQueued: () => void sync.schedule() })
       const feedback = createFeedback({
         audio: () => (typeof AudioContext === 'undefined' ? null : new AudioContext()),
         vibrate: typeof navigator.vibrate === 'function' ? pattern => navigator.vibrate(pattern) : undefined,

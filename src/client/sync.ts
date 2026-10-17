@@ -9,7 +9,7 @@ const CHUNK = 500
  * Keeps the device and the server in step (FR-022): push the outbox in chunks, then pull what changed
  * since the last sync. Runs on start, when the device comes back online and after each change.
  */
-export function createSync(deps: { store: Store; api: Api; events?: EventTarget }) {
+export function createSync(deps: { store: Store; api: Api; events?: EventTarget; visible?: () => boolean }) {
   const { store, api } = deps
   let running: Promise<void> | undefined
   let again = false
@@ -63,11 +63,22 @@ export function createSync(deps: { store: Store; api: Api; events?: EventTarget 
     async idle() {
       while (running) await running.catch(() => undefined)
     },
+    /** Syncs now, when the device comes back online and whenever the app comes to the foreground. */
     start() {
       const target = deps.events ?? (typeof window !== 'undefined' ? window : undefined)
+      const pageEvents = deps.events ?? (typeof document !== 'undefined' ? document : undefined)
+      const visible = deps.visible ?? (() => typeof document === 'undefined' || document.visibilityState === 'visible')
+      // changes made on another device show up when this one is looked at again
+      const onVisible = () => {
+        if (visible()) void quiet()
+      }
       target?.addEventListener('online', quiet)
+      pageEvents?.addEventListener('visibilitychange', onVisible)
       void quiet()
-      return () => target?.removeEventListener('online', quiet)
+      return () => {
+        target?.removeEventListener('online', quiet)
+        pageEvents?.removeEventListener('visibilitychange', onVisible)
+      }
     },
   }
 }

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { Collection, Entry } from '../../src/domain/collection.ts'
 import type { Db } from '../../worker/db/db.ts'
-import { applyChanges, getCachedGames, listChanges, upsertGames } from '../../worker/db/repository.ts'
+import { applyChanges, getCachedGames, listChanges, syncCursor, upsertGames } from '../../worker/db/repository.ts'
 import { testDb } from './db-helpers.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
@@ -34,6 +34,7 @@ const entry = (patch: Partial<Entry> = {}): Entry => ({
 })
 
 let db: Db
+const pause = () => new Promise(resolve => setTimeout(resolve, 20))
 beforeEach(async () => {
   db = await testDb()
 })
@@ -58,12 +59,30 @@ describe('repository', () => {
     expect((await listChanges(db, ANNA)).entries[0]?.mark).toBe('poop')
   })
 
-  it('returns only rows changed after since, including tombstones', async () => {
+  it('returns only rows the server received after the cursor, including tombstones', async () => {
     await applyChanges(db, ANNA, { collections: [collection()], entries: [entry()] })
+    await pause()
+    const cursor = await syncCursor(db, 0)
+    await pause()
     await applyChanges(db, ANNA, { collections: [], entries: [entry({ deleted: true, updatedAt: T2 })] })
-    const changes = await listChanges(db, ANNA, '2026-10-17T09:30:00.000Z')
+    const changes = await listChanges(db, ANNA, cursor)
     expect(changes.collections).toEqual([])
     expect(changes.entries.map(e => e.deleted)).toEqual([true])
+  })
+
+  it('still delivers a change made earlier offline and sent after another device synced', async () => {
+    await applyChanges(db, ANNA, { collections: [collection()], entries: [] })
+    await pause()
+    const laptopSyncedAt = await syncCursor(db, 0)
+    await pause()
+    // the phone made this change before the laptop's sync, but only sends it now
+    await applyChanges(db, ANNA, { collections: [], entries: [entry({ updatedAt: T1 })] })
+    expect((await listChanges(db, ANNA, laptopSyncedAt)).entries.map(e => e.bggId)).toEqual([446453])
+  })
+
+  it('gives a cursor a little in the past, so writes still on their way are not skipped', async () => {
+    const [row] = await db.query<{ now: Date }>('SELECT now() AS now')
+    expect(Date.parse(await syncCursor(db)) - new Date(row!.now).getTime()).toBeLessThanOrEqual(-4000)
   })
 
   it('limits every query to the caller', async () => {
@@ -107,7 +126,7 @@ describe('repository', () => {
     expect((await listChanges(db, BEN)).lists).toEqual([])
     expect(await applyChanges(db, ANNA, { collections: [], entries: [], lists: [{ ...spiel, title: 'old' }] })).toEqual({ applied: 0, ignored: 1 })
     await applyChanges(db, ANNA, { collections: [], entries: [], lists: [{ ...spiel, deleted: true, updatedAt: T2 }] })
-    expect((await listChanges(db, ANNA, '2026-10-17T09:30:00.000Z')).lists).toEqual([{ ...spiel, deleted: true, updatedAt: T2 }])
+    expect((await listChanges(db, ANNA)).lists).toEqual([{ ...spiel, deleted: true, updatedAt: T2 }])
     // Ben's copy of the same list is his own row
     await applyChanges(db, BEN, { collections: [], entries: [], lists: [spiel] })
     expect((await listChanges(db, BEN)).lists).toHaveLength(1)

@@ -1,17 +1,18 @@
 import { type Collection, type Entry, validateCollection, validateEntry } from '../../src/domain/collection.ts'
 import { type LoadedList, validateLoadedList } from '../../src/domain/lists.ts'
 import type { Db } from '../db/db.ts'
-import { ForeignCollectionError, applyChanges, listChanges } from '../db/repository.ts'
+import { ForeignCollectionError, applyChanges, listChanges, syncCursor } from '../db/repository.ts'
 import { HttpError } from '../http.ts'
 
 const MAX_ITEMS = 500
 const MAX_FUTURE_MS = 5 * 60 * 1000
 
-export async function getSync(db: Db, email: string, url: URL, now: Date): Promise<Response> {
+export async function getSync(db: Db, email: string, url: URL): Promise<Response> {
   const since = url.searchParams.get('since') ?? undefined
   if (since !== undefined && Number.isNaN(Date.parse(since))) throw new HttpError('bad_request', 'since must be a timestamp.')
-  // serverTime is taken before reading, so nothing written meanwhile is skipped by the next pull
-  const serverTime = now.toISOString()
+  // the cursor comes from the database's clock (not the Worker's or the device's), taken before
+  // reading and a few seconds back, so nothing written meanwhile is skipped by the next pull
+  const serverTime = await syncCursor(db)
   return Response.json({ ...(await listChanges(db, email, since)), serverTime })
 }
 

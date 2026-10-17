@@ -34,7 +34,9 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
 
   // Must Have: ~20 hexagons burst out of the tapped button, without blocking taps
   await openGame(page, 'Cascadia')
+  const button = await sheet.getByRole('button', { name: /must have/i }).boundingBox()
   await sheet.getByRole('button', { name: /must have/i }).click()
+  await expect(sheet).toBeHidden()
   await expect(mustHaveCount).toHaveAccessibleName('Must Have 1')
   if (reduced) {
     expect(await overlay.count()).toBe(0)
@@ -42,7 +44,6 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
     await expect(overlay.locator('.burst-hex')).toHaveCount(20)
     await expect(overlay).toHaveAttribute('aria-hidden', 'true')
     await expect(overlay).toHaveCSS('pointer-events', 'none')
-    const button = await sheet.getByRole('button', { name: /must have/i }).boundingBox()
     const burst = await overlay.locator('.burst').first().boundingBox()
     expect(Math.abs((burst?.x ?? 0) - ((button?.x ?? 0) + (button?.width ?? 0) / 2))).toBeLessThan(2)
     await expectAccessible(page)
@@ -67,6 +68,7 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   await expect(mustHaveCount.locator('.group-count')).toHaveText('2')
 
   // Bought: "GOT IT!" in the centre plus a burst; the next tap goes through straight away
+  await openGame(page, 'Ark Nova')
   await sheet.getByRole('button', { name: /bought it/i }).click()
   await sheet.getByLabel('What did you pay?').fill('45')
   await sheet.getByRole('button', { name: /save, got it/i }).click()

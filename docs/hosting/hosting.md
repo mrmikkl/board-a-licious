@@ -38,7 +38,7 @@ sync between devices and as a backup. Losing the server would lose nothing a pho
 |---|---|
 | Project | `Board-a-licious`, region AWS Europe Central 1 (Frankfurt), free plan |
 | Database | `neondb`, role `neondb_owner` |
-| Schema | `migrations/*.sql`: tables `collection`, `collection_entry`, `game` (0001) and `loaded_list` (0002, which BGG lists a person loaded) |
+| Schema | `migrations/*.sql`: tables `collection`, `collection_entry`, `game` (0001) `loaded_list` (0002, which BGG lists a person loaded) and `synced_at` on all three (0003, the server's receive time, used for pulls) |
 | Connection | the **direct** connection string (host without `-pooler`), stored only in Hyperdrive |
 
 - **Free plan**: 1 GB storage (the app needs a few MB), scales to zero when idle. The first

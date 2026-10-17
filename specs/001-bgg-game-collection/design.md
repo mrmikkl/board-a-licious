@@ -9,8 +9,7 @@ It uses sample data; invented games get generated covers.
 ## Navigation
 
 Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until Release 1.0,
-without a "soon" label), **Config**. Every screen has the 🔊/🔇 sound toggle in its header (second
-header row on phones).
+without a "soon" label), **Config**. Sound is switched in Config only.
 
 ## Screens and flows
 
@@ -30,7 +29,7 @@ header row on phones).
 | **List** | name filter; rows with facts (Essen) and "in a collection" hint; **+** per row | List game sheet |
 | **List game** (sheet) | cover, description, facts; "In collections": one tick per collection showing where the game is; Done applies adds and removals, Cancel discards | – |
 | **Search** | "Searching all of BoardGameGeek comes soon" card; disabled search field and sample results; "Add a game by link instead" | Add (game) |
-| **Config** | Sound ("Sound and vibration" switch, same setting as the header toggle); Share: pick a collection, pick groups, message preview (Essen: booth and price; bought games marked ✅), "Share list"; export / import backup | – |
+| **Config** | Sound ("Sound and vibration" switch); Share: pick a collection, pick groups, message preview (Essen: booth and price; bought games marked ✅), "Share list"; export / import backup | – |
 
 ## Rules shown in the UI
 

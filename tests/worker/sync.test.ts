@@ -52,9 +52,11 @@ describe('/api/sync', () => {
     const call = testApp(db)
     await call('/api/sync', json({ collections: [collection], entries: [entry] }))
     const all = await (await call('/api/sync')).json()
-    expect(all).toEqual({ collections: [collection], entries: [entry], lists: [], serverTime: '2026-10-17T12:00:00.000Z' })
-    const since = await (await call(`/api/sync?since=${encodeURIComponent('2026-10-17T09:30:00.000Z')}`)).json()
-    expect(since).toMatchObject({ collections: [], entries: [] })
+    expect(all).toEqual({ collections: [collection], entries: [entry], lists: [], serverTime: expect.any(String) })
+    // serverTime is the server's own clock (a few seconds back), not the device's
+    expect(Date.parse(all.serverTime)).toBeLessThan(Date.now())
+    const later = await (await call(`/api/sync?since=${encodeURIComponent('2999-01-01T00:00:00.000Z')}`)).json()
+    expect(later).toMatchObject({ collections: [], entries: [] })
   })
 
   it.each([

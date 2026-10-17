@@ -61,7 +61,11 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
 
 ### `GET /api/sync?since=<iso>`
 
-- Without `since`: everything; with `since`: only rows with `updatedAt > since` (incl. tombstones).
+- Without `since`: everything; with `since`: only rows the **server received** after `since`
+  (column `synced_at`, incl. tombstones), not by the device's `updatedAt`: a change made offline and
+  sent later must still reach devices that synced in between.
+- `serverTime` is the next `since`: the database's clock a few seconds back, so writes still on their
+  way are fetched again (merging is last-write-wins and harmless when repeated).
 - `200`:
   ```json
   { "collections": [ { "id": "c0f…", "name": "Essen 2026", "type": "essen",

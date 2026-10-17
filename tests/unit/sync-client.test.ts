@@ -135,6 +135,25 @@ describe('sync', () => {
     expect(here?.items).toBeUndefined()
   })
 
+  it('syncs again when the app comes back to the foreground', async () => {
+    store = await openStore('anna@example.com')
+    const server = fakeServer(() => Response.json({ collections: [], entries: [], serverTime: T2 }))
+    const events = new EventTarget()
+    let visible = false
+    const sync = createSync({ store, api: createApi({ fetch: server.fetch }), events, visible: () => visible })
+    const stop = sync.start()
+    await sync.idle()
+    const before = server.calls.length
+    events.dispatchEvent(new Event('visibilitychange'))
+    await sync.idle()
+    expect(server.calls.length).toBe(before)
+    visible = true
+    events.dispatchEvent(new Event('visibilitychange'))
+    await sync.idle()
+    stop()
+    expect(server.calls.length).toBeGreaterThan(before)
+  })
+
   it('pushes in chunks of at most 500 items', async () => {
     const store = await openStore('anna@example.com')
     track(store)

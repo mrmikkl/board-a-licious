@@ -65,23 +65,32 @@ function toEntry(r: EntryRow): Entry {
   }
 }
 
-/** Everything of one user, or only what changed after `since` (tombstones included). */
+/**
+ * A cursor for the next pull: the database's clock a few seconds back, so writes that were still
+ * on their way when this pull ran are fetched again next time (merging twice is harmless).
+ */
+export async function syncCursor(db: Db, marginSeconds = 5): Promise<string> {
+  const [row] = await db.query<{ t: Date | string }>(`SELECT now() - make_interval(secs => $1) AS t`, [marginSeconds])
+  return iso(row!.t)
+}
+
+/** Everything of one user, or only what the server received after `since` (tombstones included). */
 export async function listChanges(db: Db, email: string, since?: string): Promise<Changes> {
   const after = since ?? '1970-01-01T00:00:00.000Z'
   const collections = await db.query<CollectionRow>(
     `SELECT id, name, type, updated_at, deleted FROM collection
-     WHERE user_email = $1 AND updated_at > $2 ORDER BY updated_at`,
+     WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
   const entries = await db.query<EntryRow>(
     `SELECT collection_id, bgg_id, mark, bought, paid_cents, paid_currency, booth, price_cents, currency,
             publisher, facts_source, details_pending, updated_at, deleted
-     FROM collection_entry WHERE user_email = $1 AND updated_at > $2 ORDER BY updated_at`,
+     FROM collection_entry WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
   const lists = await db.query<ListRow>(
     `SELECT kind, list_id, title, is_essen, updated_at, deleted FROM loaded_list
-     WHERE user_email = $1 AND updated_at > $2 ORDER BY updated_at`,
+     WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
   return {
@@ -102,7 +111,7 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
       `INSERT INTO collection AS t (id, user_email, name, type, updated_at, deleted)
        VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (id) DO UPDATE SET name = excluded.name, type = excluded.type,
-         updated_at = excluded.updated_at, deleted = excluded.deleted
+         updated_at = excluded.updated_at, deleted = excluded.deleted, synced_at = now()
        WHERE t.user_email = excluded.user_email AND excluded.updated_at > t.updated_at
        RETURNING id`,
       [c.id, email, c.name, c.type, c.updatedAt, c.deleted],
@@ -130,7 +139,7 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
          paid_cents = excluded.paid_cents, paid_currency = excluded.paid_currency, booth = excluded.booth,
          price_cents = excluded.price_cents, currency = excluded.currency, publisher = excluded.publisher,
          facts_source = excluded.facts_source, details_pending = excluded.details_pending,
-         updated_at = excluded.updated_at, deleted = excluded.deleted
+         updated_at = excluded.updated_at, deleted = excluded.deleted, synced_at = now()
        WHERE t.user_email = excluded.user_email AND excluded.updated_at > t.updated_at
        RETURNING bgg_id`,
       [
@@ -158,7 +167,7 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
       `INSERT INTO loaded_list AS t (user_email, kind, list_id, title, is_essen, updated_at, deleted)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (user_email, kind, list_id) DO UPDATE SET title = excluded.title, is_essen = excluded.is_essen,
-         updated_at = excluded.updated_at, deleted = excluded.deleted
+         updated_at = excluded.updated_at, deleted = excluded.deleted, synced_at = now()
        WHERE excluded.updated_at > t.updated_at
        RETURNING list_id`,
       [email, l.kind, l.id, l.title, l.isEssen, l.updatedAt, l.deleted],
