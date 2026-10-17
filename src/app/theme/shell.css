@@ -198,3 +198,21 @@
   height: 11px;
   background: var(--orange);
 }
+
+/* Expired sign-in: above the screen, solid like every interactive surface */
+.signin-banner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  margin: 12px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--deck-2);
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+}
+.signin-banner p {
+  margin: 0;
+  font-size: 14px;
+}

@@ -22,6 +22,10 @@ export type AppServices = {
 }
 
 const Services = createContext<AppServices | null>(null)
+const SignedOut = createContext(false)
+
+/** Where the app sends people to sign in: an /api path, so the service worker lets it through to Access. */
+export const SIGN_IN_URL = '/api/signin'
 const LAST_EMAIL = 'bal-last-email'
 
 type Boot = { state: 'loading' } | { state: 'ready'; services: AppServices } | { state: 'signed-out' } | { state: 'error'; message: string }
@@ -37,13 +41,15 @@ function rememberedEmail(): string | null {
 /** Finds out who is signed in (offline: the last person on this device), opens their store, starts sync. */
 export function AppProvider({ children, fallback }: { children: ReactNode; fallback: (boot: Exclude<Boot, { state: 'ready' }>) => ReactNode }) {
   const [boot, setBoot] = useState<Boot>({ state: 'loading' })
+  // the Access session expired: the app keeps working on the device, sync waits for a new sign-in
+  const [signedOut, setSignedOut] = useState(false)
 
   useEffect(() => {
     let stop: (() => void) | undefined
     let store: Store | undefined
     let cancelled = false
     ;(async () => {
-      const api = createApi()
+      const api = createApi({ onUnauthenticated: () => setSignedOut(true) })
       let email: string | null = null
       let bggSearch = false
       try {
@@ -56,8 +62,9 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
           // private mode: fine, offline start just needs a sign-in first
         }
       } catch (error) {
-        if (error instanceof ApiError && error.code === 'unauthenticated') return setBoot({ state: 'signed-out' })
+        const expired = error instanceof ApiError && error.code === 'unauthenticated'
         email = rememberedEmail()
+        if (expired && !email) return setBoot({ state: 'signed-out' })
         if (!email) return setBoot({ state: 'error', message: 'Connect once to sign in; after that the app also works offline.' })
       }
       store = await openStore(email)
@@ -94,7 +101,11 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
   }, [])
 
   if (boot.state !== 'ready') return <>{fallback(boot)}</>
-  return <Services.Provider value={boot.services}>{children}</Services.Provider>
+  return (
+    <SignedOut.Provider value={signedOut}>
+      <Services.Provider value={boot.services}>{children}</Services.Provider>
+    </SignedOut.Provider>
+  )
 }
 
 /** One run at a time; a call during a run starts one more run afterwards, so new entries are not missed. */
@@ -119,6 +130,9 @@ function detailsRunner(store: Store, api: Api, sync: Sync) {
     return running
   }
 }
+
+/** True once the server said the sign-in expired. */
+export const useSignedOut = () => useContext(SignedOut)
 
 /** The services, or null outside the provider (e.g. the boot screen). */
 export function useOptionalServices(): AppServices | null {

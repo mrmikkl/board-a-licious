@@ -85,6 +85,12 @@ describe('/api/sync', () => {
     expect(await (await testApp(db)('/api/me')).json()).toEqual({ email: 'anna@example.com', bggSearch: false })
   })
 
+  it('sends a signed-in person from /api/signin back to the app', async () => {
+    const res = await testApp(db)('/api/signin')
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('/')
+  })
+
   it('switches search on only once a BGG token is configured (Release 1.0, T066)', async () => {
     const me = await (await testApp(db, { env: { BGG_TOKEN: 'secret' } })('/api/me')).json()
     expect(me.bggSearch).toBe(true)

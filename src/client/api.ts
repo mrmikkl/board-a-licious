@@ -34,16 +34,22 @@ export type ListPage = {
 export type SyncPull = { collections: Collection[]; entries: Entry[]; serverTime: string }
 
 /** Thin fetch wrapper for /api (contracts/api.md); every failure becomes an ApiError. */
-export function createApi(deps: { fetch?: typeof fetch; base?: string } = {}) {
+export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthenticated?: () => void } = {}) {
   const doFetch = deps.fetch ?? ((input, init) => fetch(input, init))
   const base = deps.base ?? ''
 
   async function call<T>(path: string, init?: RequestInit): Promise<T> {
     let res: Response
     try {
-      res = await doFetch(`${base}${path}`, { credentials: 'same-origin', ...init })
+      // never follow redirects: Cloudflare Access answers an expired session with a redirect to its
+      // login page, which must not be mistaken for being offline or for data
+      res = await doFetch(`${base}${path}`, { credentials: 'same-origin', redirect: 'manual', ...init })
     } catch {
       throw new ApiError('offline', 'No connection. Your changes are kept and sent later.', true)
+    }
+    if (res.type === 'opaqueredirect' || res.status === 401) {
+      deps.onUnauthenticated?.()
+      throw new ApiError('unauthenticated', 'Your sign-in has expired. Sign in again to sync.', false)
     }
     if (res.ok) return (await res.json()) as T
     let body: { error?: ApiErrorCode; message?: string; retryable?: boolean } = {}

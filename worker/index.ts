@@ -50,6 +50,9 @@ export function createApp(deps: Deps) {
             return await gamesRoute(ctx)
           case 'GET /api/bgg/companies':
             return await companiesRoute(ctx)
+          case 'GET /api/signin':
+            // reached only through Access, so the person has just signed in: back to the app
+            return new Response(null, { status: 302, headers: { Location: '/' } })
           case 'GET /api/me':
             return Response.json({ email, bggSearch: Boolean(env.BGG_TOKEN) })
           case 'GET /api/sync':

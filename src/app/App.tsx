@@ -1,4 +1,4 @@
-import { AppProvider, useServices } from './context.tsx'
+import { AppProvider, SIGN_IN_URL, useServices, useSignedOut } from './context.tsx'
 import { Celebrate } from './components/Celebrate.tsx'
 import { Header } from './components/Header.tsx'
 import { HexBoard } from './components/HexBoard.tsx'
@@ -64,18 +64,32 @@ function Placeholder({ route }: { route: Route }) {
   )
 }
 
+/** Shown when the Access session expired: everything keeps working here, syncing needs a new sign-in. */
+function SignInBanner() {
+  if (!useSignedOut()) return null
+  return (
+    <div className="signin-banner" role="status">
+      <p>Your sign-in has expired. Your changes stay on this phone and are sent once you sign in again.</p>
+      <a className="btn btn-primary" href={SIGN_IN_URL}>
+        Sign in again
+      </a>
+    </div>
+  )
+}
+
 function Shell() {
   const route = useRoute()
   const { bggSearch } = useServices()
   return (
     <div className="app">
+      <SignInBanner />
       <Screen route={route} />
       <TabBar route={route} searchSoon={!bggSearch} />
     </div>
   )
 }
 
-function Boot({ message }: { message?: string }) {
+function Boot({ message, signIn = false }: { message?: string; signIn?: boolean }) {
   return (
     <div className="app">
       <Header title="Board-a-licious" />
@@ -83,6 +97,13 @@ function Boot({ message }: { message?: string }) {
         <div className="empty">
           <div className="hex" />
           {message ? <p>{message}</p> : <p>Loading your collections…</p>}
+          {signIn && (
+            <div className="actions">
+              <a className="btn btn-primary btn-block" href={SIGN_IN_URL}>
+                Sign in
+              </a>
+            </div>
+          )}
         </div>
       </main>
     </div>
@@ -103,7 +124,7 @@ export function App() {
           intro ? null : boot.state === 'loading' ? (
             <Boot />
           ) : boot.state === 'signed-out' ? (
-            <Boot message="Your sign-in has expired. Reload the page to sign in again." />
+            <Boot message="Sign in with your email to use the app. You get a one-time PIN by email." signIn />
           ) : (
             <Boot message={boot.message} />
           )

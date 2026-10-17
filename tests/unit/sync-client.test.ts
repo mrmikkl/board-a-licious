@@ -39,6 +39,27 @@ describe('api', () => {
   })
 })
 
+describe('expired sign-in (Cloudflare Access)', () => {
+  it('treats the Access login redirect and 401 as unauthenticated and reports it', async () => {
+    const seen: string[] = []
+    const redirect = { ok: false, status: 0, type: 'opaqueredirect', json: async () => ({}) } as unknown as Response
+    const viaAccess = createApi({ fetch: async () => redirect, onUnauthenticated: () => seen.push('redirect') })
+    await expect(viaAccess.me()).rejects.toMatchObject({ code: 'unauthenticated', retryable: false })
+    const via401 = createApi({
+      fetch: async () => Response.json({ error: 'unauthenticated', message: 'Sign in', retryable: false }, { status: 401 }),
+      onUnauthenticated: () => seen.push('401'),
+    })
+    await expect(via401.pull()).rejects.toMatchObject({ code: 'unauthenticated' })
+    expect(seen).toEqual(['redirect', '401'])
+  })
+
+  it('asks fetch not to follow redirects, so a login page is never mistaken for data', async () => {
+    let init: RequestInit | undefined
+    await createApi({ fetch: async (_, i) => ((init = i), Response.json({ email: 'a@b.c', bggSearch: false })) }).me()
+    expect(init?.redirect).toBe('manual')
+  })
+})
+
 describe('sync', () => {
   it('pushes the outbox, acknowledges it, then pulls since the last sync', async () => {
     const store = await openStore('anna@example.com')
