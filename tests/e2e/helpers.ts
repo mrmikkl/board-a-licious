@@ -18,7 +18,7 @@ export async function fakeBgg(page: Page) {
 }
 
 /** A name nobody else's test run uses, as the dev server's database is shared between runs. */
-export const unique = (name: string) => `${name} ${Date.now().toString(36).slice(-5)}`
+export const unique = (name: string) => `${name} ${Date.now().toString(36).slice(-4)}${Math.random().toString(36).slice(2, 5)}`
 
 export async function expectAccessible(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()

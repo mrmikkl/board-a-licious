@@ -27,6 +27,16 @@ async function fakeLists(page: Page) {
     const { companies } = apiFixture('companies.json') as { companies: { id: number }[] }
     await route.fulfill({ json: { companies: companies.filter(c => ids.includes(c.id)) } })
   })
+  // a person who has loaded no lists yet: lists synced from other test runs (same dev user) are hidden
+  await page.route('**/api/sync**', async route => {
+    if (route.request().method() !== 'GET') return route.continue()
+    try {
+      const response = await route.fetch()
+      await route.fulfill({ response, json: { ...(await response.json()), lists: [] } })
+    } catch {
+      // the test ended while a sync was still on its way
+    }
+  })
   await page.route('**/api/bgg/lists/geeklist/404404?**', route =>
     route.fulfill({ status: 404, json: { error: 'not_found', message: 'This list does not exist.', retryable: false } }),
   )

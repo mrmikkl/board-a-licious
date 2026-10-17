@@ -5,6 +5,8 @@ const phone = { ...devices['Pixel 7'], viewport: { width: 360, height: 740 } }
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
+  // the local database serves one connection at a time, so a full parallel run is slower than one test
+  expect: { timeout: 10_000 },
   // a device that has seen the intro already; tests/e2e/intro.spec.ts starts from a fresh one
   use: { baseURL: 'http://localhost:5173', trace: 'retain-on-failure', storageState: 'tests/e2e/intro-seen.json' },
   projects: [
