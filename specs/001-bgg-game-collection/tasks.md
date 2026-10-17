@@ -44,9 +44,9 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [ ] T007 [P] Unit tests for marks in `tests/unit/marks.test.ts`: order `new, must_have, interested, unsure, poop, skip`, labels and emoji per data-model.md, unknown keys rejected
 - [ ] T008 [P] Unit tests for entries and merge in `tests/unit/collection.test.ts`: later `updatedAt` wins, equal → server copy, tombstones (`deleted = true`) sync like changes, collection `name` "1–60 chars, trimmed", `type` "`essen` | `standard`", renaming keeps the type, deleting a collection tombstones all its entries (FR-001a)
 - [ ] T009 [P] Worker tests for auth in `tests/worker/auth.test.ts`: valid `Cf-Access-Jwt-Assertion` (JWKS, `aud`, `exp`) passes; missing/invalid → `401 {"error":"unauthenticated"}`; `DEV_USER_EMAIL` used only when `ENVIRONMENT=development`
-- [ ] T010 [P] Repository tests on PGlite in `tests/worker/db.test.ts`: schema from `migrations/0001_collections.sql`, upsert applies last-write-wins, every query limited to the caller's `user_email`, CHECKs (`length(name) BETWEEN 1 AND 60`, `type IN ('essen','standard')`, `bgg_id > 0`, `paid_cents >= 0`)
+- [ ] T010 [P] Repository tests on PGlite in `tests/worker/db.test.ts`: schema from `migrations/0001_collections.sql`, upsert applies last-write-wins, every query limited to the caller's `user_email`, CHECKs (`length(name) BETWEEN 1 AND 60`, `type IN ('essen','standard')`, `bgg_id > 0`, `paid_cents >= 0`, `paid_currency` a 3-letter code or null, null whenever `paid_cents` is null)
 - [ ] T011 [P] Unit tests for the browser store in `tests/unit/store.test.ts` (fake-indexeddb): stores `collections`, `entries` (key `[collectionId, bggId]`), `outbox`, `games`, `lists`, `publishers`, `meta`; outbox enqueue and acknowledge
-- [ ] T012 [P] Worker tests for sync in `tests/worker/sync.test.ts` per contracts/api.md: `GET /api/sync?since=`, `POST /api/sync` (1–500 items, mark known, `bggId > 0`, `updatedAt` ≤ 5 min in the future, entry's collection must belong to the user), `{ applied, ignored }`, idempotent
+- [ ] T012 [P] Worker tests for sync in `tests/worker/sync.test.ts` per contracts/api.md: `GET /api/sync?since=`, `POST /api/sync` (1–500 items, mark known, `bggId > 0`, `updatedAt` ≤ 5 min in the future, entry's collection must belong to the user, `paidCurrency` a 3-letter code or null), `{ applied, ignored }`, idempotent
 - [ ] T012a [P] BGG adapter tests in `tests/worker/bgg-cache.test.ts` (fake clock, fixtures): cache times lists 1 h, games 7 days, companies 30 days; a repeated request is served from the cache; at most 1 request/s to BGG; honest `User-Agent`; BGG failure → `bgg_unavailable`, 429 → `bgg_rate_limited` (FR-025, constitution V)
 - [ ] T012b [P] Unit tests for the client in `tests/unit/sync-client.test.ts` (fake fetch, fake-indexeddb): outbox pushed then acknowledged; pull with `since` merges last-write-wins; after a network error the outbox stays filled and is retried on `online`; API errors mapped to the error codes of contracts/api.md
 
@@ -162,7 +162,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [ ] T057 [P] [US4] Implement `src/domain/filter.ts` and the bought rules in `src/domain/collection.ts`
 - [ ] T058 [US4] Build `src/app/components/FilterPanel.tsx` (button with selection and count; presets; Bought segment; group checkboxes with counts; closes on Done or outside tap; selection stored in `meta.activeFilter`)
 - [ ] T059 [US4] Extend `GameSheet.tsx`: "✅ Bought it" → "What did you pay?" (prefilled, Enter saves, "Don't track the price"), "Not bought after all"; bought ✓ on the cover and price badge in `GameRow.tsx`; bought line under the filter in `Collection.tsx` with the money spent per currency
-- [ ] T060 [US4] Add manual facts to `GameSheet.tsx`: "➕ Add booth, price and publisher" / "✎ Edit", form with Booth, Price €, Publisher, Save enabled once one field is filled (FR-011)
+- [ ] T060 [US4] Add manual facts to `GameSheet.tsx`: "➕ Add booth, price and publisher" / "✎ Edit", form with Booth, Price with a currency choice (default EUR), Publisher, Save enabled once one field is filled (FR-011)
 - [ ] T061 [US4] Show the game description in `GameSheet.tsx` and `MembershipSheet.tsx`, with "The description is filled in from BoardGameGeek later." when missing (FR-018)
 
 **Checkpoint**: US1–US4 work independently.
@@ -206,11 +206,11 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [ ] T071 [P] Build the animated hexagon background `src/app/components/HexBoard.tsx` (canvas, faint honeycomb, light waves, popping cells, brightest at the top, ~30 fps, paused when hidden, still frame with reduced motion) per docs/design.md §9
 - [ ] T072 [P] Build `src/app/components/Celebrate.tsx`: Must Have burst (~20 hexagons) and "GOT IT!" stamp; rolling counters `src/app/components/Counter.tsx`
 - [ ] T073 [P] Unit tests then implementation of `src/client/feedback.ts` (dice sound and chime via Web Audio, vibration via `navigator.vibrate`, mute stored in `meta.soundOn`) with fakes in `tests/unit/feedback.test.ts`; wire the header sound toggle
-- [ ] T074 [P] Build the intro `src/app/screens/Intro.tsx` (3 swipeable cards, Skip, Next / "Let's go", `meta.introSeen`, "Show the intro again" on the Collections screen) — FR-027
+- [ ] T074 [P] Build the intro `src/app/screens/Intro.tsx` (3 swipeable cards, Skip, Next / "Let's go", `meta.introSeen`, "Show the intro again" on the Collections screen) — FR-027; end-to-end check in `tests/e2e/intro.spec.ts`: shown on first start, Skip lands on Collections, not shown after a reload, "Show the intro again" brings it back
 - [ ] T075 Offline: precache app shell, fonts and loaded data; end-to-end test `tests/e2e/offline.spec.ts` (airplane mode: mark, buy, reload; online: synced) — SC-004
 - [ ] T076 Accessibility and reduced-motion pass over all screens at 360×740 in `tests/e2e/a11y.spec.ts` (axe, no horizontal scroll, focus order, labels) — FR-024, FR-026, SC-006
 - [ ] T077 Production setup: Neon migration, Hyperdrive, Access application (one-time PIN), secrets; setup steps in `README.md`
-- [ ] T078 Run the 16 validation scenarios of `quickstart.md` on the deployed app (phone), note results in `specs/001-bgg-game-collection/quickstart.md`
+- [ ] T078 Run the 19 validation scenarios of `quickstart.md` on the deployed app (phone), note results in `specs/001-bgg-game-collection/quickstart.md`
 
 ---
 
@@ -250,9 +250,10 @@ Task: "T039 tests/unit/lists.test.ts"
 Task: "T040 tests/unit/facts.test.ts"
 Task: "T041 tests/unit/membership.test.ts"
 Task: "T042 tests/worker/bgg-lists.test.ts"
+Task: "T042a tests/unit/list-loader.test.ts"
 # Then domain while the Worker route is written:
 Task: "T044 src/domain/lists.ts, facts.ts, membership.ts"
-Task: "T045 worker/bgg/geekdo.ts + worker/routes/lists.ts"
+Task: "T045 worker/bgg/geekdo.ts + worker/routes/lists.ts + worker/routes/companies.ts"
 ```
 
 ---
@@ -279,7 +280,6 @@ the token.
 - Resolved after `/speckit-analyze`: renaming/deleting collections (FR-001a, T037a), adding with no
   collection (FR-016, T036), mixed currencies (FR-008, T055/T059), test-first gaps (T012a, T012b,
   T027a, T042a), publishers filled in after the first page (T042, T045, T046).
-- Still open in `checklists/fair-and-ux.md`, accepted as out of scope for 0.5 unless decided
-  otherwise: undo swipe (CHK005), sync status (CHK006).
+- Out of scope for 0.5 (spec Assumptions): undo swipe (CHK005), sync status (CHK006).
 - Commit after each task or logical group (`F001 T0xx: …` per docs/commit-conventions.md).
 - The prototype is a visual reference only; no code is copied from it.

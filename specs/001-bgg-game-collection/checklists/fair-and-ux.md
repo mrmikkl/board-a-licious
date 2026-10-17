@@ -14,8 +14,8 @@
 - [x] CHK002 Is it specified what happens to a collection's games, marks, bought states and prices when the collection is deleted? [Gap, Spec §FR-001, §FR-022]
 - [x] CHK003 Is it specified whether a collection's type (Essen / standard) can change after creation? [Gap, Spec §FR-001]
 - [x] CHK004 Are requirements defined for adding a game (by link or from a list) when the user has no collection yet? [Gap, Spec §FR-014, §FR-016]
-- [ ] CHK005 Is undoing the last swipe decision specified, or explicitly out of scope? [Gap, Spec §FR-015]
-- [ ] CHK006 Are requirements defined for how a user sees that changes are not yet synchronised or that sync failed? [Gap, Spec §FR-022]
+- [x] CHK005 Is undoing the last swipe decision specified, or explicitly out of scope? [Gap, Spec §FR-015]
+- [x] CHK006 Are requirements defined for how a user sees that changes are not yet synchronised or that sync failed? [Gap, Spec §FR-022]
 - [ ] CHK007 Are empty states defined for the collections list and the lists tab, not only for an empty collection and an empty filter? [Completeness, Spec §Edge Cases]
 - [ ] CHK008 Are loading states specified for list pages still loading, game details pending and covers not yet available? [Completeness, Spec §FR-012, §FR-017]
 
@@ -40,7 +40,7 @@
 ## Acceptance Criteria Quality
 
 - [ ] CHK021 Can SC-005 ("every member uses the app instead of paper or chat lists") be objectively measured? [Measurability, Spec §SC-005]
-- [ ] CHK022 Is the starting state and the counting method for SC-011 (15 swipe decisions per minute) and SC-012 (4 taps to "Must Have, not bought") defined? [Measurability, Spec §SC-011, §SC-012]
+- [x] CHK022 Is the starting state and the counting method for SC-011 (15 swipe decisions per minute) and SC-012 (4 taps to "Must Have, not bought") defined? [Measurability, Spec §SC-011, §SC-012]
 - [ ] CHK023 Is "typical mobile connection" in SC-002 quantified? [Clarity, Spec §SC-002]
 
 ## Scenario & Edge Case Coverage

@@ -211,8 +211,8 @@ the fair. Until then the search tab is visible but switched off and points to ad
   interested; the set MUST be extendable without changing stored data.
 - **FR-005**: A collection MUST show its games grouped by mark in the order of FR-004, Not yet marked
   first and Not interested collapsed by default.
-- **FR-006**: Users MUST be able to change a game's mark from its details in at most 2 taps and
-  remove a game from a collection.
+- **FR-006**: Users MUST be able to change a game's mark from its details (see SC-003) and remove a
+  game from a collection.
 
 **Bought and filtering**
 
@@ -318,9 +318,11 @@ the fair. Until then the search tab is visible but switched off and points to ad
   marks, bought states, prices and facts.
 - **SC-010**: Before SPIEL Essen 2026 opens (2026-10-22), each user can load the SPIEL preview and
   swipe through it without official BoardGameGeek data access.
-- **SC-011**: Swiping, a user decides on at least 15 games per minute.
-- **SC-012**: From opening the app, the "Must Have, not bought" list of a collection is reached in at
-  most 4 taps.
+- **SC-011**: Swiping, a user decides on at least 15 games per minute, counted over 20 consecutive
+  cards from the first card shown, with the list's first page already loaded.
+- **SC-012**: From opening the app on the Collections screen (signed in, intro already seen), the
+  "Must Have, not bought" list of a collection is reached in at most 4 taps, counting every tap
+  including opening the filter.
 
 ## Assumptions
 
@@ -337,5 +339,7 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - Personal notes, ratings, hall-by-hall routing and purchase handling are out of scope for this
   feature (hall view is a later idea, see the vision).
 - Writing back to BoardGameGeek (e.g. a user's BGG collection) is out of scope.
+- Undoing the last swipe decision and showing the sync status are out of scope for Release 0.5; a
+  wrong swipe is corrected in the game's details, and sync happens automatically in the background.
 - The app relies on BoardGameGeek's public data and follows its terms of use; access to that data
   may require registering the app with BoardGameGeek.

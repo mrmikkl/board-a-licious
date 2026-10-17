@@ -91,6 +91,8 @@ src/
 │   ├── filter.ts            # groups × bought filter, presets (FR-009)
 │   ├── facts.ts             # Essen facts rule, manual facts (FR-010/011)
 │   ├── lists.ts             # BGG list references from links: preview / geeklist (FR-012)
+│   ├── membership.ts        # collection ticks before/after → adds and removals (FR-014)
+│   ├── swipe.ts             # swipe queue and decisions (FR-015)
 │   ├── bgg-link.ts          # game ID + suggested name from a link (FR-016)
 │   ├── share.ts             # share text (contracts/share-and-backup.md)
 │   └── backup.ts            # backup v2: serialise, validate, import plan
@@ -104,11 +106,14 @@ src/
     ├── api.ts               # fetch wrapper for /api
     ├── store.ts             # IndexedDB: collections, entries, outbox, lists, games, meta
     ├── sync.ts              # outbox push + pull
+    ├── lists.ts             # background list loader, publishers filled in afterwards
+    ├── details.ts           # completes link-added games (FR-017)
     └── feedback.ts          # dice sound (Web Audio), vibration, mute setting
 
 worker/
 ├── index.ts                 # router, static assets fallback
 ├── auth.ts                  # Cf-Access-Jwt-Assertion validation (jose)
+├── routes/                  # sync, games, lists, companies, search
 ├── bgg/                     # BggSource interface; GeekdoSource (0.5), XmlApiSource (1.0); cache
 └── db/                      # collections and entries repository; game cache
 
