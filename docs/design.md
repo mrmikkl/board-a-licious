@@ -1,6 +1,6 @@
 # Design rules
 
-**Version**: 1.2.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.3.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -83,9 +83,9 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 - From 768px wide (tablets, laptops) the column grows to 1040px: collection cards and game rows
   flow into a grid; sheets (560px), the swipe card, the intro and forms keep a readable width; the
   tab bar stays phone-sized and centred.
-- **Header**: on phones two rows: back button (or logo) and the screen title (22px, at most two
-  lines), then, if the screen has any, a row with the badge (e.g. Essen) on the left and the
-  screen's buttons on the right. From 600px one row (title 26px).
+- **Header**: one row: back button (or logo), the screen title (22px on phones, 26px from 600px,
+  at most two lines) with its badge (e.g. Essen) directly below it like a subheading, and the
+  screen's buttons (e.g. ⋯) at the far right.
 
 ## 7. Components
 
