@@ -55,7 +55,7 @@ export function Collection({ id }: { id: string }) {
   const current = entries.find(e => e.bggId === openGame)
   const actions = (
     <>
-      <a className="btn btn-primary" href={href({ name: 'lists' })}>
+      <a className="btn btn-primary" href={href({ name: 'swipe', id })}>
         Add from BGG list
       </a>
       <a className="btn" href={href({ name: 'add-link', id })}>

@@ -1,0 +1,266 @@
+/* Swipe screen and list picker: docs/design.md §7 (swipe card), §9 (swipe motion) */
+
+/* A card dragged or flung past the edge never scrolls the page sideways */
+.swipe-screen {
+  overflow-x: clip;
+}
+
+/* Source note: which list, whether facts are kept */
+.swipe-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.swipe-note b {
+  color: var(--text);
+}
+.swipe-note > .hex {
+  flex: none;
+  width: 14px;
+  height: 16px;
+  margin-top: 2px;
+  background: var(--grad-dusk);
+}
+.swipe-note.warm > .hex {
+  background: var(--grad-hot);
+}
+.swipe-note .badge-essen {
+  vertical-align: 1px;
+}
+
+/* Card stack */
+.deck {
+  position: relative;
+  height: min(400px, 54vh);
+  min-height: 340px;
+  margin: 0 0 14px;
+}
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #1f2350 0%, var(--deck) 70%);
+  box-shadow: var(--lift);
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-card > * {
+  flex-shrink: 0;
+}
+.swipe-card.behind {
+  transform: scale(0.95) translateY(14px);
+  opacity: 0.6;
+}
+.swipe-card.top {
+  touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.5s var(--spring);
+}
+.swipe-card.top.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.swipe-card.enter {
+  animation: swipe-card-in 0.45s var(--spring);
+}
+@keyframes swipe-card-in {
+  from {
+    transform: scale(0.94) translateY(16px);
+    opacity: 0.6;
+  }
+}
+.swipe-card.leaving {
+  pointer-events: none;
+  animation: swipe-fling 0.38s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes swipe-fling {
+  from {
+    transform: translateX(var(--from-x)) rotate(calc(var(--from-x) / 14px * 1deg));
+  }
+  to {
+    transform: translate(calc(var(--dir) * 520px), -40px) rotate(calc(var(--dir) * 30deg));
+    opacity: 0;
+  }
+}
+.swipe-card .cover {
+  margin-bottom: 12px;
+}
+.swipe-name {
+  margin: 0;
+  font: 700 24px/1.15 var(--font-display);
+}
+.swipe-year {
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+.swipe-desc {
+  display: -webkit-box;
+  margin: 0 0 10px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.swipe-facts {
+  margin: auto 0 0;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--raised);
+  font-size: 13px;
+  font-weight: 600;
+}
+.swipe-nofacts {
+  margin: auto 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.swipe-wait {
+  justify-content: center;
+  gap: 12px;
+  cursor: default;
+}
+.swipe-wait .hex {
+  width: 56px;
+  height: 64px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.swipe-wait p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ADD / NOPE stamps grow while dragging; the leaving card shows its stamp in full */
+.swipe-stamp {
+  position: absolute;
+  top: 20px;
+  padding: 4px 10px;
+  border: 2px solid;
+  border-radius: 10px;
+  font: 700 18px var(--font-display);
+  opacity: 0;
+  scale: 0.7;
+}
+.swipe-stamp.add {
+  left: 16px;
+  color: var(--teal);
+  rotate: -12deg;
+}
+.swipe-stamp.nope {
+  right: 16px;
+  color: var(--danger);
+  rotate: 12deg;
+}
+.leaving-right .swipe-stamp.add,
+.leaving-left .swipe-stamp.nope {
+  opacity: 1;
+  scale: 1.2;
+}
+
+/* ✕ / ✓ hexagon buttons */
+.swipe-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+.swipe-btn {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 80px;
+  border: 0;
+  clip-path: var(--hex);
+  font: 700 28px var(--font-display);
+  cursor: pointer;
+}
+.swipe-btn.no {
+  background: var(--grad-red);
+  color: #fff;
+}
+.swipe-btn.yes {
+  background: var(--grad-cool);
+  color: #04161a;
+}
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.swipe-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* List picker */
+.pick-list {
+  display: grid;
+  gap: var(--gap);
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.pick {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pick-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.pick small {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not(:disabled):hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .swipe-btn:not(:disabled):hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Reduced motion: no tilt, fling or pop-in; the card just changes */
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card.leaving {
+    display: none;
+  }
+}

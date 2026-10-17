@@ -9,6 +9,7 @@ import { AddByLink } from './screens/AddByLink.tsx'
 import { Collection } from './screens/Collection.tsx'
 import { Collections } from './screens/Collections.tsx'
 import { Search } from './screens/Search.tsx'
+import { Swipe } from './screens/Swipe.tsx'
 
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
@@ -16,6 +17,8 @@ function Screen({ route }: { route: Route }) {
       return <Collections />
     case 'collection':
       return <Collection key={route.id} id={route.id} />
+    case 'swipe':
+      return <Swipe key={route.id} id={route.id} />
     case 'add-link':
       return <AddByLink key={route.id} id={route.id} />
     case 'add':
