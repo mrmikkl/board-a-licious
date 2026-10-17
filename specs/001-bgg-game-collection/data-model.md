@@ -135,7 +135,7 @@ CREATE TABLE game (                            -- public BGG display data, share
 - Upserts apply last-write-wins in SQL (`… DO UPDATE … WHERE excluded.updated_at > t.updated_at`).
 - Marks are validated in the domain, not by a CHECK, so new marks need no migration.
 
-## Browser storage (IndexedDB `board-a-licious`)
+## Browser storage (IndexedDB `board-a-licious-<userEmail>`, one database per signed-in person)
 
 | Store | Key | Content |
 |---|---|---|
@@ -145,4 +145,4 @@ CREATE TABLE game (                            -- public BGG display data, share
 | `games` | `bggId` | Game cache |
 | `lists` | `[kind, id]` | BGG list incl. entries; index on normalised game name |
 | `publishers` | `companyId` | name |
-| `meta` | name | `lastSyncAt`, `userEmail`, `soundOn`, `introSeen`, `activeFilter` |
+| `meta` | name | `lastSyncAt`, `userEmail`, `soundOn` (default true), `introSeen`, `activeFilter` (per collection ID) |

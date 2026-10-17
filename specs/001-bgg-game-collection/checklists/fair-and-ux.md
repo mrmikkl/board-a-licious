@@ -16,48 +16,48 @@
 - [x] CHK004 Are requirements defined for adding a game (by link or from a list) when the user has no collection yet? [Gap, Spec §FR-014, §FR-016]
 - [x] CHK005 Is undoing the last swipe decision specified, or explicitly out of scope? [Gap, Spec §FR-015]
 - [x] CHK006 Are requirements defined for how a user sees that changes are not yet synchronised or that sync failed? [Gap, Spec §FR-022]
-- [ ] CHK007 Are empty states defined for the collections list and the lists tab, not only for an empty collection and an empty filter? [Completeness, Spec §Edge Cases]
-- [ ] CHK008 Are loading states specified for list pages still loading, game details pending and covers not yet available? [Completeness, Spec §FR-012, §FR-017]
+- [x] CHK007 Are empty states defined for the collections list and the lists tab, not only for an empty collection and an empty filter? [Completeness, Spec §Edge Cases]
+- [x] CHK008 Are loading states specified for list pages still loading, game details pending and covers not yet available? [Completeness, Spec §FR-012, §FR-017]
 
 ## Requirement Clarity
 
 - [x] CHK009 Is the currency of prices specified (previews list EUR and USD), including how "money spent" is summed across currencies? [Ambiguity, Spec §FR-007, §FR-008]
-- [ ] CHK010 Is the format and precision of the price paid defined (whole euros vs cents, decimal comma)? [Clarity, Spec §FR-007]
-- [ ] CHK011 Does the spec state that undoing "bought" also removes the price paid? [Clarity, Spec §FR-007]
-- [ ] CHK012 Is the order of cards when swiping defined (list order, skipping already decided games)? [Clarity, Spec §FR-015]
-- [ ] CHK013 Is it defined whether the filter selection is remembered per collection, per session or across sessions? [Clarity, Spec §FR-009]
-- [ ] CHK014 Is the default selection of groups when sharing specified, and whether "Not yet marked" can be shared? [Clarity, Spec §FR-020]
-- [ ] CHK015 Is the granularity of conflict resolution on backup import defined (once for all vs per game)? [Clarity, Spec §FR-021]
-- [ ] CHK016 Are limits for names (collection name length, very long game names) and their display (truncation) specified? [Gap, Spec §FR-001]
+- [x] CHK010 Is the format and precision of the price paid defined (whole euros vs cents, decimal comma)? [Clarity, Spec §FR-007]
+- [x] CHK011 Does the spec state that undoing "bought" also removes the price paid? [Clarity, Spec §FR-007]
+- [x] CHK012 Is the order of cards when swiping defined (list order, skipping already decided games)? [Clarity, Spec §FR-015]
+- [x] CHK013 Is it defined whether the filter selection is remembered per collection, per session or across sessions? [Clarity, Spec §FR-009]
+- [x] CHK014 Is the default selection of groups when sharing specified, and whether "Not yet marked" can be shared? [Clarity, Spec §FR-020]
+- [x] CHK015 Is the granularity of conflict resolution on backup import defined (once for all vs per game)? [Clarity, Spec §FR-021]
+- [x] CHK016 Are limits for names (collection name length, very long game names) and their display (truncation) specified? [Gap, Spec §FR-001]
 
 ## Requirement Consistency
 
-- [ ] CHK017 Are the rules for preview facts and manually entered facts consistent when both could apply (which wins on edit, and on a later re-add)? [Consistency, Spec §FR-010, §FR-011]
-- [ ] CHK018 Is the "MAY play a sound" requirement consistent with the design rule that sound is on by default with a mute toggle? [Conflict, Spec §FR-026, docs/design.md §10]
-- [ ] CHK019 Are mark names, order and emoji identical across spec, design rules, share text and backup format (including ⬡ for "Not yet marked")? [Consistency, Spec §FR-004, docs/design.md §4, contracts/share-and-backup.md]
-- [ ] CHK020 Is "Release 0.5 before the fair" consistent with the delight items (sound, intro, background) being cut first in the plan's delivery order? [Consistency, Spec §FR-026, §FR-027, Plan §Delivery Order]
+- [x] CHK017 Are the rules for preview facts and manually entered facts consistent when both could apply (which wins on edit, and on a later re-add)? [Consistency, Spec §FR-010, §FR-011]
+- [x] CHK018 Is the "MAY play a sound" requirement consistent with the design rule that sound is on by default with a mute toggle? [Conflict, Spec §FR-026, docs/design.md §10]
+- [x] CHK019 Are mark names, order and emoji identical across spec, design rules, share text and backup format (including ⬡ for "Not yet marked")? [Consistency, Spec §FR-004, docs/design.md §4, contracts/share-and-backup.md]
+- [x] CHK020 Is "Release 0.5 before the fair" consistent with the delight items (sound, intro, background) being cut first in the plan's delivery order? [Consistency, Spec §FR-026, §FR-027, Plan §Delivery Order]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK021 Can SC-005 ("every member uses the app instead of paper or chat lists") be objectively measured? [Measurability, Spec §SC-005]
+- [x] CHK021 Can SC-005 ("every member uses the app instead of paper or chat lists") be objectively measured? [Measurability, Spec §SC-005]
 - [x] CHK022 Is the starting state and the counting method for SC-011 (15 swipe decisions per minute) and SC-012 (4 taps to "Must Have, not bought") defined? [Measurability, Spec §SC-011, §SC-012]
-- [ ] CHK023 Is "typical mobile connection" in SC-002 quantified? [Clarity, Spec §SC-002]
+- [x] CHK023 Is "typical mobile connection" in SC-002 quantified? [Clarity, Spec §SC-002]
 
 ## Scenario & Edge Case Coverage
 
-- [ ] CHK024 Are requirements defined for swiping while the list is still loading pages in the background? [Coverage, Spec §FR-012, §FR-015]
-- [ ] CHK025 Are requirements defined for preview facts that change on BoardGameGeek after a game was added (booth moved, price changed)? [Gap, Spec §FR-010]
-- [ ] CHK026 Are offline requirements explicit for each action: adding by link, marking, buying with price, editing facts, loading a list that was never opened? [Coverage, Spec §FR-022, §SC-004]
-- [ ] CHK027 Is behaviour defined when a different person signs in on a device that still holds another person's data? [Edge Case, Gap, Spec §FR-022, §FR-023]
-- [ ] CHK028 Are BGG failure requirements defined per flow (list loading, swipe cards, game details), not only in general? [Coverage, Spec §Edge Cases]
+- [x] CHK024 Are requirements defined for swiping while the list is still loading pages in the background? [Coverage, Spec §FR-012, §FR-015]
+- [x] CHK025 Are requirements defined for preview facts that change on BoardGameGeek after a game was added (booth moved, price changed)? [Gap, Spec §FR-010]
+- [x] CHK026 Are offline requirements explicit for each action: adding by link, marking, buying with price, editing facts, loading a list that was never opened? [Coverage, Spec §FR-022, §SC-004]
+- [x] CHK027 Is behaviour defined when a different person signs in on a device that still holds another person's data? [Edge Case, Gap, Spec §FR-022, §FR-023]
+- [x] CHK028 Are BGG failure requirements defined per flow (list loading, swipe cards, game details), not only in general? [Coverage, Spec §Edge Cases]
 
 ## Non-Functional: UX, Accessibility, Feedback
 
-- [ ] CHK029 Are non-gesture and screen-reader alternatives specified for swiping (announced card content and result, not only buttons and arrow keys)? [Coverage, Spec §FR-015, §FR-024]
-- [ ] CHK030 Are contrast requirements verifiable for text on gradient pills and badges (e.g. white on violet or red)? [Measurability, docs/design.md §3, Spec §FR-024]
-- [ ] CHK031 Does the reduced-motion requirement list every moving element (background, burst, stamp, counters, pulses, shimmer, swipe fling)? [Completeness, Spec §FR-026, docs/design.md §9]
-- [ ] CHK032 Are hover rules (which are pointer-only) complemented by touch-equivalent feedback requirements for phones? [Clarity, docs/design.md §8]
-- [ ] CHK033 Is it specified when the introduction appears again (new device, after sign-out) and that it never blocks a returning user? [Clarity, Spec §FR-027]
+- [x] CHK029 Are non-gesture and screen-reader alternatives specified for swiping (announced card content and result, not only buttons and arrow keys)? [Coverage, Spec §FR-015, §FR-024]
+- [x] CHK030 Are contrast requirements verifiable for text on gradient pills and badges (e.g. white on violet or red)? [Measurability, docs/design.md §3, Spec §FR-024]
+- [x] CHK031 Does the reduced-motion requirement list every moving element (background, burst, stamp, counters, pulses, shimmer, swipe fling)? [Completeness, Spec §FR-026, docs/design.md §9]
+- [x] CHK032 Are hover rules (which are pointer-only) complemented by touch-equivalent feedback requirements for phones? [Clarity, docs/design.md §8]
+- [x] CHK033 Is it specified when the introduction appears again (new device, after sign-out) and that it never blocks a returning user? [Clarity, Spec §FR-027]
 
 ## Notes
 

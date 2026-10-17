@@ -20,6 +20,7 @@ empty groups left out; bought games get ✅; Essen collections add booth and pri
 ```
 
 - Full URLs so chat apps link them; "Not yet marked" uses ⬡.
+- Default selection: Must Have and Interested; every group can be chosen.
 - Nothing selected or all selected groups empty: sharing is not offered and the UI says why.
 
 ## Backup file (FR-021)

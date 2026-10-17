@@ -191,6 +191,24 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - Sound is unwanted: it can be muted, and the choice is remembered. Phones without web vibration
   (iPhone) simply do not vibrate.
 - Reduced motion is set on the device: animations and the moving background are off.
+- No collections yet: the collections screen shows an empty state inviting to create the first
+  collection or to load a BGG list. No lists loaded: the lists screen invites to load one and names
+  the SPIEL preview link as an example.
+- Loading: a list still loading shows "Loading 23 of 138 pages" on its card and above its rows, and
+  rows appear as pages arrive; a publisher not known yet shows "…"; a game without details or cover
+  shows initials in a hexagon and "Details follow from BoardGameGeek".
+- Long names: collection names have 1–60 characters; game names wrap to at most two lines in rows
+  and cards (then "…") and are shown in full in the details.
+- Facts from a list and typed in by hand: typing a fact replaces it and marks the facts as added by
+  the user; such facts are never overwritten from a list. Facts taken from a preview are updated
+  when the preview is reloaded and its booth or price changed.
+- Offline: adding by link (details follow later), marking, buying with a price and editing facts
+  work offline; loading a list that was never opened needs a connection and says so.
+- Another person signs in on the same device: they see only their own collections; the previous
+  person's data stays separate on the device and is not shown.
+- BoardGameGeek fails in a flow: list loading pauses with "BoardGameGeek is not reachable. Retry"
+  and keeps the pages already loaded; swiping offers the loaded games; missing details are retried
+  later; adding by link always works because the ID comes from the link.
 
 ## Requirements *(mandatory)*
 
@@ -217,13 +235,16 @@ the fair. Until then the search tab is visible but switched off and points to ad
 **Bought and filtering**
 
 - **FR-007**: Users MUST be able to mark a game as bought independently of its mark, optionally with
-  the price paid (suggested from the listed price), and undo it. A bought game stays in its group
+  the price paid (suggested from the listed price), and undo it; undoing also removes the price
+  paid. Prices are entered in currency units with up to two decimals (comma or point accepted,
+  0–9,999) and shown without cents when whole ("€52", "€12.50"). A bought game stays in its group
   and shows a bought badge with the price.
 - **FR-008**: A collection MUST show how many games are bought and the total price paid per
   currency (e.g. "€152 + $40"); a price paid is entered in the currency of the listed price,
   defaulting to EUR.
 - **FR-009**: Users MUST be able to filter a collection by any combination of groups and by bought
-  state (all / not bought / bought), with presets "All" and "Must Have, not bought".
+  state (all / not bought / bought), with presets "All" and "Must Have, not bought". The selection
+  is remembered per collection on the device, also after closing the app.
 
 **Booth, price and publisher ("facts")**
 
@@ -243,6 +264,10 @@ the fair. Until then the search tab is visible but switched off and points to ad
   the choice MUST start from the current memberships and apply only on confirmation.
 - **FR-015**: Inside a collection, users MUST be able to go through a list card by card, adding
   (right) or marking Not interested (left); games already in the collection MUST NOT be offered.
+  Cards come in list order, starting at the first undecided game; while later pages are still
+  loading, the loaded games are offered and a "Loading more games…" card follows the last one.
+  Without gestures, buttons and arrow keys do the same; screen readers hear each card's name, year
+  and facts and the result of each decision ("Added Cascadia", "Cascadia: not interested").
 
 **Adding single games**
 
@@ -268,9 +293,11 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 - **FR-020**: Users MUST be able to share one collection, with chosen groups, as plain text through
   the device's share menu (clipboard where none exists): grouped by mark, BoardGameGeek links, booth
-  and price for Essen collections, bought games marked.
+  and price for Essen collections, bought games marked. Every group, including Not yet marked, can
+  be chosen; Must Have and Interested are selected by default.
 - **FR-021**: Users MUST be able to export all collections to one backup file and import it on any
-  device; importing MUST NOT silently overwrite existing data.
+  device; importing MUST NOT silently overwrite existing data: conflicts are resolved once for the
+  whole import ("Keep current" or "Use backup").
 
 **Accounts, storage, quality**
 
@@ -283,10 +310,12 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - **FR-024**: All screens MUST work on a phone-width screen with touch, meet WCAG 2.2 AA and follow
   [docs/design.md](../../docs/design.md).
 - **FR-025**: The app MUST limit and cache its requests to BoardGameGeek.
-- **FR-026**: Marking games MAY play a short sound and vibrate where the device supports it; sound
-  MUST be mutable and the choice remembered; motion MUST respect the device's reduced-motion setting.
-- **FR-027**: On first start the app MUST offer a short skippable introduction that can be shown
-  again later.
+- **FR-026**: Marking games MUST play a short sound (on by default) and vibrate where the device
+  supports it; sound MUST be mutable and the choice remembered; motion MUST respect the device's
+  reduced-motion setting.
+- **FR-027**: On first start on a device the app MUST offer a short skippable introduction that
+  can be shown again later from the collections screen. It is shown once per device (not again
+  after signing out) and never blocks: every card can be skipped.
 
 ### Key Entities
 
@@ -306,11 +335,12 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 - **SC-001**: A user can add a game by link and mark it in under 20 seconds on a phone.
 - **SC-002**: A user can load the SPIEL Essen 2026 preview and see its first games in under 10
-  seconds on a typical mobile connection.
+  seconds on a typical mobile connection (4G: about 10 Mbit/s and 100 ms latency).
 - **SC-003**: Changing a game's mark takes at most 2 taps from the collection.
 - **SC-004**: With no network connection, 100% of collections and loaded lists remain usable and
   no change made offline is lost.
-- **SC-005**: During the fair, every member of the group uses the app instead of paper or chat lists.
+- **SC-005**: Asked after the fair, every member of the group says they used the app instead of
+  paper or chat lists (outcome measure, not verified by tests).
 - **SC-006**: Every flow is completable on a 360px-wide screen without horizontal scrolling or zooming.
 - **SC-007**: 100% of attempts to open the app without an invited sign-in are refused.
 - **SC-008**: A user can send their Must Haves to a group chat in under 15 seconds.
@@ -339,6 +369,9 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - Personal notes, ratings, hall-by-hall routing and purchase handling are out of scope for this
   feature (hall view is a later idea, see the vision).
 - Writing back to BoardGameGeek (e.g. a user's BGG collection) is out of scope.
+- Delivery before the fair puts the core first: if time runs short, the moving background, burst,
+  stamp, sound, vibration and introduction (FR-026, FR-027) may follow in an update shortly after
+  Release 0.5; muting and reduced motion are kept whenever those effects ship.
 - Undoing the last swipe decision and showing the sync status are out of scope for Release 0.5; a
   wrong swipe is corrected in the game's details, and sync happens automatically in the background.
 - The app relies on BoardGameGeek's public data and follows its terms of use; access to that data

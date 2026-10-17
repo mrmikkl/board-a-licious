@@ -1,6 +1,6 @@
 # Feature design: BGG Game Collection
 
-**Design rules**: [docs/design.md](../../docs/design.md) v1.0.0 | **Prototype**: [design/prototype.html](design/prototype.html)
+**Design rules**: [docs/design.md](../../docs/design.md) v1.0.1 | **Prototype**: [design/prototype.html](design/prototype.html)
 (first iteration kept as [design/prototype-v1.html](design/prototype-v1.html)) | **Agreed**: 2026-10-17
 
 Open the prototype in a desktop browser and switch the developer tools to device mode (phone size).
