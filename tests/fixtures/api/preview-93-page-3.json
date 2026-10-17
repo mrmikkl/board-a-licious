@@ -1,0 +1,11 @@
+{
+  "kind": "preview",
+  "id": 93,
+  "title": "SPIEL Essen 2026",
+  "isEssen": true,
+  "page": 3,
+  "pageCount": 3,
+  "entries": [
+    { "position": 5, "bggId": 463681, "name": "Shape It", "thumbnailUrl": null, "facts": { "booth": null, "priceCents": null, "currency": null, "publisherId": 54509, "publisher": null } }
+  ]
+}

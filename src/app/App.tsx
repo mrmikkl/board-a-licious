@@ -8,6 +8,8 @@ import { Add } from './screens/Add.tsx'
 import { AddByLink } from './screens/AddByLink.tsx'
 import { Collection } from './screens/Collection.tsx'
 import { Collections } from './screens/Collections.tsx'
+import { List } from './screens/List.tsx'
+import { Lists } from './screens/Lists.tsx'
 import { Search } from './screens/Search.tsx'
 import { Swipe } from './screens/Swipe.tsx'
 
@@ -21,6 +23,10 @@ function Screen({ route }: { route: Route }) {
       return <Swipe key={route.id} id={route.id} />
     case 'add-link':
       return <AddByLink key={route.id} id={route.id} />
+    case 'lists':
+      return <Lists />
+    case 'list':
+      return <List key={`${route.kind}:${route.listId}`} kind={route.kind} listId={route.listId} />
     case 'add':
       return <Add what={route.what} />
     case 'search':

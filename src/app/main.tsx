@@ -9,6 +9,7 @@ import './theme/shell.css'
 import './theme/components.css'
 import './theme/fair.css'
 import './theme/swipe.css'
+import './theme/lists.css'
 import './theme/interaction.css'
 
 const root = document.getElementById('root')
