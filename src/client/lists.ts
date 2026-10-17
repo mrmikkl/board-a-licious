@@ -1,3 +1,4 @@
+import { mergeListEntries } from '../domain/lists.ts'
 import { refreshPreviewFacts } from '../domain/facts.ts'
 import type { Api, ListPage } from './api.ts'
 import type { Store } from './store.ts'
@@ -94,23 +95,26 @@ export function createListLoader(deps: {
   }
 
   async function storePage(kind: ListKind, id: number, page: ListPage) {
-    const entries = (await withPublishers(page.entries)).map(e => ({ ...e, page: page.page }))
-    const ids = new Set(entries.map(e => e.bggId))
-    const list = await update(kind, id, old => ({
+    const fresh = (await withPublishers(page.entries)).map(e => ({ ...e, page: page.page }))
+    let entries: StoredListEntry[] = []
+    const list = await update(kind, id, old => {
+      // a reload replaces the page's old items; games listed on several pages merge into one row
+      const items = [...(old?.items ?? []).filter(e => e.page !== page.page), ...fresh]
+      entries = mergeListEntries(items)
+      return {
       kind,
       id,
       title: page.title,
       isEssen: page.isEssen,
       pageCount: page.pageCount,
       loadedPages: page.page,
-      // a reload replaces the page's old entries, and games that moved here from another page
-      entries: [...(old?.entries ?? []).filter(e => e.page !== page.page && !ids.has(e.bggId)), ...entries].sort(
-        (a, b) => a.position - b.position,
-      ),
+      items,
+      entries,
       openedAt: old?.openedAt ?? iso(),
       loadedAt: old?.loadedAt,
-    }))
-    await refreshCollections(list, entries)
+      }
+    })
+    await refreshCollections(list, entries.filter(e => fresh.some(f => f.bggId === e.bggId)))
     return list
   }
 
@@ -126,11 +130,8 @@ export function createListLoader(deps: {
     if (Object.keys(names).length > 0) await store.putPublishers(names)
     const done = await update(kind, id, async old => {
       const current = old ?? list
-      return {
-        ...current,
-        entries: (await withPublishers(current.entries)).filter(e => (e.page ?? 1) <= current.pageCount),
-        loadedAt: iso(),
-      }
+      const items = (await withPublishers(current.items ?? current.entries)).filter(e => (e.page ?? 1) <= current.pageCount)
+      return { ...current, items, entries: mergeListEntries(items), loadedAt: iso() }
     })
     if (Object.keys(names).length > 0) await refreshCollections(done, done.entries)
     return true
@@ -200,7 +201,9 @@ export function createListLoader(deps: {
         } else {
           list = await update(kind, id, old => {
             const current = old ?? list!
-            const stale = current.loadedAt !== undefined && now() - Date.parse(current.loadedAt) > RELOAD_AFTER_MS
+            // lists stored before editions were merged (no `items`) reload once, to drop their duplicates
+            const stale =
+              current.items === undefined || (current.loadedAt !== undefined && now() - Date.parse(current.loadedAt) > RELOAD_AFTER_MS)
             return { ...current, openedAt: iso(), error: undefined, ...(stale ? { loadedPages: 0, loadedAt: undefined } : {}) }
           })
         }

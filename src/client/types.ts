@@ -25,6 +25,8 @@ export type StoredListEntry = {
 
 /** A BGG list loaded on this device (data-model.md, "BGG list"). */
 export type StoredList = {
+  /** Every item as BGG lists it (one per edition or publisher); `entries` merges them per game. */
+  items?: StoredListEntry[]
   kind: ListKind
   id: number
   title: string

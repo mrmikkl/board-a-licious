@@ -106,6 +106,23 @@ describe('list loader', () => {
     expect(progress).toContain(2)
   })
 
+  it('shows a game listed on two pages (two editions) once, with both booths, and loses neither', async () => {
+    const bgg = fakeApi(clock)
+    const second = bgg.api.listPage.bind(bgg.api)
+    bgg.api.listPage = (async (kind: ListKind, id: number, page: number) => {
+      const result = await second(kind, id, page)
+      // page 3's first game is another edition of page 1's first game, at another booth
+      if (page === 3) result.entries[0] = { ...result.entries[0]!, bggId: 100, facts: { ...result.entries[0]!.facts!, booth: '9-Z999' } }
+      return result
+    }) as Api['listPage']
+    const loader = loaderFor(bgg.api)
+    await loader.open('preview', 93)
+    await loader.idle()
+    const stored = (await store.list('preview', 93)) as StoredList
+    expect(stored.entries.map(e => e.bggId)).toEqual([100, 101, 200, 201, 301])
+    expect(stored.entries[0]?.facts?.booth).toBe(`${bgg.booth(1, 0)} / 9-Z999`)
+  })
+
   it('resumes after a reload where it stopped', async () => {
     const first = fakeApi(clock)
     const before = loaderFor(first.api)

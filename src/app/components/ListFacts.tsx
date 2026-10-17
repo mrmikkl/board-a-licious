@@ -4,10 +4,13 @@ import { formatMoney } from '../../domain/money.ts'
 /** "…" while the publisher's name is still being looked up on BoardGameGeek. */
 const publisherOf = (facts: ListEntryFacts) => facts.publisher ?? (facts.publisherId != null ? '…' : null)
 
-/** Booth · price · publisher of a preview entry, as in the game rows (docs/design.md §7). */
+/**
+ * Booth · price · publisher of a preview entry, as in the game rows (docs/design.md §7). About half
+ * the preview has no booth yet (publishers add them before the fair), which the row says outright.
+ */
 export function factsLine(facts: ListEntryFacts | undefined): string {
   if (!facts) return ''
-  return [facts.booth, facts.priceCents != null ? formatMoney(facts.priceCents, facts.currency) : null, publisherOf(facts)].filter(Boolean).join(' · ')
+  return [facts.booth || 'No booth yet', facts.priceCents != null ? formatMoney(facts.priceCents, facts.currency) : null, publisherOf(facts)].filter(Boolean).join(' · ')
 }
 
 /** Booth, price and publisher of a preview entry in the list game sheet. */
