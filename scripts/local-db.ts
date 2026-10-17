@@ -11,7 +11,9 @@ const dir = new URL('../migrations/', import.meta.url)
 for (const file of readdirSync(dir).filter(f => f.endsWith('.sql')).sort()) {
   await db.exec(readFileSync(new URL(file, dir), 'utf8'))
 }
-const server = new PGLiteSocketServer({ db, port, maxConnections: 10 })
+// One connection at a time: PGlite is a single session, so parallel connections would mix up each
+// other's prepared statements. Further connections wait in the server's queue.
+const server = new PGLiteSocketServer({ db, port, maxConnections: 1 })
 await server.start()
 console.log(`Local PostgreSQL (PGlite) on postgres://postgres:postgres@localhost:${port}/boardalicious`)
 
