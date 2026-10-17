@@ -53,6 +53,13 @@ sync between devices and as a backup. Losing the server would lose nothing a pho
 | **Cache API** | caches BGG answers at the edge (lists 1 h, games 7 days, publishers 30 days) | in code, `worker/bgg/cache.ts` |
 | **Zero Trust / Access** | login wall in front of the whole address; only listed emails get a one-time PIN | Zero Trust dashboard; team domain and AUD tag in `wrangler.jsonc` vars |
 
+- **What "Zero Trust" means**: Cloudflare's name for its products that decide who may reach what,
+  trusting no one by default: every request must prove who sent it (unlike a classic company
+  network, where being inside is enough). Of it the app uses only **Access**, a login wall in front
+  of its address: a visitor enters their email; if it is on the list, Cloudflare emails a 6-digit
+  one-time PIN; with the PIN they get in, everyone else never reaches the app. The Zero Trust
+  "team" is the account for this area; its name is the login page's address
+  (`<team>.cloudflareaccess.com`).
 - **Access and the Worker**: Access puts a signed token (`Cf-Access-Jwt-Assertion`) on every
   request it lets through. The Worker checks that token's signature, issuer (the team domain) and
   audience (the application's AUD tag) in `worker/auth.ts`, so even a request that bypassed Access
