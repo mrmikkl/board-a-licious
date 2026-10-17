@@ -90,6 +90,10 @@ sync between devices and as a backup. Losing the server would lose nothing a pho
   **All traffic** (not "Previews only", which leaves the real address open) → a policy → Apply
   Access. Access applications of type "self-hosted" cannot be created for `workers.dev`
   addresses, so this tab is the way.
+- **When a session expires** (session duration, e.g. 1 month): the app still opens from the phone
+  and keeps working; it shows "Sign in again", which leads to `/api/signin`. That path is not served
+  by the service worker, so it reaches Access, which asks for a new PIN and then sends the person
+  back to the app; the outbox syncs afterwards.
 - **Inviting someone**: add their email to the Access application's policy. Nothing to change in
   the app; their collections start empty.
 - **Locally** there is no Access: `.dev.vars` sets `ENVIRONMENT=development` and `DEV_USER_EMAIL`,
