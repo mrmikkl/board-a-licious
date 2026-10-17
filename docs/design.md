@@ -1,6 +1,6 @@
 # Design rules
 
-**Version**: 1.0.1 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-17 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.1.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -80,6 +80,12 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 - Rounded rectangles for surfaces: 16px (`--r-md`) for fields, buttons, rows; 24px (`--r-lg`) for
   cards and sheets. Pills (999px) for badges and chips.
 - Phone column max 440px, side gutter 16px, touch targets ≥ 44px, list gap 8px.
+- From 768px wide (tablets, laptops) the column grows to 1040px: collection cards and game rows
+  flow into a grid; sheets (560px), the swipe card, the intro and forms keep a readable width; the
+  tab bar stays phone-sized and centred.
+- **Header**: on phones two rows: back button (or logo) and the screen title (22px, at most two
+  lines), then a row with the badge (e.g. Essen) on the left and the screen's buttons and the
+  🔊/🔇 toggle on the right. From 600px one row (title 26px).
 
 ## 7. Components
 
@@ -95,7 +101,7 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 | **Filter** | one full-width button showing the selection and count; opens a panel with presets ("All", "⭐ Must Have, not bought"), a Bought segment (All / Not bought / ✅ Bought) and a checkbox per group. |
 | **Separator** | 2px orange → violet line between the controls of a screen and its content. |
 | **Hexagon picker** | 3–4 hexagons in a honeycomb (every second one offset down); selected = filled with its gradient. Used for marks and for "what to add". |
-| **Sheet** | bottom sheet for details; closes with Esc, scrim tap or Cancel; never saves without an explicit button. |
+| **Sheet** | bottom sheet for details; closes with Esc, scrim tap, Cancel or by pulling it down on a touch screen (from the handle, or anywhere while scrolled to the top; 100px, or a quick flick of 40px); never saves without an explicit button. |
 | **Multi-choice list** | rows with a hexagon tick; the ticks always show the current truth; changes apply on "Done". |
 | **Inputs** | solid field with label or icon; the primary button stays disabled until the input is valid. Dropdowns use the same field look with an orange hexagon as arrow. |
 | **Swipe card** | big cover, name, year, description (3 lines), facts; ✓/✕ hexagon buttons below; arrow keys work. |
@@ -134,7 +140,8 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 ## 10. Sound and haptics
 
 - A short synthesised **dice roll** on every mark; bought adds a two-note chime. A 🔊/🔇 button in
-  the header mutes it; the choice is remembered.
+  the header and the "Sound and vibration" switch in Config mute it (one setting); the choice is
+  remembered.
 - **Vibration** (Android browsers): short tick per mark or swipe, double for Must Have, longer
   pattern for bought. iPhone browsers offer no web vibration; nothing happens there.
 
