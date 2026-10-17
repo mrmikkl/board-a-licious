@@ -81,6 +81,15 @@ sync between devices and as a backup. Losing the server would lose nothing a pho
   request it lets through. The Worker checks that token's signature, issuer (the team domain) and
   audience (the application's AUD tag) in `worker/auth.ts`, so even a request that bypassed Access
   gets no data.
+- **Where the values live**: the team domain is under Zero Trust → Settings → Team domain
+  (`boardalicious.cloudflareaccess.com`). The AUD tag is under Zero Trust → Access controls →
+  Applications → the Worker's application → Overview / Basic information ("Application Audience
+  (AUD) Tag"); the login redirect also carries it as `kid=…`. Both go into `wrangler.jsonc`
+  (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`); they are not secret.
+- **How Access was switched on**: Workers & Pages → `board-a-licious` → tab **Access** → scope
+  **All traffic** (not "Previews only", which leaves the real address open) → a policy → Apply
+  Access. Access applications of type "self-hosted" cannot be created for `workers.dev`
+  addresses, so this tab is the way.
 - **Inviting someone**: add their email to the Access application's policy. Nothing to change in
   the app; their collections start empty.
 - **Locally** there is no Access: `.dev.vars` sets `ENVIRONMENT=development` and `DEV_USER_EMAIL`,
