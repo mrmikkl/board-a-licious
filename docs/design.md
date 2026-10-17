@@ -1,6 +1,6 @@
 # Design rules
 
-**Version**: 1.0.0 | **Agreed**: 2026-10-17 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.0.1 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-17 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -45,8 +45,10 @@ Gradients (all 135°):
 | got | `#0FB98F` → `#7CF0C5` | Bought |
 | dusk | `#8B5CF6` → `#4C5BFF` → `#14C8C8` | neutral decoration, standard collections |
 
-Contrast: body text ≥ 4.5:1 against its surface (WCAG 2.2 AA). State is never shown by colour
-alone; every mark also has its emoji and label.
+Contrast: body text ≥ 4.5:1 against its surface (WCAG 2.2 AA). Text on a gradient pill or badge
+is checked against the gradient's least contrasting colour: dark text (`--ink`) on hot, cool, got
+and white; white text on red, violet, mud and dusk, made bold at ≥ 14px where needed to reach 3:1
+for large text. State is never shown by colour alone; every mark also has its emoji and label.
 
 ## 4. Marks and their symbols
 
@@ -111,6 +113,8 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
   orange hexagon pulse expanding from the tap point.
 - **Focus**: 2px orange outline, offset 2px.
 - **Disabled**: 45% opacity, no hover effect.
+- **Touch**: phones have no hover; press squish and the tap pulse are the feedback there, and
+  nothing is reachable or understandable only by hovering.
 
 ## 9. Motion
 
@@ -123,7 +127,9 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 - **Background**: a faint honeycomb on a deep blue-violet gradient; slow light waves fill cells in
   violet→orange, and every ~0.5–1.2s a single cell lights up orange or teal and fades. Low contrast,
   brightest at the top, ~30fps, paused in hidden tabs.
-- **Reduced motion**: all of the above is switched off; the background is one still frame.
+- **Reduced motion**: all of the above is switched off: background (one still frame), bursts,
+  stamp, counter rolls and flashes, tap pulses, press squish, the shimmer on the + button, and the
+  swipe tilt, fling and pop-in (the card changes without animation).
 
 ## 10. Sound and haptics
 
