@@ -10,5 +10,8 @@ export default defineConfig({
     { name: 'phone', use: phone },
     { name: 'phone-reduced-motion', use: { ...phone, contextOptions: { reducedMotion: 'reduce' } } },
   ],
-  webServer: { command: 'npm run dev', url: 'http://localhost:5173', reuseExistingServer: true },
+  webServer: [
+    { command: 'npm run db:local', port: 5432, reuseExistingServer: true },
+    { command: 'npm run dev', url: 'http://localhost:5173', reuseExistingServer: true },
+  ],
 })

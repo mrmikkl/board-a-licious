@@ -77,10 +77,10 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ### Tests for User Story 1
 
-- [ ] T026 [P] [US1] Unit tests for links in `tests/unit/bgg-link.test.ts`: `/boardgame/<id>[/<slug>]` and `/boardgameexpansion/…`, suggested name from slug (`ark-nova` → "Ark Nova"), non-game links rejected with a hint
-- [ ] T027 [P] [US1] Worker tests for game details in `tests/worker/bgg-games.test.ts` with fixture `tests/fixtures/bgg/geekitems-295947.json`: name, year, thumbnail, `short_description`; `GET /api/bgg/games?ids=` (1–50 IDs) served from the `game` table when fresher than 7 days
-- [ ] T027a [P] [US1] Unit tests in `tests/unit/details.test.ts`: an entry with `detailsPending` gets name, year, cover and description; mark, bought and price stay unchanged; a BGG failure keeps it pending for the next try (FR-017)
-- [ ] T028 [P] [US1] End-to-end test in `tests/e2e/us1-collections.spec.ts`: create "Essen 2026" (Essen on), empty state with both buttons, add by link, mark Must Have, reload; axe clean at 360 px
+- [X] T026 [P] [US1] Unit tests for links in `tests/unit/bgg-link.test.ts`: `/boardgame/<id>[/<slug>]` and `/boardgameexpansion/…`, suggested name from slug (`ark-nova` → "Ark Nova"), non-game links rejected with a hint
+- [X] T027 [P] [US1] Worker tests for game details in `tests/worker/bgg-games.test.ts` with fixture `tests/fixtures/bgg/geekitems-295947.json`: name, year, thumbnail, `short_description`; `GET /api/bgg/games?ids=` (1–50 IDs) served from the `game` table when fresher than 7 days
+- [X] T027a [P] [US1] Unit tests in `tests/unit/details.test.ts`: an entry with `detailsPending` gets name, year, cover and description; mark, bought and price stay unchanged; a BGG failure keeps it pending for the next try (FR-017)
+- [X] T028 [P] [US1] End-to-end test in `tests/e2e/us1-collections.spec.ts`: create "Essen 2026" (Essen on), empty state with both buttons, add by link, mark Must Have, reload; axe clean at 360 px
 
 ### Implementation for User Story 1
 

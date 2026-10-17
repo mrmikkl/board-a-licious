@@ -1,0 +1,60 @@
+import { afterEach, describe, expect, it } from 'vitest'
+
+import { ApiError } from '../../src/client/api.ts'
+import { completeDetails } from '../../src/client/details.ts'
+import { type Store, deleteStore, openStore } from '../../src/client/store.ts'
+import type { Game } from '../../src/client/types.ts'
+import { newEntry } from '../../src/domain/collection.ts'
+
+const T1 = '2026-10-17T09:00:00.000Z'
+const T2 = '2026-10-17T10:00:00.000Z'
+const cascadia: Game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: 'https://cf.geekdo-images.com/x.jpg', description: 'Tiles.', kind: 'boardgame' }
+
+let store: Store
+afterEach(async () => {
+  store.close()
+  await deleteStore(store.email)
+})
+
+const pendingEntry = () => ({ ...newEntry('c1', 295947, T1), detailsPending: true, mark: 'must_have' as const, bought: true, paidCents: 5200, paidCurrency: 'EUR' })
+
+describe('completing link-added games (FR-017)', () => {
+  it('fills in name, year, cover and description and keeps mark, bought and price', async () => {
+    store = await openStore('anna@example.com')
+    await store.putGames([{ ...cascadia, name: 'Cascadia (from link)', year: null, thumbnailUrl: null, description: null }])
+    await store.saveEntry(pendingEntry())
+    const asked: number[][] = []
+    const api = { games: async (ids: number[]) => (asked.push(ids), [cascadia]) }
+
+    expect(await completeDetails({ store, api, now: () => T2 })).toBe(1)
+    expect(asked).toEqual([[295947]])
+    expect(await store.game(295947)).toEqual(cascadia)
+    const [entry] = await store.entries('c1')
+    expect(entry).toMatchObject({ detailsPending: false, mark: 'must_have', bought: true, paidCents: 5200, paidCurrency: 'EUR', updatedAt: T2 })
+  })
+
+  it('keeps the entry pending when BGG fails, for the next try', async () => {
+    store = await openStore('anna@example.com')
+    await store.saveEntry(pendingEntry())
+    const api = { games: async () => Promise.reject(new ApiError('bgg_unavailable', 'down', true)) }
+    expect(await completeDetails({ store, api, now: () => T2 })).toBe(0)
+    expect((await store.entries('c1'))[0]?.detailsPending).toBe(true)
+  })
+
+  it('keeps entries pending that BGG did not return', async () => {
+    store = await openStore('anna@example.com')
+    await store.saveEntry(pendingEntry())
+    expect(await completeDetails({ store, api: { games: async () => [] }, now: () => T2 })).toBe(0)
+    expect((await store.entries('c1'))[0]?.detailsPending).toBe(true)
+  })
+
+  it('ignores deleted entries and asks for at most 50 ids at a time', async () => {
+    store = await openStore('anna@example.com')
+    for (let id = 1; id <= 60; id++) await store.saveEntry({ ...newEntry('c1', id, T1), detailsPending: true })
+    await store.saveEntry({ ...newEntry('c1', 61, T1), detailsPending: true, deleted: true })
+    const asked: number[][] = []
+    await completeDetails({ store, api: { games: async ids => (asked.push(ids), []) }, now: () => T2 })
+    expect(asked.map(ids => ids.length)).toEqual([50, 10])
+    expect(asked.flat()).not.toContain(61)
+  })
+})
