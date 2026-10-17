@@ -200,6 +200,9 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 - **FR-001**: Users MUST be able to create any number of collections, each with a name and a type:
   **Essen** or **standard**.
+- **FR-001a**: Users MUST be able to rename and delete a collection; deleting asks for confirmation
+  and removes all its games, marks, bought states and prices. A collection's type cannot change after
+  creation.
 - **FR-002**: The collections list MUST show each collection with its type and the number of games
   per mark and bought.
 - **FR-003**: A game MAY be in several collections; each membership has its own mark, bought state
@@ -216,7 +219,9 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - **FR-007**: Users MUST be able to mark a game as bought independently of its mark, optionally with
   the price paid (suggested from the listed price), and undo it. A bought game stays in its group
   and shows a bought badge with the price.
-- **FR-008**: A collection MUST show how many games are bought and the total price paid.
+- **FR-008**: A collection MUST show how many games are bought and the total price paid per
+  currency (e.g. "€152 + $40"); a price paid is entered in the currency of the listed price,
+  defaulting to EUR.
 - **FR-009**: Users MUST be able to filter a collection by any combination of groups and by bought
   state (all / not bought / bought), with presets "All" and "Must Have, not bought".
 
@@ -243,7 +248,9 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 - **FR-016**: Users MUST be able to add a game by pasting its BoardGameGeek game link: inside a
   collection (no collection choice) or from the add button with a collection dropdown. The game ID
-  and a suggested name MUST come from the link alone; the name is editable.
+  and a suggested name MUST come from the link alone; the name is editable. If the user has no
+  collection yet, the add flow MUST offer to create one first (name prefilled "SPIEL 2026", Essen)
+  and then continue with the game.
 - **FR-017**: Games added by link MUST be completed with name, year, cover and description from
   BoardGameGeek as soon as that data can be loaded, without changing marks.
 

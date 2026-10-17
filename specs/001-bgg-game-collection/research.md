@@ -163,9 +163,15 @@ sources or on knowledge that could not be checked against the vendor's own page.
   `/geekpreview/<id>…` → preview, `/geeklist/<id>…` → geeklist.
 - **Loading**: page 1 at once, the remaining pages sequentially in the background through the Worker
   (throttled to 1 request/s, each page cached 1 h at the edge); stored in IndexedDB for offline use
-  and search by name. Publisher names resolved once per company and cached.
+  and search by name. Publisher names resolved once per company and cached. Entries are shown as
+  soon as a page arrives; publisher names are filled in afterwards (unknown companies queued, shown
+  as "…" until resolved), so the first page meets SC-002.
+- **On user demand (constitution V)**: opening a BGG list is the user's request for the whole list;
+  the remaining pages load only while the list is open or the app is in the foreground, never on a
+  schedule or for lists the user did not open.
 - **Release 1.0**: the XML API has no preview endpoint; previews keep using this source under the
-  constitution exception until BGG offers an official way, or the exception's end date is reviewed.
+  constitution exception (v1.3.0: data the official API does not offer) until BGG offers an
+  official way, at the latest 2027-01-31.
   **Verify** with BGG once the token is granted.
 - **Alternatives considered**: free-text parsing of geeklist posts (unreliable); asking users to type
   facts (kept only as the manual fallback, FR-011).

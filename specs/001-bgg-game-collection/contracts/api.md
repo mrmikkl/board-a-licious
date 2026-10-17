@@ -34,11 +34,18 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
     "page": 1, "pageCount": 138,
     "entries": [ { "position": 1, "bggId": 446453, "name": "…", "thumbnailUrl": "https://…",
                    "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR",
-                              "publisher": "Inside Up Games" } } ] }
+                              "publisherId": 34183, "publisher": "Inside Up Games" } } ] }
   ```
 - Geeklists: `isEssen: false`, no `facts`, up to 25 entries per page, non-game entries omitted.
-- Previews: 10 entries per page; price = `showprice`, else `msrp`; publisher resolved and cached.
+- Previews: 10 entries per page; price = `showprice`, else `msrp`. `publisher` comes from the
+  company cache and is `null` while a company is not resolved yet; the page never waits for company
+  lookups (SC-002). The app resolves missing names with `GET /api/bgg/companies`.
 - Each page cached 1 h at the edge; `404` for unknown lists.
+
+### `GET /api/bgg/companies?ids=<id,id,…>`
+
+- 1–10 company IDs. `200 { "companies": [ { "id": 34183, "name": "Inside Up Games" } ] }`.
+- Each name cached 30 days; requests to BGG throttled to 1/s like all others.
 
 ### `GET /api/bgg/games?ids=<id,id,…>`
 
@@ -60,7 +67,7 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
   { "collections": [ { "id": "c0f…", "name": "Essen 2026", "type": "essen",
                        "updatedAt": "2026-10-17T09:12:03.120Z", "deleted": false } ],
     "entries": [ { "collectionId": "c0f…", "bggId": 446453, "mark": "must_have",
-                   "bought": true, "paidCents": 5200,
+                   "bought": true, "paidCents": 5200, "paidCurrency": "EUR",
                    "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR",
                               "publisher": "Inside Up Games" },
                    "factsSource": "preview", "detailsPending": false,

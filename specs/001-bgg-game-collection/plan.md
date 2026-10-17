@@ -49,7 +49,7 @@ to ~1,500 games; about 12 screens and sheets (design.md)
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.* Constitution v1.2.0.
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.* Constitution v1.3.0.
 
 | Principle | Pre | Post | How the design complies |
 |---|---|---|---|
@@ -153,4 +153,6 @@ Order inside 0.5 (cut from the end if time runs short):
 
 - Apply for the BGG XML API token (approval may take a week or more).
 - Loading the whole SPIEL preview takes ~2–3 minutes at 1 request/s (138 pages of 10); the first
-  page shows at once and the rest loads in the background (R9).
+  page shows at once and the rest loads in the background (R9). Opening a list counts as the
+  user's request for the whole list; pages load only while the list is open or the app is in the
+  foreground (constitution V, "on user demand").

@@ -35,7 +35,7 @@ empty groups left out; bought games get ✅; Essen collections add booth and pri
     { "id": "c0f…", "name": "Essen 2026", "type": "essen", "updatedAt": "…",
       "entries": [
         { "bggId": 446453, "name": "…", "year": 2026, "mark": "must_have",
-          "bought": true, "paidCents": 5200,
+          "bought": true, "paidCents": 5200, "paidCurrency": "EUR",
           "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR", "publisher": "…" },
           "factsSource": "preview", "updatedAt": "…" } ] } ]
 }

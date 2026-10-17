@@ -50,6 +50,7 @@ Link derived: `https://boardgamegeek.com/boardgame/{bggId}`.
 | `mark` | Mark key | default `new` |
 | `bought` | boolean | independent of `mark` (FR-007) |
 | `paidCents` | integer ≥ 0 \| null | price paid; null = not tracked |
+| `paidCurrency` | ISO 4217 code \| null | currency of the price paid; from `facts.currency`, else `EUR` (FR-008) |
 | `facts` | `{ booth, priceCents, currency, publisher }` \| null | each part optional |
 | `factsSource` | `preview` \| `manual` \| null | `manual` shows "Added by you" (FR-011) |
 | `detailsPending` | boolean | added by link, BGG details not loaded yet (FR-017) |
@@ -65,8 +66,10 @@ Rules (all in `src/domain/`):
   have an entry in the collection (including `skip`) are not offered.
 - **Membership choice (FR-014)**: input = collection IDs before and after; output = adds and
   removals; a removal sets `deleted = true` (mark, bought and price go with it).
-- **Bought (FR-007/008)**: marking bought suggests `paidCents` from `facts.priceCents`; un-buying
-  clears `paidCents`. Spent = Σ `paidCents` of bought entries.
+- **Bought (FR-007/008)**: marking bought suggests `paidCents` and `paidCurrency` from `facts`
+  (currency defaults to `EUR`); un-buying clears both. Spent = Σ `paidCents` of bought entries,
+  grouped by `paidCurrency`.
+- **Deleting a collection (FR-001a)**: sets `deleted = true` on the collection and all its entries.
 - **Filter (FR-009)**: `{ groups: Set<Mark>, bought: 'all' | 'no' | 'yes' }`; presets `all` and
   `hunt` = `{ groups: {must_have}, bought: 'no' }`.
 - **Merge**: per entry (and per collection) the later `updatedAt` wins; equal → server copy.
@@ -104,6 +107,7 @@ CREATE TABLE collection_entry (
   mark            text        NOT NULL DEFAULT 'new',
   bought          boolean     NOT NULL DEFAULT false,
   paid_cents      integer     CHECK (paid_cents >= 0),
+  paid_currency   text,
   booth           text,
   price_cents     integer     CHECK (price_cents >= 0),
   currency        text,

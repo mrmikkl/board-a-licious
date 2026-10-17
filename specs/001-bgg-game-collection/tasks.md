@@ -42,11 +42,13 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 ### Tests first
 
 - [ ] T007 [P] Unit tests for marks in `tests/unit/marks.test.ts`: order `new, must_have, interested, unsure, poop, skip`, labels and emoji per data-model.md, unknown keys rejected
-- [ ] T008 [P] Unit tests for entries and merge in `tests/unit/collection.test.ts`: later `updatedAt` wins, equal → server copy, tombstones (`deleted = true`) sync like changes, collection `name` "1–60 chars, trimmed", `type` "`essen` | `standard`"
+- [ ] T008 [P] Unit tests for entries and merge in `tests/unit/collection.test.ts`: later `updatedAt` wins, equal → server copy, tombstones (`deleted = true`) sync like changes, collection `name` "1–60 chars, trimmed", `type` "`essen` | `standard`", renaming keeps the type, deleting a collection tombstones all its entries (FR-001a)
 - [ ] T009 [P] Worker tests for auth in `tests/worker/auth.test.ts`: valid `Cf-Access-Jwt-Assertion` (JWKS, `aud`, `exp`) passes; missing/invalid → `401 {"error":"unauthenticated"}`; `DEV_USER_EMAIL` used only when `ENVIRONMENT=development`
 - [ ] T010 [P] Repository tests on PGlite in `tests/worker/db.test.ts`: schema from `migrations/0001_collections.sql`, upsert applies last-write-wins, every query limited to the caller's `user_email`, CHECKs (`length(name) BETWEEN 1 AND 60`, `type IN ('essen','standard')`, `bgg_id > 0`, `paid_cents >= 0`)
 - [ ] T011 [P] Unit tests for the browser store in `tests/unit/store.test.ts` (fake-indexeddb): stores `collections`, `entries` (key `[collectionId, bggId]`), `outbox`, `games`, `lists`, `publishers`, `meta`; outbox enqueue and acknowledge
 - [ ] T012 [P] Worker tests for sync in `tests/worker/sync.test.ts` per contracts/api.md: `GET /api/sync?since=`, `POST /api/sync` (1–500 items, mark known, `bggId > 0`, `updatedAt` ≤ 5 min in the future, entry's collection must belong to the user), `{ applied, ignored }`, idempotent
+- [ ] T012a [P] BGG adapter tests in `tests/worker/bgg-cache.test.ts` (fake clock, fixtures): cache times lists 1 h, games 7 days, companies 30 days; a repeated request is served from the cache; at most 1 request/s to BGG; honest `User-Agent`; BGG failure → `bgg_unavailable`, 429 → `bgg_rate_limited` (FR-025, constitution V)
+- [ ] T012b [P] Unit tests for the client in `tests/unit/sync-client.test.ts` (fake fetch, fake-indexeddb): outbox pushed then acknowledged; pull with `since` merges last-write-wins; after a network error the outbox stays filled and is retried on `online`; API errors mapped to the error codes of contracts/api.md
 
 ### Implementation
 
@@ -77,6 +79,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 - [ ] T026 [P] [US1] Unit tests for links in `tests/unit/bgg-link.test.ts`: `/boardgame/<id>[/<slug>]` and `/boardgameexpansion/…`, suggested name from slug (`ark-nova` → "Ark Nova"), non-game links rejected with a hint
 - [ ] T027 [P] [US1] Worker tests for game details in `tests/worker/bgg-games.test.ts` with fixture `tests/fixtures/bgg/geekitems-295947.json`: name, year, thumbnail, `short_description`; `GET /api/bgg/games?ids=` (1–50 IDs) served from the `game` table when fresher than 7 days
+- [ ] T027a [P] [US1] Unit tests in `tests/unit/details.test.ts`: an entry with `detailsPending` gets name, year, cover and description; mark, bought and price stay unchanged; a BGG failure keeps it pending for the next try (FR-017)
 - [ ] T028 [P] [US1] End-to-end test in `tests/e2e/us1-collections.spec.ts`: create "Essen 2026" (Essen on), empty state with both buttons, add by link, mark Must Have, reload; axe clean at 360 px
 
 ### Implementation for User Story 1
@@ -88,8 +91,9 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [ ] T033 [US1] Build the Add screen `src/app/screens/Add.tsx`: hexagons Collection / BGG list / Game; New collection form (name, "Essen collection" switch on by default, "Create collection" disabled until a name is typed)
 - [ ] T034 [US1] Build the Collection screen `src/app/screens/Collection.tsx` with `GameRow.tsx` and `GroupHeading.tsx`: groups in mark order, "Not yet marked" first, "Not interested" collapsed; centred empty state with "Add from BGG list" and "Add by link"; separator line
 - [ ] T035 [US1] Build the game details sheet `src/app/components/GameSheet.tsx`: cover, name, year, BGG link, mark picker (4 hexagons), "🛑 Not interested" / "Mark as not yet decided", "Remove from collection"
-- [ ] T036 [US1] Build add-by-link inside a collection `src/app/screens/AddByLink.tsx` (link only, "Add to ‹collection›", back to the collection) and the Game form in `Add.tsx` (collection dropdown always visible, "Add game" enabled only with a valid link, a name and a free collection)
+- [ ] T036 [US1] Build add-by-link inside a collection `src/app/screens/AddByLink.tsx` (link only, "Add to ‹collection›", back to the collection) and the Game form in `Add.tsx` (collection dropdown always visible, "Add game" enabled only with a valid link, a name and a free collection; with no collection yet, offer "Create a collection" first — name prefilled "SPIEL 2026", Essen — and then continue with the game, FR-016)
 - [ ] T037 [US1] Complete link-added games in the background in `src/client/details.ts` (FR-017: fetch details for `detailsPending` entries, keep marks)
+- [ ] T037a [US1] Rename and delete a collection from a header menu in `src/app/screens/Collection.tsx` (rename: 1–60 chars; delete: confirmation "Delete ‹name› and its N games?", tombstones the collection and all its entries via the outbox; type stays fixed) and the rules in `src/domain/collection.ts`, covered by T008 (FR-001a)
 - [ ] T038 [US1] Build the switched-off Search screen `src/app/screens/Search.tsx` ("Searching all of BoardGameGeek comes soon", disabled field, "Add a game by link instead") — FR-019 for Release 0.5
 
 **Checkpoint**: US1 works on its own (MVP).
@@ -106,14 +110,15 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [ ] T039 [P] [US2] Unit tests in `tests/unit/lists.test.ts`: `/geekpreview/<id>…` → `{kind: 'preview', id}`, `/geeklist/<id>…` → `{kind: 'geeklist', id}`, anything else → null
 - [ ] T040 [P] [US2] Unit tests in `tests/unit/facts.test.ts`: facts kept only for preview → Essen collection; reason texts for every other combination; manual facts marked `factsSource: 'manual'`
 - [ ] T041 [P] [US2] Unit tests in `tests/unit/membership.test.ts`: before/after sets → adds and removals; removal = tombstone incl. mark, bought and price
-- [ ] T042 [P] [US2] Worker tests in `tests/worker/bgg-lists.test.ts` with fixtures `tests/fixtures/bgg/preview-93-page-1.json`, `preview-93-page-138.json`, `geeklist-page-1.json`, `company-34183.json`: preview entries carry booth (`location`), price (`showprice`, else `msrp`, with currency) and publisher name; geeklist entries have no facts and skip non-games; `pageCount`; 404 for unknown lists
+- [ ] T042 [P] [US2] Worker tests in `tests/worker/bgg-lists.test.ts` with fixtures `tests/fixtures/bgg/preview-93-page-1.json`, `preview-93-page-138.json`, `geeklist-page-1.json`, `company-34183.json`: preview entries carry booth (`location`), price (`showprice`, else `msrp`, with currency) and `publisherId`; page 1 responds without company lookups (`publisher` null when not cached); `GET /api/bgg/companies?ids=` (1–10 IDs) returns names; geeklist entries have no facts and skip non-games; `pageCount`; 404 for unknown lists
+- [ ] T042a [P] [US2] Unit tests in `tests/unit/list-loader.test.ts` (fake clock, fake API): page 1 at once, the rest sequentially at ≤ 1 request/s; progress stored; resumes after a reload; pauses when the list is closed or the app is in the background; stops with a retryable error when a page fails; missing publishers resolved afterwards
 - [ ] T043 [US2] End-to-end test in `tests/e2e/us2-lists.spec.ts`: load preview link, Essen badge, first page fast, progress, name filter, membership ticks applied on Done, Cancel discards
 
 ### Implementation for User Story 2
 
 - [ ] T044 [P] [US2] Implement `src/domain/lists.ts`, `src/domain/facts.ts` and `src/domain/membership.ts`
-- [ ] T045 [US2] Implement `GeekdoSource.getListPage` in `worker/bgg/geekdo.ts` (preview items + company names cached; geeklist items) and `GET /api/bgg/lists/:kind/:id?page=` in `worker/routes/lists.ts` per contracts/api.md
-- [ ] T046 [US2] Implement the background list loader in `src/client/lists.ts` (page 1 at once, remaining pages sequentially at ≤ 1 request/s, progress stored in `lists`, resumable after reload)
+- [ ] T045 [US2] Implement `GeekdoSource.getListPage` in `worker/bgg/geekdo.ts` (preview items returned without waiting for publisher names, `publisher` from the company cache or null; geeklist items), `GET /api/bgg/lists/:kind/:id?page=` in `worker/routes/lists.ts` and `GET /api/bgg/companies?ids=` in `worker/routes/companies.ts` per contracts/api.md
+- [ ] T046 [US2] Implement the background list loader in `src/client/lists.ts` (page 1 at once, remaining pages sequentially at ≤ 1 request/s, progress stored in `lists`, resumable after reload; loads only while the list is open or the app is in the foreground — constitution V "on user demand"; then resolves missing publishers via `/api/bgg/companies` and updates the stored entries)
 - [ ] T047 [US2] Build the BGG list form in `src/app/screens/Add.tsx` (link field, hint "Preview: an Essen list …" / "Geeklist: …", "Load list" disabled until a valid link)
 - [ ] T048 [US2] Build `src/app/screens/Lists.tsx` (cards with Essen badge and progress, "Load a BGG list" card) and `src/app/screens/List.tsx` (name filter, rows with facts and "in a collection", + per row)
 - [ ] T049 [US2] Build `src/app/components/MembershipSheet.tsx` (cover, description, facts, one hexagon tick per collection showing current membership and the effect of a change; Done / Cancel)
@@ -149,14 +154,14 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 ### Tests for User Story 4
 
 - [ ] T054 [P] [US4] Unit tests in `tests/unit/filter.test.ts`: groups × bought (`all` / `no` / `yes`), presets `all` and `hunt` = `{ groups: {must_have}, bought: 'no' }`, label text for the filter button
-- [ ] T055 [P] [US4] Unit tests in `tests/unit/bought.test.ts`: suggested price from `facts.priceCents`, skip price, undo clears `paidCents`, spent = sum of `paidCents` of bought entries
+- [ ] T055 [P] [US4] Unit tests in `tests/unit/bought.test.ts`: suggested price from `facts.priceCents`, skip price, currency from `facts.currency`, else `EUR`; undo clears `paidCents` and `paidCurrency`; spent = sum of `paidCents` of bought entries per currency ("€152 + $40") (FR-008)
 - [ ] T056 [US4] End-to-end test in `tests/e2e/us4-fair.spec.ts`: filter panel, preset, "Bought it" with price, badge "✅ €52", "€52 spent", game stays in its group, manual facts "Added by you"
 
 ### Implementation for User Story 4
 
 - [ ] T057 [P] [US4] Implement `src/domain/filter.ts` and the bought rules in `src/domain/collection.ts`
 - [ ] T058 [US4] Build `src/app/components/FilterPanel.tsx` (button with selection and count; presets; Bought segment; group checkboxes with counts; closes on Done or outside tap; selection stored in `meta.activeFilter`)
-- [ ] T059 [US4] Extend `GameSheet.tsx`: "✅ Bought it" → "What did you pay?" (prefilled, Enter saves, "Don't track the price"), "Not bought after all"; bought ✓ on the cover and price badge in `GameRow.tsx`; bought line under the filter in `Collection.tsx`
+- [ ] T059 [US4] Extend `GameSheet.tsx`: "✅ Bought it" → "What did you pay?" (prefilled, Enter saves, "Don't track the price"), "Not bought after all"; bought ✓ on the cover and price badge in `GameRow.tsx`; bought line under the filter in `Collection.tsx` with the money spent per currency
 - [ ] T060 [US4] Add manual facts to `GameSheet.tsx`: "➕ Add booth, price and publisher" / "✎ Edit", form with Booth, Price €, Publisher, Save enabled once one field is filled (FR-011)
 - [ ] T061 [US4] Show the game description in `GameSheet.tsx` and `MembershipSheet.tsx`, with "The description is filled in from BoardGameGeek later." when missing (FR-018)
 
@@ -231,7 +236,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ### Parallel Opportunities
 
-- Setup T002–T005; Foundational tests T007–T012 and T013, T020, T023, T024.
+- Setup T002–T005; Foundational tests T007–T012b and T013, T020, T023, T024.
 - Within stories: all test tasks marked [P]; domain modules ([P]) while Worker routes are built.
 - US4 and US5 can run in parallel after US1; Polish T071–T074 in parallel at any point after Phase 2.
 
@@ -271,9 +276,10 @@ the token.
 
 ## Notes
 
-- Open gaps from `checklists/fair-and-ux.md` are **not** covered by tasks: renaming/deleting
-  collections (CHK001–003), adding with no collection (CHK004, the UI should route to "Create a
-  collection"), undo swipe (CHK005), sync status (CHK006), mixed currencies (CHK009). Decide them in
-  the spec before `/speckit-implement`, or accept them as out of scope.
+- Resolved after `/speckit-analyze`: renaming/deleting collections (FR-001a, T037a), adding with no
+  collection (FR-016, T036), mixed currencies (FR-008, T055/T059), test-first gaps (T012a, T012b,
+  T027a, T042a), publishers filled in after the first page (T042, T045, T046).
+- Still open in `checklists/fair-and-ux.md`, accepted as out of scope for 0.5 unless decided
+  otherwise: undo swipe (CHK005), sync status (CHK006).
 - Commit after each task or logical group (`F001 T0xx: …` per docs/commit-conventions.md).
 - The prototype is a visual reference only; no code is copied from it.
