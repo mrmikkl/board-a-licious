@@ -1,6 +1,6 @@
 # Design rules
 
-**Version**: 1.5.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.6.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -86,6 +86,10 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 - **Header**: one row: back button (or logo), the screen title (22px on phones, 26px from 600px,
   at most two lines) with its badge (e.g. Essen) directly below it like a subheading, and the
   screen's buttons (e.g. ⋯) at the far right.
+- **Collection screen**: no back button and no logo (the Collections tab leads back), so the name
+  has the whole width. On phones a tool row of four equal icon buttons follows: Add by list
+  (primary), Add by link, Filter, ⋯. From 600px the two add buttons carry text and filter and ⋯ sit
+  at the far right of the header.
 
 ## 7. Components
 
