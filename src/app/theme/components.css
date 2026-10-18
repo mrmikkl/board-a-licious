@@ -310,6 +310,10 @@
 .soon-card .card-title {
   padding-right: 0;
 }
+/* F002 Share hint at the top of Config */
+.hint-card .card-title {
+  padding-right: 0;
+}
 
 /* Collection screen: long names wrap to two lines instead of being cut after a few letters */
 .top h1 {
