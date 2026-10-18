@@ -69,8 +69,8 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 - [ ] T010 [P] [US1] Just-added highlight for game rows in `src/app/components/GameRow.tsx` and `src/app/theme/components.css` (docs/design.md v1.9.0 Motion "Just added": the orange border and glow of the hover state until the user scrolls or taps elsewhere); the collection screen passes the id of the row just added (from the navigation after a share)
 - [ ] T011 [US1] Implement `src/app/components/SharedGameSheet.tsx` (docs/design.md "Shared game", "Choosing a collection"; design.md screens): hexagon cover (`HexCover`, known game data if the device has it) beside the editable name ("Name", trimmed, empty means the suggested name) and "Shared from BoardGameGeek"; native `select` "Collection" in the field look with "(last used)" / "(already in it)" markers; one hint line updated in place (no re-mount of the sheet); Cancel / Add to collection, disabled while the game is in the chosen collection; on add call `addGameByLink` (`src/app/actions.ts`), set `lastShareCollection`, navigate (history replaced) to the collection with the just-added id and show the toast
 - [ ] T012 [US1] Add the no-collection variant to `SharedGameSheet.tsx`: "A game goes into a collection, and you have none yet. Create one, and <game> goes straight into it.", "Collection name" prefilled "SPIEL 2026" (1–60 characters, 001's rule), Create and add → `createCollection` then `addGameByLink`
-- [ ] T013 [P] [US1] Implement the "Not a BoardGameGeek game" sheet in `src/app/components/NotAGameSheet.tsx`: one line why nothing can be added, the shared text/link (`shown`), Close (to the screen behind, history replaced) and Add game by link (opens the collection's Add game sheet with an empty link)
-- [ ] T014 [US1] Implement `src/app/screens/Shared.tsx` and wire it in `src/app/App.tsx`: `readShare` on the route params; game → the collection from `lastShareCollection` (else the first collection by name; none → the collections screen) rendered behind `SharedGameSheet`; none → the same background with `NotAGameSheet`; T009 passes
+- [X] T013 [P] [US1] Implement the "Not a BoardGameGeek game" sheet in `src/app/components/NotAGameSheet.tsx`: one line why nothing can be added, the shared text/link (`shown`), Close (to the screen behind, history replaced) and Add game by link (opens the collection's Add game sheet with an empty link)
+- [X] T014 [US1] Implement `src/app/screens/Shared.tsx` and wire it in `src/app/App.tsx`: `readShare` on the route params; game → the collection from `lastShareCollection` (else the first collection by name; none → the collections screen) rendered behind `SharedGameSheet`; none → the same background with `NotAGameSheet`; T009 passes
 
 **Checkpoint**: sharing a game adds it in at most two taps; all US1 e2e tests green.
 
@@ -100,8 +100,8 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 
 **Independent Test**: open `/share-target?url=https://boardgamegeek.com/geekpreview/93/spiel-essen-2026` → the list screen of preview 93, loading.
 
-- [ ] T017 [US3] Playwright test in `tests/e2e/share-target.spec.ts` (fail first, BGG lists answered from 001's fixtures): shared preview link → `#/lists/preview/93` with the list loading; shared geeklist link → `#/lists/geeklist/<id>`
-- [ ] T018 [US3] In `src/app/screens/Shared.tsx`, a `list` result navigates (history replaced) to the list route; T017 passes
+- [X] T017 [US3] Playwright test in `tests/e2e/share-target.spec.ts` (fail first, BGG lists answered from 001's fixtures): shared preview link → `#/lists/preview/93` with the list loading; shared geeklist link → `#/lists/geeklist/<id>`
+- [X] T018 [US3] In `src/app/screens/Shared.tsx`, a `list` result navigates (history replaced) to the list route; T017 passes
 
 **Checkpoint**: all three stories green.
 
