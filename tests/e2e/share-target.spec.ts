@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs'
+
 import { type Page, expect, test } from '@playwright/test'
 
 import { expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 /** F002: sharing a BoardGameGeek page into the app (contracts/share-target.md). */
 const CASCADIA = 'https://boardgamegeek.com/boardgame/295947/cascadia'
+const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 const shareUrl = (params: Record<string, string>) => `/share-target?${new URLSearchParams(params)}`
 
 test('a share lands on #/shared once; Back and reload do not share again (T004)', async ({ page }) => {
@@ -155,4 +158,28 @@ test('with no collection, a shared page that is no game shows the sheet over the
   await expect(sheet.getByText('just some words')).toBeVisible()
   await sheet.getByRole('button', { name: 'Close' }).click()
   await expect(page).toHaveURL(/#\/collections$/)
+})
+
+test('a shared preview opens that list, loading (T017)', async ({ page }) => {
+  await fakeBgg(page)
+  await page.route('**/api/bgg/lists/preview/93?**', async route => {
+    const n = Number(new URL(route.request().url()).searchParams.get('page') ?? 1)
+    await route.fulfill({ json: apiFixture(`preview-93-page-${n}.json`) })
+  })
+  await page.route('**/api/bgg/companies?**', route => route.fulfill({ json: { companies: [] } }))
+  await page.goto('/#/collections')
+  await page.goto(shareUrl({ url: 'https://boardgamegeek.com/geekpreview/93/spiel-essen-2026' }))
+  await expect(page).toHaveURL(/#\/lists\/preview\/93$/)
+  await expect(page.getByText(/loading/i).first()).toBeVisible()
+  // the share was replaced: Back goes to where the person was
+  await page.goBack()
+  await expect(page).toHaveURL(/#\/collections$/)
+})
+
+test('a shared geeklist opens that list (T017)', async ({ page }) => {
+  await page.route('**/api/bgg/lists/geeklist/66420?**', route =>
+    route.fulfill({ status: 404, json: { error: 'not_found', message: 'This list does not exist.', retryable: false } }),
+  )
+  await page.goto(shareUrl({ text: 'Top games https://boardgamegeek.com/geeklist/66420/top-games' }))
+  await expect(page).toHaveURL(/#\/lists\/geeklist\/66420$/)
 })

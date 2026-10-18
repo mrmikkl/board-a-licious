@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { readShare } from '../../domain/shared.ts'
 import { NotAGameSheet } from '../components/NotAGameSheet.tsx'
@@ -22,6 +22,10 @@ export function Shared({ title, text, url }: { title?: string; text?: string; ur
     const last = await store.meta('lastShareCollection')
     return { collections, entries, last }
   })
+
+  useEffect(() => {
+    if (result.kind === 'list') navigate({ name: 'list', kind: result.ref.kind, listId: result.ref.id }, { replace: true })
+  }, [result])
 
   const preselected = data && (data.collections.find(c => c.id === data.last) ?? data.collections[0])?.id
   const close = useCallback(() => {
