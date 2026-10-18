@@ -248,8 +248,8 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 - **FR-009a**: Users MUST be able to group a collection by mark (default) or by fair hall, taken
   from the booth (e.g. "3-R400" is hall 3): halls in order, inside a hall by booth; a game with
-  booths in several halls appears in each, games without a booth last. The choice is remembered per
-  collection on the device.
+  booths in several halls appears in each, games without a booth last, games marked Not interested
+  left out. The choice is remembered per collection on the device.
 
 **Booth, price and publisher ("facts")**
 

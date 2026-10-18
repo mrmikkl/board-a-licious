@@ -24,10 +24,11 @@ export type HallGroup = { key: string; label: string; entries: Entry[] }
 /**
  * A collection grouped by fair hall (the part of the booth before "-"): halls in order, numbered
  * ones first; inside a hall by booth, then name. A game with booths in several halls appears in
- * each; games without a booth come last ("No booth yet").
+ * each; games without a booth come last ("No booth yet"). Games marked Not interested are left out.
  */
 export function groupByHall(entries: Entry[], nameOf: (entry: Entry) => string): HallGroup[] {
-  const live = entries.filter(e => !e.deleted)
+  // games marked Not interested are not part of the route through the halls
+  const live = entries.filter(e => !e.deleted && e.mark !== 'skip')
   const byHall = new Map<string, { entry: Entry; booth: string }[]>()
   const none: Entry[] = []
   for (const entry of live) {

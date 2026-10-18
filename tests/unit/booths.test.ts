@@ -51,4 +51,9 @@ describe('grouping a collection by hall', () => {
     const groups = groupByHall([entry(1, 'Galeria-G101'), entry(2, '12-A1'), entry(3, '2-B2')], nameOf)
     expect(groups.map(g => g.label)).toEqual(['Hall 2', 'Hall 12', 'Galeria'])
   })
+
+  it('leaves out games marked Not interested (the hall view is a route to walk)', () => {
+    const groups = groupByHall([entry(1, '3-R400'), { ...entry(2, '3-A100'), mark: 'skip' }, { ...entry(3, null), mark: 'skip' }], nameOf)
+    expect(groups.map(g => [g.label, g.entries.map(e => e.bggId)])).toEqual([['Hall 3', [1]]])
+  })
 })
