@@ -66,7 +66,7 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Just-added highlight for game rows in `src/app/components/GameRow.tsx` and `src/app/theme/components.css` (docs/design.md v1.9.0 Motion "Just added": the orange border and glow of the hover state until the user scrolls or taps elsewhere); the collection screen passes the id of the row just added (from the navigation after a share)
+- [X] T010 [P] [US1] Just-added highlight for game rows in `src/app/components/GameRow.tsx` and `src/app/theme/components.css` (docs/design.md v1.9.0 Motion "Just added": the orange border and glow of the hover state until the user scrolls or taps elsewhere); the collection screen passes the id of the row just added (from the navigation after a share)
 - [ ] T011 [US1] Implement `src/app/components/SharedGameSheet.tsx` (docs/design.md "Shared game", "Choosing a collection"; design.md screens): hexagon cover (`HexCover`, known game data if the device has it) beside the editable name ("Name", trimmed, empty means the suggested name) and "Shared from BoardGameGeek"; native `select` "Collection" in the field look with "(last used)" / "(already in it)" markers; one hint line updated in place (no re-mount of the sheet); Cancel / Add to collection, disabled while the game is in the chosen collection; on add call `addGameByLink` (`src/app/actions.ts`), set `lastShareCollection`, navigate (history replaced) to the collection with the just-added id and show the toast
 - [ ] T012 [US1] Add the no-collection variant to `SharedGameSheet.tsx`: "A game goes into a collection, and you have none yet. Create one, and <game> goes straight into it.", "Collection name" prefilled "SPIEL 2026" (1–60 characters, 001's rule), Create and add → `createCollection` then `addGameByLink`
 - [X] T013 [P] [US1] Implement the "Not a BoardGameGeek game" sheet in `src/app/components/NotAGameSheet.tsx`: one line why nothing can be added, the shared text/link (`shown`), Close (to the screen behind, history replaced) and Add game by link (opens the collection's Add game sheet with an empty link)
@@ -109,10 +109,10 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T019 Playwright test (fail first) in `tests/e2e/share-target.spec.ts`: Config in a browser tab shows the "📲 Share from BoardGameGeek" card at the top; with `display-mode: standalone` emulated it is absent (FR-011, research R6)
-- [ ] T020 Implement the Share hint card in `src/app/screens/Config.tsx` (docs/design.md v1.9.0 "Share hint", shown while `matchMedia("(display-mode: standalone)")` does not match); T019 passes
+- [X] T019 Playwright test (fail first) in `tests/e2e/share-target.spec.ts`: Config in a browser tab shows the "📲 Share from BoardGameGeek" card at the top; with `display-mode: standalone` emulated it is absent (FR-011, research R6)
+- [X] T020 Implement the Share hint card in `src/app/screens/Config.tsx` (docs/design.md v1.9.0 "Share hint", shown while `matchMedia("(display-mode: standalone)")` does not match); T019 passes
 - [ ] T021 [P] Record real share texts as fixtures in `tests/fixtures/shares/` (≥ 10 game links from the BGG Android app and ≥ 10 from Chrome, SC-002) and run them through `readShare` in `tests/unit/shared.test.ts`; adjust the name rules if real texts differ (research R4 open point)
-- [ ] T022 [P] Add sharing to the docs: README feature list, `docs/hosting/setup.md` (after deploying: open the app from its icon so Chrome refreshes it; reinstall if board-a-licious is missing from the share menu)
+- [X] T022 [P] Add sharing to the docs: README feature list, `docs/hosting/setup.md` (after deploying: open the app from its icon so Chrome refreshes it; reinstall if board-a-licious is missing from the share menu)
 - [ ] T023 Run `npx tsc --noEmit`, `npm test`, `npm run test:e2e` (all projects green), deploy, and walk through the 10 scenarios of `quickstart.md` on the phone; note the results there
 
 ---
