@@ -1,7 +1,9 @@
 # Board-a-licious
 
 A mobile-first web app for a small group of friends going to SPIEL Essen: collections of
-BoardGameGeek games, marked by swiping, ticked off as bought at the fair, shared as text.
+BoardGameGeek games, marked by swiping, ticked off as bought at the fair, shared as text. Once the
+app is on an Android home screen, games can be shared to it from the BGG app or website straight
+into a collection.
 
 - What and why: [docs/vision.md](docs/vision.md) · all docs: [docs/README.md](docs/README.md)
 - Run it locally and test it: [quickstart](specs/001-bgg-game-collection/quickstart.md) and the

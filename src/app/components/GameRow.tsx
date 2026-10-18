@@ -8,15 +8,15 @@ import { HexCover } from './HexCover.tsx'
 
 /**
  * A game in a collection (docs/design.md §7): hexagon cover; name and year; publisher; the first three
- * infos (FR-010); mark pill and bought pill.
+ * infos (FR-010); mark pill and bought pill. `justAdded` keeps the hover highlight on it (F002 "Just added").
  */
-export function GameRow({ entry, game, onOpen }: { entry: Entry; game?: Game; onOpen: () => void }) {
+export function GameRow({ entry, game, onOpen, justAdded = false }: { entry: Entry; game?: Game; onOpen: () => void; justAdded?: boolean }) {
   const name = game?.name ?? `Game ${entry.bggId}`
   const mark = markInfo(entry.mark)
   const publisher = publisherOf(entry.facts, game)
   const waiting = entry.detailsPending && !game?.year
   return (
-    <button type="button" className={`row${entry.mark === 'skip' ? ' skip' : ''}`} onClick={onOpen}>
+    <button type="button" className={`row${entry.mark === 'skip' ? ' skip' : ''}${justAdded ? ' is-just-added' : ''}`} onClick={onOpen}>
       <HexCover game={game} name={name} pending={entry.detailsPending && !game?.thumbnailUrl} bought={entry.bought} />
       <span className="row-meta">
         <span className="row-name">
