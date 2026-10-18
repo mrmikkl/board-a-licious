@@ -8,7 +8,7 @@ It uses sample data; invented games get generated covers.
 
 ## Navigation
 
-Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until Release 1.0,
+Tab bar: **Collections**, **Lists**, **+** (add), **Search** (switched off until the search feature,
 without a "soon" label), **Config**. Sound is switched in Config only.
 
 ## Screens and flows
