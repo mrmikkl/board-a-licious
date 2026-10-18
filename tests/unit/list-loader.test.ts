@@ -148,8 +148,10 @@ describe('list loader', () => {
 
   it('queues lists loaded before lists were synced, so they reach the other devices', async () => {
     await store.putList({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, pageCount: 3, loadedPages: 3, entries: [], openedAt: new Date(START).toISOString() })
-    await loaderFor(fakeApi(clock).api).open('preview', 93)
+    const loader = loaderFor(fakeApi(clock).api)
+    await loader.open('preview', 93)
     expect((await store.pending()).filter(p => p.kind === 'list').map(p => p.row)).toMatchObject([{ kind: 'preview', id: 93 }])
+    await loader.idle()
   })
 
   it('asks for a sync as soon as a list is queued for the other devices', async () => {
