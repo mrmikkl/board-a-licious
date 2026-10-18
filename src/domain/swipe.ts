@@ -22,7 +22,8 @@ export function swipeQueue<G extends SwipeGame>(list: SwipeList<G>, entries: Pic
     seen.add(game.bggId)
     games.push(game)
   }
-  const loadingMore = list.loadedPages < list.pageCount
+  // pageCount 0: the list came from another device and has not loaded here yet
+  const loadingMore = list.pageCount === 0 || list.loadedPages < list.pageCount
   return { games, loadingMore, allDecided: games.length === 0 && !loadingMore }
 }
 

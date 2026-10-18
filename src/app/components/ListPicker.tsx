@@ -71,7 +71,9 @@ export function ListPicker({
                 const isChosen = selected?.kind === list.kind && selected.id === list.id
                 const text = queue.allDecided
                   ? "You've seen every game on it"
-                  : `${left > 0 ? `${games(left)} to go through` : 'More games are loading'}.`
+                  : list.pageCount === 0
+                    ? 'Its games load when you select it.'
+                    : `${left > 0 ? `${games(left)} to go through` : 'More games are loading'}.`
                 return (
                   <li key={`${list.kind}:${list.id}`}>
                     <button

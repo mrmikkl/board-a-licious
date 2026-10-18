@@ -13,6 +13,11 @@ const list = (entries: ReturnType<typeof game>[], loadedPages = 1, pageCount = 1
 const ids = (queue: { games: { bggId: number }[] }) => queue.games.map(g => g.bggId)
 
 describe('swipe queue (FR-015)', () => {
+  it('a list not loaded on this device yet (from another device) is still to go through, not all seen', () => {
+    const queue = swipeQueue({ loadedPages: 0, pageCount: 0, entries: [] }, [])
+    expect(queue).toEqual({ games: [], loadingMore: true, allDecided: false })
+  })
+
   it('offers the games in list order', () => {
     const queue = swipeQueue(list([game(2, 20), game(3, 30), game(1, 10)]), [])
     expect(ids(queue)).toEqual([10, 20, 30])
