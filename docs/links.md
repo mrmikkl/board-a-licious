@@ -9,3 +9,5 @@
 | **Neon database roles** (reset the password) | [Neon → Board-a-licious → main → Roles](https://console.neon.tech/app/projects/cold-block-88164058/branches/br-old-king-barpscev/roles) |
 
 How these fit together: [hosting/hosting.md](hosting/hosting.md); how they were set up: [hosting/setup.md](hosting/setup.md).
+
+In the app, Config → five taps on the heading show the same links under "Developer".
