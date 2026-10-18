@@ -2506,17 +2506,29 @@ function openAddSheet() {
               ${state.collections.map(c => `<option value="${c.id}" ${c.id === chosen ? 'selected' : ''}>${esc(c.name)}${c.games.some(x => x.name === g.name) ? ' (already in it)' : c.id === state.lastShare ? ' (last used)' : ''}</option>`).join('')}
             </select>
           </div>
-          ${already ? `<p class="hint error">${esc(g.name)} is already in ${esc(target.name)}. Pick another collection.</p>` : '<p class="hint">Preselected: the collection you last shared into.</p>'}
+          <p class="hint" id="collection-hint"></p>
         </div>
         <div class="sheet-actions sheet-actions-row">
           <button type="button" class="btn" id="cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary" ${already ? 'disabled' : ''}>Add to collection</button>
+          <button type="submit" class="btn btn-primary" id="add">Add to collection</button>
         </div>
       </form>`)
-    $('#collection').onchange = e => { chosen = e.target.value; render() }
+    // only the hint and the button follow the choice; the sheet itself stays put
+    const update = () => {
+      const t = state.collections.find(c => c.id === chosen)
+      const isIn = t.games.some(x => x.name === g.name)
+      const hint = $('#collection-hint')
+      hint.className = isIn ? 'hint error' : 'hint'
+      hint.textContent = isIn ? `${g.name} is already in ${t.name}. Pick another collection.` : chosen === state.lastShare ? 'Preselected: the collection you last shared into.' : ''
+      $('#add').disabled = isIn
+    }
+    $('#collection').onchange = e => { chosen = e.target.value; update() }
+    update()
     $('#cancel').onclick = $('#scrim').onclick = () => { root.innerHTML = collectionScreen(state.lastShare) }
     $('#addform').onsubmit = e => {
       e.preventDefault()
+      const target = state.collections.find(c => c.id === chosen)
+      if (target.games.some(x => x.name === g.name)) return
       const name = $('#name').value.trim() || g.name
       target.games.forEach(x => (x.fresh = false))
       target.games.unshift({ ...g, name, mark: 'new', fresh: true, pending: offline })
