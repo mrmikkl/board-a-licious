@@ -17,6 +17,8 @@ export default defineConfig({
         background_color: '#0D0F1F',
         display: 'standalone',
         icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        // F002: the installed app appears in Android's share menu; a share opens /share-target?title&text&url
+        share_target: { action: '/share-target', method: 'GET', params: { title: 'title', text: 'text', url: 'url' } },
       },
       workbox: {
         // app shell and self-hosted fonts are precached; /api is never cached by the service worker

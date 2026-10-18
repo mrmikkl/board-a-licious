@@ -27,8 +27,8 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 
 **Purpose**: the app announces itself as a share target.
 
-- [ ] T001 Write a failing Playwright test in `tests/e2e/share-target.spec.ts` (project `phone`, against `vite preview`) that fetches `/manifest.webmanifest` and expects `share_target` = `{ action: "/share-target", method: "GET", params: { title: "title", text: "text", url: "url" } }` (contracts/share-target.md)
-- [ ] T002 Add `share_target` to the PWA manifest in `vite.config.ts` (method GET, action `/share-target`, params title/text/url); `start_url`, `scope`, `display: "standalone"` unchanged; T001 passes
+- [X] T001 Write a failing Playwright test in `tests/e2e/share-offline.spec.ts` (project `offline`, against `vite preview`, where the manifest exists) that fetches `/manifest.webmanifest` and expects `share_target` = `{ action: "/share-target", method: "GET", params: { title: "title", text: "text", url: "url" } }` (contracts/share-target.md)
+- [X] T002 Add `share_target` to the PWA manifest in `vite.config.ts` (method GET, action `/share-target`, params title/text/url); `start_url`, `scope`, `display: "standalone"` unchanged; T001 passes
 
 ---
 
@@ -40,15 +40,15 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 
 ### Tests first
 
-- [ ] T003 [P] Unit tests for `readShare({ title, text, url })` in `tests/unit/shared.test.ts` (research R4, data-model "Share reading"): game link in `url`; game link inside `text` with words around it ("Check out Cascadia on BoardGameGeek: https://boardgamegeek.com/boardgame/295947/cascadia"); expansion link (`/boardgameexpansion/<id>`); `url` wins over `text` and `text` over `title`; preview and geeklist links → `{ kind: "list", ref }`; blog post, forum thread, non-BGG link and empty input → `{ kind: "none", shown }` with `shown` "the first link, else the text, trimmed to 200 chars"; suggested name from the title with BGG suffixes removed ("Cascadia | Board Game | BoardGameGeek" → "Cascadia"), else short plain text before the link, else the slug name, "never empty (falls back to the slug name, then "Game <id>")"
-- [ ] T004 [P] Failing Playwright test in `tests/e2e/share-target.spec.ts`: opening `/share-target?text=<game link>` ends on `/#/shared?…` (history replaced: Back does not return to `/share-target`), and a reload of that page does not share twice; opening `/share-target` offline (project `offline`) shows the app, not an error page (research R2)
+- [X] T003 [P] Unit tests for `readShare({ title, text, url })` in `tests/unit/shared.test.ts` (research R4, data-model "Share reading"): game link in `url`; game link inside `text` with words around it ("Check out Cascadia on BoardGameGeek: https://boardgamegeek.com/boardgame/295947/cascadia"); expansion link (`/boardgameexpansion/<id>`); `url` wins over `text` and `text` over `title`; preview and geeklist links → `{ kind: "list", ref }`; blog post, forum thread, non-BGG link and empty input → `{ kind: "none", shown }` with `shown` "the first link, else the text, trimmed to 200 chars"; suggested name from the title with BGG suffixes removed ("Cascadia | Board Game | BoardGameGeek" → "Cascadia"), else short plain text before the link, else the slug name, "never empty (falls back to the slug name, then "Game <id>")"
+- [X] T004 [P] Failing Playwright test in `tests/e2e/share-target.spec.ts`: opening `/share-target?text=<game link>` ends on `/#/shared?…` (history replaced: Back does not return to `/share-target`), and a reload of that page does not share twice; opening `/share-target` offline (project `offline`, `tests/e2e/share-offline.spec.ts`) shows the app, not an error page (research R2)
 
 ### Implementation
 
-- [ ] T005 Implement `readShare` in `src/domain/shared.ts` reusing `parseGameLink` (`src/domain/bgg-link.ts`) and `parseListLink` (`src/domain/lists.ts`); pure, no DOM; T003 passes
-- [ ] T006 Add the route `{ name: "shared"; title?: string; text?: string; url?: string }` to `src/app/router.ts` (`#/shared?title=…&text=…&url=…`, parse and `href`), and the tab mapping in `src/app/components/TabBar.tsx` (shared → collections)
-- [ ] T007 Implement `src/app/share-target.ts`: on boot, before the router reads the hash, if `location.pathname === "/share-target"` read `title`, `text`, `url` and `history.replaceState` to `/#/shared?…`; call it first in `src/app/main.tsx`; T004 passes
-- [ ] T008 Add the meta key `lastShareCollection: string` to `MetaValues` in `src/client/store.ts` (data-model: "set after each successful add from a share; ignored when that collection no longer exists or was deleted")
+- [X] T005 Implement `readShare` in `src/domain/shared.ts` reusing `parseGameLink` (`src/domain/bgg-link.ts`) and `parseListLink` (`src/domain/lists.ts`); pure, no DOM; T003 passes
+- [X] T006 Add the route `{ name: "shared"; title?: string; text?: string; url?: string }` to `src/app/router.ts` (`#/shared?title=…&text=…&url=…`, parse and `href`), and the tab mapping in `src/app/components/TabBar.tsx` (shared → collections)
+- [X] T007 Implement `src/app/share-target.ts`: on boot, before the router reads the hash, if `location.pathname === "/share-target"` read `title`, `text`, `url` and `history.replaceState` to `/#/shared?…`; call it first in `src/app/main.tsx`; T004 passes
+- [X] T008 Add the meta key `lastShareCollection: string` to `MetaValues` in `src/client/store.ts` (data-model: "set after each successful add from a share; ignored when that collection no longer exists or was deleted")
 
 **Checkpoint**: a share opens the app on `#/shared` with its parameters, online and offline.
 
@@ -84,7 +84,7 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 
 ### Tests for User Story 2
 
-- [ ] T015 [US2] Playwright tests in `tests/e2e/share-target.spec.ts` (project `offline`, fail first): offline share shows the framed note "You are offline: the game is added on this phone now; its cover and details follow once you are back online.", adding works and the row shows "Details follow from BoardGameGeek"; after going online the entry reaches the server (`/api/sync`); with the API answering 401 the game is added locally and the "Sign in again" banner shows
+- [ ] T015 [US2] Playwright tests in `tests/e2e/share-offline.spec.ts` (project `offline`, fail first): offline share shows the framed note "You are offline: the game is added on this phone now; its cover and details follow once you are back online.", adding works and the row shows "Details follow from BoardGameGeek"; after going online the entry reaches the server (`/api/sync`); with the API answering 401 the game is added locally and the "Sign in again" banner shows
 
 ### Implementation for User Story 2
 

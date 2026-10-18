@@ -11,9 +11,12 @@ export type Route =
   | { name: 'search' }
   | { name: 'config' }
   | { name: 'share' }
+  /** F002: something shared to the app (contracts/share-target.md) */
+  | { name: 'shared'; title?: string; text?: string; url?: string }
 
 export function parseRoute(hash: string): Route {
-  const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent)
+  const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?')
+  const parts = path.split('/').filter(Boolean).map(decodeURIComponent)
   const [first, second, third] = parts
   switch (first) {
     case 'collections':
@@ -36,6 +39,11 @@ export function parseRoute(hash: string): Route {
       return second === 'share' ? { name: 'share' } : { name: 'config' }
     case 'share': // old links
       return { name: 'share' }
+    case 'shared': {
+      const params = new URLSearchParams(query)
+      const value = (key: string) => params.get(key) ?? undefined
+      return { name: 'shared', title: value('title'), text: value('text'), url: value('url') }
+    }
     default:
       return { name: 'collections' }
   }
@@ -61,11 +69,18 @@ export function href(route: Route): string {
       return '#/config'
     case 'share':
       return '#/config/share'
+    case 'shared': {
+      const params = new URLSearchParams()
+      for (const key of ['title', 'text', 'url'] as const) if (route[key]) params.set(key, route[key])
+      return `#/shared?${params}`
+    }
   }
 }
 
-export function navigate(route: Route) {
-  window.location.hash = href(route)
+/** Goes to a route; `replace` swaps the current history entry (e.g. leaving a share, so Back does not reopen it). */
+export function navigate(route: Route, options: { replace?: boolean } = {}) {
+  if (options.replace) window.location.replace(href(route))
+  else window.location.hash = href(route)
 }
 
 export function useRoute(): Route {

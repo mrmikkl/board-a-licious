@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { App } from './App.tsx'
+import { takeShare } from './share-target.ts'
 import './theme/fonts.css'
 import './theme/tokens.css'
 import './theme/base.css'
@@ -18,7 +19,9 @@ import './theme/celebrate.css'
 
 const root = document.getElementById('root')
 if (root) {
-  createRoot(root).render(
+  takeShare()
+
+createRoot(root).render(
     <StrictMode>
       <App />
     </StrictMode>,

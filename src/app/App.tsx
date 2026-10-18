@@ -55,6 +55,7 @@ function Placeholder({ route }: { route: Route }) {
     search: 'Search',
     config: 'Config',
     share: 'Share and backup',
+    shared: 'Shared from BoardGameGeek',
   }
   return (
     <>
