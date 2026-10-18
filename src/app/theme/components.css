@@ -409,6 +409,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* F002 "Just added": the hover highlight, kept until the user scrolls or taps (not an animation) */
+.row.is-just-added {
+  border-color: var(--orange);
+  box-shadow: var(--lift), var(--glow);
+}
 .row.skip .row-name {
   text-decoration: line-through;
   color: var(--muted);
