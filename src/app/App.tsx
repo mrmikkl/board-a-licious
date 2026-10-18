@@ -8,7 +8,6 @@ import { ToastProvider } from './components/Toast.tsx'
 import { useIntroOpen } from './intro.ts'
 import { type Route, useRoute } from './router.ts'
 import { Add } from './screens/Add.tsx'
-import { AddByLink } from './screens/AddByLink.tsx'
 import { Collection } from './screens/Collection.tsx'
 import { Collections } from './screens/Collections.tsx'
 import { Intro } from './screens/Intro.tsx'
@@ -26,9 +25,7 @@ function Screen({ route }: { route: Route }) {
     case 'collection':
       return <Collection key={route.id} id={route.id} />
     case 'swipe':
-      return <Swipe key={route.id} id={route.id} />
-    case 'add-link':
-      return <AddByLink key={route.id} id={route.id} />
+      return <Swipe key={`${route.id}:${route.list?.kind}:${route.list?.id}`} id={route.id} list={route.list} />
     case 'lists':
       return <Lists />
     case 'list':
@@ -52,7 +49,6 @@ function Placeholder({ route }: { route: Route }) {
     collections: 'Collections',
     collection: 'Collection',
     swipe: 'Swipe',
-    'add-link': 'Add by link',
     lists: 'BGG lists',
     list: 'BGG list',
     add: 'Add',

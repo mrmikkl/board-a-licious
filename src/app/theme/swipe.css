@@ -264,3 +264,31 @@
     display: none;
   }
 }
+
+/* "Add by list": the chosen list is clearly marked (orange edge, glow and a tick) */
+.pick[aria-pressed='true'] {
+  position: relative;
+  border: 2px solid var(--orange);
+  box-shadow: var(--lift), var(--glow);
+  padding-right: 44px;
+}
+.pick[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 27px;
+  transform: translateY(-50%);
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  color: var(--ink);
+  font-weight: 700;
+}
+.pick-list,
+.pick-new,
+.pick-empty {
+  margin-top: 16px;
+}

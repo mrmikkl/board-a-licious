@@ -20,8 +20,9 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
   await page.getByLabel('Name').fill(name)
   await page.getByRole('button', { name: 'Create collection' }).click()
   // swipe three preview games in (they keep their booths in an Essen collection)
-  await page.getByRole('link', { name: /^add by list$/i }).click()
-  const picker = page.getByRole('dialog', { name: /add from which list/i })
+  await page.getByRole('button', { name: /^add by list$/i }).click()
+  const picker = page.getByRole('dialog', { name: /^add by list$/i })
+  await picker.getByRole('button', { name: 'Add new list' }).click()
   await picker.getByLabel(/bgg list link/i).fill('https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview')
   await picker.getByRole('button', { name: 'Load list' }).click()
   for (let i = 0; i < 3; i++) {

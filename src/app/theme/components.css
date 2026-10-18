@@ -564,3 +564,7 @@
     display: contents;
   }
 }
+/* Cancel and the main action side by side, the main action on the right */
+.sheet-actions-row {
+  grid-template-columns: 1fr 1fr;
+}

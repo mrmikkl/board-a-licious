@@ -42,10 +42,11 @@ test('US3: swipe a BGG preview into an Essen collection', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 
   // pick the list by its link
-  await page.getByRole('link', { name: /^add by list$/i }).click()
-  const picker = page.getByRole('dialog', { name: /add from which list/i })
+  await page.getByRole('button', { name: /^add by list$/i }).click()
+  const picker = page.getByRole('dialog', { name: /^add by list$/i })
   await expect(picker).toBeVisible()
   await expectAccessible(page)
+  await picker.getByRole('button', { name: 'Add new list' }).click()
   await picker.getByLabel(/bgg list link/i).fill('https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview')
   await picker.getByRole('button', { name: 'Load list' }).click()
 
@@ -98,8 +99,8 @@ test('US3: swipe a BGG preview into an Essen collection', async ({ page }) => {
   for (const game of ['Cascadia', 'Arcs', 'Faraway']) await expect(skipped.getByRole('button', { name: game })).toBeVisible()
 
   // decided games are never offered again
-  await page.getByRole('link', { name: /^add by list$/i }).click()
-  const again = page.getByRole('dialog', { name: /add from which list/i })
+  await page.getByRole('button', { name: /^add by list$/i }).click()
+  const again = page.getByRole('dialog', { name: /^add by list$/i })
   await expect(again.getByRole('button', { name: /spiel essen 2026 preview/i })).toBeDisabled()
   await expect(again).toContainText("You've seen every game on it")
 })

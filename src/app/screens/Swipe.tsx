@@ -40,10 +40,11 @@ type Leaving = { game: StoredListEntry; details?: Game; direction: SwipeDirectio
  * as Not interested. Games already in the collection never come up. The list is open (loading its
  * pages) while this screen shows it.
  */
-export function Swipe({ id }: { id: string }) {
+export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
   const services = useServices()
   const reducedMotion = useReducedMotion()
-  const [ref, setRef] = useState<ListRef | null>(null)
+  // the list chosen in the collection's "Add by list" sheet, or one picked here
+  const [ref, setRef] = useState<ListRef | null>(chosen ?? null)
   const [pickError, setPickError] = useState<string>()
   const [decided, setDecided] = useState<Set<number>>(() => new Set())
   const decidedRef = useRef(decided)

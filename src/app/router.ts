@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 export type Route =
   | { name: 'collections' }
   | { name: 'collection'; id: string }
-  | { name: 'swipe'; id: string }
-  | { name: 'add-link'; id: string }
+  | { name: 'swipe'; id: string; list?: { kind: 'preview' | 'geeklist'; id: number } }
   | { name: 'lists' }
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
   | { name: 'add'; what?: 'collection' | 'list' | 'game' }
@@ -18,8 +17,12 @@ export function parseRoute(hash: string): Route {
   const [first, second, third] = parts
   switch (first) {
     case 'collections':
-      if (second && third === 'swipe') return { name: 'swipe', id: second }
-      if (second && third === 'add-link') return { name: 'add-link', id: second }
+      if (second && third === 'swipe') {
+        const [, , , kind, listId] = parts
+        return (kind === 'preview' || kind === 'geeklist') && Number(listId) > 0
+          ? { name: 'swipe', id: second, list: { kind, id: Number(listId) } }
+          : { name: 'swipe', id: second }
+      }
       return second ? { name: 'collection', id: second } : { name: 'collections' }
     case 'lists':
       if ((second === 'preview' || second === 'geeklist') && Number(third) > 0)
@@ -45,9 +48,7 @@ export function href(route: Route): string {
     case 'collection':
       return `#/collections/${encodeURIComponent(route.id)}`
     case 'swipe':
-      return `#/collections/${encodeURIComponent(route.id)}/swipe`
-    case 'add-link':
-      return `#/collections/${encodeURIComponent(route.id)}/add-link`
+      return `#/collections/${encodeURIComponent(route.id)}/swipe${route.list ? `/${route.list.kind}/${route.list.id}` : ''}`
     case 'lists':
       return '#/lists'
     case 'list':

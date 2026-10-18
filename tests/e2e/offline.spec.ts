@@ -19,9 +19,9 @@ test('offline: mark and buy in airplane mode, reload, then sync when back online
   await page.getByRole('button', { name: /^collection/i }).click()
   await page.getByLabel('Name').fill(name)
   await page.getByRole('button', { name: 'Create collection' }).click()
-  await page.getByRole('link', { name: /add by link/i }).click()
+  await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
-  await page.getByRole('button', { name: `Add to ${name}` }).click()
+  await page.getByRole('button', { name: 'Add to collection' }).click()
   const game = () => page.getByRole('button', { name: /cascadia/i }).first()
   await expect(game()).toBeVisible()
 

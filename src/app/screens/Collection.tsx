@@ -4,6 +4,7 @@ import { groupByHall } from '../../domain/booths.ts'
 import { type Collection as CollectionRow, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
 import { type Filter, applyFilter, filterLabel, fromStored, groupCounts, presetOf } from '../../domain/filter.ts'
 import { deleteCollection, renameCollection, saveFilter, saveGroupBy } from '../actions.ts'
+import { AddGameSheet } from '../components/AddGameSheet.tsx'
 import { Counter } from '../components/Counter.tsx'
 import { EssenBadge } from '../components/EssenBadge.tsx'
 import { FilterSheet } from '../components/FilterPanel.tsx'
@@ -12,6 +13,7 @@ import { GameRow } from '../components/GameRow.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { GroupHeading } from '../components/GroupHeading.tsx'
 import { Header } from '../components/Header.tsx'
+import { ListPicker } from '../components/ListPicker.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
@@ -29,6 +31,9 @@ export function Collection({ id }: { id: string }) {
   const [showSkip, setShowSkip] = useState(false)
   const [menu, setMenu] = useState(false)
   const [viewOpen, setViewOpen] = useState(false)
+  // the "Add by list" and "Add game" sheets open over the collection
+  const [adding, setAdding] = useState<'list' | 'game' | null>(null)
+  const closeAdding = useCallback(() => setAdding(null), [])
   const closeView = useCallback(() => setViewOpen(false), [])
   const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: 'mark' | 'booth' }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
@@ -40,13 +45,14 @@ export function Collection({ id }: { id: string }) {
       const games = new Map((await store.games(entries.map(e => e.bggId))).map(g => [g.bggId, g]))
       const storedFilter = (await store.meta('activeFilter'))?.[id]
       const storedGroupBy = (await store.meta('groupBy'))?.[id]
-      return { id, collection, entries, games, storedFilter, storedGroupBy }
+      const lists = await store.lists()
+      return { id, collection, entries, games, storedFilter, storedGroupBy, lists }
     },
     [id],
   )
   const back = href({ name: 'collections' })
   if (!data || data.id !== id) return <Header title="" back={back} />
-  const { collection, entries, games, storedFilter, storedGroupBy } = data
+  const { collection, entries, games, storedFilter, storedGroupBy, lists } = data
   if (!collection) {
     return (
       <>
@@ -90,12 +96,12 @@ export function Collection({ id }: { id: string }) {
   const current = entries.find(e => e.bggId === openGame)
   const actions = (
     <>
-      <a className="btn btn-primary" href={href({ name: 'swipe', id })}>
+      <button type="button" className="btn btn-primary" aria-haspopup="dialog" onClick={() => setAdding('list')}>
         Add by list
-      </a>
-      <a className="btn" href={href({ name: 'add-link', id })}>
-        Add by link
-      </a>
+      </button>
+      <button type="button" className="btn" aria-haspopup="dialog" onClick={() => setAdding('game')}>
+        Add game
+      </button>
     </>
   )
   const filterButton = entries.length > 0 && (
@@ -140,21 +146,21 @@ export function Collection({ id }: { id: string }) {
           <div className="empty">
             <div className="hex" />
             <h2>No games in {collection.name} yet</h2>
-            <p>Go through a BGG list and swipe the games you care about into it, or add a single game by its link.</p>
+            <p>Go through a BGG list and swipe the games you care about into it, or add a single game by its BoardGameGeek link.</p>
             <div className="actions">{actions}</div>
           </div>
         ) : (
           <>
             {/* phones: four equal icon buttons in one row; wide screens: the two text buttons */}
             <div className="collection-tools">
-              <a className="btn btn-primary tool" href={href({ name: 'swipe', id })} aria-label="Add by list">
+              <button type="button" className="btn btn-primary tool" aria-label="Add by list" aria-haspopup="dialog" onClick={() => setAdding('list')}>
                 <IconAddList />
                 <span className="tool-text">Add by list</span>
-              </a>
-              <a className="btn tool" href={href({ name: 'add-link', id })} aria-label="Add by link">
+              </button>
+              <button type="button" className="btn tool" aria-label="Add game" aria-haspopup="dialog" onClick={() => setAdding('game')}>
                 <IconLink />
-                <span className="tool-text">Add by link</span>
-              </a>
+                <span className="tool-text">Add game</span>
+              </button>
               <span className="phone-only">
                 {filterButton}
                 {menuButton}
@@ -211,6 +217,10 @@ export function Collection({ id }: { id: string }) {
         onGroupBy={changeGroupBy}
         onClose={closeView}
       />
+      {adding === 'list' && (
+        <ListPicker collection={collection} entries={entries} lists={lists} onPick={list => navigate({ name: 'swipe', id, list })} onClose={closeAdding} />
+      )}
+      {adding === 'game' && <AddGameSheet collection={collection} inside={new Set(entries.map(e => e.bggId))} onClose={closeAdding} />}
       {menu && <CollectionMenu collection={collection} gameCount={entries.length} onClose={closeMenu} />}
     </>
   )

@@ -12,10 +12,10 @@ async function createCollection(page: Page, name: string) {
 }
 
 async function addMustHave(page: Page, collection: string, link: string, game: string) {
-  await page.getByRole('link', { name: /add by link/i }).click()
+  await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(page.getByLabel(/^name$/i)).toHaveValue(game)
-  await page.getByRole('button', { name: `Add to ${collection}` }).click()
+  await page.getByRole('button', { name: 'Add to collection' }).click()
   await page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
   // choosing a mark closes the sheet; open the game again from its new group
