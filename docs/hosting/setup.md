@@ -127,6 +127,9 @@ and sign in again: the collection appears there, so the way through Hyperdrive t
   first with **Policy tester** if you like.
 - **Remove someone**: delete their email from `Friends`. Their data stays in Neon until removed.
 - **Deploy a new version**: `npm run deploy` (needs `npx wrangler login` on a new machine).
+  Afterwards open the app from its home-screen icon once, so Chrome picks up the new version and
+  its manifest. If board-a-licious is missing from the share menu (sharing from BGG), remove it
+  from the home screen and add it again (Chrome menu ⋮ → Add to Home screen).
 - **Schema change**: new file in `migrations/`, then `npm run db:migrate:neon` before deploying
   the code that needs it.
 - **Neon password** (reset if it ever leaked): Neon → Roles → `neondb_owner` → Reset password,
