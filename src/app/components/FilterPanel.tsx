@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 
-import { type Bought, type Filter, PRESETS, filterLabel, presetOf } from '../../domain/filter.ts'
+import { type Bought, type Filter, type Price, filterLabel } from '../../domain/filter.ts'
 import { MARKS, type Mark } from '../../domain/marks.ts'
 
 const BOUGHT: { key: Bought; label: string }[] = [
@@ -9,9 +9,17 @@ const BOUGHT: { key: Bought; label: string }[] = [
   { key: 'yes', label: '✅ Bought' },
 ]
 
+const PRICE: { key: Price; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'cheap', label: 'Cheap' },
+  { key: 'mid', label: 'Mid' },
+  { key: 'expensive', label: 'Expensive' },
+]
+
 /**
  * One full-width button showing the selection and the number of games shown; it opens a panel with
- * presets, a Bought segment and a checkbox per group (docs/design.md §7, FR-009). Closes on Done,
+ * a Bought segment, a Price segment (listed price: cheap up to 30, mid up to 60, expensive above) and
+ * a checkbox per group with Select all / Select none (docs/design.md §7, FR-009). Closes on Done,
  * Esc or a tap outside.
  */
 export function FilterPanel({ filter, shown, counts, onChange }: { filter: Filter; shown: number; counts: Record<Mark, number>; onChange: (filter: Filter) => void }) {
@@ -19,7 +27,6 @@ export function FilterPanel({ filter, shown, counts, onChange }: { filter: Filte
   const ref = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const panelId = useId()
-  const preset = presetOf(filter)
 
   useEffect(() => {
     if (!open) return
@@ -64,14 +71,6 @@ export function FilterPanel({ filter, shown, counts, onChange }: { filter: Filte
       </button>
       {open && (
         <div className="filter-panel" id={panelId} role="group" aria-label="Filter">
-          <div className="filter-presets" role="group" aria-label="Presets">
-            <button type="button" className="chip" aria-pressed={preset === 'all'} onClick={() => onChange(PRESETS.all)}>
-              All
-            </button>
-            <button type="button" className="chip" aria-pressed={preset === 'hunt'} onClick={() => onChange(PRESETS.hunt)}>
-              ⭐ Must Have, not bought
-            </button>
-          </div>
           <p className="seg-title" aria-hidden="true">
             Bought
           </p>
@@ -83,8 +82,28 @@ export function FilterPanel({ filter, shown, counts, onChange }: { filter: Filte
             ))}
           </div>
           <p className="seg-title" aria-hidden="true">
-            Groups
+            Price
           </p>
+          <div className="seg" role="group" aria-label="Price">
+            {PRICE.map(p => (
+              <button key={p.key} type="button" aria-pressed={filter.price === p.key} onClick={() => onChange({ ...filter, price: p.key })}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="seg-head">
+            <p className="seg-title" aria-hidden="true">
+              Groups
+            </p>
+            <div className="seg-actions">
+              <button type="button" className="link-btn" onClick={() => onChange({ ...filter, groups: new Set(MARKS.map(m => m.key)) })}>
+                Select all
+              </button>
+              <button type="button" className="link-btn" onClick={() => onChange({ ...filter, groups: new Set() })}>
+                Select none
+              </button>
+            </div>
+          </div>
           <div role="group" aria-label="Groups">
             {MARKS.map(m => (
               <label key={m.key} className="filter-row">

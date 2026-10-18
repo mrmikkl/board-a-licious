@@ -23,7 +23,7 @@ async function addMustHave(page: Page, collection: string, link: string, game: s
   await page.getByRole('region', { name: /must have/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
 }
 
-test('US4: manual facts, bought with a price, money spent, filter presets', async ({ page }) => {
+test('US4: manual facts, bought with a price, money spent, filter', async ({ page }) => {
   await fakeBgg(page)
   const name = unique('Essen 2026')
   await createCollection(page, name)
@@ -70,8 +70,13 @@ test('US4: manual facts, bought with a price, money spent, filter presets', asyn
   const panel = page.getByRole('group', { name: 'Filter' })
   await expect(panel.getByRole('checkbox', { name: /must have/i })).toBeChecked()
   await expectAccessible(page)
-  await panel.getByRole('button', { name: '⭐ Must Have, not bought' }).click()
-  await expect(panel.getByRole('group', { name: 'Bought' }).getByRole('button', { name: 'Not bought' })).toHaveAttribute('aria-pressed', 'true')
+  // no presets any more: Select none, tick Must Have, then Not bought
+  await expect(panel.getByRole('button', { name: '⭐ Must Have, not bought' })).toHaveCount(0)
+  await panel.getByRole('button', { name: 'Select none' }).click()
+  await expect(panel.getByRole('checkbox', { name: /must have/i })).not.toBeChecked()
+  await panel.getByRole('checkbox', { name: /must have/i }).check()
+  await panel.getByRole('group', { name: 'Bought' }).getByRole('button', { name: 'Not bought' }).click()
+  await expect(panel.getByRole('group', { name: 'Price' }).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true')
   await panel.getByRole('button', { name: 'Done' }).click()
   await expect(panel).toBeHidden()
   await expect(filter).toContainText('⭐ Must Have, not bought')
@@ -94,7 +99,8 @@ test('US4: manual facts, bought with a price, money spent, filter presets', asyn
 
   // un-buying from "All games": back in the hunt, the price paid is gone
   await filter.click()
-  await panel.getByRole('group', { name: 'Presets' }).getByRole('button', { name: 'All' }).click()
+  await panel.getByRole('button', { name: 'Select all' }).click()
+  await panel.getByRole('group', { name: 'Bought' }).getByRole('button', { name: 'All' }).click()
   await page.getByRole('heading', { level: 1, name }).click()
   await expect(panel).toBeHidden()
   await mustHave.getByRole('button', { name: /cascadia/i }).click()

@@ -9,6 +9,7 @@ import {
   fromStored,
   groupCounts,
   presetOf,
+  priceBand,
   toStored,
 } from '../../src/domain/filter.ts'
 import type { Mark } from '../../src/domain/marks.ts'
@@ -26,7 +27,33 @@ const entries = [
   { ...entry(6, 'must_have'), deleted: true },
 ]
 const ids = (list: Entry[]) => list.map(e => e.bggId)
-const filter = (groups: Mark[], bought: Filter['bought']): Filter => ({ groups: new Set(groups), bought })
+const filter = (groups: Mark[], bought: Filter['bought'], price: Filter['price'] = 'all'): Filter => ({ groups: new Set(groups), bought, price })
+const priced = (bggId: number, cents: number | null): Entry => ({
+  ...entry(bggId, 'must_have'),
+  facts: cents === null ? null : { booth: null, priceCents: cents, currency: 'EUR', publisher: null },
+})
+
+describe('filter by price (listed price)', () => {
+  it('sorts prices into cheap (up to 30), mid (over 30 up to 60) and expensive (over 60)', () => {
+    expect([2999, 3000, 3001, 6000, 6001].map(c => priceBand(priced(1, c)))).toEqual(['cheap', 'cheap', 'mid', 'mid', 'expensive'])
+    expect(priceBand(priced(1, null))).toBeNull()
+  })
+
+  it('shows only games in the chosen band; games without a price only under All', () => {
+    const list = [priced(1, 2500), priced(2, 4500), priced(3, 9000), priced(4, null)]
+    const all = new Set<Mark>(['must_have'])
+    expect(ids(applyFilter(list, { groups: all, bought: 'all', price: 'all' }))).toEqual([1, 2, 3, 4])
+    expect(ids(applyFilter(list, { groups: all, bought: 'all', price: 'cheap' }))).toEqual([1])
+    expect(ids(applyFilter(list, { groups: all, bought: 'all', price: 'mid' }))).toEqual([2])
+    expect(ids(applyFilter(list, { groups: all, bought: 'all', price: 'expensive' }))).toEqual([3])
+  })
+
+  it('names the price in the filter button and keeps it when stored', () => {
+    expect(filterLabel(filter(['must_have', 'interested'], 'all', 'cheap'))).toBe('⭐ 👀, cheap')
+    expect(fromStored(toStored(filter(['must_have'], 'no', 'expensive')))).toEqual(filter(['must_have'], 'no', 'expensive'))
+    expect(fromStored({ groups: ['must_have'], bought: 'no' }).price).toBe('all')
+  })
+})
 
 describe('filter (FR-009)', () => {
   it('"All" shows every live game', () => {
@@ -67,7 +94,7 @@ describe('filter (FR-009)', () => {
 
   it('is stored as plain JSON and read back; anything unknown falls back to All', () => {
     const stored = toStored(PRESETS.hunt)
-    expect(JSON.parse(JSON.stringify(stored))).toEqual({ groups: ['must_have'], bought: 'no' })
+    expect(JSON.parse(JSON.stringify(stored))).toEqual({ groups: ['must_have'], bought: 'no', price: 'all' })
     expect(fromStored(stored)).toEqual(PRESETS.hunt)
     expect(fromStored(undefined)).toEqual(PRESETS.all)
     expect(fromStored({ groups: ['must_have', 'nonsense'], bought: 'maybe' })).toEqual(filter(['must_have'], 'all'))

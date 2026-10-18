@@ -242,10 +242,10 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - **FR-008**: A collection MUST show how many games are bought and the total price paid per
   currency (e.g. "€152 + $40"); a price paid is entered in the currency of the listed price,
   defaulting to EUR.
-- **FR-009**: Users MUST be able to filter a collection by any combination of groups and by bought
-  state (all / not bought / bought), with presets "All" and "Must Have, not bought". The selection
-  is remembered per collection on the device, also after closing the app.
-
+- **FR-009**: Users MUST be able to filter a collection by any combination of groups (with "Select all"
+  and "Select none"), by bought state (all / not bought / bought) and by the listed price (all / cheap
+  up to 30 / mid over 30 up to 60 / expensive over 60; games without a price only under all). The
+  selection is remembered per collection on the device, also after closing the app.
 - **FR-009a**: Users MUST be able to group a collection by mark (default) or by fair hall, taken
   from the booth (e.g. "3-R400" is hall 3): halls in order, inside a hall by booth; a game with
   booths in several halls appears in each, games without a booth last, games marked Not interested
@@ -356,9 +356,9 @@ the fair. Until then the search tab is visible but switched off and points to ad
   swipe through it without official BoardGameGeek data access.
 - **SC-011**: Swiping, a user decides on at least 15 games per minute, counted over 20 consecutive
   cards from the first card shown, with the list's first page already loaded.
-- **SC-012**: From opening the app on the Collections screen (signed in, intro already seen), the
-  "Must Have, not bought" list of a collection is reached in at most 4 taps, counting every tap
-  including opening the filter.
+- **SC-012**: From the Collections screen (signed in, intro already seen), "Must Have, not bought"
+  of a collection is set up in at most 6 taps (open the collection, the filter, Select none, Must
+  Have, Not bought, Done) and is then remembered, so later it is 1 tap away.
 
 ## Assumptions
 

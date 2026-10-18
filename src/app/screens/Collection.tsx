@@ -119,7 +119,7 @@ export function Collection({ id }: { id: string }) {
           <>
             <div className="row-actions">{actions}</div>
             <hr className="separator" />
-            <FilterPanel filter={filter} shown={shown.length} counts={groupCounts(entries, filter.bought)} onChange={changeFilter} />
+            <FilterPanel filter={filter} shown={shown.length} counts={groupCounts(entries, filter.bought, filter.price)} onChange={changeFilter} />
             <div className="group-by">
               <label className="label" htmlFor="group-by">
                 Group by
