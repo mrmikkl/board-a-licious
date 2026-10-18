@@ -35,7 +35,7 @@ No test calls the live BGG site.
 ## Deploy
 
 ```bash
-npm run db:migrate                    # against Neon
+npm run db:migrate:neon               # against Neon, string from .env.neon (git-ignored)
 npm run deploy                        # wrangler deploy (assets + /api)
 ```
 

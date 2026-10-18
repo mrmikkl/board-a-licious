@@ -8,6 +8,7 @@ test-results/
 .wrangler/
 .dev.vars
 .env*
+!.env.neon.example
 *.log
 *.tmp
 *.swp

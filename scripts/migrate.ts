@@ -5,7 +5,7 @@ import postgres from 'postgres'
 
 const url = process.env.DATABASE_URL
 if (!url) {
-  console.error('Set DATABASE_URL to the database to migrate.')
+  console.error('Set DATABASE_URL to the database to migrate; for Neon put it in .env.neon (see .env.neon.example).')
   process.exit(1)
 }
 const sql = postgres(url, { max: 1 })

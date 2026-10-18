@@ -31,10 +31,12 @@ Changing it later changes every link you have shared.
    ```
 4. Create the tables:
    ```bash
-   DATABASE_URL='<direct string>' npm run db:migrate     # prints: applied 0001_collections.sql
+   cp .env.neon.example .env.neon   # then paste the direct string into .env.neon (git-ignored)
+   npm run db:migrate:neon          # prints: applied 0001_collections.sql …
    ```
    The statements are idempotent; running it again is safe. Later schema changes are new files
-   in `migrations/`, applied the same way.
+   in `migrations/`, applied the same way. `.env.neon` holds the password: it never goes into git
+   or a chat, and `.claude/settings.json` denies Claude Code reading it.
 
 ## 3. Hyperdrive
 
@@ -118,10 +120,10 @@ and sign in again: the collection appears there, so the way through Hyperdrive t
   first with **Policy tester** if you like.
 - **Remove someone**: delete their email from `Friends`. Their data stays in Neon until removed.
 - **Deploy a new version**: `npm run deploy` (needs `npx wrangler login` on a new machine).
-- **Schema change**: new file in `migrations/`, then `DATABASE_URL='<direct string>' npm run
-  db:migrate` before deploying the code that needs it.
+- **Schema change**: new file in `migrations/`, then `npm run db:migrate:neon` before deploying
+  the code that needs it.
 - **Neon password** (reset if it ever leaked): Neon → Roles → `neondb_owner` → Reset password,
-  then build the new direct string as in step 2 and update Hyperdrive:
+  then build the new direct string as in step 2, put it into `.env.neon` and update Hyperdrive:
   ```bash
   npx wrangler hyperdrive update fe856b6ea9814a788872db3a9ff9ef89 --connection-string='<new direct string>'
   ```

@@ -10,6 +10,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate:neon": "tsx --env-file-if-exists=.env.neon scripts/migrate.ts",
     "deploy": "npm run build && wrangler deploy",
     "db:local": "tsx scripts/local-db.ts"
   },

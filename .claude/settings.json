@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env.neon)",
+      "Edit(./.env.neon)",
+      "Write(./.env.neon)",
+      "Bash(cat .env.neon*)",
+      "Bash(head .env.neon*)",
+      "Bash(tail .env.neon*)",
+      "Bash(less .env.neon*)",
+      "Bash(more .env.neon*)",
+      "Bash(grep * .env.neon*)",
+      "Bash(sed * .env.neon*)",
+      "Bash(awk * .env.neon*)",
+      "Bash(source .env.neon*)",
+      "Bash(. .env.neon*)",
+      "Bash(printenv*)",
+      "Bash(env)"
+    ]
+  }
+}
