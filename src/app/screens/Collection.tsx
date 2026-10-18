@@ -7,7 +7,7 @@ import { deleteCollection, renameCollection, saveFilter, saveGroupBy } from '../
 import { Counter } from '../components/Counter.tsx'
 import { EssenBadge } from '../components/EssenBadge.tsx'
 import { FilterSheet } from '../components/FilterPanel.tsx'
-import { IconFilter } from '../components/icons.tsx'
+import { IconAddList, IconFilter, IconLink } from '../components/icons.tsx'
 import { GameRow } from '../components/GameRow.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { GroupHeading } from '../components/GroupHeading.tsx'
@@ -98,6 +98,22 @@ export function Collection({ id }: { id: string }) {
       </a>
     </>
   )
+  const filterButton = entries.length > 0 && (
+    <button
+      type="button"
+      className={`icon-btn filter-icon${narrowed ? ' is-active' : ''}`}
+      aria-label={narrowed ? 'Filter and group (active)' : 'Filter and group'}
+      aria-haspopup="dialog"
+      onClick={() => setViewOpen(true)}
+    >
+      <IconFilter />
+    </button>
+  )
+  const menuButton = (
+    <button type="button" className="icon-btn" aria-label="Collection options" aria-haspopup="dialog" onClick={() => setMenu(true)}>
+      ⋯
+    </button>
+  )
 
   return (
     <>
@@ -105,23 +121,18 @@ export function Collection({ id }: { id: string }) {
         title={collection.name}
         back={back}
         badge={collection.type === 'essen' ? <EssenBadge /> : undefined}
+        lead={false}
         actions={
-          <>
-            {entries.length > 0 && (
-              <button
-                type="button"
-                className={`icon-btn filter-icon${narrowed ? ' is-active' : ''}`}
-                aria-label={narrowed ? 'Filter and group (active)' : 'Filter and group'}
-                aria-haspopup="dialog"
-                onClick={() => setViewOpen(true)}
-              >
-                <IconFilter />
-              </button>
-            )}
-            <button type="button" className="icon-btn" aria-label="Collection options" aria-haspopup="dialog" onClick={() => setMenu(true)}>
-              ⋯
-            </button>
-          </>
+          // wide screens: filter and ⋯ in the header; phones: in the tool row below (an empty
+          // collection has no tool row, so ⋯ stays in the header there)
+          entries.length > 0 ? (
+            <span className="wide-only">
+              {filterButton}
+              {menuButton}
+            </span>
+          ) : (
+            menuButton
+          )
         }
       />
       <main className="screen">
@@ -134,7 +145,21 @@ export function Collection({ id }: { id: string }) {
           </div>
         ) : (
           <>
-            <div className="row-actions">{actions}</div>
+            {/* phones: four equal icon buttons in one row; wide screens: the two text buttons */}
+            <div className="collection-tools">
+              <a className="btn btn-primary tool" href={href({ name: 'swipe', id })} aria-label="Add by list">
+                <IconAddList />
+                <span className="tool-text">Add by list</span>
+              </a>
+              <a className="btn tool" href={href({ name: 'add-link', id })} aria-label="Add by link">
+                <IconLink />
+                <span className="tool-text">Add by link</span>
+              </a>
+              <span className="phone-only">
+                {filterButton}
+                {menuButton}
+              </span>
+            </div>
             {/* only while something is filtered or grouped by hall: what is shown, tap to change */}
             {narrowed && (
               <button type="button" className="filter-summary" onClick={() => setViewOpen(true)}>

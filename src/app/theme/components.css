@@ -498,3 +498,69 @@
 .group-by {
   margin-top: 12px;
 }
+
+/* Config → Developer: plain links, each a full-width 44px target */
+.dev-links {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dev-links a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Collection tools (docs/design.md §6): on phones four equal icon buttons in one row
+   (Add by list, Add by link, Filter, ⋯); from 600px the two text buttons, filter and ⋯ in the header */
+.collection-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+}
+.collection-tools .tool {
+  padding-inline: 6px;
+}
+.collection-tools .icon-btn {
+  width: 100%;
+  border-radius: var(--r-md);
+}
+.collection-tools .tool-text {
+  /* only the icon on phones; the link keeps its name for screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.phone-only {
+  display: contents;
+}
+.wide-only {
+  display: none;
+}
+@media (min-width: 600px) {
+  .collection-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+  .collection-tools .tool svg {
+    display: none;
+  }
+  .collection-tools .tool-text {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+  .phone-only {
+    display: none;
+  }
+  .wide-only {
+    display: contents;
+  }
+}

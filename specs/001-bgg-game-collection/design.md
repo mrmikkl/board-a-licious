@@ -1,6 +1,6 @@
 # Feature design: BGG Game Collection
 
-**Design rules**: [docs/design.md](../../docs/design.md) v1.5.0 | **Prototype**: [design/prototype.html](design/prototype.html)
+**Design rules**: [docs/design.md](../../docs/design.md) v1.6.0 | **Prototype**: [design/prototype.html](design/prototype.html)
 (first iteration kept as [design/prototype-v1.html](design/prototype-v1.html)) | **Agreed**: 2026-10-17
 
 Open the prototype in a desktop browser and switch the developer tools to device mode (phone size).
@@ -29,7 +29,7 @@ without a "soon" label), **Config**. Sound is switched in Config only.
 | **List** | name filter; rows with facts (Essen) and "in a collection" hint; **+** per row | List game sheet |
 | **List game** (sheet) | cover, description, facts; "In collections": one tick per collection showing where the game is; Done applies adds and removals, Cancel discards | – |
 | **Search** | "Searching all of BoardGameGeek comes soon" card; disabled search field and sample results; "Add a game by link instead" | Add (game) |
-| **Config** | sections divided by separator lines: Sound ("Sound and vibration" switch); Introduction ("Show the intro again"); Share and backup (button) | Share and backup |
+| **Config** | sections divided by separator lines: Sound ("Sound and vibration" switch); Introduction ("Show the intro again"); Share and backup (button); Developer (hidden: five taps on the "Config" heading show or hide links to GitHub, Cloudflare and Neon, remembered per device) | Share and backup |
 | **Share and backup** | Share: pick a collection, pick groups, message preview (Essen: booth and price; bought games marked ✅), "Share list"; export / import backup | – |
 
 ## Rules shown in the UI

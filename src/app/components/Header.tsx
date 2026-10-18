@@ -5,10 +5,25 @@ import type { ReactNode } from 'react'
  * (e.g. Essen) directly below it like a subheading, and the screen's buttons (e.g. ⋯) at the far
  * right. Sound is switched in Config.
  */
-export function Header({ title, back, badge, actions }: { title: string; back?: string; badge?: ReactNode; actions?: ReactNode }) {
+export function Header({
+  title,
+  back,
+  badge,
+  actions,
+  onTitleClick,
+  lead = true,
+}: {
+  title: string
+  back?: string
+  badge?: ReactNode
+  actions?: ReactNode
+  onTitleClick?: () => void
+  /** false: no back button and no logo, the title gets the whole width */
+  lead?: boolean
+}) {
   return (
     <header className="top">
-      {back ? (
+      {!lead ? null : back ? (
         <a className="icon-btn back" href={back} aria-label="Back">
           ‹
         </a>
@@ -18,7 +33,7 @@ export function Header({ title, back, badge, actions }: { title: string; back?: 
         </span>
       )}
       <div className="top-title">
-        <h1>{title}</h1>
+        <h1 onClick={onTitleClick}>{title}</h1>
         {badge && <div className="top-badge">{badge}</div>}
       </div>
       {actions && <div className="top-actions">{actions}</div>}
