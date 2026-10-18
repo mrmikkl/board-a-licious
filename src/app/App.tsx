@@ -6,7 +6,7 @@ import { TabBar } from './components/TabBar.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import { useIntroOpen } from './intro.ts'
-import { type Route, useRoute } from './router.ts'
+import { type Route, href, useRoute } from './router.ts'
 import { Add } from './screens/Add.tsx'
 import { Collection } from './screens/Collection.tsx'
 import { Collections } from './screens/Collections.tsx'
@@ -16,6 +16,7 @@ import { Lists } from './screens/Lists.tsx'
 import { Search } from './screens/Search.tsx'
 import { Config } from './screens/Config.tsx'
 import { Share } from './screens/Share.tsx'
+import { Shared } from './screens/Shared.tsx'
 import { Swipe } from './screens/Swipe.tsx'
 
 function Screen({ route }: { route: Route }) {
@@ -38,31 +39,9 @@ function Screen({ route }: { route: Route }) {
       return <Share />
     case 'config':
       return <Config />
-    default:
-      return <Placeholder route={route} />
+    case 'shared':
+      return <Shared key={href(route)} title={route.title} text={route.text} url={route.url} />
   }
-}
-
-function Placeholder({ route }: { route: Route }) {
-  // The other screens arrive with later user stories; until then each route shows its title.
-  const titles: Record<Route['name'], string> = {
-    collections: 'Collections',
-    collection: 'Collection',
-    swipe: 'Swipe',
-    lists: 'BGG lists',
-    list: 'BGG list',
-    add: 'Add',
-    search: 'Search',
-    config: 'Config',
-    share: 'Share and backup',
-    shared: 'Shared from BoardGameGeek',
-  }
-  return (
-    <>
-      <Header title={titles[route.name]} />
-      <main className="screen" />
-    </>
-  )
 }
 
 /** Shown when the Access session expired: everything keeps working here, syncing needs a new sign-in. */
