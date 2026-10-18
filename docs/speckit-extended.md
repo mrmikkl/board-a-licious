@@ -1,12 +1,13 @@
 # Spec Kit extended
 
-Our version of Spec Kit: the [basic flow](speckit.md) plus two extensions that fill gaps the basic
+Our version of Spec Kit: the [basic flow](speckit.md) plus three extensions that fill gaps the basic
 flow leaves open.
 
 | # | Extension | Gap in basic Spec Kit | Adds |
 |---|---|---|---|
 | 1 | Architecture Decision Records | Technical decisions live only in one feature's `research.md`; later features lose the reasons | `docs/adr/` |
 | 2 | Design | Nothing defines how the app looks; the implementing agent decides on its own | clickable prototype, `docs/design.md`, `specs/<NNN>/design.md` |
+| 3 | Several features ahead | The basic flow assumes one feature at a time; specifying ahead on several branches breaks its folder-based numbering | one worktree per feature, numbering across branches |
 
 ## The extended flow
 
@@ -93,6 +94,45 @@ so the implementation follows agreed rules instead of the agent's taste.
 - `/speckit-tasks` references screens and components by the names used in the design files.
 - `/speckit-implement` follows `docs/design.md`; the prototype is a reference, not code to copy.
 - `/speckit-analyze` also checks that every screen in the feature's `design.md` is covered by tasks.
+
+## Extension 3: Several features ahead
+
+Ideas can be specified (and designed) ahead while another feature is planned or built; plan, tasks
+and implement still happen one feature at a time.
+
+**One feature, one branch, one worktree**:
+
+- Every feature `NNN-<short-name>` has its own branch of that name and, when worked on in parallel,
+  its own worktree next to the repo: `../board-a-licious-NNN` (any folder works; the branch is what
+  counts). Create it from an up-to-date `main`:
+  `git worktree add ../board-a-licious-NNN -b NNN-<short-name> main`.
+- Each worktree is a normal folder: its files can be opened, read and diffed beside the others.
+  `git worktree list` shows them all. Each has its own `.specify/feature.json` (git-ignored) and its
+  own agent session; the Spec Kit pane follows the branch.
+- Working in one folder and switching branches (`git switch`) is equally valid when only one
+  feature is open at a time.
+
+**Numbering across branches** (instead of Spec Kit's folder scan):
+
+A worktree's `specs/` only holds `main`'s features and its own, so the next number comes from all
+feature branches, which every worktree shares:
+
+```bash
+git branch --list '[0-9][0-9][0-9]-*' --format='%(refname:short)' | sort | tail -1   # highest so far
+```
+
+Use the next number after the highest of these and of the folders in `specs/`; `/speckit-specify`
+creates the branch and `specs/NNN-<short-name>/` with it.
+
+**Order and merging**:
+
+- Specs only describe what and why, so writing several ahead does no harm; plans depend on the
+  code, so `/speckit-plan` starts only from a `main` that contains the features it builds on.
+- A finished feature is merged into `main` (pull request), and its worktree removed
+  (`git worktree remove ../board-a-licious-NNN`); features still in progress take `main` in with
+  `git merge main` before their plan.
+- Within one feature, its tasks may be split across parallel agents (e.g. an Orca Swarm), each in
+  a worktree of its own branched from the feature branch and merged back into it.
 
 ## How the extensions are applied
 

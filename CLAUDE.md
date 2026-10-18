@@ -37,6 +37,8 @@ We run an extended flow, `docs/speckit-extended.md`; apply it whenever a `/speck
 - **Extension 2, Design**: between specify/clarify and plan, build a clickable prototype, review it
   with the user, and record rules in `docs/design.md` and `specs/<NNN>/design.md`; later steps
   follow them.
+- **Extension 3, Several features ahead**: one branch (and, in parallel, one worktree) per feature;
+  number new features after the highest `NNN-*` branch, not just the folders in `specs/`.
 
 - Features live in `specs/<NNN>-<short-name>/` (sequential numbering) with `spec.md`, `plan.md`,
   `tasks.md`; task IDs in `tasks.md` (`T001`, …) are what commit prefixes refer to.
