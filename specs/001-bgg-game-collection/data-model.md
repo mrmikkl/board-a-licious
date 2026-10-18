@@ -1,6 +1,7 @@
 # Data Model: BGG Game Collection
 
-Re-planned 2026-10-17. Domain types live in `src/domain/` and are shared by app and Worker.
+Re-planned 2026-10-17; amended 2026-10-18 (no Essen type, game info). Domain types live in
+`src/domain/` and are shared by app and Worker.
 
 ## Domain entities
 
@@ -28,7 +29,14 @@ Defined once in `src/domain/marks.ts`; stored as the key. New marks = new list i
 | `thumbnailUrl` | https URL \| null | BGG image CDN |
 | `description` | string \| null | BGG `short_description` |
 | `kind` | `boardgame` \| `expansion` | |
+| `minPlayers`, `maxPlayers` | integer \| null | number of players |
+| `designers` | string[] | BGG `boardgamedesigner` links, in BGG order |
+| `mechanisms` | string[] | BGG `boardgamemechanic` links, shown as badges |
+| `publisher` | string \| null | the game's first BGG publisher (fallback when no list publisher) |
 | `fetchedAt` | timestamp | refresh after 7 days |
+
+Games stored on a device before 2026-10-18 lack `designers`; they are fetched again once in the
+background (FR-017).
 
 Link derived: `https://boardgamegeek.com/boardgame/{bggId}`.
 
@@ -38,7 +46,6 @@ Link derived: `https://boardgamegeek.com/boardgame/{bggId}`.
 |---|---|---|
 | `id` | UUID (client-generated) | identity, works offline |
 | `name` | string, 1–60 chars, trimmed | required |
-| `type` | `essen` \| `standard` | fixed after creation |
 | `updatedAt` | ISO timestamp (ms) | set by client |
 | `deleted` | boolean | tombstone for sync |
 
@@ -51,7 +58,7 @@ Link derived: `https://boardgamegeek.com/boardgame/{bggId}`.
 | `bought` | boolean | independent of `mark` (FR-007) |
 | `paidCents` | integer ≥ 0 \| null | price paid; null = not tracked |
 | `paidCurrency` | ISO 4217 code \| null | currency of the price paid; from `facts.currency`, else `EUR` (FR-008) |
-| `facts` | `{ booth, priceCents, currency, publisher }` \| null | each part optional |
+| `facts` | `{ booth, priceCents, currency, publisher, edition }` \| null | each part optional |
 | `factsSource` | `preview` \| `manual` \| null | `manual` shows "Added by you" (FR-011) |
 | `detailsPending` | boolean | added by link, BGG details not loaded yet (FR-017) |
 | `updatedAt` | ISO timestamp (ms) | set by client on every change |
@@ -59,9 +66,12 @@ Link derived: `https://boardgamegeek.com/boardgame/{bggId}`.
 
 Rules (all in `src/domain/`):
 
-- **Facts rule (FR-010)**: when adding from a list, `facts` are copied only if the list is a preview
-  and the collection is `essen`; otherwise `facts = null`. `facts.ts` also returns the reason text
-  the UI shows ("Booth, price and publisher are kept" / "Added without booth and price: …").
+- **Facts (FR-010)**: when adding from a list, whatever `facts` the list has for the game are
+  copied into any collection (previews have them, geeklists not); no rule, no reason text.
+- **Game info (FR-005, FR-010)**: `src/domain/game-info.ts` builds the ordered infos from entry and
+  game: price, players ("1–4 players"), booth, edition, designer(s), mechanisms; unknown ones are
+  left out. Rows take the first three; details show all. Publisher: `facts.publisher` (list or
+  typed in) else `game.publisher`.
 - **Swipe (FR-015)**: right → entry with `mark = new`; left → `mark = skip`. Games that already
   have an entry in the collection (including `skip`) are not offered.
 - **Membership choice (FR-014)**: input = collection IDs before and after; output = adds and
@@ -77,17 +87,16 @@ Rules (all in `src/domain/`):
 ### BGG list (games per device; the list itself per person)
 
 Which lists a person loaded syncs to their other devices as a `LoadedList` (`kind`, `id`,
-`title`, `isEssen`, `updatedAt`, `deleted`; table `loaded_list`, last write wins). A device that
+`title`, `updatedAt`, `deleted`; table `loaded_list`, last write wins). A device that
 gets one from sync shows it with `pageCount: 0` and loads the pages when it is opened.
 
 | Field | Type | Notes |
 |---|---|---|
 | `kind` + `id` | `preview` \| `geeklist`, integer | identity, from the pasted link |
 | `title` | string | from BGG |
-| `isEssen` | boolean | `true` for previews (research R9) |
 | `pageCount`, `loadedPages` | integers | background loading progress |
-| `items` | `{ position, bggId, facts?, page }[]` | every item as BGG lists it (one per edition or publisher) |
-| `entries` | same shape | one per game, editions merged (`mergeListEntries`: all booths and publishers) |
+| `items` | `{ position, bggId, facts?, info?, page }[]` | every item as BGG lists it (one per edition or publisher); previews add `facts.edition` (the version name) and `info` (`minPlayers`, `maxPlayers`, `designers`, `mechanisms` from the item's game) |
+| `entries` | same shape | one per game, editions merged (`mergeListEntries`: all booths, publishers and editions) |
 | `openedAt` | timestamp | |
 
 Publishers: `{ companyId → name }` cache.
@@ -99,7 +108,6 @@ CREATE TABLE collection (
   id          uuid        PRIMARY KEY,
   user_email  text        NOT NULL,            -- verified Access email, lowercased
   name        text        NOT NULL CHECK (length(name) BETWEEN 1 AND 60),
-  type        text        NOT NULL CHECK (type IN ('essen', 'standard')),
   updated_at  timestamptz NOT NULL,
   deleted     boolean     NOT NULL DEFAULT false
 );
@@ -117,6 +125,7 @@ CREATE TABLE collection_entry (
   price_cents     integer     CHECK (price_cents >= 0),
   currency        text,
   publisher       text,
+  edition         text,                        -- migration 0004
   facts_source    text        CHECK (facts_source IN ('preview', 'manual')),
   details_pending boolean     NOT NULL DEFAULT false,
   updated_at      timestamptz NOT NULL,
@@ -140,6 +149,8 @@ CREATE TABLE game (                            -- public BGG display data, share
 - Upserts apply last-write-wins in SQL (`… DO UPDATE … WHERE excluded.updated_at > t.updated_at`)
   and set `synced_at = now()` (migration 0003); pulls filter by `synced_at`, the server's receive time.
 - Marks are validated in the domain, not by a CHECK, so new marks need no migration.
+- Migration 0004 (2026-10-18) drops `collection.type` and `loaded_list.is_essen` and adds
+  `collection_entry.edition`.
 
 ## Browser storage (IndexedDB `board-a-licious-<userEmail>`, one database per signed-in person)
 

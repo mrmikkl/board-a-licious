@@ -2,7 +2,7 @@
 
 **Input**: Design documents from `/specs/001-bgg-game-collection/`
 **Prerequisites**: plan.md, spec.md, design.md, research.md, data-model.md, contracts/, quickstart.md;
-design rules `docs/design.md` v1.7.0; ADRs 0001–0006.
+design rules `docs/design.md` v1.8.0; ADRs 0001–0006.
 
 **Tests**: Required. Constitution II (test-first, NON-NEGOTIABLE): every test task comes before
 the code it covers and must fail first. BGG is only ever tested against recorded fixtures.
@@ -212,7 +212,23 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [X] T075 Offline: precache app shell, fonts and loaded data; end-to-end test `tests/e2e/offline.spec.ts` (airplane mode: mark, buy, reload; online: synced) — SC-004
 - [X] T076 Accessibility and reduced-motion pass over all screens at 360×740 in `tests/e2e/a11y.spec.ts` (axe, no horizontal scroll, focus order, labels) — FR-024, FR-026, SC-006
 - [X] T077 Production setup: Neon migration, Hyperdrive, Access application (one-time PIN), secrets; setup steps in `README.md`
-- [ ] T078 Run the 19 validation scenarios of `quickstart.md` on the deployed app (phone), note results in `specs/001-bgg-game-collection/quickstart.md`
+- [ ] T078 Run the 20 validation scenarios of `quickstart.md` on the deployed app (phone), note results in `specs/001-bgg-game-collection/quickstart.md`
+
+---
+
+## Phase 10: Game info without Essen (2026-10-18 change)
+
+**Goal**: no Essen type for collections or lists; game rows and details show game info in a fixed
+order (spec Clarifications 2026-10-18, FR-001, FR-005, FR-010, FR-017, FR-018; design rules v1.8.0).
+**Independent Test**: quickstart scenarios 3, 7 and 20 — a preview game ticked into two
+collections shows booth, price and edition in both; rows show name and year, publisher and three
+infos; details show all.
+
+- [ ] T079 Drop collection type and list `isEssen` (tests first): domain (`collection.ts`, `lists.ts`, `facts.ts` without the rule, `membership.ts`, `swipe.ts`, `share.ts`, `backup.ts` v3 reading v1/v2), client `store.ts` / `api.ts` / `lists.ts`, `worker/db/repository.ts`, migration `migrations/0004_drop_essen.sql` (drop `collection.type`, `loaded_list.is_essen`; add `collection_entry.edition`)
+- [ ] T080 [P] Parse game info in the Worker (fixture tests first): `worker/bgg/geekdo-games.ts` (`minPlayers`, `maxPlayers`, `designers`, `mechanisms`, first `publisher`) and `worker/bgg/geekdo-lists.ts` (`facts.edition` from the version name; players, designers, mechanisms from the preview item's `geekitem`)
+- [ ] T081 [P] Domain `src/domain/game-info.ts` with unit tests: ordered infos (price, players, booth, edition, designer, mechanisms), unknown ones left out, publisher choice (list or typed-in, else BGG), first three for rows
+- [ ] T082 UI: `GameRow` and list rows (publisher line, three infos), `GameSheet`, `SwipeCard` and `MembershipSheet` (all infos, mechanisms as pills); remove `EssenBadge`, the Essen switch and the facts notes; update the e2e tests
+- [ ] T083 Client: fetch details once more for stored games without game info (`src/client/details.ts`), with a unit test
 
 ---
 
@@ -222,6 +238,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 - Setup (1) → Foundational (2) → user stories (3–7) → Polish (9). T006 (spike) decides whether US2/US3 use BGG lists or fall back.
 - US6 (8) needs the BGG token; it can happen any time after Phase 2.
+- Phase 10 (2026-10-18 change) builds on all of Release 0.5: T079 first; T080 and T081 in parallel; then T082 and T083.
 
 ### User Story Dependencies
 

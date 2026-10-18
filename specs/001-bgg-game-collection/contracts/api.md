@@ -30,13 +30,18 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
   from a pasted link (`/geekpreview/<id>…`, `/geeklist/<id>…`).
 - `200`:
   ```json
-  { "kind": "preview", "id": 93, "title": "SPIEL Essen 2026", "isEssen": true,
+  { "kind": "preview", "id": 93, "title": "SPIEL Essen 2026",
     "page": 1, "pageCount": 138,
     "entries": [ { "position": 1, "bggId": 446453, "name": "…", "thumbnailUrl": "https://…",
                    "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR",
-                              "publisherId": 34183, "publisher": "Inside Up Games" } } ] }
+                              "publisherId": 34183, "publisher": "Inside Up Games",
+                              "edition": "English edition" },
+                   "info": { "minPlayers": 1, "maxPlayers": 4, "designers": ["Gilles Turbide"],
+                             "mechanisms": ["Chaining", "Closed Drafting"] } } ] }
   ```
-- Geeklists: `isEssen: false`, no `facts`, up to 25 entries per page, non-game entries omitted.
+- Geeklists: no `facts` and no `info`, up to 25 entries per page, non-game entries omitted.
+- Previews: `facts.edition` is the item's version name; `info` comes from the item's game
+  (`geekitem`) and needs no extra request.
 - Previews: 10 entries per page; price = `showprice`, else `msrp`. `publisher` comes from the
   company cache and is `null` while a company is not resolved yet; the page never waits for company
   lookups (SC-002). The app resolves missing names with `GET /api/bgg/companies`.
@@ -49,7 +54,9 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
 
 ### `GET /api/bgg/games?ids=<id,id,…>`
 
-- 1–50 IDs. `200 { "games": [ { "bggId", "name", "year", "thumbnailUrl", "description", "kind" } ] }`.
+- 1–50 IDs. `200 { "games": [ { "bggId", "name", "year", "thumbnailUrl", "description", "kind",
+  "minPlayers", "maxPlayers", "designers", "mechanisms", "publisher" } ] }` (`publisher`: the game's
+  first BGG publisher; lists are `[]` when BGG has none).
 - Served from the `game` table when fresher than 7 days, else from BGG (cached).
 
 ### `GET /api/bgg/search?q=<text>` (Release 1.0)
@@ -68,12 +75,12 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
   way are fetched again (merging is last-write-wins and harmless when repeated).
 - `200`:
   ```json
-  { "collections": [ { "id": "c0f…", "name": "Essen 2026", "type": "essen",
+  { "collections": [ { "id": "c0f…", "name": "Essen 2026",
                        "updatedAt": "2026-10-17T09:12:03.120Z", "deleted": false } ],
     "entries": [ { "collectionId": "c0f…", "bggId": 446453, "mark": "must_have",
                    "bought": true, "paidCents": 5200, "paidCurrency": "EUR",
                    "facts": { "booth": "3-R400", "priceCents": 6000, "currency": "EUR",
-                              "publisher": "Inside Up Games" },
+                              "publisher": "Inside Up Games", "edition": "English edition" },
                    "factsSource": "preview", "detailsPending": false,
                    "updatedAt": "2026-10-17T09:14:00.000Z", "deleted": false } ],
     "serverTime": "2026-10-17T09:14:05.000Z" }
@@ -83,9 +90,10 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
 
 - Body: `{ "collections": [Collection…], "entries": [Entry…], "lists": [LoadedList…] }` (`lists`
   optional), together 1–500 items (backup import uses the same route). `LoadedList` =
-  `{ "kind": "preview", "id": 93, "title": "SPIEL Essen 2026", "isEssen": true, "updatedAt", "deleted" }`;
+  `{ "kind": "preview", "id": 93, "title": "SPIEL Essen 2026", "updatedAt", "deleted" }`;
   `GET /api/sync` returns `lists` too.
-- Validation: collection name 1–60 chars, type `essen|standard`; entry mark known, `bggId > 0`,
+- Validation: collection name 1–60 chars (a `type` or `isEssen` sent by an older app is ignored);
+  entry mark known, `bggId > 0`,
   `paidCents`/`priceCents` ≥ 0, entry's collection belongs to the user; `updatedAt` at most 5 min in
   the future.
 - Last write wins per collection and per entry. `200 { "applied": 3, "ignored": 1 }`; idempotent.

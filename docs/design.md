@@ -1,6 +1,6 @@
 # Design rules
 
-**Version**: 1.7.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.8.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -30,20 +30,20 @@ background. Playful details reward actions, but nothing gets in the way on a pho
 | `--deck` / `--deck-2` | `#151831` / `#1D2142` | surfaces / raised surfaces |
 | borders | `#3A4078` (default), `#4A5196` (secondary buttons) | surface edges |
 | `--text` / `--muted` | `#ECEEFF` / `#9AA0C8` | text / secondary text |
-| `--orange` → `--orange-2` | `#FF7A1A` → `#FFB020` | the highlight: primary actions, focus, Essen, Must Have |
+| `--orange` → `--orange-2` | `#FF7A1A` → `#FFB020` | the highlight: primary actions, focus, Must Have |
 | `--danger` | `#FF4D5E` | destructive actions, Not interested |
 
 Gradients (all 135°):
 
 | Name | Colours | Meaning |
 |---|---|---|
-| hot | `#FF7A1A` → `#FFB020` | primary, Must Have, Essen |
+| hot | `#FF7A1A` → `#FFB020` | primary, Must Have |
 | cool | `#4C5BFF` → `#14C8C8` | Interested, swipe "add" |
 | violet | `#6D4AE0` → `#A78BFA` | Unsure |
 | mud | `#7A6046` → `#B0916E` | Poop |
 | red | `#C2183A` → `#FF4D5E` | Not interested, swipe "nope" |
 | got | `#0FB98F` → `#7CF0C5` | Bought |
-| dusk | `#8B5CF6` → `#4C5BFF` → `#14C8C8` | neutral decoration, standard collections |
+| dusk | `#8B5CF6` → `#4C5BFF` → `#14C8C8` | neutral decoration, collection cards |
 
 Contrast: body text ≥ 4.5:1 against its surface (WCAG 2.2 AA). Text on a gradient pill or badge
 is checked against the gradient's least contrasting colour: dark text (`--ink`) on hot, cool, got
@@ -84,7 +84,7 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
   flow into a grid; sheets (560px), the swipe card, the intro and forms keep a readable width; the
   tab bar stays phone-sized and centred.
 - **Header**: one row: back button (or logo), the screen title (22px on phones, 26px from 600px,
-  at most two lines) with its badge (e.g. Essen) directly below it like a subheading, and the
+  at most two lines) with its badge (if a screen has one) directly below it like a subheading, and the
   screen's buttons (e.g. ⋯) at the far right.
 - **Collection screen**: no back button and no logo (the Collections tab leads back), so the name
   has the whole width. On phones a tool row of four equal icon buttons follows: Add by list
@@ -100,8 +100,9 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 | **Secondary button** | solid `#232852`, border `#4A5196`; fills orange on hover. |
 | **Destructive button** | secondary look with red text; fills red on hover. |
 | **Bought button** | got gradient. |
-| **Card** (collection, geeklist) | solid surface, title + Essen badge, counts; a **cluster of hexagons in the top-right corner** (hot for Essen, violet→teal for standard) that glows and sways slowly. The "create" card is dashed orange and fills orange on hover. |
-| **Game row** | solid tile: hexagon cover (with ✓ badge when bought), name, booth/price/publisher line (Essen) or year, mark pill (+ "✅ €paid" pill when bought). Not-interested rows are dimmed and struck through. |
+| **Card** (collection, BGG list) | solid surface, title, counts; a **cluster of hexagons in the top-right corner** (violet→teal) that glows and sways slowly. The "create" card is dashed orange and fills orange on hover. |
+| **Game row** | solid tile: hexagon cover (with ✓ badge when bought); line 1 name and year; line 2 the publisher (muted, left out when unknown); line 3 the first three available **game infos**; mark pill (+ "✅ €paid" pill when bought). Not-interested rows are dimmed and struck through. |
+| **Game info** | always in this order, each left out when unknown: price, number of players ("1–4 players"), booth, edition, designer(s), mechanisms. Text infos are joined with " · "; mechanisms are small outline pills that wrap. Rows show the first three available; game details, the swipe card and a list game's sheet show all. No note when something is missing. |
 | **Group heading** | small coloured hexagon, label, rolling count. "Not interested" is collapsed by default with a chevron. |
 | **Filter and group** | a filter icon in the collection header (with a small hot hexagon while something is narrowed) opens a sheet: "Filter" with a Bought segment (All / Not bought / ✅ Bought), a Price segment (All / Cheap / Mid / Expensive) and a checkbox per group with "Select all" / "Select none"; a separator; "Group by" (Marks / Booth (hall)); Done. Changes apply at once. While something is narrowed, one summary line under the add buttons says what is shown and opens the sheet. Segments keep all options in one row. |
 | **Separator** | 2px orange → violet line between the controls of a screen and its content. |
@@ -112,10 +113,9 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 | **Hidden taps** | a heading that counts taps (Config: five taps within 4 s show or hide the developer section) does not select text, does not zoom on double tap and takes the title's full width. |
 | **Multi-choice list** | rows with a hexagon tick; the ticks always show the current truth; changes apply on "Done". |
 | **Inputs** | solid field with label or icon; the primary button stays disabled until the input is valid. Dropdowns use the same field look with an orange hexagon as arrow. |
-| **Swipe card** | big cover, name, year, description (3 lines), facts; ✓/✕ hexagon buttons below; arrow keys work. |
+| **Swipe card** | big cover, name, year, publisher, description (3 lines), all game infos; ✓/✕ hexagon buttons below; arrow keys work. |
 | **Empty state** | centred: decorative hexagon (no symbol), one heading, one hint, the actions as buttons. |
 | **Toast** | dark pill above the tab bar, one short sentence. |
-| **Badge "Essen"** | orange outline pill with a small hot hexagon. |
 | **Tab bar** | 4 tabs + the big hot hexagon "+" in the middle (opens the add choice); a light shimmer passes over it every 5 s. |
 
 ## 8. Interaction states

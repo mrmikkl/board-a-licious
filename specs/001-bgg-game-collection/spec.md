@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-bgg-game-collection`
 
-**Created**: 2026-10-16 | **Updated**: 2026-10-17 (design session, see [design.md](design.md))
+**Created**: 2026-10-16 | **Updated**: 2026-10-18 (no Essen type, game info; see Clarifications)
 
 **Status**: Draft
 
@@ -15,24 +15,37 @@ that we mark — and on them we want to put states which will help us during the
 Product context: [docs/vision.md](../../docs/vision.md). Look and feel: [docs/design.md](../../docs/design.md)
 and this feature's [design.md](design.md).
 
+## Clarifications
+
+### Session 2026-10-18
+
+- Q: Do collections and lists still need an Essen type? → A: No. Collections have no type and lists
+  no Essen flag; whatever a list provides (booth, price, publisher, edition) is kept in any
+  collection, and what a list does not provide is simply not shown.
+- Q: Which game info is shown, and how? → A: In this order, each left out when unknown: price,
+  number of players, booth, edition, designer, mechanisms (as badges). A game row shows the name
+  and year, then the publisher, then the first three available infos; details show all of them.
+- Q: Where does the publisher come from for games not on a preview? → A: The game's first
+  publisher on BoardGameGeek; a preview's publisher (the one at the booth) wins.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Collections and marking games (Priority: P1)
 
-A user creates a collection, for example "Essen 2026" as an Essen collection, adds a game by
+A user creates a collection, for example "Essen 2026", adds a game by
 pasting its BoardGameGeek link, and marks it Must Have. The collection shows its games grouped by
 mark, with not-yet-marked games on top.
 
 **Why this priority**: Without collections and marks there is nothing to work with; adding by link
 works without any BoardGameGeek data access, so this slice is usable on its own.
 
-**Independent Test**: Create an Essen collection, add a game by link, mark it, reload the app, and
+**Independent Test**: Create a collection, add a game by link, mark it, reload the app, and
 confirm the collection, the game and its mark are still there.
 
 **Acceptance Scenarios**:
 
-1. **Given** no collections, **When** the user creates one with a name and the Essen switch on,
-   **Then** it appears in the collections list with an Essen badge and opens empty, offering
+1. **Given** no collections, **When** the user creates one with a name, **Then** it appears in the
+   collections list and opens empty, offering
    "Add by list" and "Add game".
 2. **Given** an open collection, **When** the user pastes a link like
    `https://boardgamegeek.com/boardgame/295947/cascadia` and confirms, **Then** the game is added
@@ -57,31 +70,31 @@ and press Done.
 **Why this priority**: The SPIEL preview is where fair releases are found; it also brings the
 booth, price and publisher needed at the fair.
 
-**Independent Test**: Load the SPIEL preview, open a game, tick an Essen and a standard collection,
-press Done, and confirm the game is in both, with booth, price and publisher only in the Essen one.
+**Independent Test**: Load the SPIEL preview, open a game, tick two collections, press Done, and
+confirm the game is in both, each with its booth, price, publisher and edition.
 
 **Acceptance Scenarios**:
 
-1. **Given** a BGG list link, **When** the user loads it, **Then** it is listed; a BGG preview (such
-   as SPIEL Essen 2026) gets an Essen badge and its games show booth, price and publisher, a
-   geeklist shows its games without them.
+1. **Given** a BGG list link, **When** the user loads it, **Then** it is listed; the games of a BGG
+   preview (such as SPIEL Essen 2026) show booth, price, publisher and edition, a geeklist shows
+   its games without them.
 2. **Given** a large list, **When** it is opened the first time, **Then** the first games appear
    quickly and the rest load in the background with visible progress; it stays available offline.
 3. **Given** a loaded list, **When** the user filters by name, **Then** only matching games show.
 4. **Given** a game in a list, **When** the user opens it, **Then** the collections it is already in
    are ticked; ticking or unticking changes nothing until Done, and Done adds and removes exactly
    as ticked; Cancel discards.
-5. **Given** a game from an Essen list ticked into a standard collection, or a game from a geeklist
-   ticked into an Essen collection, **When** the user looks at the tick, **Then** it says the game is
-   added without booth and price.
+5. **Given** a game ticked into any collection, **When** Done is pressed, **Then** it takes along
+   whatever booth, price, publisher and edition the list has for it.
 
 ---
 
 ### User Story 3 - Swipe through a BGG list (Priority: P3)
 
-In a collection the user chooses "Add from BGG list", picks the SPIEL preview, and swipes: right
+In a collection the user chooses "Add by list", picks the SPIEL preview, and swipes: right
 adds a game, left marks it "Not interested". Each card shows cover, name, year, a short
-description and, for Essen lists, booth, price and publisher.
+description and all game info the list or BoardGameGeek has (price, players, booth, edition,
+designer, mechanisms).
 
 **Why this priority**: The fastest way through hundreds of preview games; builds on US1 and US2.
 
@@ -101,7 +114,7 @@ offered again.
 
 ### User Story 4 - Use a collection at the fair (Priority: P4)
 
-On the fair floor the user filters the Essen collection to "Must Have, not bought", walks to the
+On the fair floor the user filters their fair collection to "Must Have, not bought", walks to the
 booth shown, buys a game, marks it "Bought it" and enters the price paid. The game keeps its mark
 and gets a bought badge; the collection shows how much has been spent.
 
@@ -121,16 +134,16 @@ group in "All games", shows the price, and the total spent is correct.
 3. **Given** bought games, **When** the collection is shown, **Then** each keeps its group, shows a
    bought badge with the price paid, and a line shows the number bought and the money spent.
 4. **Given** a game without booth, price or publisher, **When** the user opens its details, **Then**
-   they can add or edit them by hand, and the game shows them like data from an Essen list, marked as added by
-   the user.
+   they can add or edit them by hand, and the game shows them like data from a list, marked as
+   added by the user.
 5. **Given** a game, **When** the user opens its details, **Then** they see its cover, a short
-   description and a link to its BoardGameGeek page.
+   description, all known game info (FR-010) and a link to its BoardGameGeek page.
 
 ---
 
 ### User Story 5 - Share, back up and restore (Priority: P5)
 
-The user sends the Must Haves of their Essen collection to the group chat, with booths and prices,
+The user sends the Must Haves of their fair collection to the group chat, with booths and prices,
 and keeps a backup file of all collections.
 
 **Why this priority**: Gives friends a view of each other's lists and protects against data loss.
@@ -142,7 +155,7 @@ backup, delete a collection, import the backup and confirm it is back unchanged.
 
 1. **Given** collections, **When** the user picks one and the groups to include, **Then** the
    phone's share menu opens with a plain-text message: games grouped by mark, each with its
-   BoardGameGeek link, booth and price for Essen collections, and ✅ before bought games.
+   BoardGameGeek link, booth and price where known, and ✅ before bought games.
 2. **Given** collections, **When** the user exports a backup, **Then** they get one file with all
    collections, games, marks, bought state, prices and facts.
 3. **Given** a backup file, **When** the user imports it, **Then** missing collections are restored
@@ -216,19 +229,19 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 **Collections and marks**
 
-- **FR-001**: Users MUST be able to create any number of collections, each with a name and a type:
-  **Essen** or **standard**.
+- **FR-001**: Users MUST be able to create any number of collections, each with a name; collections
+  have no type (changed 2026-10-18: the Essen type was dropped).
 - **FR-001a**: Users MUST be able to rename and delete a collection; deleting asks for confirmation
-  and removes all its games, marks, bought states and prices. A collection's type cannot change after
-  creation.
-- **FR-002**: The collections list MUST show each collection with its type and the number of games
-  per mark and bought.
+  and removes all its games, marks, bought states and prices.
+- **FR-002**: The collections list MUST show each collection with the number of games per mark and
+  bought.
 - **FR-003**: A game MAY be in several collections; each membership has its own mark, bought state
   and facts.
 - **FR-004**: Marks MUST be: Not yet marked (default), Must Have, Interested, Unsure, Poop, Not
   interested; the set MUST be extendable without changing stored data.
 - **FR-005**: A collection MUST show its games grouped by mark in the order of FR-004, Not yet marked
-  first and Not interested collapsed by default.
+  first and Not interested collapsed by default. Each game row shows name and year, then the
+  publisher (when known), then the first three available game infos of FR-010.
 - **FR-006**: Users MUST be able to change a game's mark from its details (see SC-003) and remove a
   game from a collection.
 
@@ -251,21 +264,26 @@ the fair. Until then the search tab is visible but switched off and points to ad
   booths in several halls appears in each, games without a booth last, games marked Not interested
   left out. The choice is remembered per collection on the device.
 
-**Booth, price and publisher ("facts")**
+**Game info (booth, price, publisher, edition: "facts"; players, designer, mechanisms)**
 
-- **FR-010**: Facts MUST be kept when a game comes from an Essen list into an Essen collection,
-  and only then; the UI MUST say so before adding in every other combination.
-- **FR-011**: Users MUST be able to add or edit facts of a game in a collection by hand; such facts
-  are shown as added by the user.
+- **FR-010**: Whatever a list provides for a game (booth, price, publisher, edition) MUST be kept
+  when the game goes from that list into any collection; what is not provided is not shown. Game
+  info MUST be shown in this order, each left out when unknown: price, number of players, booth,
+  edition, designer, mechanisms (as badges). Rows show the first three (FR-005); game details,
+  swipe cards and a list game's sheet show all. Players, designers, mechanisms and a fallback
+  publisher (the game's first on BoardGameGeek) come from the game's BoardGameGeek details; a
+  list's publisher wins over the fallback.
+- **FR-011**: Users MUST be able to add or edit booth, price and publisher of a game in a collection
+  by hand; such facts are shown as added by the user.
 
 **BGG lists**
 
-- **FR-012**: Users MUST be able to load a BGG list by its link: a BoardGameGeek preview (an
-  Essen list, with booth, price and publisher) or a geeklist (no facts); loaded lists are
+- **FR-012**: Users MUST be able to load a BGG list by its link: a BoardGameGeek preview (with
+  booth, price, publisher, edition and game info) or a geeklist (no facts); loaded lists are
   remembered per person (they appear on every device the person signs in on; the games load per
   device), load page by page with visible progress and are available offline.
 - **FR-013**: Users MUST be able to browse a loaded list, filter it by name and see each game's
-  facts (Essen lists) and whether it is in a collection.
+  publisher and game info (FR-005 row) and whether it is in a collection.
 - **FR-014**: From a game in a list, users MUST be able to choose the collections the game belongs to;
   the choice MUST start from the current memberships and apply only on confirmation.
 - **FR-015**: Inside a collection, users MUST be able to go through a list card by card, adding
@@ -280,15 +298,16 @@ the fair. Until then the search tab is visible but switched off and points to ad
 - **FR-016**: Users MUST be able to add a game by pasting its BoardGameGeek game link: inside a
   collection (no collection choice) or from the add button with a collection dropdown. The game ID
   and a suggested name MUST come from the link alone; the name is editable. If the user has no
-  collection yet, the add flow MUST offer to create one first (name prefilled "SPIEL 2026", Essen)
+  collection yet, the add flow MUST offer to create one first (name prefilled "SPIEL 2026")
   and then continue with the game.
-- **FR-017**: Games added by link MUST be completed with name, year, cover and description from
-  BoardGameGeek as soon as that data can be loaded, without changing marks.
+- **FR-017**: Games added by link MUST be completed with name, year, cover, description and game
+  info (players, designers, mechanisms, publisher) from BoardGameGeek as soon as that data can be
+  loaded, without changing marks; games stored before game info existed are completed once.
 
 **Game details**
 
-- **FR-018**: Game details MUST show cover, name, year, a short description, facts and a link to the
-  game's BoardGameGeek page.
+- **FR-018**: Game details MUST show cover, name, year, publisher, a short description, all game
+  info (FR-010) and a link to the game's BoardGameGeek page.
 
 **Search**
 
@@ -299,7 +318,7 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 - **FR-020**: Users MUST be able to share one collection, with chosen groups, as plain text through
   the device's share menu (clipboard where none exists): grouped by mark, BoardGameGeek links, booth
-  and price for Essen collections, bought games marked. Every group, including Not yet marked, can
+  and price where known, bought games marked. Every group, including Not yet marked, can
   be chosen; Must Have and Interested are selected by default.
 - **FR-021**: Users MUST be able to export all collections to one backup file and import it on any
   device; importing MUST NOT silently overwrite existing data: conflicts are resolved once for the
@@ -325,15 +344,14 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 ### Key Entities
 
-- **Game**: a BoardGameGeek game, identified by its BGG ID; name, year, cover, short description and
-  link come from BGG.
-- **Collection**: a person's named list, type Essen or standard.
+- **Game**: a BoardGameGeek game, identified by its BGG ID; name, year, cover, short description,
+  number of players, designers, mechanisms, first publisher and link come from BGG.
+- **Collection**: a person's named list.
 - **Collection entry**: a game in a collection: mark, bought (yes/no), price paid (optional), facts
-  (booth, price, publisher; from an Essen list or added by hand), when it last changed.
+  (booth, price, publisher, edition; from a list or added by hand), when it last changed.
 - **Mark**: Not yet marked, Must Have, Interested, Unsure, Poop, Not interested.
-- **BGG list**: a BoardGameGeek preview or geeklist identified by kind and ID, with title, Essen
-  flag (previews), load progress and ordered
-  entries (game + facts for Essen lists).
+- **BGG list**: a BoardGameGeek preview or geeklist identified by kind and ID, with title, load
+  progress and ordered entries (game, plus facts and game info for previews).
 
 ## Success Criteria *(mandatory)*
 

@@ -147,7 +147,7 @@ sources or on knowledge that could not be checked against the vendor's own page.
 - **Rationale**: Principle II (test-first, BGG via fixtures, never live) and Principle I (phone
   width, WCAG 2.2 AA).
 
-## R9. Where Essen facts come from: BGG GeekPreview (new 2026-10-17)
+## R9. Where fair facts come from: BGG GeekPreview (new 2026-10-17)
 
 - **Finding** (checked 2026-10-17 against `api.geekdo.com`, no token):
   - `GET /api/geekpreviews/93` → "SPIEL Essen 2026", start 2026-10-22 (no. 92 is Gen Con 2026, 94
@@ -164,7 +164,7 @@ sources or on knowledge that could not be checked against the vendor's own page.
     /api/listitems?listid=<id>&page=<n>` → `data[]` (25 per page; `item.type` `things` with a
     `/boardgame…` href are games, others are threads, geeklists, RPGs …) and `pagination.total`.
     Unknown ids answer 404 on both previews and geeklists.
-- **Decision**: "Essen lists" are BGG **previews**. Facts = booth (`location`), price (`showprice`,
+- **Decision**: fair facts come from BGG **previews**. Facts = booth (`location`), price (`showprice`,
   falling back to `msrp`, with currency), publisher (company name, cached). Geeklists stay supported
   for other lists (friends' picks) but carry no facts. A pasted link decides the kind:
   `/geekpreview/<id>…` → preview, `/geeklist/<id>…` → geeklist.
@@ -182,6 +182,12 @@ sources or on knowledge that could not be checked against the vendor's own page.
   **Verify** with BGG once the token is granted.
 - **Alternatives considered**: free-text parsing of geeklist posts (unreliable); asking users to type
   facts (kept only as the manual fallback, FR-011).
+- **Update 2026-10-18 (game info)**: preview items also carry the edition (`version.item.versionname`,
+  e.g. "English edition") and the game (`geekitem.item`: `minplayers`, `maxplayers`,
+  `links.boardgamedesigner[]`, `links.boardgamemechanic[]`, `links.boardgamepublisher[]`), so a
+  preview page needs no extra request for game info. `geekitems?objectid=<id>&objecttype=thing` has
+  the same fields for every other game. The Essen flag of lists and the Essen type of collections
+  were dropped: a list's facts go into any collection (spec Clarifications 2026-10-18).
 
 - **Spike result (T006, 2026-10-17)**: a Worker deployed on `workers.dev` fetched
   `geekpreviewitems?previewid=93&pageid=1` (200, ~240 ms, 10 items with `location` and `showprice`)

@@ -21,17 +21,17 @@ already use.
 
 ## What it does
 
-1. **Collections** of games, as many as you like. An **Essen** collection keeps booth, price and
-   publisher for each game; a standard collection is a plain list.
+1. **Collections** of games, as many as you like. Each game shows what is known about it: price,
+   players, booth, edition, designer, mechanisms, and its publisher.
 2. **BGG lists** are loaded by their link once and browsed on the phone, also offline. The SPIEL
-   preview is an Essen list: it brings booth, price and publisher.
+   preview brings booth, price, publisher and edition; they go with a game into any collection.
 3. **Swipe to sort**: go through a geeklist card by card; right adds a game to the collection, left
    marks it as not interesting.
 4. **Marks** say how much you like a game: Must Have, Interested, Unsure, Poop, or Not interested.
    **Bought** is a separate tick on top, with the price you paid.
 5. **At the fair**: filter to "Must Have, not bought", group by hall, walk to the booth, tick it
    off, and see what you have spent.
-6. **Share** a collection as plain text into any chat, with booths and prices for Essen.
+6. **Share** a collection as plain text into any chat, with booths and prices where known.
 
 ## What makes it feel right
 
@@ -60,7 +60,7 @@ already use.
 
 | Horizon | What |
 |---|---|
-| Release 0.5 (before SPIEL Essen 2026, 22 Oct) | Collections, Essen facts, geeklists, swipe, marks, bought with price, filter, share/backup, offline; adding single games by link |
+| Release 0.5 (before SPIEL Essen 2026, 22 Oct) | Collections, booth/price/edition from the preview, game info, geeklists, swipe, marks, bought with price, filter, share/backup, offline; adding single games by link |
 | Release 1.0 (once BGG grants API access) | Search across all of BoardGameGeek; data from the official API |
 | Later ideas | Seeing friends' marks from shared lists, sharing straight from BGG into the app (Android) |
 
@@ -78,3 +78,10 @@ changed the product in these ways:
 - **Bought** is independent of the mark, records the price paid and adds up the money spent.
 - **Search** is visible but switched off until Release 1.0.
 - The big **+** opens a choice: collection, geeklist or game.
+
+## Decisions of 2026-10-18
+
+- **No Essen type** for collections or lists: whatever a list provides goes with a game into any
+  collection, and what it does not provide is simply not shown.
+- **Game info** in a fixed order (price, players, booth, edition, designer, mechanisms); a game row
+  shows name and year, the publisher, and the first three infos; details show all.

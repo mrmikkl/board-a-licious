@@ -3,12 +3,12 @@
 **Branch**: `001-bgg-game-collection` | **Date**: 2026-10-17 (re-planned after the design session) | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/001-bgg-game-collection/spec.md`, design rules
-[docs/design.md](../../docs/design.md) v1.7.0, feature design [design.md](design.md), accepted ADRs
+[docs/design.md](../../docs/design.md) v1.8.0, feature design [design.md](design.md), accepted ADRs
 0001–0006 in [docs/adr/](../../docs/adr/README.md).
 
 ## Summary
 
-A mobile-first web app in which each person keeps several collections (Essen or standard) of
+A mobile-first web app in which each person keeps several collections of
 BoardGameGeek games, fills them from BGG lists by swiping or ticking, marks games (Must Have,
 Interested, Unsure, Poop, Not interested), ticks them off as bought with the price paid, and shares
 them as text. One Cloudflare Worker serves the React SPA and a small `/api` (ADR 0002): a cached BGG
@@ -19,8 +19,12 @@ outbox keep everything usable offline.
 **Key finding of this re-plan (R9)**: on BoardGameGeek, SPIEL Essen 2026 is a **GeekPreview**
 (no. 93, ~1,376 games), not a geeklist. Previews carry structured booth (e.g. "3-R400"), show
 price, MSRP, availability and publisher per game; geeklists only have free text. The app therefore
-loads two kinds of BGG lists: **previews**, which are Essen lists with facts, and **geeklists**,
-which have no facts. The spec says "load a BGG list"; the kind follows from the link.
+loads two kinds of BGG lists: **previews**, which bring facts, and **geeklists**, which have no
+facts. The spec says "load a BGG list"; the kind follows from the link.
+
+**Change 2026-10-18**: the Essen type of collections and lists is gone; whatever a list provides is
+kept in any collection. Game rows and details show game info in a fixed order (price, players,
+booth, edition, designer, mechanisms) built by `src/domain/game-info.ts`; see tasks T079–T083.
 
 ## Technical Context
 
@@ -90,13 +94,14 @@ src/
 │   ├── marks.ts             # marks, order, groups (FR-004/005)
 │   ├── collection.ts        # entries, bought/paid, merge (last write wins)
 │   ├── filter.ts            # groups × bought filter, presets (FR-009)
-│   ├── facts.ts             # Essen facts rule, manual facts (FR-010/011)
+│   ├── facts.ts             # facts from lists, manual facts (FR-010/011)
+│   ├── game-info.ts         # ordered game info for rows and details (FR-005/010)
 │   ├── lists.ts             # BGG list references from links: preview / geeklist (FR-012)
 │   ├── membership.ts        # collection ticks before/after → adds and removals (FR-014)
 │   ├── swipe.ts             # swipe queue and decisions (FR-015)
 │   ├── bgg-link.ts          # game ID + suggested name from a link (FR-016)
 │   ├── share.ts             # share text (contracts/share-and-backup.md)
-│   └── backup.ts            # backup v2: serialise, validate, import plan
+│   └── backup.ts            # backup v3 (reads v1/v2): serialise, validate, import plan
 ├── app/                     # React UI, follows docs/design.md
 │   ├── theme/               # tokens.css, hexagon helpers, motion (reduced-motion aware)
 │   ├── screens/             # Collections, Collection, Swipe, Lists, List, Add, Search, Share, Intro
@@ -151,7 +156,7 @@ Order inside 0.5 (cut from the end if time runs short):
 | Addition | Why Needed | Simpler Alternative Rejected Because |
 |---|---|---|
 | Server PostgreSQL + sync (ADR 0004) | collections survive lost phones, multi-device | browser-only: a lost phone loses everything |
-| Two BGG list kinds (preview + geeklist) | SPIEL is a preview with structured facts; friends' lists are geeklists | geeklists only: no booth or price for Essen |
+| Two BGG list kinds (preview + geeklist) | SPIEL is a preview with structured facts; friends' lists are geeklists | geeklists only: no booth or price at the fair |
 | Shared game cache table | cover, year and description reused across users and collections | per-entry copies: many more BGG requests |
 | Synthesised sound + vibration | design rule §10, cheap without assets | audio files: bundle weight, licensing |
 
