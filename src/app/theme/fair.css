@@ -1,73 +1,6 @@
 /* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
 
 /* Filter: one full-width button, a panel below it */
-.filter {
-  position: relative;
-  z-index: 20;
-  margin-top: 12px;
-}
-.filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--deck);
-  box-shadow: var(--lift);
-  font-weight: 600;
-  text-align: left;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.25s;
-}
-.filter-ico {
-  flex: none;
-  width: 16px;
-  height: 18px;
-  background: var(--grad-hot);
-}
-.filter-label {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.filter-count {
-  font: 600 14px var(--font-display);
-  color: var(--muted);
-}
-.filter-btn .chev {
-  font-size: 22px;
-  color: var(--muted);
-  transform: rotate(90deg);
-  transition: transform 0.2s;
-}
-.filter-btn[aria-expanded='true'] {
-  border-color: var(--orange);
-}
-.filter-btn[aria-expanded='true'] .chev {
-  transform: rotate(-90deg);
-}
-.filter-panel {
-  /* in the page flow, not floating: on a 740px phone Done would hide behind the tab bar */
-  margin-top: 8px;
-  padding: 12px 14px 14px;
-  border: 1px solid var(--border-2);
-  border-radius: var(--r-lg);
-  background: var(--deck-2);
-  box-shadow: 0 18px 40px rgba(3, 4, 12, 0.75);
-  animation: filter-drop 0.2s var(--spring);
-}
-@keyframes filter-drop {
-  /* no fade: the panel is readable (and checkable for contrast) from the first frame */
-  from {
-    transform: translateY(-8px) scale(0.98);
-  }
-}
 .chip {
   display: inline-flex;
   align-items: center;
@@ -141,11 +74,7 @@
   font: 600 14px var(--font-display);
   color: var(--muted);
 }
-.filter-panel > .btn {
-  margin-top: 10px;
-}
 @media (hover: hover) and (pointer: fine) {
-  .filter-btn:hover,
   .chip:hover {
     border-color: var(--orange);
     box-shadow: var(--lift), var(--glow);
@@ -252,4 +181,35 @@
 .seg-actions .link-btn {
   min-height: var(--tap);
   padding: 0 8px;
+}
+
+/* filter icon in the collection header; a dot while a filter or the hall grouping is active */
+.filter-icon {
+  position: relative;
+}
+.filter-icon.is-active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 11px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+}
+/* what is shown while narrowed; a tap opens "Filter and group" */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
 }

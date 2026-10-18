@@ -3,7 +3,7 @@
 **Branch**: `001-bgg-game-collection` | **Date**: 2026-10-17 (re-planned after the design session) | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/001-bgg-game-collection/spec.md`, design rules
-[docs/design.md](../../docs/design.md) v1.4.0, feature design [design.md](design.md), accepted ADRs
+[docs/design.md](../../docs/design.md) v1.5.0, feature design [design.md](design.md), accepted ADRs
 0001–0006 in [docs/adr/](../../docs/adr/README.md).
 
 ## Summary
@@ -50,7 +50,7 @@ to ~1,500 games; about 12 screens and sheets (design.md)
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.* Constitution v1.4.0.
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.* Constitution v1.5.0.
 
 | Principle | Pre | Post | How the design complies |
 |---|---|---|---|

@@ -2,11 +2,12 @@ import { type FormEvent, useCallback, useId, useState } from 'react'
 
 import { groupByHall } from '../../domain/booths.ts'
 import { type Collection as CollectionRow, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
-import { type Filter, applyFilter, fromStored, groupCounts, presetOf } from '../../domain/filter.ts'
+import { type Filter, applyFilter, filterLabel, fromStored, groupCounts, presetOf } from '../../domain/filter.ts'
 import { deleteCollection, renameCollection, saveFilter, saveGroupBy } from '../actions.ts'
 import { Counter } from '../components/Counter.tsx'
 import { EssenBadge } from '../components/EssenBadge.tsx'
-import { FilterPanel } from '../components/FilterPanel.tsx'
+import { FilterSheet } from '../components/FilterPanel.tsx'
+import { IconFilter } from '../components/icons.tsx'
 import { GameRow } from '../components/GameRow.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { GroupHeading } from '../components/GroupHeading.tsx'
@@ -27,6 +28,8 @@ export function Collection({ id }: { id: string }) {
   const [chosen, setChosen] = useState<{ id: string; filter: Filter }>()
   const [showSkip, setShowSkip] = useState(false)
   const [menu, setMenu] = useState(false)
+  const [viewOpen, setViewOpen] = useState(false)
+  const closeView = useCallback(() => setViewOpen(false), [])
   const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: 'mark' | 'booth' }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
   const closeMenu = useCallback(() => setMenu(false), [])
@@ -76,6 +79,7 @@ export function Collection({ id }: { id: string }) {
     setGroupChoice({ id, groupBy: next })
     void saveGroupBy(services, id, next)
   }
+  const narrowed = presetOf(filter) !== 'all' || groupBy === 'booth'
   // by mark (FR-005) or by fair hall, taken from the booth (hall view)
   const groups =
     groupBy === 'booth'
@@ -102,9 +106,22 @@ export function Collection({ id }: { id: string }) {
         back={back}
         badge={collection.type === 'essen' ? <EssenBadge /> : undefined}
         actions={
-          <button type="button" className="icon-btn" aria-label="Collection options" aria-haspopup="dialog" onClick={() => setMenu(true)}>
-            ⋯
-          </button>
+          <>
+            {entries.length > 0 && (
+              <button
+                type="button"
+                className={`icon-btn filter-icon${narrowed ? ' is-active' : ''}`}
+                aria-label={narrowed ? 'Filter and group (active)' : 'Filter and group'}
+                aria-haspopup="dialog"
+                onClick={() => setViewOpen(true)}
+              >
+                <IconFilter />
+              </button>
+            )}
+            <button type="button" className="icon-btn" aria-label="Collection options" aria-haspopup="dialog" onClick={() => setMenu(true)}>
+              ⋯
+            </button>
+          </>
         }
       />
       <main className="screen">
@@ -118,19 +135,14 @@ export function Collection({ id }: { id: string }) {
         ) : (
           <>
             <div className="row-actions">{actions}</div>
-            <hr className="separator" />
-            <FilterPanel filter={filter} shown={shown.length} counts={groupCounts(entries, filter.bought, filter.price)} onChange={changeFilter} />
-            <div className="group-by">
-              <label className="label" htmlFor="group-by">
-                Group by
-              </label>
-              <div className="field select">
-                <select id="group-by" value={groupBy} onChange={e => changeGroupBy(e.target.value as 'mark' | 'booth')}>
-                  <option value="mark">Marks</option>
-                  <option value="booth">Booth (hall)</option>
-                </select>
-              </div>
-            </div>
+            {/* only while something is filtered or grouped by hall: what is shown, tap to change */}
+            {narrowed && (
+              <button type="button" className="filter-summary" onClick={() => setViewOpen(true)}>
+                <span className="visually-hidden">Filter: </span>
+                {filterLabel(filter)}
+                {groupBy === 'booth' && ' · by hall'} · {shown.length} {shown.length === 1 ? 'game' : 'games'}
+              </button>
+            )}
             {bought && (
               <p className="bought-line">
                 ✅ <Counter value={boughtCount} />
@@ -165,6 +177,15 @@ export function Collection({ id }: { id: string }) {
         )}
       </main>
       {current && <GameSheet entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
+      <FilterSheet
+        open={viewOpen}
+        filter={filter}
+        counts={groupCounts(entries, filter.bought, filter.price)}
+        groupBy={groupBy}
+        onChange={changeFilter}
+        onGroupBy={changeGroupBy}
+        onClose={closeView}
+      />
       {menu && <CollectionMenu collection={collection} gameCount={entries.length} onClose={closeMenu} />}
     </>
   )

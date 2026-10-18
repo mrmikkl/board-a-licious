@@ -37,3 +37,8 @@ export const IconShare = () => (
     <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
   </svg>
 )
+export const IconFilter = () => (
+  <svg {...common}>
+    <path d="M3 5h18l-7 8v5l-4 2v-7z" />
+  </svg>
+)
