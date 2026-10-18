@@ -68,7 +68,8 @@ test('Config: sound is switched here and nowhere else, and stays switched', asyn
   await expect(page.getByRole('button', { name: /^sound (on|off)$/i })).toHaveCount(0)
   await expect(page.getByText('soon')).toHaveCount(0)
   await page.goto('/#/config')
-  await expect(page.locator('main hr.separator')).toHaveCount(2)
+  // sections: (F002 share hint, in a browser tab) | sound | introduction | share and backup
+  await expect(page.locator('main hr.separator')).toHaveCount(3)
   await expectAccessible(page)
   await page.getByRole('link', { name: 'Share and backup' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Share and backup' })).toBeVisible()
