@@ -1,0 +1,14 @@
+/* Background: the living hexagon board behind the phone column (docs/design.md §2, §9).
+   Below every other layer and never in the way of a tap. */
+.hexboard {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: 100%;
+  max-width: var(--column);
+  height: 100%;
+  height: 100lvh;
+  transform: translateX(-50%);
+  pointer-events: none;
+}

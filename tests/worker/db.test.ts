@@ -1,0 +1,133 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+
+import type { Collection, Entry } from '../../src/domain/collection.ts'
+import type { Db } from '../../worker/db/db.ts'
+import { applyChanges, getCachedGames, listChanges, syncCursor, upsertGames } from '../../worker/db/repository.ts'
+import { testDb } from './db-helpers.ts'
+
+const T1 = '2026-10-17T09:00:00.000Z'
+const T2 = '2026-10-17T10:00:00.000Z'
+const ANNA = 'anna@example.com'
+const BEN = 'ben@example.com'
+
+const collection = (patch: Partial<Collection> = {}): Collection => ({
+  id: '00000000-0000-4000-8000-000000000001',
+  name: 'Essen 2026',
+  updatedAt: T1,
+  deleted: false,
+  ...patch,
+})
+const entry = (patch: Partial<Entry> = {}): Entry => ({
+  collectionId: collection().id,
+  bggId: 446453,
+  mark: 'must_have',
+  bought: true,
+  paidCents: 5200,
+  paidCurrency: 'EUR',
+  facts: { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisher: 'Inside Up Games', edition: 'English edition' },
+  factsSource: 'preview',
+  detailsPending: false,
+  updatedAt: T1,
+  deleted: false,
+  ...patch,
+})
+
+let db: Db
+const pause = () => new Promise(resolve => setTimeout(resolve, 20))
+beforeEach(async () => {
+  db = await testDb()
+})
+
+describe('repository', () => {
+  it('stores and returns collections and entries with all fields', async () => {
+    expect(await applyChanges(db, ANNA, { collections: [collection()], entries: [entry()] })).toEqual({
+      applied: 2,
+      ignored: 0,
+    })
+    const changes = await listChanges(db, ANNA)
+    expect(changes.collections).toEqual([collection()])
+    expect(changes.entries).toEqual([entry()])
+  })
+
+  it('applies last-write-wins: later wins, equal or older is ignored', async () => {
+    await applyChanges(db, ANNA, { collections: [collection()], entries: [entry()] })
+    const older = await applyChanges(db, ANNA, { collections: [], entries: [entry({ mark: 'poop', updatedAt: T1 })] })
+    expect(older).toEqual({ applied: 0, ignored: 1 })
+    const newer = await applyChanges(db, ANNA, { collections: [], entries: [entry({ mark: 'poop', updatedAt: T2 })] })
+    expect(newer).toEqual({ applied: 1, ignored: 0 })
+    expect((await listChanges(db, ANNA)).entries[0]?.mark).toBe('poop')
+  })
+
+  it('returns only rows the server received after the cursor, including tombstones', async () => {
+    await applyChanges(db, ANNA, { collections: [collection()], entries: [entry()] })
+    await pause()
+    const cursor = await syncCursor(db, 0)
+    await pause()
+    await applyChanges(db, ANNA, { collections: [], entries: [entry({ deleted: true, updatedAt: T2 })] })
+    const changes = await listChanges(db, ANNA, cursor)
+    expect(changes.collections).toEqual([])
+    expect(changes.entries.map(e => e.deleted)).toEqual([true])
+  })
+
+  it('still delivers a change made earlier offline and sent after another device synced', async () => {
+    await applyChanges(db, ANNA, { collections: [collection()], entries: [] })
+    await pause()
+    const laptopSyncedAt = await syncCursor(db, 0)
+    await pause()
+    // the phone made this change before the laptop's sync, but only sends it now
+    await applyChanges(db, ANNA, { collections: [], entries: [entry({ updatedAt: T1 })] })
+    expect((await listChanges(db, ANNA, laptopSyncedAt)).entries.map(e => e.bggId)).toEqual([446453])
+  })
+
+  it('gives a cursor a little in the past, so writes still on their way are not skipped', async () => {
+    const [row] = await db.query<{ now: Date }>('SELECT now() AS now')
+    expect(Date.parse(await syncCursor(db)) - new Date(row!.now).getTime()).toBeLessThanOrEqual(-4000)
+  })
+
+  it('limits every query to the caller', async () => {
+    await applyChanges(db, ANNA, { collections: [collection()], entries: [entry()] })
+    expect(await listChanges(db, BEN)).toEqual({ collections: [], entries: [], lists: [] })
+    // Ben cannot overwrite Anna's collection or add entries to it
+    const attempt = await applyChanges(db, BEN, { collections: [collection({ name: 'Mine', updatedAt: T2 })], entries: [] })
+    expect(attempt).toEqual({ applied: 0, ignored: 1 })
+    await expect(applyChanges(db, BEN, { collections: [], entries: [entry({ updatedAt: T2 })] })).rejects.toThrow(
+      /collection/i,
+    )
+    expect((await listChanges(db, ANNA)).collections[0]?.name).toBe('Essen 2026')
+  })
+
+  it('enforces the CHECKs of the schema', async () => {
+    const bad = (sql: string, params: unknown[]) => expect(db.query(sql, params)).rejects.toThrow()
+    await bad(`INSERT INTO collection (id, user_email, name, updated_at) VALUES ($1, $2, '', now())`, [collection().id, ANNA])
+    await db.query(`INSERT INTO collection (id, user_email, name, updated_at) VALUES ($1, $2, 'x', now())`, [
+      collection().id,
+      ANNA,
+    ])
+    const entrySql = `INSERT INTO collection_entry (collection_id, bgg_id, user_email, paid_cents, paid_currency, updated_at)
+      VALUES ($1, $2, $3, $4, $5, now())`
+    await bad(entrySql, [collection().id, 0, ANNA, null, null])
+    await bad(entrySql, [collection().id, 1, ANNA, -1, 'EUR'])
+    await bad(entrySql, [collection().id, 1, ANNA, 100, 'euro'])
+    await bad(entrySql, [collection().id, 1, ANNA, null, 'EUR'])
+  })
+
+  it('keeps the BGG lists a person loaded, last write wins, per person', async () => {
+    const spiel = { kind: 'preview' as const, id: 93, title: 'SPIEL Essen 2026', updatedAt: T1, deleted: false }
+    expect(await applyChanges(db, ANNA, { collections: [], entries: [], lists: [spiel] })).toEqual({ applied: 1, ignored: 0 })
+    expect((await listChanges(db, ANNA)).lists).toEqual([spiel])
+    expect((await listChanges(db, BEN)).lists).toEqual([])
+    expect(await applyChanges(db, ANNA, { collections: [], entries: [], lists: [{ ...spiel, title: 'old' }] })).toEqual({ applied: 0, ignored: 1 })
+    await applyChanges(db, ANNA, { collections: [], entries: [], lists: [{ ...spiel, deleted: true, updatedAt: T2 }] })
+    expect((await listChanges(db, ANNA)).lists).toEqual([{ ...spiel, deleted: true, updatedAt: T2 }])
+    // Ben's copy of the same list is his own row
+    await applyChanges(db, BEN, { collections: [], entries: [], lists: [spiel] })
+    expect((await listChanges(db, BEN)).lists).toHaveLength(1)
+  })
+
+  it('caches games and returns only fresh ones', async () => {
+    const game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: 'Tiles.', kind: 'boardgame' as const, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ["Tile Placement", 'Drafting'], publisher: 'Flatout Games' }
+    await upsertGames(db, [game], '2026-10-01T00:00:00.000Z')
+    expect(await getCachedGames(db, [295947], '2026-09-30T00:00:00.000Z')).toEqual([game])
+    expect(await getCachedGames(db, [295947], '2026-10-02T00:00:00.000Z')).toEqual([])
+  })
+})

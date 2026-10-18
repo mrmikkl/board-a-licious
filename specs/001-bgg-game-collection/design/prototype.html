@@ -1,0 +1,1489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Board-a-licious prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Design tokens ─────────────────────────────────────────────── */
+:root {
+  --lift: 0 8px 22px rgba(3, 4, 12, .55), 0 1px 0 rgba(255, 255, 255, .04) inset;
+  --ink: #0D0F1F;
+  --deck: #151831;
+  --deck-2: #1D2142;
+  --rim: #2C3160;
+  --text: #ECEEFF;
+  --muted: #9AA0C8;
+  --orange: #FF7A1A;
+  --orange-2: #FFB020;
+  --indigo: #4C5BFF;
+  --teal: #14C8C8;
+  --violet: #8B5CF6;
+  --danger: #FF4D5E;
+
+  --grad-hot: linear-gradient(135deg, var(--orange) 0%, var(--orange-2) 100%);
+  --grad-cool: linear-gradient(135deg, var(--indigo) 0%, var(--teal) 100%);
+  --grad-dusk: linear-gradient(135deg, var(--violet) 0%, var(--indigo) 55%, var(--teal) 100%);
+  --grad-mud: linear-gradient(135deg, #7A6046 0%, #B0916E 100%);
+  --grad-red: linear-gradient(135deg, #C2183A 0%, #FF4D5E 100%);
+  --grad-violet: linear-gradient(135deg, #6D4AE0 0%, #A78BFA 100%);
+  --grad-got: linear-gradient(135deg, #0FB98F 0%, #7CF0C5 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+
+  --font-display: "Chakra Petch", "Avenir Next Condensed", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --tap: 44px;
+  --gutter: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--ink); color: var(--text); font: 400 15px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+.app {
+  position: relative; max-width: 440px; min-height: 100%; margin: 0 auto;
+  padding-bottom: calc(92px + env(safe-area-inset-bottom)); overflow-x: hidden;
+  background: var(--ink);
+}
+
+/* Background: a living hexagon board on a canvas (see the script at the end) */
+#bg { position: fixed; top: 0; left: 50%; width: 100%; max-width: 440px; height: 100%; transform: translateX(-50%); pointer-events: none; z-index: 0; }
+.top, main { z-index: 1; }
+
+
+/* top bar */
+.top { position: relative; display: flex; align-items: center; gap: 12px; padding: 18px var(--gutter) 8px; }
+.logo { width: 34px; height: 38px; flex: none; clip-path: var(--hex); background: var(--grad-hot); display: grid; place-items: center; font: 700 15px var(--font-display); color: var(--ink); }
+.top h1 { margin: 0; flex: 1; min-width: 0; font: 700 26px/1.1 var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.back { background: #232852; border: 1px solid #4A5196; border-radius: 50%; width: var(--tap); height: var(--tap); font-size: 24px; line-height: 1; color: var(--text); flex: none; box-shadow: var(--lift); }
+main { position: relative; padding: 0 var(--gutter); }
+
+/* basics */
+.lead { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+.field { display: flex; align-items: center; gap: 10px; background: var(--deck); box-shadow: var(--lift); border: 1px solid #3A4078; border-radius: var(--r-md); padding: 0 14px; min-height: 50px; }
+.field:focus-within { border-color: var(--orange); }
+.field input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; padding: 12px 0; }
+.field input::placeholder { color: #6E74A0; }
+.field svg { flex: none; opacity: .7; }
+.field.disabled { opacity: .5; }
+.select { position: relative; display: block; }
+.select select { appearance: none; -webkit-appearance: none; width: 100%; min-height: 52px; padding: 0 44px 0 14px; border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); border: 1px solid #3A4078; color: var(--text); font: 600 15px var(--font-body); }
+.select select:focus { outline: 0; border-color: var(--orange); }
+.select::after { content: ""; position: absolute; right: 16px; top: 50%; width: 12px; height: 13px; margin-top: -6px; clip-path: var(--hex); background: var(--grad-hot); pointer-events: none; }
+.select option { background: var(--deck); color: var(--text); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border: 0; border-radius: var(--r-md); font: 600 15px var(--font-body); }
+.btn-primary { background: var(--grad-hot); color: #1B1005; }
+.btn { box-shadow: var(--lift); }
+.btn-ghost { background: #232852; color: var(--text); border: 1px solid #4A5196; }
+.btn-block { width: 100%; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.link-btn { background: none; border: 0; color: var(--orange); padding: 10px 0; min-height: var(--tap); font-weight: 600; }
+.row-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 6px; }
+
+.section-title { font: 600 18px var(--font-display); margin: 22px 0 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.section-title small { font: 500 13px var(--font-body); color: var(--muted); }
+.group-title { font: 600 15px var(--font-display); margin: 20px 0 6px; display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.group-title b { color: var(--text); }
+.group-title i { width: 10px; height: 11px; clip-path: var(--hex); background: var(--rim); }
+.group-title[data-state="must_have"] i { background: var(--grad-hot); }
+.group-title[data-state="interested"] i { background: var(--grad-cool); }
+.group-title[data-state="poop"] i { background: var(--grad-mud); }
+.group-title[data-state="unsure"] i { background: var(--grad-violet); }
+.group-title[data-state="skip"] i { background: var(--grad-red); }
+.group-title[data-state="new"] i { background: var(--text); }
+.fold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--tap); padding: 0; background: none; border: 0; color: var(--muted); font: inherit; text-align: left; }
+.fold i { width: 10px; height: 11px; clip-path: var(--hex); background: var(--grad-red); }
+.fold .chev { margin-left: auto; font-size: 22px; transition: transform .2s; }
+.fold[aria-expanded="true"] .chev { transform: rotate(90deg); }
+
+/* Essen badge: small orange hexagon + word */
+.badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 999px; font: 600 12px var(--font-body); background: rgba(255, 122, 26, .14); color: var(--orange-2); border: 1px solid rgba(255, 122, 26, .45); white-space: nowrap; }
+.badge::before { content: ""; width: 9px; height: 10px; clip-path: var(--hex); background: var(--grad-hot); }
+.badge.plain { background: var(--deck-2); color: var(--muted); border-color: var(--rim); }
+.badge.plain::before { background: var(--rim); }
+
+/* hexagon thumbnail */
+.hex { --size: 54px; position: relative; flex: none; width: var(--size); height: calc(var(--size) * 1.12); clip-path: var(--hex); background: var(--grad-dusk); display: grid; place-items: center; }
+.hex::after { content: attr(data-initials); position: absolute; inset: 2px; clip-path: var(--hex); display: grid; place-items: center; background: #1D2142; font: 700 calc(var(--size) * .3) var(--font-display); color: rgba(236, 238, 255, .9); }
+.hex[data-state="must_have"] { background: var(--grad-hot); }
+.hex[data-state="interested"] { background: var(--grad-cool); }
+.hex[data-state="poop"] { background: var(--grad-mud); }
+.hex[data-state="unsure"] { background: var(--grad-violet); }
+.hex[data-state="skip"] { background: var(--grad-red); }
+.hex[data-state="new"] { background: #ECEEFF; }
+
+/* rows */
+.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rows[hidden] { display: none; }
+.rows { gap: 8px !important; }
+.row { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 8px 12px 8px 8px; min-height: 76px; background: var(--deck); border: 1px solid #2E3466; border-radius: var(--r-md); box-shadow: var(--lift); }
+.row:hover { background: #1B1F3E; border-color: #4A5196; }
+span.row { box-shadow: none; }
+.row .meta { flex: 1; min-width: 0; }
+.row .name { display: block; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .sub { display: block; font-size: 13px; color: var(--muted); }
+.row.skip .name { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(255, 77, 94, .7); }
+.facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 3px; font-size: 12.5px; color: #C9CDF0; }
+.facts span { display: inline-flex; align-items: center; gap: 4px; }
+.facts svg { width: 13px; height: 13px; opacity: .75; }
+.pill { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 11px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 1px solid var(--rim); color: var(--muted); background: var(--deck); }
+.pill[data-state="must_have"] { color: #1B1005; background: var(--grad-hot); border-color: transparent; }
+.pill[data-state="interested"] { color: #04161A; background: var(--grad-cool); border-color: transparent; }
+.pill[data-state="poop"] { color: #1A120A; background: var(--grad-mud); border-color: transparent; }
+.pill[data-state="unsure"] { color: #fff; background: var(--grad-violet); border-color: transparent; }
+.pill[data-state="skip"] { color: #fff; background: var(--grad-red); border-color: transparent; }
+.add-mini { flex: none; width: 40px; height: 44px; border: 0; clip-path: var(--hex); background: var(--grad-hot); color: #1B1005; font: 700 22px var(--font-display); display: grid; place-items: center; }
+.in-mark { flex: none; font-size: 12px; color: var(--teal); font-weight: 700; }
+
+/* cards */
+.card { display: block; width: 100%; text-align: left; background: var(--deck); box-shadow: var(--lift); border: 1px solid #3A4078; border-radius: var(--r-lg); padding: 16px; margin-bottom: 10px; position: relative; overflow: hidden; }
+.card { padding-right: 84px; }
+.card::after { content: ""; position: absolute; right: -6px; top: -6px; width: 150px; height: 120px; background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20150%20120%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23A78BFA%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2314C8C8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpolygon%20points%3D%27140.5%2C35.0%20118.0%2C48.0%2095.5%2C35.0%2095.5%2C9.0%20118.0%2C-4.0%20140.5%2C9.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%271%27%2F%3E%3Cpolygon%20points%3D%27107.6%2C54.0%2092.0%2C63.0%2076.4%2C54.0%2076.4%2C36.0%2092.0%2C27.0%20107.6%2C36.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.9%27%2F%3E%3Cpolygon%20points%3D%27140.9%2C74.0%20127.0%2C82.0%20113.1%2C74.0%20113.1%2C58.0%20127.0%2C50.0%20140.9%2C58.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.75%27%2F%3E%3Cpolygon%20points%3D%2781.3%2C24.5%2070.0%2C31.0%2058.7%2C24.5%2058.7%2C11.5%2070.0%2C5.0%2081.3%2C11.5%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.7%27%2F%3E%3Cpolygon%20points%3D%27108.7%2C93.0%20100.0%2C98.0%2091.3%2C93.0%2091.3%2C83.0%20100.0%2C78.0%20108.7%2C83.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.55%27%2F%3E%3Cpolygon%20points%3D%2766.9%2C56.0%2060.0%2C60.0%2053.1%2C56.0%2053.1%2C48.0%2060.0%2C44.0%2066.9%2C48.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.5%27%2F%3E%3Cpolygon%20points%3D%27144.9%2C108.0%20138.0%2C112.0%20131.1%2C108.0%20131.1%2C100.0%20138.0%2C96.0%20144.9%2C100.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.45%27%2F%3E%3Cpolygon%20points%3D%2749.2%2C29.0%2044.0%2C32.0%2038.8%2C29.0%2038.8%2C23.0%2044.0%2C20.0%2049.2%2C23.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.35%27%2F%3E%3Cpolygon%20points%3D%2783.2%2C77.0%2078.0%2C80.0%2072.8%2C77.0%2072.8%2C71.0%2078.0%2C68.0%2083.2%2C71.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.4%27%2F%3E%3C%2Fsvg%3E") no-repeat top right / contain; filter: saturate(1.3) brightness(1.15) drop-shadow(0 0 10px rgba(139, 92, 246, .45)); transform-origin: top right; animation: glowhex 6s ease-in-out infinite alternate; pointer-events: none; }
+.card.essen::after { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20150%20120%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23FFB020%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23FF7A1A%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpolygon%20points%3D%27140.5%2C35.0%20118.0%2C48.0%2095.5%2C35.0%2095.5%2C9.0%20118.0%2C-4.0%20140.5%2C9.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%271%27%2F%3E%3Cpolygon%20points%3D%27107.6%2C54.0%2092.0%2C63.0%2076.4%2C54.0%2076.4%2C36.0%2092.0%2C27.0%20107.6%2C36.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.9%27%2F%3E%3Cpolygon%20points%3D%27140.9%2C74.0%20127.0%2C82.0%20113.1%2C74.0%20113.1%2C58.0%20127.0%2C50.0%20140.9%2C58.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.75%27%2F%3E%3Cpolygon%20points%3D%2781.3%2C24.5%2070.0%2C31.0%2058.7%2C24.5%2058.7%2C11.5%2070.0%2C5.0%2081.3%2C11.5%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.7%27%2F%3E%3Cpolygon%20points%3D%27108.7%2C93.0%20100.0%2C98.0%2091.3%2C93.0%2091.3%2C83.0%20100.0%2C78.0%20108.7%2C83.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.55%27%2F%3E%3Cpolygon%20points%3D%2766.9%2C56.0%2060.0%2C60.0%2053.1%2C56.0%2053.1%2C48.0%2060.0%2C44.0%2066.9%2C48.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.5%27%2F%3E%3Cpolygon%20points%3D%27144.9%2C108.0%20138.0%2C112.0%20131.1%2C108.0%20131.1%2C100.0%20138.0%2C96.0%20144.9%2C100.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.45%27%2F%3E%3Cpolygon%20points%3D%2749.2%2C29.0%2044.0%2C32.0%2038.8%2C29.0%2038.8%2C23.0%2044.0%2C20.0%2049.2%2C23.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.35%27%2F%3E%3Cpolygon%20points%3D%2783.2%2C77.0%2078.0%2C80.0%2072.8%2C77.0%2072.8%2C71.0%2078.0%2C68.0%2083.2%2C71.0%27%20fill%3D%27url%28%23g%29%27%20opacity%3D%270.4%27%2F%3E%3C%2Fsvg%3E"); filter: saturate(1.3) brightness(1.15) drop-shadow(0 0 10px rgba(255, 122, 26, .5)); }
+.card::before { z-index: 0; }
+@keyframes glowhex { to { transform: rotate(4deg) scale(1.05); filter: saturate(1.5) brightness(1.3) drop-shadow(0 0 14px rgba(255, 150, 60, .55)); } }
+.card.new-card { padding-right: 16px; }
+.card > * { position: relative; z-index: 1; }
+.card h3 { margin: 0 0 6px; font: 600 18px var(--font-display); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+.counts { display: flex; gap: 12px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.counts b { color: var(--text); font: 600 14px var(--font-display); }
+.progress { height: 6px; border-radius: 6px; background: var(--deck-2); margin-top: 12px; overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--grad-hot); border-radius: 6px; }
+.new-card { border: 1.5px dashed rgba(255, 122, 26, .7); background: var(--deck); color: var(--text); display: flex; align-items: center; gap: 14px; font-weight: 600; }
+.new-card::after { display: none; }
+.new-card .hex { --size: 40px; background: var(--grad-hot); }
+.new-card .hex::after { content: "+"; background: var(--ink); color: var(--orange); font-size: 20px; }
+
+/* empty + notes */
+.empty { text-align: center; padding: 30px 12px; color: var(--muted); }
+.empty .hex { --size: 72px; margin: 0 auto 14px; }
+.empty strong { display: block; color: var(--text); font-size: 17px; margin-bottom: 4px; }
+.empty-center { min-height: calc(100vh - 230px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 8px; }
+.empty-center .deco { --size: 88px; margin-bottom: 18px; background: var(--grad-dusk); opacity: .9; }
+.empty-center .deco::after { content: ""; background: linear-gradient(180deg, #1F2350, #151831); }
+.empty-center strong { font: 600 20px var(--font-display); margin-bottom: 6px; }
+.empty-center p { margin: 0 0 22px; color: var(--muted); max-width: 30ch; }
+.empty-actions { display: grid; gap: 10px; width: 100%; max-width: 320px; }
+.note { display: flex; gap: 10px; align-items: flex-start; background: linear-gradient(135deg, rgba(76, 91, 255, .18), rgba(20, 200, 200, .10)); border: 1px solid rgba(76, 91, 255, .35); border-radius: var(--r-md); padding: 12px 14px; font-size: 13px; color: #C9CDF0; margin: 0 0 14px; }
+.note i { width: 12px; height: 14px; flex: none; margin-top: 3px; clip-path: var(--hex); background: var(--grad-cool); }
+.note.warm { background: linear-gradient(135deg, rgba(255, 122, 26, .16), rgba(255, 176, 32, .06)); border-color: rgba(255, 122, 26, .4); }
+.note.warm i { background: var(--grad-hot); }
+
+/* switch + segmented choice */
+.toggle { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; background: var(--deck); box-shadow: var(--lift); border: 1px solid #3A4078; border-radius: var(--r-md); margin: 10px 0; }
+.toggle .txt { flex: 1; font-size: 14px; }
+.toggle .txt small { display: block; color: var(--muted); font-size: 12.5px; }
+.switch { position: relative; width: 50px; height: 30px; flex: none; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--deck-2); border: 1px solid var(--rim); transition: .2s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); transition: .2s; }
+.switch input:checked + span { background: var(--grad-hot); border-color: transparent; }
+.switch input:checked + span::after { left: 23px; background: #1B1005; }
+.switch input:focus-visible + span { outline: 2px solid var(--orange); outline-offset: 2px; }
+.choice { display: grid; gap: 8px; margin: 10px 0; }
+.choice button { text-align: left; padding: 12px 14px; border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); border: 1px solid #3A4078; min-height: 60px; }
+.choice button[aria-pressed="true"] { border-color: var(--orange); background: var(--deck-2); }
+.choice b { display: flex; align-items: center; gap: 8px; }
+.choice small { display: block; color: var(--muted); margin-top: 2px; }
+
+/* tab bar */
+.tabbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; padding: 8px 6px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(13, 15, 31, .98) 70%, rgba(13, 15, 31, 0)); }
+.tab { display: grid; justify-items: center; gap: 3px; min-height: 52px; padding: 6px 0; background: none; border: 0; color: var(--muted); font-size: 11px; font-weight: 600; }
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-current="page"] { color: var(--text); }
+.tab[aria-current="page"] svg { color: var(--orange); }
+.tab .soon { font-size: 9px; color: var(--violet); margin-top: -2px; }
+.tab-add { justify-self: center; width: 62px; height: 68px; margin-top: -26px; border: 0; clip-path: var(--hex); background: var(--grad-hot); color: #1B1005; display: grid; place-items: center; }
+.tab-add svg { width: 26px; height: 26px; position: relative; z-index: 1; }
+.tab-add { position: relative; overflow: hidden; }
+.tab-add::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .6) 50%, transparent 70%); transform: translateX(-130%); animation: shimmer 5s ease-in-out infinite; }
+@keyframes shimmer { 0%, 62% { transform: translateX(-130%); } 88%, 100% { transform: translateX(130%); } }
+.burst { position: fixed; z-index: 60; pointer-events: none; left: var(--x); top: var(--y); width: var(--sz); height: calc(var(--sz) * 1.12); clip-path: var(--hex); background: var(--c); animation: burst var(--t) cubic-bezier(.15, .75, .3, 1) forwards; }
+@keyframes burst { from { transform: translate(-50%, -50%) scale(.2) rotate(0); opacity: 1; } 70% { opacity: 1; } to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0; } }
+
+/* sheet */
+.scrim { position: fixed; inset: 0; background: rgba(5, 6, 14, .6); z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+.sheet { position: fixed; left: 50%; bottom: 0; z-index: 31; width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto; transform: translate(-50%, 100%); visibility: hidden; transition: transform .28s cubic-bezier(.2, .8, .2, 1), visibility 0s .28s; background: linear-gradient(180deg, #1A1E3E 0%, var(--deck) 40%); border-radius: var(--r-lg) var(--r-lg) 0 0; border-top: 1px solid var(--rim); padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom)); }
+.sheet.open { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
+.grabber { width: 40px; height: 4px; border-radius: 4px; background: var(--rim); margin: 0 auto 14px; }
+.detail-head { display: flex; gap: 16px; align-items: center; margin-bottom: 6px; }
+.detail-head .hex { --size: 84px; }
+.detail-head h2 { margin: 0; font: 700 23px/1.15 var(--font-display); }
+.detail-head p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.factsheet { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 14px 0 4px; padding: 12px 14px; border-radius: var(--r-md); background: rgba(255, 122, 26, .07); border: 1px solid rgba(255, 122, 26, .3); font-size: 14px; }
+.factsheet dt { color: var(--muted); }
+.factsheet dd { margin: 0; font-weight: 600; }
+.factsheet dd.manual { grid-column: 1 / -1; font-weight: 500; font-size: 12.5px; color: var(--muted); font-style: italic; }
+.facts-add { margin-top: 12px; }
+.facts-form { margin-top: 12px; padding: 14px; border-radius: var(--r-md); background: rgba(255, 122, 26, .07); border: 1px solid rgba(255, 122, 26, .3); display: grid; gap: 10px; }
+.facts-form h3 { margin: 0 0 2px; font: 600 16px var(--font-display); }
+.flabel { flex: none; width: 74px; color: var(--muted); font-size: 13.5px; }
+.pick-list { display: grid; gap: 8px; margin-top: 10px; }
+.pick { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; border-radius: var(--r-md); background: #232852; border: 1px solid #4A5196; min-height: 60px; width: 100%; }
+.pick .txt { flex: 1; }
+.pick .txt b { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pick .txt small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.pick[disabled] { opacity: .55; cursor: default; }
+.tick { width: 26px; height: 29px; flex: none; clip-path: var(--hex); background: var(--rim); display: grid; place-items: center; position: relative; }
+.tick::after { content: ""; position: absolute; inset: 2px; clip-path: var(--hex); background: var(--deck-2); }
+.toggle-pick[aria-pressed="true"] { border-color: var(--orange); }
+.toggle-pick[aria-pressed="true"] .tick { background: var(--grad-hot); }
+.toggle-pick[aria-pressed="true"] .tick::after { content: "✓"; background: transparent; color: #1B1005; font: 700 15px var(--font-display); display: grid; place-items: center; }
+.name-input { background: none; border: 0; border-bottom: 1px dashed var(--rim); font: 700 22px var(--font-display); width: 100%; padding: 2px 0; }
+.name-input:focus { outline: 0; border-bottom-color: var(--orange); }
+
+/* state picker */
+.picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: 18px 0 10px; }
+.picker.kinds { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.picker { filter: drop-shadow(0 8px 14px rgba(3, 4, 12, .6)); }
+.state-hex { aspect-ratio: 1 / 1.1; border: 0; padding: 0; clip-path: var(--hex); background: #4A5196; display: grid; place-items: center; position: relative; }
+.state-hex:nth-child(even) { transform: translateY(24px); }
+.picker:not(.kinds) .state-hex span { font-size: 12.5px; }
+.picker:not(.kinds) .state-hex em { font-size: 22px; }
+.state-hex span { position: absolute; inset: 2px; clip-path: var(--hex); background: var(--deck-2); display: grid; place-content: center; justify-items: center; gap: 4px; font-weight: 700; font-size: 14px; }
+.state-hex em { font-style: normal; font-size: 26px; line-height: 1; }
+.state-hex[data-state="must_have"][aria-pressed="true"] { background: var(--grad-hot); }
+.state-hex[data-state="interested"][aria-pressed="true"] { background: var(--grad-cool); }
+.state-hex[data-state="poop"][aria-pressed="true"] { background: var(--grad-mud); }
+.state-hex[data-state="unsure"][aria-pressed="true"] { background: var(--grad-violet); }
+.state-hex[aria-pressed="true"] span { background: transparent; color: #12100C; }
+.picker-pad { height: 30px; }
+.kind span { color: var(--text); }
+.kind svg { width: 30px; height: 30px; color: var(--orange); }
+.kind[aria-pressed="true"] { background: var(--grad-hot); }
+.kind[aria-pressed="true"] span { background: transparent; color: #1B1005; }
+.kind[aria-pressed="true"] svg { color: #1B1005; }
+.sheet-actions { display: grid; gap: 8px; margin-top: 8px; }
+.danger { color: var(--danger); }
+
+/* swipe deck */
+.deck-wrap { position: relative; height: 470px; margin: 6px 0 12px; }
+.swipe-card { position: absolute; inset: 0; border-radius: var(--r-lg); border: 1px solid var(--rim); background: linear-gradient(180deg, #1F2350 0%, #151831 70%); padding: 22px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; touch-action: pan-y; user-select: none; overflow: hidden; }
+.swipe-card.behind { transform: scale(.95) translateY(14px); opacity: .6; }
+.swipe-card.top { cursor: grab; transition: transform .5s cubic-bezier(.34, 1.56, .64, 1); }
+.swipe-card.top.enter { animation: cardIn .45s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes cardIn { from { transform: scale(.94) translateY(16px); opacity: .6; } to { transform: none; opacity: 1; } }
+.swipe-card.dragging { transition: none; cursor: grabbing; }
+.swipe-card .hex { --size: 130px; margin: 6px 0 16px; }
+.swipe-card h2 { margin: 0; font: 700 26px/1.15 var(--font-display); }
+.swipe-card .yr { color: var(--muted); margin: 2px 0 12px; }
+.swipe-card .factsheet { width: 100%; text-align: left; }
+.swipe-card .nofacts { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.stamp { position: absolute; top: 22px; padding: 6px 12px; border-radius: 10px; font: 700 18px var(--font-display); border: 2px solid; opacity: 0; transform: rotate(-12deg); }
+.stamp.yes { left: 18px; color: var(--teal); border-color: var(--teal); }
+.stamp.no { right: 18px; color: var(--danger); border-color: var(--danger); transform: rotate(12deg); }
+.swipe-buttons { display: flex; justify-content: center; gap: 28px; align-items: center; }
+.swipe-btn { transition: transform .18s cubic-bezier(.34, 1.56, .64, 1); }
+.swipe-btn:active { transform: scale(.86); }
+.swipe-btn { width: 74px; height: 82px; border: 0; clip-path: var(--hex); display: grid; place-items: center; font: 700 28px var(--font-display); }
+.swipe-btn.no { background: var(--grad-red); color: #fff; }
+.swipe-btn.yes { background: var(--grad-cool); color: #04161A; }
+.swipe-legend { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin-top: 8px; padding: 0 12px; }
+
+/* share */
+.check { display: flex; align-items: center; gap: 12px; min-height: var(--tap); padding: 4px 0; font-weight: 600; }
+.check input { width: 22px; height: 22px; accent-color: var(--orange); }
+.check small { color: var(--muted); font-weight: 500; margin-left: auto; }
+.preview { white-space: pre-wrap; font: 400 13px/1.55 var(--font-body); background: #0F2B22; border: 1px solid #1E4A3C; border-radius: var(--r-md) var(--r-md) var(--r-md) 4px; padding: 12px 14px; margin: 10px 0 14px; color: #E2F5EC; max-height: 260px; overflow: auto; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* search (coming later) */
+.locked { position: relative; opacity: .5; pointer-events: none; }
+.soon-card { text-align: center; padding: 26px 18px; border-radius: var(--r-lg); border: 1px dashed rgba(139, 92, 246, .6); background: linear-gradient(135deg, rgba(139, 92, 246, .14), rgba(76, 91, 255, .08)); margin-bottom: 16px; }
+.soon-card .hex { --size: 64px; margin: 0 auto 12px; background: var(--grad-dusk); }
+.soon-card strong { display: block; font: 600 18px var(--font-display); margin-bottom: 4px; }
+.soon-card p { margin: 0; color: #C9CDF0; font-size: 14px; }
+
+/* ── Hover and press effects for everything you can tap ─────────── */
+:is(.card, button.row, .pick, .choice button, .btn, .toggle, .back) {
+  position: relative; overflow: hidden;
+  transition: transform .28s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s, border-color .25s, background-color .25s, filter .25s;
+}
+
+:is(button.row, .pick, .choice button, .btn, .toggle) > * { position: relative; z-index: 1; }
+@media (hover: hover) {
+  /* cards, rows, tiles: stay in place; orange border and an outer glow */
+  :is(.card, button.row, .pick, .choice button, .toggle):hover {
+    border-color: rgba(255, 150, 50, .9);
+    box-shadow: 0 0 0 1px rgba(255, 176, 32, .35), 0 0 26px 2px rgba(255, 122, 26, .45);
+  }
+  /* the dashed "create" card is an outlined button: it fills orange */
+  .card.new-card:hover { background: var(--grad-hot); color: #1B1005; border-color: transparent; }
+  .card.new-card:hover .hex { background: #1B1005; }
+  .card.new-card:hover .hex::after { background: var(--orange); color: #1B1005; }
+  /* buttons: no lift, no inner spotlight; an outer glow, and outlined buttons fill orange */
+  .btn-primary:hover { filter: brightness(1.06) saturate(1.1); box-shadow: 0 0 0 2px rgba(255, 176, 32, .45), 0 0 26px 4px rgba(255, 122, 26, .55); }
+  :is(.btn-ghost, .back, .sound, .chip):hover { background: var(--grad-hot); color: #1B1005; border-color: transparent; box-shadow: 0 0 0 2px rgba(255, 176, 32, .4), 0 0 24px 4px rgba(255, 122, 26, .5); }
+  .chip:hover b { color: #1B1005; }
+  .btn-ghost.danger:hover { background: var(--grad-red); color: #fff; box-shadow: 0 0 0 2px rgba(255, 77, 94, .4), 0 0 24px 4px rgba(255, 77, 94, .45); }
+  .btn-bought:hover { filter: brightness(1.06); box-shadow: 0 0 0 2px rgba(124, 240, 197, .45), 0 0 26px 4px rgba(15, 185, 143, .55); }
+  .state-hex:hover, .tab-add:hover, .add-mini:hover, .swipe-btn:hover { scale: 1.07; filter: brightness(1.15); }
+  .tab:hover { color: var(--text); }
+  .tab:hover svg { color: var(--orange-2); transform: translateY(-2px); }
+  .fold:hover { color: var(--text); }
+  .link-btn:hover { color: var(--orange-2); text-decoration: underline; text-underline-offset: 4px; }
+}
+:is(.card, button.row, .pick, .choice button, .toggle):active { transform: scale(.98); transition-duration: .08s; }
+:is(.btn, .back, .sound):active { transform: scale(.96); transition-duration: .08s; }
+.sound, .back { transition: background .2s, box-shadow .25s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+.state-hex, .tab-add, .add-mini, .swipe-btn { transition: scale .25s cubic-bezier(.34, 1.56, .64, 1), filter .2s, transform .25s; }
+.state-hex:active, .tab-add:active, .add-mini:active { scale: .9; transition-duration: .08s; }
+.tab svg { transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), color .2s; }
+.tab:active svg { transform: scale(.85); }
+/* tap pulse: an expanding hexagon outline where you pressed (lives on <body>, so it survives re-renders) */
+.pulse { position: fixed; z-index: 70; pointer-events: none; width: 26px; height: 29px; transform: translate(-50%, -50%) scale(.4); opacity: .9;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 29'%3E%3Cpath d='M13 1.5l10.5 6v13.5L13 27 2.5 21V7.5z' fill='none' stroke='%23FF9A3C' stroke-width='1.6'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation: pulse .55s cubic-bezier(.2, .7, .3, 1) forwards; }
+@keyframes pulse { to { transform: translate(-50%, -50%) scale(3.2); opacity: 0; } }
+
+/* hexagon cover art */
+.hex .art { position: absolute; inset: 2px; clip-path: var(--hex); background-size: cover; background-position: center; z-index: 1; }
+.hex.has-art::after { display: none; }
+.hex[data-state="bought"] { background: var(--grad-got); }
+/* sound toggle */
+.sound { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #4A5196; background: #232852; font-size: 17px; box-shadow: var(--lift); }
+.sound[aria-pressed="false"] { opacity: .7; }
+/* quick filter chips */
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 6px 0 4px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--deck); border: 1px solid #3A4078; color: var(--muted); font-weight: 600; font-size: 14px; box-shadow: var(--lift); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), border-color .2s; }
+.chip b { font: 600 13px var(--font-display); color: var(--text); }
+.chip[aria-pressed="true"] { background: #2A2350; color: var(--text); border-color: var(--orange); }
+.chip:active { transform: scale(.95); }
+/* multi-select group filter */
+.filter { position: relative; margin: 8px 0 2px; z-index: 20; }
+.sep { border: 0; height: 2px; margin: 16px 0 4px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(255, 122, 26, .75) 18%, rgba(139, 92, 246, .75) 82%, transparent); }
+.filter-btn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 14px; border-radius: var(--r-md); background: var(--deck); border: 1px solid #3A4078; box-shadow: var(--lift); font-weight: 600; text-align: left; transition: background .2s, box-shadow .25s, border-color .2s; }
+.filter-btn b { font: 600 14px var(--font-display); color: var(--muted); }
+.filter-btn .filter-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.filter-btn .chev { font-size: 22px; color: var(--muted); transform: rotate(90deg); transition: transform .2s; }
+.filter-btn[aria-expanded="true"] { border-color: var(--orange); }
+.filter-btn[aria-expanded="true"] .chev { transform: rotate(-90deg); }
+.filter-ico { width: 16px; height: 18px; clip-path: var(--hex); background: var(--grad-hot); flex: none; }
+.filter-panel { position: absolute; left: 0; right: 0; top: calc(100% + 8px); padding: 12px 14px 14px; border-radius: var(--r-lg); background: #1A1E3E; border: 1px solid #4A5196; box-shadow: 0 18px 40px rgba(3, 4, 12, .75); animation: dropin .2s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes dropin { from { opacity: 0; transform: translateY(-8px) scale(.98); } }
+.filter-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.filter-row { border-top: 1px solid #262B55; }
+@media (hover: hover) { .filter-btn:hover { border-color: rgba(255, 150, 50, .9); box-shadow: 0 0 0 1px rgba(255, 176, 32, .35), 0 0 26px 2px rgba(255, 122, 26, .45); } }
+/* Got it */
+.group-title[data-state="bought"] i { background: var(--grad-got); }
+.pill[data-state="bought"] { color: #04241B; background: var(--grad-got); border-color: transparent; margin-right: 6px; font-weight: 800; }
+.row.is-bought { border-color: rgba(124, 240, 197, .55); }
+.thumb { position: relative; flex: none; display: inline-grid; }
+.got { position: absolute; right: -4px; bottom: 0; z-index: 3; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--grad-got); color: #04241B; font: 800 14px var(--font-display); box-shadow: 0 0 0 3px var(--deck); }
+.bought-line { margin: 8px 2px 0; font-size: 13.5px; font-weight: 600; color: #7CF0C5; }
+.seg-title { font: 600 13px var(--font-body); color: var(--muted); margin: 10px 2px 6px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 14px; background: var(--deck); border: 1px solid #3A4078; }
+.seg button { min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-weight: 600; font-size: 13.5px; }
+.seg button[aria-pressed="true"] { background: var(--grad-hot); color: #1B1005; }
+.spent { margin-left: auto; font: 600 13px var(--font-body); color: #7CF0C5; }
+.btn-bought { background: var(--grad-got); color: #04241B; }
+.paid-label { display: block; font: 600 16px var(--font-display); margin: 4px 2px 8px; }
+.paid-field .euro { font: 700 20px var(--font-display); color: #7CF0C5; }
+.paid-field input { font: 700 20px var(--font-display); }
+.paid-field input::-webkit-inner-spin-button { opacity: .5; }
+.stamp-big { position: fixed; left: 50%; top: 42%; z-index: 80; pointer-events: none; padding: 10px 22px; border: 4px solid #7CF0C5; border-radius: 14px; color: #7CF0C5; font: 700 44px var(--font-display); letter-spacing: .04em; background: rgba(4, 36, 27, .55); backdrop-filter: blur(2px); animation: stamp 1.25s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+@keyframes stamp { 0% { transform: translate(-50%, -50%) rotate(-14deg) scale(2.4); opacity: 0; } 18% { transform: translate(-50%, -50%) rotate(-10deg) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) rotate(-10deg) scale(1.05); opacity: 0; } }
+/* counters */
+.num { display: inline-block; font-variant-numeric: tabular-nums; }
+.num.rolling { color: var(--orange-2); }
+/* onboarding */
+.intro { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; justify-content: center; background: rgba(8, 9, 22, .92); backdrop-filter: blur(8px); animation: fadein .3s; }
+.intro.out { opacity: 0; transition: opacity .3s; }
+@keyframes fadein { from { opacity: 0; } }
+.intro-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; max-width: 440px; width: 100%; margin: 0 auto; }
+.intro-track::-webkit-scrollbar { display: none; }
+.intro-card { flex: 0 0 100%; scroll-snap-align: center; padding: 0 28px; text-align: center; }
+.intro-card h2 { font: 700 30px var(--font-display); margin: 10px 0 8px; }
+.intro-card p { color: #C9CDF0; margin: 0 auto; max-width: 30ch; font-size: 16px; }
+.intro-art { position: relative; height: 230px; width: 240px; margin: 0 auto 10px; }
+.ih { position: absolute; width: 96px; height: 108px; clip-path: var(--hex); display: grid; place-items: center; animation: bob 3.2s ease-in-out infinite alternate; }
+.ih span { font-size: 40px; }
+.ih0 { left: 22px; top: 0; background: var(--grad-hot); }
+.ih1 { left: 122px; top: 0; background: var(--grad-cool); animation-delay: -.8s; }
+.ih2 { left: 72px; top: 88px; background: var(--grad-violet); animation-delay: -1.6s; }
+.ih3 { left: 172px; top: 88px; background: var(--grad-mud); animation-delay: -2.4s; width: 60px; height: 67px; }
+.ih3 span { font-size: 26px; }
+@keyframes bob { to { transform: translateY(-8px) rotate(3deg); } }
+.intro-dots { display: flex; justify-content: center; gap: 8px; margin: 26px 0 18px; }
+.intro-dots i { width: 10px; height: 11px; clip-path: var(--hex); background: #3A4078; transition: background .2s, transform .2s; }
+.intro-dots i.on { background: var(--grad-hot); transform: scale(1.3); }
+.intro-actions { display: flex; justify-content: space-between; align-items: center; max-width: 440px; width: 100%; margin: 0 auto; padding: 0 28px; }
+.intro-actions .btn { min-width: 140px; }
+
+/* game description */
+.desc { margin: 12px 0 4px; font-size: 14.5px; line-height: 1.55; color: #D5D8F5; }
+.desc .muted { color: var(--muted); font-style: italic; }
+.desc.clamp { margin: 0 0 12px; font-size: 13.5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.swipe-card > * { flex-shrink: 0; }
+.swipe-card .hex { margin: 0 0 12px; }
+
+/* toast */
+.toast { position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom)); z-index: 40; transform: translate(-50%, 20px); opacity: 0; transition: .2s; background: var(--deck-2); border: 1px solid var(--rim); border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; max-width: calc(100% - 32px); display: flex; gap: 10px; align-items: center; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast i { width: 10px; height: 11px; clip-path: var(--hex); background: var(--orange); flex: none; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.foot { color: #5E6390; font-size: 12px; text-align: center; margin: 28px 0 8px; }
+.err { color: var(--danger); font-size: 13px; margin: 8px 2px 0; }
+.ok { color: var(--teal); font-size: 13px; margin: 8px 2px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <header class="top" id="top"></header>
+  <main id="view" tabindex="-1"></main>
+
+  <nav class="tabbar" aria-label="Main">
+    <button class="tab" data-go="collections">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z"/><path d="M12 12l8-4.6M12 12v9.5M12 12L4 7.4"/></svg>
+      Collections
+    </button>
+    <button class="tab" data-go="geeklists">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 4.8l1.6.9v1.8L4 8.4l-1.6-.9V5.7zM4 10.8l1.6.9v1.8L4 14.4l-1.6-.9v-1.8zM4 16.8l1.6.9v1.8L4 20.4l-1.6-.9v-1.8z"/></svg>
+      Lists
+    </button>
+    <button class="tab-add" data-go="add" aria-label="Add a collection, BGG list or game">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="tab" data-go="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      Search
+    </button>
+    <button class="tab" data-go="share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 12.5V19a1.5 1.5 0 001.5 1.5h11A1.5 1.5 0 0019 19v-6.5"/></svg>
+      Share
+    </button>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details"></section>
+<div class="toast" id="toast" role="status" aria-live="polite"><i></i><span></span></div>
+
+<script>
+/* ── Sample data (prototype only) ─────────────────────────────────
+   Cascadia, Ark Nova and Harmonies are real BGG games with correct IDs;
+   the other titles, publishers, booths and prices are invented. */
+const STATES = [
+  { key: 'must_have', label: 'Must Have', emoji: '⭐' },
+  { key: 'interested', label: 'Interested', emoji: '👀' },
+  { key: 'unsure', label: 'Unsure', emoji: '🤔' },
+  { key: 'poop', label: 'Poop', emoji: '💩' },
+];
+const GROUPS = [
+  { key: 'new', label: 'Not yet marked' },
+  ...STATES,
+  { key: 'skip', label: 'Not interested', emoji: '🛑' },
+];
+const groupOf = k => GROUPS.find(g => g.key === k);
+const groupKey = it => it.state || 'new'; // bought is separate: a badge, not a group
+const listPrice = it => Number((it.facts?.price || '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+/* what was spent: the price paid if entered, else the listed price */
+const euros = it => (typeof it.paid === 'number' ? it.paid : listPrice(it));
+const money = n => `€${Number.isInteger(n) ? n : n.toFixed(2).replace('.', ',')}`;
+
+const GAMES = {
+  295947: { name: 'Cascadia', year: 2021, desc: 'Draft habitat tiles and wildlife tokens to build the Pacific Northwest. Score for animal patterns and the largest connected habitats.', img: 'https://cf.geekdo-images.com/MjeJZfulbsM1DSV3DrGJYA__square200/img/ClDVJ5N-pZlzIkxQBCufbfFXChI=/200x200/filters:strip_icc()/pic5100691.jpg' },
+  342942: { name: 'Ark Nova', year: 2021, desc: 'Plan and build a modern, science-based zoo. Card-driven action selection to house animals and support conservation projects.', img: 'https://cf.geekdo-images.com/SoU8p28Sk1s8MSvoM4N8pQ__square200/img/bHhp_JlkP0JfeHgVd7bzt8W510k=/200x200/filters:strip_icc()/pic6293412.jpg' },
+  414317: { name: 'Harmonies', year: 2024, desc: 'Lay coloured tokens to shape rivers, mountains, fields and forests, then attract animals that need exactly those landscapes.', img: 'https://cf.geekdo-images.com/A_XP2_VN3ugyqPhezowB_w__square200/img/GzPfresEpaVrQdmh-T7Pv0yaiQc=/200x200/filters:strip_icc()/pic8026369.png' },
+  900101: { name: 'Hexfall Harbor', year: 2026, desc: 'Pilot a hexagonal harbour through storm seasons: route ships, stack cargo and outbid rival guilds for the lighthouse.' },
+  900102: { name: 'Lantern Tide', year: 2026, desc: 'A cooperative drift through a lantern festival. Light the river in the right colour order before the tide takes the boats.' },
+  900103: { name: 'Copper & Comet', year: 2026, desc: "Two-player duel of brass contraptions and falling comets. Build engines, then aim them at your opponent's workshop." },
+  900104: { name: 'The Saltmarsh Guild', year: 2026, desc: 'Trade salt, herbs and secrets across a marsh town. Every deal you make shifts which guild controls the harbour gate.' },
+  900105: { name: 'Pocket Volcano', year: 2026, desc: 'A quick, chaotic family game: drop lava marbles into a tiny volcano and hope your village is not downhill.' },
+  900106: { name: 'Orchard of Owls', year: 2026, desc: 'Grow an orchard where owls nest. Prune, plant and place owl families to score patterns across four seasons.' },
+  900107: { name: 'Night Train to Riga', year: 2026, desc: 'Run a night train across the Baltic. Seat passengers, avoid conflicts and arrive in Riga before dawn.' },
+  900108: { name: 'Beekeepers of Ys', year: 2026, desc: 'Tend hives on a mythical island. Draft flowers, move swarms and sell honey before the queen wanders off.' },
+  900109: { name: 'Tiny Tectonics', year: 2026, desc: 'Shift tectonic plates to raise mountains and open seas. A puzzly abstract for one to four players.' },
+  900110: { name: 'Glasswing', year: 2026, desc: 'Collect and arrange stained-glass panes to light a cathedral. Light changes through the day and so does scoring.' },
+  900111: { name: 'Moonmarket', year: 2026, desc: 'Open a night market on the moon. Haggle with aliens, juggle oxygen and fill orders before the shuttle leaves.' },
+  900112: { name: 'Fjord Fishers', year: 2026, desc: 'Sail fjords, set nets and share the catch. A gentle push-your-luck game about weather and fishing quotas.' },
+};
+
+const KEY = 'bal-prototype-v3';
+const initial = () => ({
+  geeklists: [
+    { id: 93, kind: 'preview', title: 'SPIEL Essen 2026', isEssen: true, pages: 138, loaded: 31, entries: [
+      { id: 900101, publisher: 'Harborlight Games', booth: 'Hall 3, B114', price: '€39' },
+      { id: 900102, publisher: 'Tidewater', booth: 'Hall 1, A202', price: '€45' },
+      { id: 900103, publisher: 'Comet Forge', booth: 'Hall 5, D310', price: '€29' },
+      { id: 900104, publisher: 'Fenwick & Co.', booth: 'Hall 3, C080', price: '€55' },
+      { id: 900105, publisher: 'Lava Lamp Games', booth: 'Hall 2, E021', price: '€19' },
+      { id: 900106, publisher: 'Nightjar', booth: 'Hall 6, F144', price: '€35' },
+      { id: 900107, publisher: 'Baltic Rail', booth: 'Hall 4, A015', price: '€49' },
+      { id: 900108, publisher: 'Honeycomb Press', booth: 'Hall 3, B200', price: '€42' },
+      { id: 900109, publisher: 'Pebble Box', booth: 'Hall 1, C330', price: '€25' },
+      { id: 900110, publisher: 'Glass Owl', booth: 'Hall 5, A101', price: '€60' },
+      { id: 900111, publisher: 'Lunar Lane', booth: 'Hall 2, B007', price: '€33' },
+      { id: 900112, publisher: 'Nordwind Spiele', booth: 'Hall 6, D222', price: '€38' },
+    ] },
+    { id: 365010, kind: 'geeklist', title: 'Friends’ picks for Essen', isEssen: false, pages: 2, loaded: 2, entries: [
+      { id: 295947 }, { id: 414317 }, { id: 900102 }, { id: 900110 },
+    ] },
+  ],
+  collections: [
+    { id: 'c1', name: 'Essen 2026', type: 'essen', items: {
+      900110: { state: 'must_have', facts: { publisher: 'Glass Owl', booth: 'Hall 5, A101', price: '€60' } },
+      900102: { state: 'interested', facts: { publisher: 'Tidewater', booth: 'Hall 1, A202', price: '€45' } },
+      900103: { state: null, facts: { publisher: 'Comet Forge', booth: 'Hall 5, D310', price: '€29' } },
+      900105: { state: 'poop', facts: { publisher: 'Lava Lamp Games', booth: 'Hall 2, E021', price: '€19' } },
+      900107: { state: 'skip', facts: { publisher: 'Baltic Rail', booth: 'Hall 4, A015', price: '€49' } },
+    } },
+    { id: 'c2', name: 'Wishlist', type: 'standard', items: {
+      295947: { state: 'must_have' }, 414317: { state: null },
+    } },
+  ],
+  extraGames: {},
+});
+let db = initial();
+try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved) db = saved; } catch (_) {}
+Object.assign(GAMES, db.extraGames || {});
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (_) {} };
+
+/* navigation state */
+let route = 'collections', openCol = null, openList = null, swipe = null, listFilter = '';
+let shareCol = 'c1';
+let linkInto = false;
+const ALL_GROUPS = ['new', 'must_have', 'interested', 'unsure', 'poop', 'skip'];
+let boughtFilter = 'all'; // 'all' | 'no' (not bought) | 'yes' (bought only)
+let shownGroups = new Set(ALL_GROUPS); // which groups the collection shows (multi-select filter)
+let filterOpen = false;
+let swipeEnter = false; // animate the next card in after a decision // the "add by link" screen inside an open collection
+const openSkip = new Set(); // collections whose "Not interested" group is expanded (collapsed by default)
+const shareGroups = new Set(['must_have', 'interested']);
+
+/* ── helpers ───────────────────────────────────────────────────── */
+const $ = s => document.querySelector(s);
+const view = $('#view');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const initials = n => n.replace(/^the /i, '').split(/[\s&]+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const col = id => db.collections.find(c => c.id === id);
+const list = id => db.geeklists.find(l => l.id === id);
+const isEssen = c => c.type === 'essen';
+/* invented sample games get generated cover art; real ones use their BGG image; games added by link show initials until BGG data arrives */
+function artFor(id) {
+  if (GAMES[id].img) return GAMES[id].img;
+  if (!(id >= 900100 && id < 900200)) return '';
+  let seed = id * 9301 + 49297; const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  const pal = ['#FF7A1A', '#FFB020', '#4C5BFF', '#14C8C8', '#8B5CF6', '#FF4D5E', '#0FB98F', '#F472B6', '#1E293B', '#FDE68A'];
+  const pick = () => pal[Math.floor(rnd() * pal.length)];
+  const [a, b] = [pick(), pick()];
+  let shapes = '';
+  for (let k = 0; k < 5; k++) {
+    const x = rnd() * 100, y = rnd() * 112, r = 8 + rnd() * 30, c = pick(), o = (.35 + rnd() * .5).toFixed(2);
+    shapes += rnd() < .5
+      ? `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}"/>`
+      : `<polygon points="${[0, 1, 2, 3, 4, 5].map(i => { const t = Math.PI / 6 + i * Math.PI / 3; return `${x + r * Math.cos(t)},${y + r * Math.sin(t)}`; }).join(' ')}" fill="${c}" opacity="${o}"/>`;
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 112"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="100" height="112" fill="url(#g)"/>${shapes}<rect y="${40 + rnd() * 40}" width="100" height="${6 + rnd() * 10}" fill="#fff" opacity=".18" transform="rotate(${-20 + rnd() * 40} 50 56)"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+const hexThumb = (id, state, size) => {
+  const art = artFor(id);
+  return `<span class="hex ${art ? 'has-art' : ''}" style="${size ? `--size:${size}px;` : ''}" data-state="${state || ''}" data-initials="${esc(initials(GAMES[id].name))}" aria-hidden="true">${art ? `<span class="art" style="background-image:url('${art}')"></span>` : ''}</span>`;
+};
+const essenBadge = on => on ? '<span class="badge">Essen</span>' : '';
+const ICON_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-6-5.6-6-11a6 6 0 0112 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>';
+const ICON_TAG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.4"/></svg>';
+const ICON_BOX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l8-4 8 4v10l-8 4-8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>';
+const factsLine = f => f ? `<span class="facts"><span>${ICON_PIN}${esc(f.booth)}</span><span>${ICON_TAG}${esc(f.price)}</span><span>${ICON_BOX}${esc(f.publisher)}</span></span>` : '';
+const descBlock = (id, cls = '') => `<p class="desc ${cls}">${GAMES[id].desc ? esc(GAMES[id].desc) : '<span class="muted">The description is filled in from BoardGameGeek later.</span>'}</p>`;
+const factSheet = f => f ? `<dl class="factsheet"><dt>Booth</dt><dd>${esc(f.booth) || '–'}</dd><dt>Price</dt><dd>${esc(f.price) || '–'}</dd><dt>Publisher</dt><dd>${esc(f.publisher) || '–'}</dd>${f.manual ? '<dd class="manual">Added by you</dd>' : ''}</dl>` : '';
+/* in a game's details: the facts, plus a way to add or edit them by hand */
+const factsBox = it => `<div id="factsbox">${factSheet(it.facts)}${it.facts
+  ? '<button class="link-btn" data-action="facts-edit">✎ Edit booth, price and publisher</button>'
+  : '<button class="btn btn-ghost btn-block facts-add" data-action="facts-edit">➕ Add booth, price and publisher</button>'}</div>`;
+function factsForm(f = {}) {
+  const num = String(f.price || '').replace(/[^\d.,]/g, '');
+  return `
+    <div class="facts-form">
+      <h3>Booth, price and publisher</h3>
+      <label class="field"><span class="flabel">Booth</span><input id="f-booth" value="${esc(f.booth || '')}" placeholder="Hall 3, B114" autocomplete="off"></label>
+      <label class="field"><span class="flabel">Price €</span><input id="f-price" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(num)}" placeholder="39"></label>
+      <label class="field"><span class="flabel">Publisher</span><input id="f-pub" value="${esc(f.publisher || '')}" placeholder="Publisher name" autocomplete="off"></label>
+      <div class="split"><button class="btn btn-ghost" data-action="facts-cancel">Cancel</button><button class="btn btn-primary" data-action="facts-save" id="factssave" disabled>Save</button></div>
+    </div>`;
+}
+
+/* a short burst of small hexagons from a point (skipped with reduced motion) */
+function burst(x, y) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['var(--grad-hot)', 'var(--orange)', 'var(--orange-2)', '#FFE08A', 'var(--grad-cool)', 'var(--violet)'];
+  for (let i = 0; i < 22; i++) {
+    const a = (i / 22) * Math.PI * 2 + Math.random() * .4, d = 70 + Math.random() * 110;
+    const el = document.createElement('i');
+    el.className = 'burst';
+    el.style.cssText = `--x:${x}px;--y:${y}px;--sz:${8 + Math.random() * 14}px;--c:${colors[i % colors.length]};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d - 30}px;--rot:${Math.random() * 360 - 180}deg;--t:${700 + Math.random() * 400}ms`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
+}
+
+function toast(msg) {
+  const t = $('#toast'); t.querySelector('span').textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* The rule for Essen facts: they are kept only when a game from an Essen list (a BGG preview) goes into an Essen collection. */
+function addToCollection(c, gameId, entry, listIsEssen, state = null) {
+  if (c.items[gameId]) return false;
+  const keepFacts = isEssen(c) && listIsEssen && entry && entry.booth;
+  c.items[gameId] = { state, ...(keepFacts ? { facts: { publisher: entry.publisher, booth: entry.booth, price: entry.price } } : {}) };
+  persist();
+  return true;
+}
+function factsRule(c, listIsEssen) {
+  if (isEssen(c) && listIsEssen) return 'Booth, price and publisher are kept';
+  if (isEssen(c)) return 'Added without booth and price: this list has none';
+  if (listIsEssen) return 'Added without booth and price: standard collection';
+  return '';
+}
+
+/* ── header per screen ─────────────────────────────────────────── */
+function header(title, backTo, badge = '') {
+  const sound = `<button class="sound" data-action="sound" aria-label="${soundOn ? 'Mute sounds' : 'Turn sounds on'}" aria-pressed="${soundOn}">${soundOn ? '🔊' : '🔇'}</button>`;
+  $('#top').innerHTML = (backTo
+    ? `<button class="back" data-back="${backTo}" aria-label="Back">‹</button><h1>${esc(title)}</h1>${badge}`
+    : `<div class="logo" aria-hidden="true">B</div><h1>${esc(title)}</h1>${badge}`) + sound;
+}
+
+/* ── Collections ───────────────────────────────────────────────── */
+function collectionsScreen() {
+  header('Collections');
+  return `
+    <p class="lead">Each collection is your own. An Essen collection also keeps booth, price and publisher from Essen lists such as the SPIEL preview.</p>
+    ${db.collections.map(c => {
+      const items = Object.values(c.items);
+      const n = k => items.filter(i => groupKey(i) === k).length;
+      const nb = items.filter(i => i.bought).length;
+      const num = k => { const v = k === 'bought' ? nb : n(k); return `<b class="num" data-key="${c.id}:${k}" data-v="${v}">${v}</b>`; };
+      return `<button class="card ${isEssen(c) ? 'essen' : ''}" data-col="${c.id}">
+        <h3>${esc(c.name)} ${essenBadge(isEssen(c))}</h3>
+        <p>${plural(items.length, 'game', 'games')}${n('new') ? `, ${n('new')} not yet marked` : ''}</p>
+        <div class="counts"><span>⭐ ${num('must_have')}</span><span>👀 ${num('interested')}</span><span>🤔 ${num('unsure')}</span><span>💩 ${num('poop')}</span><span>✅ ${num('bought')}</span><span>🛑 ${num('skip')}</span></div>
+      </button>`;
+    }).join('')}
+    <button class="card new-card" data-go="add" data-kind="collection"><span class="hex" aria-hidden="true"></span>Create a collection</button>
+    <p class="foot">Covers of invented sample games are generated. <button class="link-btn" data-action="intro">Show the intro again</button></p>`;
+}
+
+function collectionScreen(c) {
+  header(c.name, 'collections', essenBadge(isEssen(c)));
+  const ids = Object.keys(c.items).map(Number);
+  const byName = (a, b) => GAMES[a].name.localeCompare(GAMES[b].name);
+  const passBought = id => boughtFilter === 'all' || (boughtFilter === 'yes') === !!c.items[id].bought;
+  const allGroups = GROUPS.map(g => ({ ...g, ids: ids.filter(id => groupKey(c.items[id]) === g.key && passBought(id)).sort(byName) }));
+  const groups = allGroups.filter(g => g.ids.length && shownGroups.has(g.key));
+  const allSel = ALL_GROUPS.every(k => shownGroups.has(k));
+  const isAll = allSel && boughtFilter === 'all';
+  const hunt = shownGroups.size === 1 && shownGroups.has('must_have') && boughtFilter === 'no';
+  const boughtCount = ids.filter(id => c.items[id].bought).length;
+  const shownCount = groups.reduce((n, g) => n + g.ids.length, 0);
+  const spent = ids.filter(id => c.items[id].bought).reduce((sum, id) => sum + euros(c.items[id]), 0);
+  const count = (g) => `<b class="num gnum" data-key="${c.id}:g:${g.key}" data-v="${g.ids.length}">${g.ids.length}</b>`;
+  const label = isAll ? 'All games'
+    : hunt ? '⭐ Must Have, not bought'
+    : (shownGroups.size === 0 ? 'Nothing selected' : allSel ? 'All groups' : GROUPS.filter(g => shownGroups.has(g.key)).map(g => g.emoji || '⬡').join(' '))
+      + (boughtFilter === 'no' ? ', not bought' : boughtFilter === 'yes' ? ', bought only' : '');
+  const chips = ids.length ? `
+    <div class="filter">
+      <button class="filter-btn" data-action="filter" aria-expanded="${filterOpen}" aria-haspopup="true">
+        <span class="filter-ico" aria-hidden="true"></span><span class="filter-label">${label}</span><b>${shownCount}</b><span class="chev" aria-hidden="true">›</span>
+      </button>
+      ${filterOpen ? `
+      <div class="filter-panel" role="group" aria-label="Show these groups">
+        <div class="filter-presets">
+          <button class="chip" data-preset="all" aria-pressed="${isAll}">All</button>
+          <button class="chip" data-preset="hunt" aria-pressed="${hunt}">⭐ Must Have, not bought</button>
+        </div>
+        <div class="seg-title">Bought</div>
+        <div class="seg" role="group" aria-label="Bought">
+          ${[['all', 'All'], ['no', 'Not bought'], ['yes', '✅ Bought']].map(([k, t]) => `<button data-bought="${k}" aria-pressed="${boughtFilter === k}">${t}</button>`).join('')}
+        </div>
+        <div class="seg-title">Groups</div>
+        ${allGroups.map(g => `<label class="check filter-row"><input type="checkbox" data-group="${g.key}" ${shownGroups.has(g.key) ? 'checked' : ''}> ${g.emoji || '⬡'} ${g.label}<small>${g.ids.length}</small></label>`).join('')}
+        <button class="btn btn-primary btn-block" data-action="filter" style="margin-top:8px">Done</button>
+      </div>` : ''}
+    </div>` : '';
+  const actions = `
+      <button class="btn btn-primary" data-action="swipe-pick">Add from BGG list</button>
+      <button class="btn btn-ghost" data-action="link-into">Add by link</button>`;
+  if (!ids.length) return `
+    <div class="empty-center">
+      <span class="hex deco" aria-hidden="true"></span>
+      <strong>No games in ${esc(c.name)} yet</strong>
+      <p>Go through a BGG list and swipe the games you care about into it, or add a single game by its link.</p>
+      <div class="empty-actions">${actions}</div>
+    </div>`;
+  return `
+    <div class="row-actions">${actions}</div>
+    ${chips}
+    ${boughtCount ? `<p class="bought-line">✅ ${plural(boughtCount, 'game', 'games')} bought${spent ? `, ${money(spent)} spent` : ''}</p>` : ''}
+    <hr class="sep">
+    ${!groups.length ? (hunt ? `<div class="empty"><strong>Nothing left to hunt 🎉</strong>Every Must Have in ${esc(c.name)} is bought.</div>` : `<div class="empty"><strong>No games in the selected groups</strong>Open the filter to show more.</div>`) : ''}
+    ${groups.map(g => `
+      ${g.key === 'skip'
+        ? `<h2 class="group-title" data-state="skip"><button class="fold" data-fold="${c.id}" aria-expanded="${openSkip.has(c.id)}"><i></i><b>${g.label}</b> ${count(g)}<span class="chev" aria-hidden="true">›</span></button></h2>`
+        : `<h2 class="group-title" data-state="${g.key}"><i></i><b>${g.label}</b> ${count(g)}</h2>`}
+      <ul class="rows" ${g.key === 'skip' && !openSkip.has(c.id) ? 'hidden' : ''}>${g.ids.map(id => {
+        const it = c.items[id];
+        return `<li><button class="row ${it.state === 'skip' ? 'skip' : ''} ${it.bought ? 'is-bought' : ''}" data-item="${id}"><span class="thumb">${hexThumb(id, it.state || 'new')}${it.bought ? '<span class="got" aria-label="Bought">✓</span>' : ''}</span>
+          <span class="meta"><span class="name">${esc(GAMES[id].name)}</span>
+          ${it.facts ? factsLine(it.facts) : `<span class="sub">${GAMES[id].year || 'Year unknown'}</span>`}</span>
+          ${it.bought ? `<span class="pill" data-state="bought">✅${it.paid > 0 ? ` ${money(it.paid)}` : ''}</span>` : ''}${it.state && it.state !== 'skip' ? `<span class="pill" data-state="${it.state}">${groupOf(it.state).emoji}</span>` : ''}
+        </button></li>`;
+      }).join('')}</ul>`).join('')}
+    <p class="foot">Prototype with sample data. Changes stay in this browser.</p>`;
+}
+
+/* ── Add by link, inside a collection: the collection is known, only the link is needed ── */
+function linkIntoScreen(c) {
+  header(`Add to ${c.name}`, 'link', essenBadge(isEssen(c)));
+  return `
+    <p class="lead">Paste the link of a game on boardgamegeek.com.</p>
+    <label class="field"><span class="sr">Game link</span>${LINK_SVG}
+      <input id="clink" inputmode="url" autocomplete="off" placeholder="boardgamegeek.com/boardgame/…"></label>
+    <button class="link-btn" data-action="paste-into">Paste example link</button>
+    <div id="cparsed"></div>
+    <button class="btn btn-primary btn-block" data-action="add-into" id="addintobtn" disabled style="margin-top:14px">Add to ${esc(c.name)}</button>`;
+}
+function renderInto() {
+  const out = $('#cparsed'); if (!out) return;
+  const c = col(openCol), p = parseLink($('#clink').value);
+  out.dataset.id = p && !p.error ? p.id : '';
+  if (!p) out.innerHTML = '';
+  else if (p.error) out.innerHTML = `<p class="err">${esc(p.error)}</p>`;
+  else if (c.items[p.id]) out.innerHTML = `<p class="ok">${esc(GAMES[p.id]?.name || p.name)} is already in ${esc(c.name)}.</p>`;
+  else out.innerHTML = `
+    <div class="detail-head" style="margin-top:16px"><span class="hex" style="--size:72px" data-initials="${esc(initials(GAMES[p.id]?.name || p.name || '?'))}"></span>
+      <div style="flex:1"><label class="sr" for="cnewname">Name</label>
+        <input class="name-input" id="cnewname" value="${esc(GAMES[p.id]?.name || p.name)}" placeholder="Type the game's name">
+        <p>${isEssen(c) ? 'Added without booth and price: they only come from Essen lists.' : 'Lands under “Not yet marked”.'}</p></div></div>`;
+  updateInto();
+}
+function updateInto() {
+  const id = Number($('#cparsed').dataset.id) || null, c = col(openCol);
+  $('#addintobtn').disabled = !(id && !c.items[id] && ($('#cnewname')?.value || '').trim());
+}
+
+/* ── Swipe: add from a geeklist ────────────────────────────────── */
+function swipeScreen() {
+  const c = col(swipe.col), l = list(swipe.list);
+  header(`Add to ${c.name}`, 'collection', essenBadge(isEssen(c)));
+  const queue = l.entries.filter(e => !c.items[e.id]);
+  const [first, second] = queue;
+  const rule = factsRule(c, l.isEssen);
+  const card = (e, cls) => `
+    <div class="swipe-card ${cls} ${cls === 'top' && swipeEnter ? 'enter' : ''}" ${cls === 'top' ? `id="topcard" data-id="${e.id}"` : ''}>
+      ${cls === 'top' ? '<span class="stamp yes">ADD</span><span class="stamp no">NOPE</span>' : ''}
+      ${hexThumb(e.id, '', 110)}
+      <h2>${esc(GAMES[e.id].name)}</h2><div class="yr">${GAMES[e.id].year || ''}</div>
+      ${descBlock(e.id, 'clamp')}
+      ${l.isEssen ? factSheet(e) : '<div class="nofacts">No booth or price on this list.</div>'}
+    </div>`;
+  return `
+    <div class="note ${isEssen(c) && l.isEssen ? 'warm' : ''}"><i></i><span>From <b>${esc(l.title)}</b> ${essenBadge(l.isEssen)}${rule ? `<br>${esc(rule)}.` : ''}</span></div>
+    ${first ? `
+      <div class="deck-wrap">${second ? card(second, 'behind') : ''}${card(first, 'top')}</div>
+      <div class="swipe-buttons">
+        <button class="swipe-btn no" data-swipe="skip" aria-label="Not interested">✕</button>
+        <button class="swipe-btn yes" data-swipe="add" aria-label="Add to collection">✓</button>
+      </div>
+      <div class="swipe-legend"><span>← Not interested</span><span>${plural(queue.length, 'game', 'games')} left</span><span>Add →</span></div>`
+    : `<div class="empty"><span class="hex" data-initials="✓"></span><strong>You've seen every game on this list</strong>Back to the collection to mark them.<br><button class="link-btn" data-back="collection">Open ${esc(c.name)}</button></div>`}`;
+}
+
+function decide(kind) {
+  const card = $('#topcard'); if (!card) return;
+  const id = Number(card.dataset.id);
+  const c = col(swipe.col), l = list(swipe.list);
+  const entry = l.entries.find(e => e.id === id);
+  addToCollection(c, id, entry, l.isEssen, kind === 'skip' ? 'skip' : null);
+  buzz(10);
+  const dir = kind === 'skip' ? -1 : 1;
+  card.classList.remove('dragging');
+  card.style.transition = 'transform .38s cubic-bezier(.5, 0, .75, 0), opacity .38s';
+  card.style.transform = `translate(${dir * 520}px, -40px) rotate(${dir * 30}deg)`;
+  card.style.opacity = '0';
+  card.querySelector(dir > 0 ? '.stamp.yes' : '.stamp.no').style.opacity = 1;
+  toast(kind === 'skip' ? `${GAMES[id].name}: not interested` : `${GAMES[id].name} added`);
+  setTimeout(() => { swipeEnter = true; render(); swipeEnter = false; }, 300);
+}
+
+function bindSwipe() {
+  const card = $('#topcard'); if (!card) return;
+  let x0 = null, dx = 0;
+  const yes = card.querySelector('.stamp.yes'), no = card.querySelector('.stamp.no');
+  card.addEventListener('pointerdown', e => { x0 = e.clientX; dx = 0; card.setPointerCapture(e.pointerId); card.classList.add('dragging'); });
+  card.addEventListener('pointermove', e => {
+    if (x0 === null) return; dx = e.clientX - x0;
+    card.style.transform = `translate(${dx}px, ${Math.abs(dx) * .08}px) rotate(${dx / 14}deg) scale(1.03)`;
+    const oy = Math.max(0, Math.min(1, dx / 90)), on = Math.max(0, Math.min(1, -dx / 90));
+    yes.style.opacity = oy; yes.style.transform = `rotate(-12deg) scale(${.7 + .5 * oy})`;
+    no.style.opacity = on; no.style.transform = `rotate(12deg) scale(${.7 + .5 * on})`;
+  });
+  const end = () => {
+    if (x0 === null) return; x0 = null; card.classList.remove('dragging');
+    if (dx > 90) decide('add'); else if (dx < -90) decide('skip');
+    else { card.style.transform = ''; yes.style.opacity = 0; no.style.opacity = 0; } // springs back with overshoot
+  };
+  card.addEventListener('pointerup', end); card.addEventListener('pointercancel', end);
+}
+
+/* ── Geeklists ─────────────────────────────────────────────────── */
+function geeklistsScreen() {
+  header('Lists');
+  return `
+    <p class="lead">Loaded BGG lists stay on this phone for browsing, also offline. Open one to see its games.</p>
+    ${db.geeklists.map(l => `
+      <button class="card ${l.isEssen ? 'essen' : ''}" data-list="${l.id}">
+        <h3>${esc(l.title)} ${essenBadge(l.isEssen)}</h3>
+        <p>${l.loaded < l.pages ? `Loading page ${l.loaded} of ${l.pages}. You can already browse.` : `${plural(l.entries.length, 'game', 'games')}, fully loaded`}</p>
+        <div class="progress" aria-hidden="true"><span style="width:${Math.round(100 * l.loaded / l.pages)}%"></span></div>
+      </button>`).join('')}
+    <button class="card new-card" data-go="add" data-kind="geeklist"><span class="hex" aria-hidden="true"></span>Load a BGG list</button>`;
+}
+
+function geeklistScreen(l) {
+  header(l.title, 'geeklists', essenBadge(l.isEssen));
+  const q = listFilter.toLowerCase();
+  const entries = l.entries.filter(e => GAMES[e.id].name.toLowerCase().includes(q));
+  const inAny = id => db.collections.some(c => c.items[id]);
+  return `
+    <label class="field"><span class="sr">Filter this list</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="lfilter" value="${esc(listFilter)}" placeholder="Filter by name">
+    </label>
+    <ul class="rows" style="margin-top:10px">${entries.map(e => `
+      <li style="display:flex;align-items:center;gap:6px">
+        <button class="row" data-entry="${e.id}" style="flex:1">${hexThumb(e.id)}
+          <span class="meta"><span class="name">${esc(GAMES[e.id].name)}</span>
+          ${l.isEssen ? factsLine(e) : `<span class="sub">${GAMES[e.id].year || ''}</span>`}</span>
+          ${inAny(e.id) ? '<span class="in-mark">in a collection</span>' : ''}
+        </button>
+        <button class="add-mini" data-addentry="${e.id}" aria-label="Add ${esc(GAMES[e.id].name)} to a collection">+</button>
+      </li>`).join('') || '<li class="empty">No game on this list matches.</li>'}</ul>
+    ${l.loaded < l.pages ? `<p class="foot">Still loading pages ${l.loaded + 1}–${l.pages} in the background.</p>` : ''}`;
+}
+
+/* ── Add by link (big +) ───────────────────────────────────────── */
+let addTarget = null, addKind = null;
+const KINDS = [
+  { key: 'collection', label: 'Collection', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z"/><path d="M12 12l8-4.6M12 12v9.5M12 12L4 7.4"/></svg>' },
+  { key: 'geeklist', label: 'BGG list', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="12" r="1.2"/><circle cx="4" cy="18" r="1.2"/></svg>' },
+  { key: 'game', label: 'Game', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.3"/><circle cx="15" cy="15" r="1.3"/><circle cx="15" cy="9" r="1.3"/><circle cx="9" cy="15" r="1.3"/></svg>' },
+];
+const LINK_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>';
+
+function addScreen() {
+  header('Add');
+  return `
+    <p class="lead">What do you want to add?</p>
+    <div class="picker kinds" role="group" aria-label="What to add">
+      ${KINDS.map(k => `<button class="state-hex kind" data-kind="${k.key}" aria-pressed="${addKind === k.key}"><span>${k.icon}${k.label}</span></button>`).join('')}
+    </div><div class="picker-pad"></div>
+    <div id="addform">${addForm()}</div>`;
+}
+
+function addForm() {
+  if (addKind === 'collection') return `
+    <h2 class="section-title">New collection</h2>
+    <label class="field"><span class="sr">Name</span><input id="cname" placeholder="Name, e.g. Essen 2026" autocomplete="off"></label>
+    <label class="toggle"><span class="txt">Essen collection<small>Games from Essen lists (BGG previews) keep booth, price and publisher.</small></span>
+      <span class="switch"><input type="checkbox" id="cessen" checked><span></span></span></label>
+    <button class="btn btn-primary btn-block" data-action="create-collection" id="createbtn" disabled>Create collection</button>`;
+  if (addKind === 'geeklist') return `
+    <h2 class="section-title">Load a BGG list</h2>
+    <p class="lead">Paste the link of a BoardGameGeek preview (like SPIEL Essen 2026, with booth, price and publisher) or a geeklist.</p>
+    <label class="field"><span class="sr">BGG list link</span>${LINK_SVG}
+      <input id="glink" inputmode="url" placeholder="boardgamegeek.com/geekpreview/… or /geeklist/…"></label>
+    <p class="lead" id="glinkhint" style="margin:8px 2px 0"></p>
+    <button class="btn btn-primary btn-block" data-action="load-list" id="loadbtn" disabled style="margin-top:10px">Load list</button>
+    <button class="link-btn" data-action="paste-geeklist">Paste example link</button>`;
+  if (addKind === 'game') return `
+    <h2 class="section-title">Add a single game</h2>
+    <p class="lead">For games on none of your lists: copy the game's link on boardgamegeek.com and paste it here.</p>
+    <label class="field"><span class="sr">Game link</span>${LINK_SVG}
+      <input id="link" inputmode="url" autocomplete="off" placeholder="boardgamegeek.com/boardgame/…"></label>
+    <button class="link-btn" data-action="paste-sample">Paste example link</button>
+    <div id="parsed"></div>
+    <h2 class="section-title">Add to collection</h2>
+    <label class="select"><span class="sr">Collection</span><select id="linkcol"></select></label>
+    <p class="lead" id="linkhint" style="margin:8px 2px 14px"></p>
+    <button class="btn btn-primary btn-block" data-action="add-link" id="addgamebtn" disabled>Add game</button>`;
+  return '<p class="foot">Pick one of the three above.</p>';
+}
+
+/* a BGG list link: a preview (Essen list with booth, price, publisher) or a geeklist */
+function listRef(text) {
+  const m = /boardgamegeek\.com\/(geekpreview|geeklist)\/(\d+)/i.exec(text);
+  return m ? { kind: m[1].toLowerCase() === 'geekpreview' ? 'preview' : 'geeklist', id: Number(m[2]) } : null;
+}
+function updateListLink() {
+  const v = ($('#glink')?.value || '').trim(), ref = listRef(v);
+  $('#loadbtn').disabled = !ref;
+  $('#glinkhint').textContent = !v ? '' : !ref ? 'Paste a link to a BoardGameGeek preview or geeklist.'
+    : ref.kind === 'preview' ? 'Preview: an Essen list with booth, price and publisher.' : 'Geeklist: games without booth and price.';
+}
+
+function parseLink(text) {
+  const m = /boardgamegeek\.com\/(boardgame|boardgameexpansion)\/(\d+)(?:\/([\w-]+))?/i.exec(text);
+  if (!m) return /boardgamegeek\.com\//i.test(text) ? { error: 'This is a BoardGameGeek link, but not to a game. Open the game itself and copy that link.' }
+    : text.trim() ? { error: 'That is not a BoardGameGeek link. It should look like boardgamegeek.com/boardgame/295947/cascadia.' } : null;
+  return { id: Number(m[2]), name: (m[3] || '').split('-').filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ') };
+}
+function renderParsed() {
+  const out = $('#parsed'); if (!out) return;
+  const p = parseLink($('#link').value);
+  out.dataset.id = p && !p.error ? p.id : '';
+  fillCollections();
+  if (!p) { out.innerHTML = ''; return updateAddGame(); }
+  if (p.error) { out.innerHTML = `<p class="err">${esc(p.error)}</p>`; return updateAddGame(); }
+  out.innerHTML = `
+    <h2 class="section-title">Found game <small>ID ${p.id}</small></h2>
+    <div class="detail-head"><span class="hex" style="--size:72px" data-initials="${esc(initials(p.name || '?'))}"></span>
+      <div style="flex:1"><label class="sr" for="newname">Name</label>
+        <input class="name-input" id="newname" value="${esc(GAMES[p.id]?.name || p.name)}" placeholder="Type the game's name">
+        <p>Name and picture are filled in from BoardGameGeek later.</p></div></div>`;
+  updateAddGame();
+}
+/* the dropdown is always there; once a game is known, collections that already have it are greyed out */
+function fillCollections() {
+  const sel = $('#linkcol'); if (!sel) return;
+  const id = Number($('#parsed').dataset.id) || null, keep = sel.value;
+  const target = id ? pickTarget(id) : (keep || addTarget || db.collections[0]?.id);
+  sel.innerHTML = db.collections.map(c => {
+    const has = id && c.items[id];
+    return `<option value="${c.id}" ${has ? 'disabled' : ''} ${c.id === target ? 'selected' : ''}>${esc(c.name)}${isEssen(c) ? ' (Essen)' : ''}${has ? ': already in it' : ''}</option>`;
+  }).join('');
+}
+function updateAddGame() {
+  const sel = $('#linkcol'); if (!sel) return;
+  const id = Number($('#parsed').dataset.id) || null;
+  const name = ($('#newname')?.value || '').trim();
+  const free = sel.selectedOptions[0] && !sel.selectedOptions[0].disabled;
+  $('#linkhint').textContent = id && !pickTarget(id) ? 'This game is already in all your collections.' : linkHint(id);
+  $('#addgamebtn').disabled = !(id && name && free);
+}
+/* the collection we came from, else the first one that doesn't have the game yet */
+function pickTarget(gameId) {
+  const free = db.collections.filter(c => !c.items[gameId]);
+  return (free.find(c => c.id === addTarget) || free[0])?.id;
+}
+function linkHint(gameId) {
+  const c = col($('#linkcol')?.value || (gameId && pickTarget(gameId)));
+  if (!c) return '';
+  return isEssen(c) ? 'Added without booth and price: they only come from Essen lists.' : 'Lands under “Not yet marked”.';
+}
+
+/* ── Search (needs the BGG API token) ──────────────────────────── */
+function searchScreen() {
+  header('Search');
+  return `
+    <div class="soon-card"><span class="hex" aria-hidden="true" data-initials="BGG"></span>
+      <strong>Searching all of BoardGameGeek comes soon</strong>
+      <p>It switches on once BoardGameGeek grants our API access. Until then, add games from a BGG list or by link.</p></div>
+    <div class="locked" aria-hidden="true">
+      <label class="field disabled"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        <input disabled placeholder="Search BoardGameGeek, e.g. Cascadia"></label>
+      <ul class="rows" style="margin-top:12px">${[295947, 342942].map(id => `<li><span class="row">${hexThumb(id)}<span class="meta"><span class="name">${GAMES[id].name}</span><span class="sub">${GAMES[id].year}</span></span><span class="add-mini">+</span></span></li>`).join('')}</ul>
+    </div>
+    <button class="link-btn" data-go="add">Add a game by link instead</button>`;
+}
+
+/* ── Share & backup ────────────────────────────────────────────── */
+function shareText() {
+  const c = col(shareCol); if (!c) return '';
+  const parts = [`🎲 ${c.name}`];
+  GROUPS.filter(g => shareGroups.has(g.key)).forEach(g => {
+    const ids = Object.keys(c.items).map(Number).filter(id => groupKey(c.items[id]) === g.key).sort((a, b) => GAMES[a].name.localeCompare(GAMES[b].name));
+    if (!ids.length) return;
+    parts.push('', `${g.emoji || '•'} ${g.label} (${ids.length})`, ...ids.map(id => {
+      const f = c.items[id].facts;
+      return `• ${c.items[id].bought ? '✅ ' : ''}${GAMES[id].name}${f ? ` – ${f.booth}, ${f.price}` : ''} – https://boardgamegeek.com/boardgame/${id}`;
+    }));
+  });
+  return parts.length > 1 ? parts.join('\n') : '';
+}
+function shareScreen() {
+  header('Share & backup');
+  const c = col(shareCol) || db.collections[0]; shareCol = c.id;
+  const n = k => Object.values(c.items).filter(i => groupKey(i) === k).length;
+  const text = shareText();
+  return `
+    <h2 class="section-title" style="margin-top:4px">Which collection?</h2>
+    <div class="choice">${db.collections.map(x => `<button data-sharecol="${x.id}" aria-pressed="${x.id === shareCol}"><b>${esc(x.name)} ${essenBadge(isEssen(x))}</b><small>${plural(Object.keys(x.items).length, 'game', 'games')}</small></button>`).join('')}</div>
+    <h2 class="section-title">Which games?</h2>
+    ${GROUPS.map(g => `<label class="check"><input type="checkbox" data-share="${g.key}" ${shareGroups.has(g.key) ? 'checked' : ''}> ${g.emoji || '•'} ${g.label}<small>${plural(n(g.key), 'game', 'games')}</small></label>`).join('')}
+    ${text ? `<div class="preview" aria-label="Message preview">${esc(text)}</div><button class="btn btn-primary btn-block" data-action="share">Share list</button>`
+      : `<p class="err">Pick at least one group that has games.</p>`}
+    <h2 class="section-title">Backup</h2>
+    <p class="lead">Your collections are saved to your account. A backup file is your own extra copy of all of them.</p>
+    <div class="split"><button class="btn btn-ghost" data-action="export">Export backup</button><button class="btn btn-ghost" data-action="import">Import backup</button></div>
+    <input type="file" id="file" accept="application/json" hidden>`;
+}
+
+/* ── Sheets ────────────────────────────────────────────────────── */
+function openSheet(html) { $('#sheet').innerHTML = `<div class="grabber"></div>${html}`; $('#scrim').classList.add('open'); $('#sheet').classList.add('open'); $('#sheet').querySelector('button, input')?.focus(); }
+function closeSheet() { $('#scrim').classList.remove('open'); $('#sheet').classList.remove('open'); }
+
+function itemSheet(c, id) {
+  const it = c.items[id];
+  openSheet(`
+    <div class="detail-head">${hexThumb(id, it.state || 'new', 84)}
+      <div><h2>${esc(GAMES[id].name)}</h2><p>${GAMES[id].year || 'Year unknown'} in ${esc(c.name)}</p>
+      <a class="link-btn" style="display:inline-flex;text-decoration:none" href="https://boardgamegeek.com/boardgame/${id}" target="_blank" rel="noopener">Open on BoardGameGeek</a></div></div>
+    ${descBlock(id)}
+    ${factsBox(it)}
+    <div class="picker" role="group" aria-label="Mark as">
+      ${STATES.map(s => `<button class="state-hex" data-mark="${s.key}" data-state="${s.key}" aria-pressed="${it.state === s.key}"><span><em>${s.emoji}</em>${s.label}</span></button>`).join('')}
+    </div><div class="picker-pad"></div>
+    <div class="sheet-actions">
+      <button class="btn ${it.bought ? 'btn-ghost' : 'btn-bought'} btn-block" data-action="bought">${it.bought ? 'Not bought after all' : '✅ Bought it'}</button>
+      <button class="btn btn-ghost btn-block" data-mark="${it.state === 'skip' ? '' : 'skip'}">${it.state === 'skip' ? 'Mark as not yet decided' : '🛑 Not interested'}</button>
+      <button class="btn btn-ghost btn-block danger" data-action="remove">Remove from collection</button>
+    </div>`);
+  $('#sheet').dataset.col = c.id; $('#sheet').dataset.id = id;
+}
+
+function entrySheet(l, id, focusAdd) {
+  const e = l.entries.find(x => x.id === id);
+  openSheet(`
+    <div class="detail-head">${hexThumb(id, '', 84)}
+      <div><h2>${esc(GAMES[id].name)}</h2><p>${GAMES[id].year || ''} on ${esc(l.title)}</p>
+      <a class="link-btn" style="display:inline-flex;text-decoration:none" href="https://boardgamegeek.com/boardgame/${id}" target="_blank" rel="noopener">Open on BoardGameGeek</a></div></div>
+    ${descBlock(id)}
+    ${l.isEssen ? factSheet(e) : ''}
+    <h2 class="section-title">In collections</h2>
+    <p class="lead" style="margin-bottom:4px">Tick every collection this game should be in, then press Done.</p>
+    <div class="pick-list" id="picklist">${db.collections.map(c => `
+      <button class="pick toggle-pick" data-toggle="${c.id}" aria-pressed="${!!c.items[id]}" data-was="${!!c.items[id]}">
+        <span class="tick" aria-hidden="true"></span>
+        <span class="txt"><b>${esc(c.name)} ${essenBadge(isEssen(c))}</b><small>${pickNote(c, id, l, !!c.items[id])}</small></span>
+      </button>`).join('')}</div>
+    <div class="sheet-actions" style="margin-top:14px">
+      <button class="btn btn-primary btn-block" data-action="apply-entry">Done</button>
+      <button class="btn btn-ghost btn-block" data-action="close">Cancel</button>
+    </div>`);
+  $('#sheet').dataset.list = l.id; $('#sheet').dataset.id = id;
+  if (focusAdd) $('#picklist .pick:not([disabled])')?.focus();
+}
+
+/* what happens to this collection when Done is pressed */
+function pickNote(c, id, l, on) {
+  const was = !!c.items[id];
+  if (was && on) return c.items[id].state ? `In it, marked ${groupOf(c.items[id].state).label}` : 'In it, not yet marked';
+  if (was && !on) return 'Will be removed, including its mark';
+  if (!was && on) return `Will be added. ${factsRule(c, l.isEssen) || 'Lands under “Not yet marked”'}`;
+  return isEssen(c) && l.isEssen ? 'Not in it. Booth, price and publisher would be kept' : 'Not in it';
+}
+
+function newCollectionSheet() {
+  openSheet(`
+    <h2 class="section-title" style="margin-top:0">New collection</h2>
+    <label class="field"><span class="sr">Name</span><input id="cname" placeholder="Name, e.g. Essen 2026" autocomplete="off"></label>
+    <div class="choice" role="group" aria-label="Type">
+      <button data-ctype="essen" aria-pressed="true"><b>Essen ${essenBadge(true)}</b><small>For the fair: games from Essen lists keep booth, price and publisher.</small></button>
+      <button data-ctype="standard" aria-pressed="false"><b>Standard</b><small>A plain list of games and how you rate them.</small></button>
+    </div>
+    <button class="btn btn-primary btn-block" data-action="create-collection">Create collection</button>`);
+}
+
+function swipePickSheet() {
+  const c = col(openCol);
+  openSheet(`
+    <h2 class="section-title" style="margin-top:0">Add from which list?</h2>
+    <div class="pick-list">${db.geeklists.map(l => {
+      const left = l.entries.filter(e => !c.items[e.id]).length;
+      return `<button class="pick" data-swipelist="${l.id}" ${left ? '' : 'disabled'}>
+        <span class="txt"><b>${esc(l.title)} ${essenBadge(l.isEssen)}</b>
+        <small>${left ? `${plural(left, 'game', 'games')} to go through. ${esc(factsRule(c, l.isEssen))}` : 'You have seen every game on it'}</small></span></button>`;
+    }).join('')}</div>`);
+}
+
+/* ── Render + events ───────────────────────────────────────────── */
+function render(focusId) {
+  const c = openCol && col(openCol), l = openList && list(openList);
+  view.innerHTML =
+    route === 'collections' ? (swipe ? swipeScreen() : c && linkInto ? linkIntoScreen(c) : c ? collectionScreen(c) : collectionsScreen())
+    : route === 'geeklists' ? (l ? geeklistScreen(l) : geeklistsScreen())
+    : route === 'add' ? addScreen()
+    : route === 'search' ? searchScreen()
+    : shareScreen();
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-current', b.dataset.go === route ? 'page' : 'false'));
+  if (swipe) bindSwipe();
+  if (route === 'add' && addKind === 'game') { fillCollections(); updateAddGame(); }
+  if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); el.setSelectionRange?.(el.value.length, el.value.length); } }
+  rollCounters();
+}
+
+/* counters roll from their last shown value to the new one */
+const shown = {};
+function rollCounters() {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('.num').forEach(el => {
+    const key = el.dataset.key, to = Number(el.dataset.v), from = shown[key] ?? 0;
+    shown[key] = to;
+    if (still || from === to) { el.textContent = to; return; }
+    el.classList.add('rolling');
+    const t0 = performance.now(), dur = 650;
+    const step = t => {
+      const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = Math.round(from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(step); else el.classList.remove('rolling');
+    };
+    el.textContent = from; requestAnimationFrame(step);
+  });
+}
+
+document.addEventListener('click', e => {
+  if (filterOpen && !e.target.closest('.filter')) { filterOpen = false; render(); }
+  const t = e.target.closest('button, [data-go]'); if (!t || t.disabled) return;
+  const d = t.dataset;
+  if (d.go) { linkInto = false; $('#toast').classList.remove('show'); addTarget = d.target || null; addKind = d.kind || null; route = d.go; openCol = openList = swipe = null; listFilter = ''; closeSheet(); render(); scrollTo(0, 0); return; }
+  if (d.back) {
+    if (d.back === 'collection') swipe = null;
+    else if (d.back === 'link') linkInto = false;
+    else if (d.back === 'collections') openCol = null;
+    else if (d.back === 'geeklists') openList = null;
+    closeSheet(); render(); return;
+  }
+  if (d.kind) {
+    addKind = d.kind;
+    document.querySelectorAll('.kind').forEach(b => b.setAttribute('aria-pressed', b.dataset.kind === addKind));
+    $('#addform').innerHTML = addForm(); fillCollections(); updateAddGame(); $('#addform input')?.focus(); return;
+  }
+  if (d.preset) { shownGroups = new Set(d.preset === 'all' ? ALL_GROUPS : ['must_have']); boughtFilter = d.preset === 'all' ? 'all' : 'no'; render(); return; }
+  if (d.bought) { boughtFilter = d.bought; render(); return; }
+  if (d.fold) { openSkip.has(d.fold) ? openSkip.delete(d.fold) : openSkip.add(d.fold); render(); return; }
+  if (d.col) { openCol = d.col; render(); scrollTo(0, 0); return; }
+  if (d.item) { itemSheet(col(openCol), Number(d.item)); return; }
+  if (d.list) { openList = Number(d.list); listFilter = ''; render(); scrollTo(0, 0); return; }
+  if (d.entry) { entrySheet(list(openList), Number(d.entry)); return; }
+  if (d.addentry) { entrySheet(list(openList), Number(d.addentry), true); return; }
+  if (d.toggle) {
+    const on = t.getAttribute('aria-pressed') !== 'true';
+    t.setAttribute('aria-pressed', on);
+    const l = list(Number($('#sheet').dataset.list)), id = Number($('#sheet').dataset.id);
+    t.querySelector('small').textContent = pickNote(col(d.toggle), id, l, on);
+    return;
+  }
+  if (d.mark !== undefined) {
+    const c = col($('#sheet').dataset.col), id = Number($('#sheet').dataset.id);
+    c.items[id].state = d.mark || null; persist();
+    if (d.mark) dice();
+    buzz(d.mark === 'must_have' ? [12, 40, 18] : 12);
+    if (d.mark === 'must_have') { const r = t.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2); }
+    toast(d.mark ? `${GAMES[id].name}: ${groupOf(d.mark).label}` : `${GAMES[id].name}: not yet marked`);
+    closeSheet(); render(); return;
+  }
+  if (d.ctype) { t.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === t)); return; }
+  if (d.swipelist) { swipe = { col: openCol, list: Number(d.swipelist) }; closeSheet(); render(); return; }
+  if (d.swipe) { decide(d.swipe); return; }
+  if (d.action === 'add-link') {
+    const id = Number($('#parsed').dataset.id), name = ($('#newname').value || '').trim();
+    if (!name) { $('#newname').focus(); toast('Type a name first'); return; }
+    if (!GAMES[id]) { GAMES[id] = { name, year: null }; db.extraGames = { ...(db.extraGames || {}), [id]: GAMES[id] }; }
+    const c = col($('#linkcol').value); addToCollection(c, id, null, false);
+    toast(`${name} added to ${c.name}`); route = 'collections'; openCol = c.id; render(); return;
+  }
+  if (d.sharecol) { shareCol = d.sharecol; render(); return; }
+  switch (d.action) {
+    case 'close': closeSheet(); break;
+    case 'facts-edit': {
+      const it = col($('#sheet').dataset.col).items[Number($('#sheet').dataset.id)];
+      $('#factsbox').innerHTML = factsForm(it.facts); $('#f-booth').focus(); updateFactsSave(); break;
+    }
+    case 'facts-cancel': { const it = col($('#sheet').dataset.col).items[Number($('#sheet').dataset.id)]; $('#factsbox').outerHTML = factsBox(it); break; }
+    case 'facts-save': {
+      const c = col($('#sheet').dataset.col), id = Number($('#sheet').dataset.id), it = c.items[id];
+      const price = parseFloat(($('#f-price').value || '').replace(',', '.'));
+      it.facts = { booth: $('#f-booth').value.trim(), price: price >= 0 ? money(price) : '', publisher: $('#f-pub').value.trim(), manual: true };
+      persist(); $('#factsbox').outerHTML = factsBox(it); render(); toast(`Saved details for ${GAMES[id].name}`); break;
+    }
+    case 'filter': filterOpen = !filterOpen; render(); break;
+    case 'bought': {
+      const c = col($('#sheet').dataset.col), id = Number($('#sheet').dataset.id), it = c.items[id];
+      if (it.bought) { it.bought = false; delete it.paid; persist(); closeSheet(); render(); toast(`${GAMES[id].name}: not bought`); break; }
+      // ask what was paid, prefilled with the listed price
+      const lp = listPrice(it);
+      $('#sheet .sheet-actions').innerHTML = `
+        <label class="paid-label" for="paid">What did you pay?</label>
+        <div class="field paid-field"><span class="euro" aria-hidden="true">€</span>
+          <input id="paid" type="number" inputmode="decimal" min="0" step="0.5" value="${lp || ''}" placeholder="0"></div>
+        ${lp ? `<p class="lead" style="margin:6px 2px 4px">Listed at ${money(lp)} on the SPIEL preview.</p>` : ''}
+        <button class="btn btn-bought btn-block" data-action="confirm-bought">✅ Save, got it</button>
+        <button class="btn btn-ghost btn-block" data-action="confirm-bought" data-noprice="1">Don't track the price</button>`;
+      $('#paid').focus(); $('#paid').select();
+      break;
+    }
+    case 'confirm-bought': {
+      const c = col($('#sheet').dataset.col), id = Number($('#sheet').dataset.id), it = c.items[id];
+      const v = parseFloat(($('#paid')?.value || '').replace(',', '.'));
+      it.bought = true;
+      if (!d.noprice && v >= 0) it.paid = v; else delete it.paid;
+      if (d.noprice) it.paid = 0;
+      persist(); closeSheet(); render();
+      gotIt(); dice(true); buzz([20, 50, 20, 50, 40]);
+      toast(`${GAMES[id].name}: got it${typeof it.paid === 'number' && it.paid > 0 ? ` for ${money(it.paid)}` : ''}!`);
+      break;
+    }
+    case 'sound': soundOn = !soundOn; try { localStorage.setItem('bal-sound', soundOn ? '1' : '0'); } catch (_) {} render(); if (soundOn) dice(); break;
+    case 'intro': showIntro(); break;
+    case 'link-into': linkInto = true; render(); $('#clink').focus(); break;
+    case 'paste-into': $('#clink').value = 'https://boardgamegeek.com/boardgame/342942/ark-nova'; renderInto(); break;
+    case 'add-into': {
+      const c = col(openCol), id = Number($('#cparsed').dataset.id), name = $('#cnewname').value.trim();
+      if (!GAMES[id]) { GAMES[id] = { name, year: null }; db.extraGames = { ...(db.extraGames || {}), [id]: GAMES[id] }; }
+      addToCollection(c, id, null, false); linkInto = false; render(); scrollTo(0, 0);
+      toast(`${name} added to ${c.name}`); break;
+    }
+    case 'apply-entry': {
+      const l = list(Number($('#sheet').dataset.list)), id = Number($('#sheet').dataset.id);
+      const added = [], removed = [];
+      $('#sheet').querySelectorAll('[data-toggle]').forEach(b => {
+        const c = col(b.dataset.toggle), on = b.getAttribute('aria-pressed') === 'true';
+        if (on && !c.items[id]) { addToCollection(c, id, l.entries.find(x => x.id === id), l.isEssen); added.push(c.name); }
+        if (!on && c.items[id]) { delete c.items[id]; removed.push(c.name); }
+      });
+      persist(); closeSheet(); render();
+      toast(added.length || removed.length
+        ? [added.length && `Added to ${added.join(', ')}`, removed.length && `Removed from ${removed.join(', ')}`].filter(Boolean).join('. ')
+        : 'No changes');
+      break;
+    }
+    case 'new-collection': newCollectionSheet(); break;
+    case 'create-collection': {
+      const name = ($('#cname').value || '').trim(); if (!name) { $('#cname').focus(); toast('Give the collection a name'); return; }
+      const type = $('#cessen').checked ? 'essen' : 'standard';
+      const id = 'c' + Date.now(); db.collections.push({ id, name, type, items: {} }); persist();
+      closeSheet(); route = 'collections'; openCol = id; render(); toast(`Created ${name}`); break;
+    }
+    case 'swipe-pick': swipePickSheet(); break;
+    case 'remove': { const c = col($('#sheet').dataset.col), id = Number($('#sheet').dataset.id); delete c.items[id]; persist(); closeSheet(); render(); toast(`Removed ${GAMES[id].name}`); break; }
+    case 'load-list': {
+      const ref = listRef(($('#glink').value || '').trim());
+      if (!ref) { toast('Paste a preview or geeklist link first'); $('#glink').focus(); return; }
+      if (list(ref.id)) { toast('This list is already loaded'); return; }
+      const essen = ref.kind === 'preview';
+      db.geeklists.push({ id: ref.id, kind: ref.kind, title: essen ? `Preview ${ref.id}` : `Geeklist ${ref.id}`, isEssen: essen, pages: 3, loaded: 1,
+        entries: [900104, 900106, 900108].map(id => essen ? { ...db.geeklists[0].entries.find(e => e.id === id) } : { id }) });
+      persist(); route = 'geeklists'; openList = ref.id; render(); toast(essen ? 'Loading preview: an Essen list' : 'Loading geeklist'); break;
+    }
+    case 'paste-geeklist': $('#glink').value = 'https://boardgamegeek.com/geekpreview/94/pax-unplugged-2026-preview'; updateListLink(); break;
+    case 'paste-sample': $('#link').value = 'https://boardgamegeek.com/boardgame/342942/ark-nova'; renderParsed(); break;
+    case 'share': { const text = shareText(); if (navigator.share) navigator.share({ text }).catch(() => {}); else navigator.clipboard?.writeText(text).then(() => toast('Copied. Paste it into your chat.'), () => toast('Select the preview text to copy it')); break; }
+    case 'export': {
+      const data = { format: 'board-a-licious-backup', version: 2, exportedAt: new Date().toISOString(), collections: db.collections, games: GAMES };
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      a.download = `board-a-licious-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click(); toast('Backup exported'); break;
+    }
+    case 'import': $('#file').click(); break;
+  }
+});
+
+function updateFactsSave() {
+  const b = $('#factssave'); if (!b) return;
+  b.disabled = !['#f-booth', '#f-price', '#f-pub'].some(sel => ($(sel).value || '').trim());
+}
+document.addEventListener('input', e => {
+  if (['f-booth', 'f-price', 'f-pub'].includes(e.target.id)) { updateFactsSave(); return; }
+  if (e.target.dataset.group) { e.target.checked ? shownGroups.add(e.target.dataset.group) : shownGroups.delete(e.target.dataset.group); render(); return; }
+  if (e.target.id === 'cname') $('#createbtn').disabled = !e.target.value.trim();
+  if (e.target.id === 'glink') updateListLink();
+  if (e.target.id === 'newname') updateAddGame();
+  if (e.target.id === 'clink') renderInto();
+  if (e.target.id === 'cnewname') updateInto();
+  if (e.target.id === 'link') renderParsed();
+  if (e.target.id === 'lfilter') { listFilter = e.target.value; render('lfilter'); }
+  if (e.target.dataset.share) { e.target.checked ? shareGroups.add(e.target.dataset.share) : shareGroups.delete(e.target.dataset.share); render(); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'linkcol') { updateAddGame(); return; }
+  if (e.target.id !== 'file' || !e.target.files[0]) return;
+  e.target.files[0].text().then(txt => {
+    let data; try { data = JSON.parse(txt); } catch (_) { toast('This file is not a backup. Nothing was changed.'); return; }
+    if (data.format !== 'board-a-licious-backup' || !data.collections) { toast('This file is not a Board-a-licious backup. Nothing was changed.'); return; }
+    let added = 0;
+    data.collections.forEach(bc => { if (!col(bc.id)) { db.collections.push(bc); added++; } });
+    Object.assign(GAMES, data.games || {}); persist(); render(); toast(`Imported: ${plural(added, 'new collection', 'new collections')}`);
+  });
+  e.target.value = '';
+});
+$('#scrim').addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'paid') { $('[data-action="confirm-bought"]:not([data-noprice])')?.click(); return; }
+  if (e.key === 'Escape') closeSheet();
+  if (swipe && !$('#sheet').classList.contains('open')) { if (e.key === 'ArrowRight') decide('add'); if (e.key === 'ArrowLeft') decide('skip'); }
+});
+
+/* ── Background: a hexagon board that slowly breathes ─────────────
+   A faint honeycomb; soft waves light cells in violet → orange, and now
+   and then a single cell pops in orange, like a token being placed.
+   Bright at the top, fading towards the bottom so content stays readable.
+   Runs at ~30 fps, pauses in hidden tabs, one still frame with reduced motion. */
+(function hexBoard() {
+  const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+  const R = 17, W = Math.sqrt(3) * R, H = 1.5 * R;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ORANGE = [255, 122, 26], VIOLET = [139, 92, 246], TEAL = [20, 200, 200];
+  let w = 0, h = 0, cells = [], pops = [], last = 0, nextPop = 0;
+  const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    w = cv.clientWidth; h = cv.clientHeight;
+    cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cells = [];
+    for (let row = -1, y = -R; y < h + R; row++, y += H)
+      for (let x = (row % 2 ? W / 2 : 0) - W; x < w + W; x += W) cells.push({ x, y, row });
+  }
+  function hex(x, y, r) {
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); }
+    ctx.closePath();
+  }
+  function draw(t) {
+    const s = t / 1000;
+    ctx.clearRect(0, 0, w, h);
+    // deep base with a violet sky at the top and a warm corner
+    let g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#191A3D'); g.addColorStop(.45, '#0F1126'); g.addColorStop(1, '#0B0C1C');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    g = ctx.createRadialGradient(w * .95, h * .02, 0, w * .95, h * .02, w * .9);
+    g.addColorStop(0, 'rgba(255,122,26,.12)'); g.addColorStop(1, 'rgba(255,122,26,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    for (const c of cells) {
+      const fade = Math.max(.18, 1 - c.y / (h * .85));
+      const wave = Math.sin(c.x * .018 + s * .55) * Math.cos(c.y * .014 - s * .4) + .45 * Math.sin((c.x + c.y) * .01 - s * .7);
+      const lit = Math.max(0, wave - .55) / .9;
+      hex(c.x, c.y, R - 1.6);
+      if (lit > 0) {
+        const col = mix(VIOLET, ORANGE, (Math.sin(c.x * .01 + c.y * .006 + s * .25) + 1) / 2);
+        ctx.fillStyle = `rgba(${col},${(lit * .13 * fade).toFixed(3)})`; ctx.fill();
+      }
+      ctx.strokeStyle = `rgba(139,92,246,${(.045 + lit * .10) * fade})`; ctx.lineWidth = 1; ctx.stroke();
+    }
+    // popping tokens
+    if (!still && t > nextPop) {
+      const c = cells[Math.floor(Math.random() * cells.length)];
+      if (c.y < h * .7) pops.push({ c, born: t, col: Math.random() < .75 ? ORANGE : TEAL });
+      nextPop = t + 500 + Math.random() * 700;
+    }
+    pops = pops.filter(p => t - p.born < 2600);
+    for (const p of pops) {
+      const k = (t - p.born) / 2600, a = Math.sin(Math.PI * k), fade = Math.max(.25, 1 - p.c.y / (h * .85));
+      hex(p.c.x, p.c.y, (R - 2) * (.75 + .25 * a));
+      ctx.fillStyle = `rgba(${p.col},${(.16 * a * fade).toFixed(3)})`; ctx.fill();
+      ctx.strokeStyle = `rgba(${p.col},${(.28 * a * fade).toFixed(3)})`; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
+  function loop(t) {
+    if (t - last > 33) { draw(t); last = t; }
+    if (!document.hidden) requestAnimationFrame(loop);
+  }
+  resize(); addEventListener('resize', () => { resize(); draw(performance.now()); });
+  if (still) draw(4000);
+  else { requestAnimationFrame(loop); document.addEventListener('visibilitychange', () => { if (!document.hidden) requestAnimationFrame(loop); }); }
+})();
+
+/* ── Hover spotlight follows the pointer; a tap leaves a hexagon pulse ── */
+const FX = '.card, button.row, .pick, .choice button, .btn, .toggle, .back';
+
+document.addEventListener('pointerdown', e => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!e.target.closest?.(FX + ', .state-hex, .tab, .tab-add, .add-mini, .swipe-btn, .fold, .link-btn')) return;
+  const p = document.createElement('i'); p.className = 'pulse';
+  p.style.left = `${e.clientX}px`; p.style.top = `${e.clientY}px`;
+  document.body.appendChild(p); setTimeout(() => p.remove(), 600);
+});
+
+/* ── Sound: a short dice roll, synthesised (no audio files). Can be muted in the header. ── */
+let soundOn = true;
+try { soundOn = localStorage.getItem('bal-sound') !== '0'; } catch (_) {}
+let audio;
+function dice(fancy) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const now = audio.currentTime, noise = audio.createBuffer(1, audio.sampleRate * .04, audio.sampleRate);
+    const ch = noise.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / ch.length, 3);
+    let t = now;
+    [0, 38, 50, 66, 92, 130].forEach((gap, i) => {
+      t += gap / 1000;
+      const src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
+      src.buffer = noise; f.type = 'bandpass'; f.frequency.value = 1600 + Math.random() * 2200; f.Q.value = 6;
+      g.gain.value = .5 * (1 - i * .13);
+      src.connect(f).connect(g).connect(audio.destination); src.start(t);
+    });
+    if (fancy) [880, 1320].forEach((hz, i) => {
+      const o = audio.createOscillator(), g = audio.createGain(), at = t + .08 + i * .1;
+      o.type = 'triangle'; o.frequency.value = hz; g.gain.setValueAtTime(.0001, at);
+      g.gain.exponentialRampToValueAtTime(.18, at + .01); g.gain.exponentialRampToValueAtTime(.0001, at + .35);
+      o.connect(g).connect(audio.destination); o.start(at); o.stop(at + .4);
+    });
+  } catch (_) {}
+}
+/* ── Haptics: Vibration API (Android browsers); iPhone Safari has none, so nothing happens there ── */
+const buzz = pattern => { try { navigator.vibrate?.(pattern); } catch (_) {} };
+
+/* ── "Got it" stamp ── */
+function gotIt() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const el = document.createElement('div'); el.className = 'stamp-big'; el.textContent = 'GOT IT!';
+  document.body.appendChild(el); setTimeout(() => el.remove(), 1300);
+  burst(innerWidth / 2, innerHeight / 2);
+}
+
+/* ── Onboarding: three swipeable cards on first start ── */
+const INTRO = [
+  { art: ['⭐', '👀', '🤔', '💩'], title: 'Collections', text: 'Make one for Essen and one for anything else. Every game gets a mark: Must Have, Interested, Unsure or Poop.' },
+  { art: ['📋', '📍', '💶', '🏷️'], title: 'BGG lists', text: 'Load the SPIEL preview once. In Essen collections, booth, price and publisher come along.' },
+  { art: ['👉', '🛑', '✅', '🎲'], title: 'Swipe, then hunt', text: 'Swipe right to add, left for not interested. At the fair, filter to “Must Have, not bought” and tick off what you got.' },
+];
+function showIntro() {
+  const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Introduction');
+  el.innerHTML = `
+    <div class="intro-track" id="introtrack">${INTRO.map((s, i) => `
+      <section class="intro-card">
+        <div class="intro-art">${s.art.map((a, k) => `<span class="ih ih${k}"><span>${a}</span></span>`).join('')}</div>
+        <h2>${s.title}</h2><p>${s.text}</p>
+      </section>`).join('')}</div>
+    <div class="intro-dots">${INTRO.map((_, i) => `<i data-dot="${i}"></i>`).join('')}</div>
+    <div class="intro-actions"><button class="link-btn" data-intro="skip">Skip</button><button class="btn btn-primary" data-intro="next">Next</button></div>`;
+  document.body.appendChild(el);
+  const track = el.querySelector('#introtrack'), dots = el.querySelectorAll('[data-dot]'), next = el.querySelector('[data-intro="next"]');
+  const at = () => Math.round(track.scrollLeft / track.clientWidth);
+  const sync = () => { const i = at(); dots.forEach((d, k) => d.classList.toggle('on', k === i)); next.textContent = i === INTRO.length - 1 ? "Let's go" : 'Next'; };
+  const done = () => { try { localStorage.setItem('bal-intro', '1'); } catch (_) {} el.classList.add('out'); setTimeout(() => el.remove(), 300); };
+  track.addEventListener('scroll', sync, { passive: true }); sync();
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-intro]'); if (!b) return;
+    e.stopPropagation();
+    if (b.dataset.intro === 'skip' || at() === INTRO.length - 1) done();
+    else track.scrollTo({ left: (at() + 1) * track.clientWidth, behavior: 'smooth' });
+  });
+  next.focus();
+}
+try { if (!localStorage.getItem('bal-intro')) setTimeout(showIntro, 400); } catch (_) { setTimeout(showIntro, 400); }
+
+render();
+</script>
+</body>
+</html>

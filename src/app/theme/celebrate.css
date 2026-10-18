@@ -1,0 +1,106 @@
+/* Celebrations and rolling counters: docs/design.md §9. Never in the way: no pointer events, short. */
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Must Have and Bought: ~20 small hexagons flying out of the tapped button */
+.burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.burst-hex {
+  position: absolute;
+  width: var(--size);
+  height: calc(var(--size) * 1.15);
+  margin: calc(var(--size) * -0.575) 0 0 calc(var(--size) * -0.5);
+  clip-path: var(--hex);
+  animation: burst 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes burst {
+  from {
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(1) rotate(120deg);
+    opacity: 0;
+  }
+}
+
+/* Bought: "GOT IT!" stamped into the centre of the screen */
+.got-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 10px 22px;
+  border: 3px solid var(--ink);
+  border-radius: var(--r-md);
+  background: var(--grad-got);
+  box-shadow: var(--lift), 0 0 32px rgba(15, 185, 143, 0.55);
+  color: var(--ink);
+  font: 700 40px/1 var(--font-display);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  translate: -50% -50%;
+  animation: got-stamp 1.05s var(--spring) forwards;
+}
+@keyframes got-stamp {
+  from {
+    transform: scale(2.2) rotate(-14deg);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.05) rotate(-8deg);
+    opacity: 0;
+  }
+}
+
+/* Counters: rolling digits drawn over the final value, then an amber flash */
+.counter {
+  position: relative;
+  display: inline-block;
+  border-radius: 6px;
+}
+.counter.flash {
+  animation: counter-flash 0.65s ease-out;
+}
+.counter-final {
+  color: transparent;
+}
+.counter-roll {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+}
+@keyframes counter-flash {
+  from {
+    color: var(--orange-2);
+    text-shadow: 0 0 10px rgba(255, 176, 32, 0.7);
+  }
+  to {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate {
+    display: none;
+  }
+}

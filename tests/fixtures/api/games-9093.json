@@ -1,0 +1,9 @@
+{
+  "games": [
+    { "bggId": 446453, "name": "Kalypso", "year": 2026, "thumbnailUrl": null, "description": "Salvage debris to build a floating settlement in a world swallowed by the sea.", "kind": "boardgame" },
+    { "bggId": 295947, "name": "Cascadia", "year": 2021, "thumbnailUrl": null, "description": "Create the most harmonious ecosystem as you draft tiles and wildlife tokens.", "kind": "boardgame" },
+    { "bggId": 414317, "name": "Harmonies", "year": 2024, "thumbnailUrl": null, "description": "Build landscapes and invite animals to live in them.", "kind": "boardgame" },
+    { "bggId": 359871, "name": "Arcs", "year": 2024, "thumbnailUrl": null, "description": "Compete for power in a fragile, dying sector of space.", "kind": "boardgame" },
+    { "bggId": 385761, "name": "Faraway", "year": 2023, "thumbnailUrl": null, "description": "Explore Alula by playing cards in order, then score them in reverse.", "kind": "boardgame" }
+  ]
+}

@@ -1,0 +1,124 @@
+/* Intro on first start (docs/design.md §12): three cards with floating hexagons, Skip and Next */
+.intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.intro-track {
+  /* horizontal moves belong to the swipe, vertical ones still scroll the page */
+  touch-action: pan-y;
+  user-select: none;
+}
+.intro-card {
+  padding: 0 28px;
+  text-align: center;
+}
+.intro-card.from-next {
+  animation: intro-in 0.35s var(--spring);
+  --intro-from: 40px;
+}
+.intro-card.from-back {
+  animation: intro-in 0.35s var(--spring);
+  --intro-from: -40px;
+}
+@keyframes intro-in {
+  from {
+    opacity: 0;
+    translate: var(--intro-from) 0;
+  }
+}
+.intro-card h2 {
+  font-size: 30px;
+  margin: 10px 0 8px;
+}
+.intro-card p {
+  max-width: 32ch;
+  margin: 0 auto;
+  color: #c9cdf0;
+  font-size: 16px;
+}
+
+/* decoration, not controls: no border, no lift (docs/design.md §2) */
+.intro-art {
+  position: relative;
+  width: 240px;
+  height: 210px;
+  margin: 0 auto 10px;
+}
+.intro-art .hex {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 108px;
+  font-size: 40px;
+  animation: intro-float 3.2s ease-in-out infinite alternate;
+}
+.intro-art .hex:nth-child(1) {
+  left: 22px;
+  top: 0;
+  background: var(--grad-hot);
+}
+.intro-art .hex:nth-child(2) {
+  left: 122px;
+  top: 0;
+  background: var(--grad-cool);
+  animation-delay: -0.8s;
+}
+.intro-art .hex:nth-child(3) {
+  left: 72px;
+  top: 88px;
+  background: var(--grad-violet);
+  animation-delay: -1.6s;
+}
+.intro-art .hex:nth-child(4) {
+  left: 172px;
+  top: 88px;
+  width: 60px;
+  height: 67px;
+  font-size: 26px;
+  background: var(--grad-mud);
+  animation-delay: -2.4s;
+}
+@keyframes intro-float {
+  to {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+.intro-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 26px 0 18px;
+}
+.intro-dots i {
+  width: 10px;
+  height: 11px;
+  background: var(--border);
+  transition:
+    background 0.2s,
+    scale 0.2s;
+}
+.intro-dots i.on {
+  background: var(--grad-hot);
+  scale: 1.3;
+}
+.intro-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 28px;
+}
+.intro-actions .link-btn {
+  padding: 0 8px;
+}
+.intro-actions .btn {
+  min-width: 140px;
+}
+

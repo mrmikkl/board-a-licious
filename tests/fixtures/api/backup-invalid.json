@@ -1,0 +1,17 @@
+{
+  "format": "board-a-licious-backup",
+  "version": 2,
+  "exportedAt": "2026-10-17T09:30:00.000Z",
+  "collections": [
+    {
+      "id": "broken-backup-collection",
+      "name": "Broken backup",
+      "type": "standard",
+      "updatedAt": "2026-10-17T09:00:00.000Z",
+      "entries": [
+        { "bggId": 295947, "name": "Cascadia", "year": 2021, "mark": "must_have", "bought": false, "updatedAt": "2026-10-17T09:00:00.000Z" },
+        { "bggId": 414317, "name": "Harmonies", "year": 2024, "mark": "great", "bought": false, "updatedAt": "2026-10-17T09:00:00.000Z" }
+      ]
+    }
+  ]
+}

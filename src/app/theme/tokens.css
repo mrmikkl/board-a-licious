@@ -1,0 +1,47 @@
+/* Design tokens: docs/design.md §3–§6, one-to-one */
+:root {
+  --ink: #0d0f1f;
+  --deck: #151831;
+  --deck-2: #1d2142;
+  --rim: #2c3160;
+  --border: #3a4078;
+  --border-2: #4a5196;
+  --raised: #232852;
+  --text: #eceeff;
+  --muted: #9aa0c8;
+  --placeholder: #6e74a0;
+  --orange: #ff7a1a;
+  --orange-2: #ffb020;
+  --indigo: #4c5bff;
+  --teal: #14c8c8;
+  --violet: #8b5cf6;
+  --danger: #ff4d5e;
+  --got: #0fb98f;
+
+  --grad-hot: linear-gradient(135deg, #ff7a1a 0%, #ffb020 100%);
+  --grad-cool: linear-gradient(135deg, #4c5bff 0%, #14c8c8 100%);
+  --grad-violet: linear-gradient(135deg, #6d4ae0 0%, #a78bfa 100%);
+  --grad-mud: linear-gradient(135deg, #7a6046 0%, #b0916e 100%);
+  --grad-red: linear-gradient(135deg, #c2183a 0%, #ff4d5e 100%);
+  --grad-got: linear-gradient(135deg, #0fb98f 0%, #7cf0c5 100%);
+  --grad-dusk: linear-gradient(135deg, #8b5cf6 0%, #4c5bff 55%, #14c8c8 100%);
+  --grad-white: linear-gradient(135deg, #ffffff 0%, #c9cdf0 100%);
+  --grad-separator: linear-gradient(90deg, #ff7a1a 0%, #8b5cf6 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --lift: 0 8px 22px rgba(3, 4, 12, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glow: 0 0 0 1px var(--orange), 0 0 18px rgba(255, 122, 26, 0.45);
+
+  --font-display: 'Chakra Petch', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --tap: 44px;
+  --gutter: 16px;
+  --column: 440px;
+  --gap: 8px;
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

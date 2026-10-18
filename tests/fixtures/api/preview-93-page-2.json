@@ -1,0 +1,11 @@
+{
+  "kind": "preview",
+  "id": 93,
+  "title": "SPIEL Essen 2026",
+  "isEssen": true,
+  "page": 2,
+  "pageCount": 3,
+  "entries": [
+    { "position": 4, "bggId": 474443, "name": "Brumble Quest", "thumbnailUrl": null, "facts": { "booth": null, "priceCents": 1000, "currency": "USD", "publisherId": 10754, "publisher": null } }
+  ]
+}
