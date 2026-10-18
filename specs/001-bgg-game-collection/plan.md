@@ -141,7 +141,7 @@ code is copied from it.
 | Release | Target | Scope | BGG source |
 |---|---|---|---|
 | 0.5 | before 2026-10-22 | US1–US5: collections, marks, add by link, previews and geeklists, swipe, bought/price/filter/facts, share/backup, offline, intro, sound | public website JSON (`api.geekdo.com`) under the constitution V exception |
-| 1.0 | BGG token granted | US6 search; adapter switched to the XML API; Zitadel as Access login method | official XML API |
+| later | BGG token granted | own feature: search, adapter switched to the XML API (moved out of F001, spec Clarifications 2026-10-18) | official XML API |
 
 Order inside 0.5 (cut from the end if time runs short):
 1. Spike: `api.geekdo.com` reachable from a deployed Worker (preview items, geekitems).

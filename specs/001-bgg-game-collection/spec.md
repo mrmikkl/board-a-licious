@@ -27,6 +27,9 @@ and this feature's [design.md](design.md).
   and year, then the publisher, then the first three available infos; details show all of them.
 - Q: Where does the publisher come from for games not on a preview? → A: The game's first
   publisher on BoardGameGeek; a preview's publisher (the one at the booth) wins.
+- Q: Does searching all of BoardGameGeek stay in this feature? → A: No. It needs a BGG API token
+  and becomes its own feature; this feature keeps only the switched-off Search tab (US6, FR-019).
+  The former tasks T067–T070 move there.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -163,21 +166,18 @@ backup, delete a collection, import the backup and confirm it is back unchanged.
 
 ---
 
-### User Story 6 - Search all of BoardGameGeek (Priority: P6, Release 1.0)
+### User Story 6 - Search placeholder (Priority: P6)
 
-The user types a game name and adds results to a collection.
+The Search tab is visible and says that searching all of BoardGameGeek comes later; it points to
+adding a game by its link instead. Searching itself is a separate, later feature (see
+Clarifications, 2026-10-18): it needs official BoardGameGeek API access (a token).
 
-**Why this priority**: Depends on official BoardGameGeek API access, which may only be granted after
-the fair. Until then the search tab is visible but switched off and points to adding by link.
-
-**Independent Test**: With API access, search "Cascadia", add the result to a collection.
+**Independent Test**: Open Search: the note and the way to add by link are there.
 
 **Acceptance Scenarios**:
 
-1. **Given** no API access, **When** the user opens Search, **Then** they see that search comes
-   later and a way to add by link instead.
-2. **Given** API access, **When** the user searches by name, **Then** matching games appear with
-   cover and year and can be added to a collection.
+1. **Given** the app, **When** the user opens Search, **Then** they see that search comes later
+   and a way to add a game by link instead.
 
 ---
 
@@ -311,8 +311,9 @@ the fair. Until then the search tab is visible but switched off and points to ad
 
 **Search**
 
-- **FR-019**: Search across all of BoardGameGeek MUST become available once official data access is
-  granted (Release 1.0); until then the search screen MUST say so and offer adding by link.
+- **FR-019**: The search screen MUST say that searching all of BoardGameGeek comes later and offer
+  adding a game by link. Searching itself is out of scope for this feature (a later feature, once
+  official data access is granted).
 
 **Share and backup**
 
@@ -388,8 +389,8 @@ the fair. Until then the search tab is visible but switched off and points to ad
   resolved by "most recent change wins". Which BGG lists a person loaded is synced; the lists'
   games are stored per device.
 - Release 0.5 (before the fair) works without official BoardGameGeek data access, using data BGG's
-  website exposes publicly under the time-limited exception in constitution Principle V. Release 1.0
-  switches to the official access and adds full search.
+  website exposes publicly under the time-limited exception in constitution Principle V. Switching
+  to the official access and full search are a later, separate feature.
 - Web search through external search engines, AI models or company infrastructure is out of scope.
 - Personal notes, ratings, hall-by-hall routing and purchase handling are out of scope for this
   feature (hall view is a later idea, see the vision).
