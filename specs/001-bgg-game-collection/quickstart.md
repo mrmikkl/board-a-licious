@@ -51,7 +51,7 @@ npm run deploy                        # wrangler deploy (assets + /api)
 | 6 | + → List → `boardgamegeek.com/geekpreview/93/…` | "SPIEL Essen 2026", first games with publisher, then price, players and booth < 10 s, publishers filled in shortly after, progress for the rest (SC-002) |
 | 7 | Open a preview game, tick two collections, Done | In both, each showing booth, price and edition (US2, FR-010) |
 | 8 | Collection → Add by list → Select list → swipe 20 games | Right → Not yet marked, left → Not interested; none offered twice; ≥ 15/min (SC-011) |
-| 9 | Filter preset "Must Have, not bought"; Bought it at €52 | Stamp; game stays in Must Have with "✅ €52"; disappears from the preset view; "€52 spent" (US4) |
+| 9 | Filter icon → Select none, tick Must Have, Bought: Not bought, Done; open a game, Bought it at €52 | Stamp; game stays in Must Have with "✅ €52"; disappears from the filtered view; "€52 spent" (US4) |
 | 10 | Game without facts → Add booth, price and publisher | Shown with "Added by you" (FR-011) |
 | 11 | Airplane mode: mark, buy, reload; back online | Everything visible offline; synced afterwards (SC-004) |
 | 12 | Second device | Same collections (FR-022) |
