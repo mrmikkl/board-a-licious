@@ -33,7 +33,7 @@ confirm the collection, the game and its mark are still there.
 
 1. **Given** no collections, **When** the user creates one with a name and the Essen switch on,
    **Then** it appears in the collections list with an Essen badge and opens empty, offering
-   "Add from BGG list" and "Add by link".
+   "Add by list" and "Add game".
 2. **Given** an open collection, **When** the user pastes a link like
    `https://boardgamegeek.com/boardgame/295947/cascadia` and confirms, **Then** the game is added
    under "Not yet marked" with the suggested, editable name "Cascadia", and the user is back in

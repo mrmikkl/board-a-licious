@@ -1,6 +1,6 @@
 # Feature design: BGG Game Collection
 
-**Design rules**: [docs/design.md](../../docs/design.md) v1.6.0 | **Prototype**: [design/prototype.html](design/prototype.html)
+**Design rules**: [docs/design.md](../../docs/design.md) v1.7.0 | **Prototype**: [design/prototype.html](design/prototype.html)
 (first iteration kept as [design/prototype-v1.html](design/prototype-v1.html)) | **Agreed**: 2026-10-17
 
 Open the prototype in a desktop browser and switch the developer tools to device mode (phone size).
@@ -17,10 +17,11 @@ without a "soon" label), **Config**. Sound is switched in Config only.
 |---|---|---|
 | **Intro** (first start) | 3 swipeable cards: Collections, BGG lists, Swipe then hunt; Skip / Next / Let's go | Collections |
 | **Collections** | one card per collection (name, Essen badge, "y not marked", the six counts ⭐ 👀 🤔 💩 ✅ 🛑 in one row, hexagon cluster); "Create a collection" card | Collection, Add (collection) |
-| **Collection** | "Add by list" (primary), "Add by link"; filter icon in the header opens "Filter and group" (Bought, Price: All / Cheap ≤30 / Mid ≤60 / Expensive, group checkboxes with Select all / Select none; Group by: Marks / Booth (hall)); a summary line only while narrowed; bought summary line ("✅ 1 game bought, €52 spent"); separator; groups in mark order, unmarked first, Not interested collapsed. Empty collection: centred empty state with both add buttons. | Game details, Swipe, Add by link (in collection) |
+| **Collection** | "Add by list" (primary) and "Add game", both opening a sheet over the collection; filter icon in the header opens "Filter and group" (Bought, Price: All / Cheap ≤30 / Mid ≤60 / Expensive, group checkboxes with Select all / Select none; Group by: Marks / Booth (hall)); a summary line only while narrowed; bought summary line ("✅ 1 game bought, €52 spent"); separator; groups in mark order, unmarked first, Not interested collapsed. Empty collection: centred empty state with both add buttons. | Game details, Add by list, Add game |
 | **Game details** (sheet) | cover, name, year, BGG link, description, booth/price/publisher (or "➕ Add booth, price and publisher" / "✎ Edit"), mark picker (4 equal hexagons; choosing a mark closes the sheet and moves the game to its group), "✅ Bought it" → "What did you pay?" (prefilled with the listed price) → "Save, got it" / "Don't track the price"; "🛑 Not interested" / "Mark as not yet decided"; "Remove from collection" | – |
 | **Swipe** | source note (which list, whether facts are kept); card stack; ✓ / ✕; games left; arrow keys | back to Collection |
-| **Add by link (in collection)** | link field, recognised game with editable name, "Add to ‹collection›" | back to Collection |
+| **Add by list** (sheet) | segment "Select list" / "Add new list"; Select list: loaded lists, the chosen one highlighted, Cancel / "Select"; Add new list: BGG list link, Cancel / "Load list" | Swipe for that list |
+| **Add game** (sheet) | "for games not on any of your lists", BoardGameGeek link, recognised game with editable name, Cancel / "Add to collection" | back to Collection |
 | **Add (+)** | three hexagons: Collection, BGG list, Game | – |
 | ↳ Collection | name, "Essen collection" switch (on), "Create collection" (enabled once a name is typed) | the new Collection |
 | ↳ BGG list | link (preview or geeklist), "Load list" (enabled once a link is pasted); previews are Essen automatically | the list |

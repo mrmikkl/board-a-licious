@@ -3,7 +3,7 @@
 **Branch**: `001-bgg-game-collection` | **Date**: 2026-10-17 (re-planned after the design session) | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/001-bgg-game-collection/spec.md`, design rules
-[docs/design.md](../../docs/design.md) v1.6.0, feature design [design.md](design.md), accepted ADRs
+[docs/design.md](../../docs/design.md) v1.7.0, feature design [design.md](design.md), accepted ADRs
 0001–0006 in [docs/adr/](../../docs/adr/README.md).
 
 ## Summary

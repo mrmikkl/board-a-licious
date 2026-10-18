@@ -1,6 +1,6 @@
 # Design rules
 
-**Version**: 1.6.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.7.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -88,8 +88,9 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
   screen's buttons (e.g. ⋯) at the far right.
 - **Collection screen**: no back button and no logo (the Collections tab leads back), so the name
   has the whole width. On phones a tool row of four equal icon buttons follows: Add by list
-  (primary), Add by link, Filter, ⋯. From 600px the two add buttons carry text and filter and ⋯ sit
-  at the far right of the header.
+  (primary), Add game, Filter, ⋯. From 600px the two add buttons carry text and filter and ⋯ sit
+  at the far right of the header. Both add buttons open sheets over the collection; the collection
+  stays behind them.
 
 ## 7. Components
 
@@ -105,7 +106,10 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 | **Filter and group** | a filter icon in the collection header (with a small hot hexagon while something is narrowed) opens a sheet: "Filter" with a Bought segment (All / Not bought / ✅ Bought), a Price segment (All / Cheap / Mid / Expensive) and a checkbox per group with "Select all" / "Select none"; a separator; "Group by" (Marks / Booth (hall)); Done. Changes apply at once. While something is narrowed, one summary line under the add buttons says what is shown and opens the sheet. Segments keep all options in one row. |
 | **Separator** | 2px orange → violet line between the controls of a screen and its content. |
 | **Hexagon picker** | 3–4 equal hexagons in one straight, centred row; selected = filled with its gradient. Used for marks and for "what to add". |
-| **Sheet** | bottom sheet for details; closes with Esc, scrim tap, Cancel or by pulling it down on a touch screen (from the handle, or anywhere while scrolled to the top; 100px, or a quick flick of 40px); never saves without an explicit button. |
+| **Sheet** | bottom sheet for details and for adding; a sheet that asks for a choice ends with Cancel (left) and its one action (right) side by side, the action named for what it does (Select, Load list, Add to collection); closes with Esc, scrim tap, Cancel or by pulling it down on a touch screen (from the handle, or anywhere while scrolled to the top; 100px, or a quick flick of 40px); never saves without an explicit button. |
+| **Add by list** | sheet titled "Add by list" with a segment "Select list" / "Add new list" (Select list first when lists are loaded). Select list: the loaded lists as cards; the chosen one gets an orange border, glow and a hexagon tick; lists with every game seen are dimmed and disabled; action "Select". Add new list: the BGG list link with its hint; action "Load list". Either opens Swipe for that list. |
+| **Add game** | sheet titled "Add game": one line saying it is for games not on any list, the BoardGameGeek link with the recognised game and editable name, a note when the game is already in the collection; action "Add to collection". |
+| **Hidden taps** | a heading that counts taps (Config: five taps within 4 s show or hide the developer section) does not select text, does not zoom on double tap and takes the title's full width. |
 | **Multi-choice list** | rows with a hexagon tick; the ticks always show the current truth; changes apply on "Done". |
 | **Inputs** | solid field with label or icon; the primary button stays disabled until the input is valid. Dropdowns use the same field look with an orange hexagon as arrow. |
 | **Swipe card** | big cover, name, year, description (3 lines), facts; ✓/✕ hexagon buttons below; arrow keys work. |
