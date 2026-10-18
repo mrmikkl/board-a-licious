@@ -1,6 +1,6 @@
 # Design rules
 
-**Version**: 1.3.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.4.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -98,7 +98,7 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 | **Card** (collection, geeklist) | solid surface, title + Essen badge, counts; a **cluster of hexagons in the top-right corner** (hot for Essen, violet→teal for standard) that glows and sways slowly. The "create" card is dashed orange and fills orange on hover. |
 | **Game row** | solid tile: hexagon cover (with ✓ badge when bought), name, booth/price/publisher line (Essen) or year, mark pill (+ "✅ €paid" pill when bought). Not-interested rows are dimmed and struck through. |
 | **Group heading** | small coloured hexagon, label, rolling count. "Not interested" is collapsed by default with a chevron. |
-| **Filter** | one full-width button showing the selection and count; opens a panel with presets ("All", "⭐ Must Have, not bought"), a Bought segment (All / Not bought / ✅ Bought) and a checkbox per group. |
+| **Filter** | one full-width button showing the selection and count; opens a panel with a Bought segment (All / Not bought / ✅ Bought), a Price segment (All / Cheap / Mid / Expensive) and a checkbox per group with "Select all" / "Select none". Segments keep all options in one row. |
 | **Separator** | 2px orange → violet line between the controls of a screen and its content. |
 | **Hexagon picker** | 3–4 equal hexagons in one straight, centred row; selected = filled with its gradient. Used for marks and for "what to add". |
 | **Sheet** | bottom sheet for details; closes with Esc, scrim tap, Cancel or by pulling it down on a touch screen (from the handle, or anywhere while scrolled to the top; 100px, or a quick flick of 40px); never saves without an explicit button. |
