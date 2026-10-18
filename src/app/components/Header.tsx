@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 
 /**
  * Screen header in one row (docs/design.md §6): back button (or logo), the title with its badge
@@ -17,7 +17,7 @@ export function Header({
   back?: string
   badge?: ReactNode
   actions?: ReactNode
-  onTitleClick?: () => void
+  onTitleClick?: (event: MouseEvent) => void
   /** false: no back button and no logo, the title gets the whole width */
   lead?: boolean
 }) {
@@ -33,7 +33,7 @@ export function Header({
         </span>
       )}
       <div className="top-title">
-        <h1 onClick={onTitleClick}>{title}</h1>
+        <h1 className={onTitleClick ? 'tappable' : undefined} onClick={onTitleClick}>{title}</h1>
         {badge && <div className="top-badge">{badge}</div>}
       </div>
       {actions && <div className="top-actions">{actions}</div>}

@@ -24,3 +24,19 @@ test('Config: five taps on the heading show the developer links, five more hide 
   for (let i = 0; i < 5; i++) await page.getByRole('heading', { level: 1, name: 'Config' }).click()
   await expect(developer).toHaveCount(0)
 })
+
+test('Config: quick taps on a touch screen count too and do not select the heading', async ({ page }) => {
+  await page.goto('/#/config')
+  const heading = page.getByRole('heading', { level: 1, name: 'Config' })
+  const developer = page.getByRole('region', { name: 'Developer' })
+  await expect(heading).toHaveCSS('user-select', 'none')
+  await expect(heading).toHaveCSS('touch-action', 'manipulation')
+
+  for (let i = 0; i < 5; i++) await heading.tap()
+  await expect(developer).toBeVisible()
+  expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
+
+  // a burst of mouse clicks, as on a laptop (the browser counts them in event.detail)
+  await heading.click({ clickCount: 5 })
+  await expect(developer).toHaveCount(0)
+})

@@ -277,3 +277,14 @@
 .sheet-grip {
   touch-action: none;
 }
+/* a heading that reacts to taps (Config: five taps show the developer section): no text selection,
+   no double-tap zoom swallowing taps, and the whole title width as target */
+.top h1.tappable {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  justify-self: stretch;
+}

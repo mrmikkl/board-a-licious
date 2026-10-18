@@ -1,4 +1,4 @@
-import { useRef, useState, useSyncExternalStore } from 'react'
+import { type MouseEvent, useRef, useState, useSyncExternalStore } from 'react'
 
 import { Header } from '../components/Header.tsx'
 import { useToast } from '../components/Toast.tsx'
@@ -9,7 +9,7 @@ import { href } from '../router.ts'
 /** Config (design.md "Navigation"): sound, the introduction, and the way to sharing and backup. */
 const DEVELOPER_KEY = 'bal-developer'
 const TAPS = 5
-const TAP_WINDOW_MS = 3000
+const TAP_WINDOW_MS = 4000
 
 function storedDeveloper(): boolean {
   try {
@@ -35,10 +35,11 @@ export function Config() {
   const [developer, setDeveloper] = useState(storedDeveloper)
   const taps = useRef<number[]>([])
   // five taps on the heading within a few seconds switch the developer section on or off
-  const tapTitle = () => {
+  // (event.detail counts quick clicks in a row where the browser reports it)
+  const tapTitle = (event: MouseEvent) => {
     const now = Date.now()
     taps.current = [...taps.current.filter(t => now - t < TAP_WINDOW_MS), now]
-    if (taps.current.length < TAPS) return
+    if (taps.current.length < TAPS && event.detail < TAPS) return
     taps.current = []
     const next = !developer
     setDeveloper(next)
