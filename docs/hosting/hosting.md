@@ -82,7 +82,8 @@ sync between devices and as a backup. Losing the server would lose nothing a pho
 - **Access settings in use**: application session duration 1 month (one PIN per person per
   month); login method One-time PIN only, with *instant authentication* on, so the email field
   comes straight away; MFA, purpose justification and temporary authentication off. Policies:
-  "Cloudflare account members" (the owner) and "Friends" (a list of emails), both Allow.
+  "Friends" (a list of emails, the owner's included), Allow; a "Cloudflare account members"
+  policy may remain but has no effect without the Cloudflare login method.
 - **When a session expires**: the app still opens from the phone and keeps working; it shows
   "Sign in again", which leads to `/api/signin`. That path is not served by the service worker,
   so it reaches Access, which asks for a new PIN and then sends the person back to the app; the

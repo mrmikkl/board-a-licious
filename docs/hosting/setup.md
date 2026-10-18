@@ -86,8 +86,15 @@ Then refine it in Zero Trust → **Access controls → Applications** → the Wo
    duration: "Same as application session duration". Leave MFA, purpose justification and
    temporary authentication **off** (they only add hurdles). **Save policy**, then **Save**.
    Use only *Include* (OR); *Require* (AND) would demand every rule at once.
-6. **Login methods**: "Select all" (= One-time PIN) is fine; switch **Apply instant
-   authentication** on, so the email field comes without a provider choice. **Save**.
+6. **Login methods**: first make sure One-time PIN exists: Zero Trust → **Integrations →
+   Identity providers** → **Add an identity provider → One-time PIN** (a fresh account only has
+   **Cloudflare**, the Cloudflare account login, which only you can use). Then, in the
+   application, select **only One-time PIN** (Cloudflare off; "Select all" would include it) and
+   switch **Apply instant authentication** on, so the email field comes straight away. **Save**.
+   Your own email belongs in `Friends` too, so you sign in the same way.
+   Check: a private window shows "enter your email / get a login code", not "Sign in to
+   Cloudflare" with Google, Apple and GitHub. (Both methods together also work, but only with
+   instant authentication off, and friends then see a choice they can get wrong.)
 7. **Details**: **Session duration 1 month** (the longest), so nobody needs a PIN at the fair.
    **Save**.
 
