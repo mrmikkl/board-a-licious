@@ -2500,21 +2500,20 @@ function openAddSheet() {
         </div>
         ${offline ? '<p class="hint proto-offline">You are offline: the game is added on this phone now; its cover and details follow once you are back online.</p>' : ''}
         <div>
-          <span class="label">Collection</span>
-          <ul class="pick-list proto-picks" aria-label="Collection">
-            ${state.collections.map(c => `<li><button type="button" class="pick" data-id="${c.id}" aria-pressed="${c.id === chosen}">
-              <span class="pick-title">${esc(c.name)}</span>
-              <small>${c.games.some(x => x.name === g.name) ? 'Already in it' : c.id === state.lastShare ? 'Last used' : `${c.games.length} ${c.games.length === 1 ? 'game' : 'games'}`}</small>
-            </button></li>`).join('')}
-          </ul>
-          ${already ? `<p class="hint error">${esc(g.name)} is already in ${esc(target.name)}. Pick another collection.</p>` : ''}
+          <label class="label" for="collection">Collection</label>
+          <div class="field select">
+            <select id="collection">
+              ${state.collections.map(c => `<option value="${c.id}" ${c.id === chosen ? 'selected' : ''}>${esc(c.name)}${c.games.some(x => x.name === g.name) ? ' (already in it)' : c.id === state.lastShare ? ' (last used)' : ''}</option>`).join('')}
+            </select>
+          </div>
+          ${already ? `<p class="hint error">${esc(g.name)} is already in ${esc(target.name)}. Pick another collection.</p>` : '<p class="hint">Preselected: the collection you last shared into.</p>'}
         </div>
         <div class="sheet-actions sheet-actions-row">
           <button type="button" class="btn" id="cancel">Cancel</button>
           <button type="submit" class="btn btn-primary" ${already ? 'disabled' : ''}>Add to collection</button>
         </div>
       </form>`)
-    root.querySelectorAll('.pick').forEach(b => (b.onclick = () => { chosen = b.dataset.id; render() }))
+    $('#collection').onchange = e => { chosen = e.target.value; render() }
     $('#cancel').onclick = $('#scrim').onclick = () => { root.innerHTML = collectionScreen(state.lastShare) }
     $('#addform').onsubmit = e => {
       e.preventDefault()
