@@ -38,6 +38,14 @@ describe('GET /api/bgg/games', () => {
     })
   })
 
+  it('fetches at most 10 games from BGG per request and leaves the rest for later', async () => {
+    const calls: string[] = []
+    const ids = Array.from({ length: 12 }, (_, i) => 900001 + i)
+    const res = await testApp(db, { bgg, bggCalls: calls })(`/api/bgg/games?ids=${ids.join(',')}`)
+    expect(res.status).toBe(200)
+    expect(calls).toHaveLength(10)
+  })
+
   it('asks BGG with the game id and object type thing', async () => {
     const calls: string[] = []
     await testApp(db, { bgg, bggCalls: calls })('/api/bgg/games?ids=295947')

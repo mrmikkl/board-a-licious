@@ -66,14 +66,14 @@ describe('completing link-added games (FR-017)', () => {
     expect((await store.entries('c1'))[0]?.detailsPending).toBe(true)
   })
 
-  it('ignores deleted entries and asks for at most 50 ids at a time', async () => {
+  it('ignores deleted entries and asks for at most 10 ids at a time', async () => {
     store = await openStore('anna@example.com')
-    for (let id = 1; id <= 60; id++) await store.saveEntry({ ...newEntry('c1', id, T1), detailsPending: true })
-    await store.saveEntry({ ...newEntry('c1', 61, T1), detailsPending: true, deleted: true })
+    for (let id = 1; id <= 25; id++) await store.saveEntry({ ...newEntry('c1', id, T1), detailsPending: true })
+    await store.saveEntry({ ...newEntry('c1', 26, T1), detailsPending: true, deleted: true })
     const asked: number[][] = []
     await completeDetails({ store, api: { games: async ids => (asked.push(ids), []) }, now: () => T2 })
-    expect(asked.map(ids => ids.length)).toEqual([50, 10])
-    expect(asked.flat()).not.toContain(61)
+    expect(asked.map(ids => ids.length)).toEqual([10, 10, 5])
+    expect(asked.flat()).not.toContain(26)
   })
 
   it('never loses a mark made while it completes the details (no lost update)', async () => {

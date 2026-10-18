@@ -1,7 +1,8 @@
 import type { Store } from './store.ts'
 import type { Game } from './types.ts'
 
-const CHUNK = 50
+// small batches: names and covers appear batch by batch, and a reload loses at most one batch
+const CHUNK = 10
 
 /**
  * Completes games added by link (FR-017): fetches BGG details for entries with `detailsPending` and
