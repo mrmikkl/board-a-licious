@@ -49,6 +49,10 @@ export function ListPicker({
   return (
     <Sheet open title="Add by list" onClose={onClose}>
       <form onSubmit={submit}>
+        <p className="lead pick-intro">
+          Go through a list game by game, Tinder style: swipe right to add a game to {collection.name}, swipe left to pass on it. Games you've
+          decided on don't come back.
+        </p>
         <div className="seg" role="group" aria-label="Which list">
           <button type="button" aria-pressed={mode === 'select'} onClick={() => setMode('select')}>
             Select list
