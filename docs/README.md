@@ -6,7 +6,8 @@
 | [Design rules](design.md) | Look and feel every feature follows (Spec Kit extension 2) |
 | [Constitution](../.specify/memory/constitution.md) | Project principles every feature must respect (lives where Spec Kit expects it) |
 | [Spec Kit](speckit.md) | The basic spec-driven flow |
-| [Spec Kit extended](speckit-extended.md) | Our flow: Spec Kit plus ADRs (ext. 1) and design (ext. 2) |
+| [Spec Kit extended](speckit-extended.md) | Our flow: Spec Kit plus ADRs (ext. 1), design (ext. 2) and several features ahead (ext. 3) |
+| [Orca Swarm](orca-swarm.md) | Implementing one feature's tasks with parallel agents (Orca) |
 | [Architecture decisions](adr/README.md) | Project-wide technical decisions (ADRs) |
 | [Hosting](hosting/hosting.md) | What Neon and Cloudflare do for the app |
 | [Links](links.md) | The app, the SPIEL preview, the repository, the Cloudflare and Neon consoles |

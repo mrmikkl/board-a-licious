@@ -131,8 +131,8 @@ creates the branch and `specs/NNN-<short-name>/` with it.
 - A finished feature is merged into `main` (pull request), and its worktree removed
   (`git worktree remove ../board-a-licious-NNN`); features still in progress take `main` in with
   `git merge main` before their plan.
-- Within one feature, its tasks may be split across parallel agents (e.g. an Orca Swarm), each in
-  a worktree of its own branched from the feature branch and merged back into it.
+- Within one feature, its tasks may be split across parallel agents ([Orca Swarm](orca-swarm.md)),
+  each in a worktree of its own branched from the feature branch and merged back into it.
 
 ## How the extensions are applied
 
