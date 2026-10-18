@@ -224,11 +224,11 @@ order (spec Clarifications 2026-10-18, FR-001, FR-005, FR-010, FR-017, FR-018; d
 collections shows booth, price and edition in both; rows show name and year, publisher and three
 infos; details show all.
 
-- [ ] T079 Drop collection type and list `isEssen` (tests first): domain (`collection.ts`, `lists.ts`, `facts.ts` without the rule, `membership.ts`, `swipe.ts`, `share.ts`, `backup.ts` v3 reading v1/v2), client `store.ts` / `api.ts` / `lists.ts`, `worker/db/repository.ts`, migration `migrations/0004_drop_essen.sql` (drop `collection.type`, `loaded_list.is_essen`; add `collection_entry.edition`)
-- [ ] T080 [P] Parse game info in the Worker (fixture tests first): `worker/bgg/geekdo-games.ts` (`minPlayers`, `maxPlayers`, `designers`, `mechanisms`, first `publisher`) and `worker/bgg/geekdo-lists.ts` (`facts.edition` from the version name; players, designers, mechanisms from the preview item's `geekitem`)
-- [ ] T081 [P] Domain `src/domain/game-info.ts` with unit tests: ordered infos (price, players, booth, edition, designer, mechanisms), unknown ones left out, publisher choice (list or typed-in, else BGG), first three for rows
-- [ ] T082 UI: `GameRow` and list rows (publisher line, three infos), `GameSheet`, `SwipeCard` and `MembershipSheet` (all infos, mechanisms as pills); remove `EssenBadge`, the Essen switch and the facts notes; update the e2e tests
-- [ ] T083 Client: fetch details once more for stored games without game info (`src/client/details.ts`), with a unit test
+- [X] T079 Drop collection type and list `isEssen` (tests first): domain (`collection.ts`, `lists.ts`, `facts.ts` without the rule, `membership.ts`, `swipe.ts`, `share.ts`, `backup.ts` v3 reading v1/v2), client `store.ts` / `api.ts` / `lists.ts`, `worker/db/repository.ts`, migration `migrations/0004_drop_essen.sql` (drop `collection.type`, `loaded_list.is_essen`; add `collection_entry.edition`)
+- [X] T080 [P] Parse game info in the Worker (fixture tests first): `worker/bgg/geekdo-games.ts` (`minPlayers`, `maxPlayers`, `designers`, `mechanisms`, first `publisher`) and `worker/bgg/geekdo-lists.ts` (`facts.edition` from the version name; players, designers, mechanisms from the preview item's `geekitem`)
+- [X] T081 [P] Domain `src/domain/game-info.ts` with unit tests: ordered infos (price, players, booth, edition, designer, mechanisms), unknown ones left out, publisher choice (list or typed-in, else BGG), first three for rows
+- [X] T082 UI: `GameRow` and list rows (publisher line, three infos), `GameSheet`, `SwipeCard` and `MembershipSheet` (all infos, mechanisms as pills); remove `EssenBadge`, the Essen switch and the facts notes; update the e2e tests
+- [X] T083 Client: fetch details once more for stored games without game info (`src/client/details.ts`), with a unit test
 
 ---
 

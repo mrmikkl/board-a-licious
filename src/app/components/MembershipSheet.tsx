@@ -3,14 +3,13 @@ import { useId, useState } from 'react'
 import type { StoredList, StoredListEntry } from '../../client/types.ts'
 import { gameUrl } from '../../domain/bgg-link.ts'
 import type { Collection, Entry } from '../../domain/collection.ts'
-import { factsRule } from '../../domain/facts.ts'
+import { publisherOf } from '../../domain/game-info.ts'
 import { markInfo } from '../../domain/marks.ts'
 import { memberships } from '../../domain/membership.ts'
 import { useServices, useStoreData } from '../context.tsx'
 import { applyMembership } from '../list-actions.ts'
 import { href } from '../router.ts'
-import { EssenBadge } from './EssenBadge.tsx'
-import { FactsList } from './ListFacts.tsx'
+import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
 import { Sheet } from './Sheet.tsx'
 import { useToast } from './Toast.tsx'
@@ -18,15 +17,15 @@ import { useToast } from './Toast.tsx'
 const plural = (n: number) => `${n} ${n === 1 ? 'collection' : 'collections'}`
 
 /** What Done will do to this collection, or what the game is there now. */
-function note(collection: Collection, entry: Entry | undefined, ticked: boolean, listIsEssen: boolean) {
+function note(entry: Entry | undefined, ticked: boolean) {
   if (entry && ticked) return entry.mark === 'new' ? 'In it, not yet marked' : `In it, marked ${markInfo(entry.mark).label}`
   if (entry) return entry.bought ? 'Will be removed, including its mark and the price you paid' : 'Will be removed, including its mark'
-  if (ticked) return `Will be added. ${factsRule(listIsEssen, collection.type).reason}`
+  if (ticked) return 'Will be added'
   return 'Not in it'
 }
 
 /**
- * A game in a BGG list (FR-013, FR-014): cover, description, facts and one hexagon tick per
+ * A game in a BGG list (FR-013, FR-014): cover, description, game info (FR-010) and one hexagon tick per
  * collection, starting from where the game is now. Ticks change nothing until Done; Cancel discards.
  */
 export function MembershipSheet({ list, item, onClose }: { list: StoredList; item: StoredListEntry; onClose: () => void }) {
@@ -78,7 +77,7 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
         </div>
       </div>
       <p className="description">{description || 'The description is filled in from BoardGameGeek later.'}</p>
-      {list.isEssen && <FactsList facts={item.facts} />}
+      <InfoList facts={item.facts} details={{ ...item.info, ...ready?.game }} publisher={publisherOf(item.facts, { ...item.info, ...ready?.game })} />
       <h3 className="section-title">In collections</h3>
       {ready && ready.collections.length === 0 ? (
         <p className="lead">
@@ -94,10 +93,8 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
                 collection={c}
                 checked={after.has(c.id)}
                 note={note(
-                  c,
                   ready.entries.find(e => e.collectionId === c.id),
                   after.has(c.id),
-                  list.isEssen,
                 )}
                 onChange={on => toggle(c.id, on)}
               />
@@ -127,7 +124,7 @@ function Pick({ collection, checked, note, onChange }: { collection: Collection;
       <span className="tick hex" aria-hidden="true" />
       <span className="pick-text">
         <span className="pick-name">
-          <span id={nameId}>{collection.name}</span> {collection.type === 'essen' && <EssenBadge />}
+          <span id={nameId}>{collection.name}</span>
         </span>
         <small id={noteId}>{note}</small>
       </span>

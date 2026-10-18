@@ -80,7 +80,7 @@ describe('list loader', () => {
     const loader = loaderFor(bgg.api)
     const list = await loader.open('preview', 93)
     expect(bgg.calls[0]).toEqual({ what: 'page 1', at: START })
-    expect(list).toMatchObject({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, pageCount: 3, loadedPages: 1 })
+    expect(list).toMatchObject({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', pageCount: 3, loadedPages: 1 })
     expect(list.entries.map(e => e.bggId)).toEqual([100, 101])
     expect(list.openedAt).toBe(new Date(START).toISOString())
     await loader.idle()
@@ -129,14 +129,14 @@ describe('list loader', () => {
     await loader.idle()
     const refs = (await store.pending()).filter(p => p.kind === 'list')
     expect(refs.map(p => p.row)).toEqual([
-      { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: new Date(START).toISOString(), deleted: false },
+      { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', updatedAt: new Date(START).toISOString(), deleted: false },
     ])
     await loader.open('preview', 93)
     expect((await store.pending()).filter(p => p.kind === 'list')).toHaveLength(1)
   })
 
   it('loads a list that arrived from another device (0 pages yet) when it is opened', async () => {
-    await store.applyRemote({ collections: [], entries: [], lists: [{ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: new Date(START).toISOString(), deleted: false }] })
+    await store.applyRemote({ collections: [], entries: [], lists: [{ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', updatedAt: new Date(START).toISOString(), deleted: false }] })
     const bgg = fakeApi(clock)
     const loader = loaderFor(bgg.api)
     const list = await loader.open('preview', 93)
@@ -147,7 +147,7 @@ describe('list loader', () => {
   })
 
   it('queues lists loaded before lists were synced, so they reach the other devices', async () => {
-    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, pageCount: 3, loadedPages: 3, entries: [], openedAt: new Date(START).toISOString() })
+    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', pageCount: 3, loadedPages: 3, entries: [], openedAt: new Date(START).toISOString() })
     const loader = loaderFor(fakeApi(clock).api)
     await loader.open('preview', 93)
     expect((await store.pending()).filter(p => p.kind === 'list').map(p => p.row)).toMatchObject([{ kind: 'preview', id: 93 }])
@@ -164,7 +164,7 @@ describe('list loader', () => {
 
   it('queues a list once that was fully loaded but never shared, and not again', async () => {
     const opened = new Date(START).toISOString()
-    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, pageCount: 3, loadedPages: 3, items: [], entries: [], openedAt: opened, loadedAt: opened })
+    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', pageCount: 3, loadedPages: 3, items: [], entries: [], openedAt: opened, loadedAt: opened })
     let asked = 0
     const loader = createListLoader({ store, api: fakeApi(clock).api, now: clock.now, sleep: clock.sleep, foreground: () => true, events, onQueued: () => asked++ })
     await loader.open('preview', 93)
@@ -316,7 +316,7 @@ describe('list loader', () => {
     const loader = loaderFor(bgg.api)
     const list = await loader.open('geeklist', 66420)
     await loader.idle()
-    expect(list.isEssen).toBe(false)
+    expect(list.kind).toBe('geeklist')
     expect((await store.list('geeklist', 66420))?.loadedPages).toBe(2)
   })
 })

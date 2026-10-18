@@ -49,8 +49,8 @@ describe('one row per game (a preview lists one item per edition or publisher)',
       [2, 2],
       [12, 405769],
     ])
-    expect(merged[0]?.facts).toEqual({ booth: '7-C111 / 3-V300', priceCents: 4500, currency: 'EUR', publisherId: 1, publisher: 'Lookout Games' })
-    expect(merged[2]?.facts).toEqual({ booth: '4-E400', priceCents: null, currency: null, publisherId: 3, publisher: 'Ruse.Games, HABA' })
+    expect(merged[0]?.facts).toEqual({ booth: '7-C111 / 3-V300', priceCents: 4500, currency: 'EUR', publisherId: 1, publisher: 'Lookout Games', edition: null })
+    expect(merged[2]?.facts).toEqual({ booth: '4-E400', priceCents: null, currency: null, publisherId: 3, publisher: 'Ruse.Games, HABA', edition: null })
   })
 
   it('leaves lists without duplicates and without facts (geeklists) as they are', () => {

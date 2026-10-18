@@ -3,11 +3,13 @@ import { type FormEvent, useEffect, useId, useRef, useState } from 'react'
 import type { Game } from '../../client/types.ts'
 import { gameUrl } from '../../domain/bgg-link.ts'
 import { type Collection, type Entry, type Facts, type Paid, suggestPaid } from '../../domain/collection.ts'
+import { gameInfos, publisherOf } from '../../domain/game-info.ts'
 import { MARKS, type Mark, markInfo } from '../../domain/marks.ts'
 import { CURRENCIES, currencySymbol, formatMoney, parsePrice, priceInput } from '../../domain/money.ts'
 import { buyGame, removeGame, saveFacts, setMark, unbuyGame } from '../actions.ts'
 import { type Point, centreOf } from '../celebrate.ts'
 import { useServices } from '../context.tsx'
+import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
 import { HexPicker } from './HexPicker.tsx'
 import { Sheet } from './Sheet.tsx'
@@ -85,7 +87,7 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
       {step === 'facts' ? (
         <FactsForm facts={entry.facts} onSave={facts => void save(facts)} onCancel={() => setStep('details')} />
       ) : (
-        <FactsBox entry={entry} onEdit={() => setStep('facts')} />
+        <FactsBox entry={entry} game={game} onEdit={() => setStep('facts')} />
       )}
       <div style={{ display: 'contents' }} onClickCapture={e => (tapped.current = (e.target as Element).closest('button'))}>
         <HexPicker label="Mark as" options={PICKER} value={entry.mark} onPick={mark} />
@@ -124,26 +126,24 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
   )
 }
 
-/** Booth, price and publisher as an Essen list shows them; typed-in ones say so (FR-011). */
-function FactsBox({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
+/** Publisher and every info of the game (FR-010); booth, price and publisher typed in say so (FR-011). */
+function FactsBox({ entry, game, onEdit }: { entry: Entry; game?: Game; onEdit: () => void }) {
   const facts = entry.facts
+  const publisher = publisherOf(facts, game)
+  const info = <InfoList facts={facts} details={game} publisher={publisher} />
   if (!facts) {
     return (
-      <button type="button" className="btn btn-block facts-add" onClick={onEdit}>
-        ➕ Add booth, price and publisher
-      </button>
+      <>
+        {(publisher || gameInfos(facts, game).length > 0) && <div className="facts-box">{info}</div>}
+        <button type="button" className="btn btn-block facts-add" onClick={onEdit}>
+          ➕ Add booth, price and publisher
+        </button>
+      </>
     )
   }
   return (
     <div className="facts-box">
-      <dl className="factsheet">
-        <dt>Booth</dt>
-        <dd>{facts.booth || '–'}</dd>
-        <dt>Price</dt>
-        <dd>{facts.priceCents != null ? formatMoney(facts.priceCents, facts.currency) : '–'}</dd>
-        <dt>Publisher</dt>
-        <dd>{facts.publisher || '–'}</dd>
-      </dl>
+      {info}
       <div className="facts-foot">
         {entry.factsSource === 'manual' && <span className="facts-by">Added by you</span>}
         <button type="button" className="link-btn" onClick={onEdit}>
@@ -170,7 +170,7 @@ function FactsForm({ facts, onSave, onCancel }: { facts: Facts | null; onSave: (
   const submit = (event: FormEvent) => {
     event.preventDefault()
     if (!filled || priceInvalid) return
-    onSave({ booth, priceCents: cents, currency: cents === null ? null : currency, publisher })
+    onSave({ booth, priceCents: cents, currency: cents === null ? null : currency, publisher, edition: facts?.edition ?? null })
   }
   return (
     <form className="form facts-form" onSubmit={submit}>

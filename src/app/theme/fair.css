@@ -110,21 +110,6 @@
   border-radius: var(--r-md);
   background: var(--deck);
 }
-.factsheet {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 14px;
-  margin: 0;
-}
-.factsheet dt {
-  color: var(--muted);
-  font-size: 14px;
-}
-.factsheet dd {
-  margin: 0;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
 .facts-foot {
   display: flex;
   flex-wrap: wrap;

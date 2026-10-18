@@ -19,7 +19,7 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
   await page.goto('/#/add/collection')
   await page.getByLabel('Name').fill(name)
   await page.getByRole('button', { name: 'Create collection' }).click()
-  // swipe three preview games in (they keep their booths in an Essen collection)
+  // swipe three preview games in (they keep their booths)
   await page.getByRole('button', { name: /^add by list$/i }).click()
   const picker = page.getByRole('dialog', { name: /^add by list$/i })
   await picker.getByRole('button', { name: 'Add new list' }).click()

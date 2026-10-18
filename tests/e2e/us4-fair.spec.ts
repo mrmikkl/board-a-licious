@@ -56,7 +56,7 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   // the game keeps its group, shows the price paid; the collection shows what was spent
   const mustHave = page.getByRole('region', { name: /must have/i })
   await expect(mustHave.getByRole('button', { name: /cascadia/i })).toContainText('✅ €52')
-  await expect(mustHave.getByRole('button', { name: /cascadia/i })).toContainText('3-A101 · €52 · AEG')
+  await expect(mustHave.getByRole('button', { name: /cascadia/i })).toContainText('AEG€52 · Booth 3-A101')
   await expect(page.getByText('✅ 1 game bought, €52 spent')).toBeVisible()
 
   // FR-009: the hunt preset hides bought games and remembers itself

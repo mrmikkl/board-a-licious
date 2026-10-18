@@ -5,7 +5,7 @@ import { type Store, deleteStore, openStore } from '../../src/client/store.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
-const essen: Collection = { id: 'c1', name: 'Essen 2026', type: 'essen', updatedAt: T1, deleted: false }
+const essen: Collection = { id: 'c1', name: 'Essen 2026', updatedAt: T1, deleted: false }
 
 const opened: Store[] = []
 async function open(email = 'anna@example.com') {
@@ -68,7 +68,7 @@ describe('browser store', () => {
     const store = await open()
     await store.putGames([{ bggId: 5, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: null, kind: 'boardgame' }])
     expect((await store.game(5))?.name).toBe('Cascadia')
-    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL', isEssen: true, pageCount: 138, loadedPages: 1, entries: [], openedAt: T1 })
+    await store.putList({ kind: 'preview', id: 93, title: 'SPIEL', pageCount: 138, loadedPages: 1, entries: [], openedAt: T1 })
     expect((await store.list('preview', 93))?.pageCount).toBe(138)
     expect(await store.lists()).toHaveLength(1)
     await store.putPublishers({ 34183: 'Inside Up Games' })

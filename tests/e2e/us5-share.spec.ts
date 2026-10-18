@@ -6,7 +6,7 @@ import { expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 const fixture = (name: string) => readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8')
 
-/** The backup fixture as a fresh Essen collection (own id and name, as the dev database is shared). */
+/** The backup fixture (version 2, with the old Essen type) as a fresh collection (own id and name, as the dev database is shared). */
 function backupFile(name: string) {
   const id = crypto.randomUUID()
   const text = fixture('backup-v2.json').replace('COLLECTION_ID', id).replace('COLLECTION_NAME', name)
@@ -101,9 +101,10 @@ test('US5: export a backup, import it back over a changed mark, restore a delete
   const saved = await download
   expect(saved.suggestedFilename()).toMatch(/^board-a-licious-backup-\d{4}-\d{2}-\d{2}\.json$/)
   const exported = JSON.parse(readFileSync(await saved.path(), 'utf8'))
-  expect(exported).toMatchObject({ format: 'board-a-licious-backup', version: 2 })
+  expect(exported).toMatchObject({ format: 'board-a-licious-backup', version: 3 })
   const mine = exported.collections.find((c: { id: string }) => c.id === id)
-  expect(mine).toMatchObject({ name, type: 'essen' })
+  expect(mine).toMatchObject({ name })
+  expect(mine).not.toHaveProperty('type')
   expect(mine.entries).toHaveLength(3)
   expect(mine.entries.find((e: { bggId: number }) => e.bggId === 295947)).toMatchObject({
     name: 'Cascadia',

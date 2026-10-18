@@ -1,4 +1,5 @@
 import type { Facts } from '../domain/collection.ts'
+import type { GameDetails } from '../domain/game-info.ts'
 
 export type Game = {
   bggId: number
@@ -7,7 +8,8 @@ export type Game = {
   thumbnailUrl: string | null
   description: string | null
   kind: 'boardgame' | 'expansion'
-}
+} & Partial<GameDetails>
+// (games stored before the game info existed lack these fields and are fetched again, FR-017)
 
 export type ListKind = 'preview' | 'geeklist'
 
@@ -19,6 +21,8 @@ export type StoredListEntry = {
   name: string
   thumbnailUrl: string | null
   facts?: ListEntryFacts
+  /** Players, designers and mechanisms as a BGG preview lists them. */
+  info?: Omit<GameDetails, 'publisher'>
   /** The list page the entry came from; a reload replaces entries page by page. */
   page?: number
 }
@@ -32,7 +36,6 @@ export type StoredList = {
   kind: ListKind
   id: number
   title: string
-  isEssen: boolean
   pageCount: number
   loadedPages: number
   entries: StoredListEntry[]

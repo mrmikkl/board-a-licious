@@ -1,17 +1,10 @@
 import { type CSSProperties, type PointerEvent, useRef } from 'react'
 
-import type { Game, ListEntryFacts, StoredListEntry } from '../../client/types.ts'
-import { formatMoney } from '../../domain/money.ts'
+import type { Game, StoredListEntry } from '../../client/types.ts'
+import { publisherOf } from '../../domain/game-info.ts'
 import type { SwipeDirection } from '../../domain/swipe.ts'
+import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
-
-/** "Booth 3-R400 · €60 · Inside Up Games", or null when the list says nothing. */
-export function factsLine(facts?: ListEntryFacts): string | null {
-  if (!facts) return null
-  const parts = [facts.booth ? `Booth ${facts.booth}` : null, facts.priceCents != null ? formatMoney(facts.priceCents, facts.currency) : null, facts.publisher]
-  const line = parts.filter(Boolean).join(' · ')
-  return line || null
-}
 
 /** How far the card must travel before letting go decides. */
 const THRESHOLD = 90
@@ -24,7 +17,6 @@ const THRESHOLD = 90
 export function SwipeCard({
   game,
   details,
-  isEssen,
   place,
   enter = false,
   leaving,
@@ -33,7 +25,6 @@ export function SwipeCard({
 }: {
   game: StoredListEntry
   details?: Game
-  isEssen: boolean
   place: 'top' | 'behind' | 'leaving'
   enter?: boolean
   leaving?: { direction: SwipeDirection; fromX: number }
@@ -86,7 +77,8 @@ export function SwipeCard({
       }
     : {}
 
-  const facts = isEssen ? factsLine(game.facts) : null
+  // the list's players, designers and mechanisms, overridden by the game's details once known
+  const info = { ...game.info, ...details }
   const cover: Game = details ?? { bggId: game.bggId, name: game.name, year: null, thumbnailUrl: game.thumbnailUrl, description: null, kind: 'boardgame' }
   const style = leaving ? ({ '--dir': leaving.direction === 'right' ? 1 : -1, '--from-x': `${leaving.fromX}px` } as CSSProperties) : undefined
   const classes = ['swipe-card', place, enter && !reducedMotion ? 'enter' : '', leaving ? `leaving-${leaving.direction}` : ''].filter(Boolean).join(' ')
@@ -111,7 +103,7 @@ export function SwipeCard({
       <h2 className="swipe-name">{details?.name ?? game.name}</h2>
       <p className="swipe-year">{details?.year ?? ' '}</p>
       {details?.description && <p className="swipe-desc">{details.description}</p>}
-      {facts ? <p className="swipe-facts">{facts}</p> : <p className="swipe-nofacts">{isEssen ? 'No booth or price for this game yet' : 'No booth or price on this list'}</p>}
+      <InfoList facts={game.facts} details={info} publisher={publisherOf(game.facts, info)} />
     </div>
   )
 }

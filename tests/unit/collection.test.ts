@@ -15,19 +15,18 @@ import {
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
 
-const essen: Collection = { id: 'c1', name: 'Essen 2026', type: 'essen', updatedAt: T1, deleted: false }
+const essen: Collection = { id: 'c1', name: 'Essen 2026', updatedAt: T1, deleted: false }
 const entry = (patch: Partial<Entry> = {}): Entry => ({ ...newEntry('c1', 446453, T1), ...patch })
 
 describe('collections', () => {
   it('trims the name and accepts 1–60 chars', () => {
-    expect(newCollection({ id: 'x', name: '  Essen 2026 ', type: 'essen', now: T1 }).name).toBe('Essen 2026')
-    expect(() => newCollection({ id: 'x', name: '   ', type: 'essen', now: T1 })).toThrow(/name/i)
-    expect(() => newCollection({ id: 'x', name: 'x'.repeat(61), type: 'essen', now: T1 })).toThrow(/60/)
+    expect(newCollection({ id: 'x', name: '  Essen 2026 ', now: T1 }).name).toBe('Essen 2026')
+    expect(() => newCollection({ id: 'x', name: '   ', now: T1 })).toThrow(/name/i)
+    expect(() => newCollection({ id: 'x', name: 'x'.repeat(61), now: T1 })).toThrow(/60/)
   })
 
-  it('validates type essen | standard', () => {
-    expect(validateCollection({ ...essen, type: 'standard' })).toBeNull()
-    expect(validateCollection({ ...essen, type: 'other' as never })).toMatch(/type/i)
+  it('validates a collection, which has no type anymore', () => {
+    expect(validateCollection({ ...essen })).toBeNull()
     expect(validateCollection({ ...essen, name: '' })).toMatch(/name/i)
   })
 

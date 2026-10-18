@@ -28,21 +28,22 @@ describe('GET /api/bgg/lists/preview/<id>', () => {
     const res = await testApp(db, { bgg })('/api/bgg/lists/preview/93')
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body).toMatchObject({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, page: 1, pageCount: 138 })
+    expect(body).toMatchObject({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', page: 1, pageCount: 138 })
     expect(body.entries).toHaveLength(10)
     expect(body.entries[0]).toEqual({
       position: 1,
       bggId: 446453,
       name: 'Kalypso',
       thumbnailUrl: expect.stringContaining('cf.geekdo-images.com'),
-      facts: { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisherId: 34183, publisher: 'Inside Up Games' },
+      facts: { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisherId: 34183, publisher: 'Inside Up Games', edition: 'English edition' },
+      info: { minPlayers: 1, maxPlayers: 4, designers: ['Gilles Turbide'], mechanisms: expect.arrayContaining(['Chaining', 'Closed Drafting']) },
     })
   })
 
   it('reads the booth as null when missing and the price as null when BGG lists none', async () => {
     const { entries } = await (await testApp(db, { bgg })('/api/bgg/lists/preview/93?page=1')).json()
-    expect(entries[1].facts).toEqual({ booth: null, priceCents: 2000, currency: 'USD', publisherId: 10754, publisher: 'Plaid Hat Games' })
-    expect(entries[9].facts).toEqual({ booth: '4-E400', priceCents: null, currency: null, publisherId: 54509, publisher: 'Ruse.Games' })
+    expect(entries[1].facts).toMatchObject({ booth: null, priceCents: 2000, currency: 'USD', publisherId: 10754, publisher: 'Plaid Hat Games' })
+    expect(entries[9].facts).toMatchObject({ booth: '4-E400', priceCents: null, currency: null, publisherId: 54509, publisher: 'Ruse.Games' })
   })
 
   it('falls back to the msrp when there is no fair price', async () => {
@@ -87,7 +88,6 @@ describe('GET /api/bgg/lists/geeklist/<id>', () => {
       kind: 'geeklist',
       id: 66420,
       title: 'MetaList for GeekList AUCTIONS',
-      isEssen: false,
       page: 1,
       pageCount: 1,
       entries: [

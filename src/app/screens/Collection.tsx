@@ -6,7 +6,6 @@ import { type Filter, applyFilter, filterLabel, fromStored, groupCounts, presetO
 import { deleteCollection, renameCollection, saveFilter, saveGroupBy } from '../actions.ts'
 import { AddGameSheet } from '../components/AddGameSheet.tsx'
 import { Counter } from '../components/Counter.tsx'
-import { EssenBadge } from '../components/EssenBadge.tsx'
 import { FilterSheet } from '../components/FilterPanel.tsx'
 import { IconAddList, IconFilter, IconLink } from '../components/icons.tsx'
 import { GameRow } from '../components/GameRow.tsx'
@@ -126,7 +125,6 @@ export function Collection({ id }: { id: string }) {
       <Header
         title={collection.name}
         back={back}
-        badge={collection.type === 'essen' ? <EssenBadge /> : undefined}
         lead={false}
         actions={
           // wide screens: filter and ⋯ in the header; phones: in the tool row below (an empty
@@ -286,7 +284,7 @@ function CollectionMenu({ collection, gameCount, onClose }: { collection: Collec
           <div className="field">
             <input id={nameId} value={name} maxLength={NAME_MAX} autoComplete="off" onChange={e => setName(e.target.value)} />
           </div>
-          <p className="hint">{collection.type === 'essen' ? 'Essen collection' : 'Standard collection'}; the type cannot change.</p>
+          
         </div>
         <button type="submit" className="btn btn-primary btn-block" disabled={!canRename}>
           Save name

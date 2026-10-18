@@ -6,14 +6,15 @@ const CHUNK = 50
 /**
  * Completes games added by link (FR-017): fetches BGG details for entries with `detailsPending` and
  * clears the flag; mark, bought and price stay as they are. Games this device has no details for yet
- * (entries synced from another device) are fetched too. Failures keep the entries pending for the next
- * run. Returns how many pending entries were completed.
+ * (entries synced from another device), or only without players, designers and mechanisms (stored
+ * before the game info existed, FR-010), are fetched too. Failures keep the entries pending for the
+ * next run. Returns how many pending entries were completed.
  */
 export async function completeDetails(deps: { store: Store; api: { games(ids: number[]): Promise<Game[]> }; now: () => string }) {
   const { store, api, now } = deps
   const live = (await store.allEntries()).filter(e => !e.deleted)
   const allIds = [...new Set(live.map(e => e.bggId))]
-  const known = new Set((await store.games(allIds)).map(g => g.bggId))
+  const known = new Set((await store.games(allIds)).filter(g => Array.isArray(g.designers)).map(g => g.bggId))
   const pendingIds = new Set(live.filter(e => e.detailsPending).map(e => e.bggId))
   const ids = allIds.filter(id => pendingIds.has(id) || !known.has(id))
   let completed = 0

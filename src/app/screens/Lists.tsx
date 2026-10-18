@@ -1,5 +1,4 @@
 import type { StoredList } from '../../client/types.ts'
-import { EssenBadge } from '../components/EssenBadge.tsx'
 import { Header } from '../components/Header.tsx'
 import { useStoreData } from '../context.tsx'
 import { href } from '../router.ts'
@@ -40,14 +39,14 @@ export function Lists() {
             <p className="lead">Loaded lists stay on this phone for browsing, also offline. Open one to put its games into your collections.</p>
             <div className="cards">
               {lists.map(list => (
-                <a key={`${list.kind}:${list.id}`} className={`card list-card${list.isEssen ? ' essen' : ''}`} href={href({ name: 'list', kind: list.kind, listId: list.id })}>
+                <a key={`${list.kind}:${list.id}`} className="card list-card" href={href({ name: 'list', kind: list.kind, listId: list.id })}>
                   <span className="cluster" aria-hidden="true">
                     <i className="hex" />
                     <i className="hex" />
                     <i className="hex" />
                   </span>
                   <h2 className="card-title">
-                    <span className="card-name">{list.title}</span> {list.isEssen && <EssenBadge />}
+                    <span className="card-name">{list.title}</span>
                   </h2>
                   <p className="card-sub">{list.error ? `${list.error} Open the list to retry.` : progress(list)}</p>
                   {list.loadedPages < list.pageCount && (

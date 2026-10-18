@@ -33,7 +33,7 @@ async function drag(page: Page, card: Locator, dx: number) {
   await page.mouse.up()
 }
 
-test('US3: swipe a BGG preview into an Essen collection', async ({ page }) => {
+test('US3: swipe a BGG preview into a collection', async ({ page }) => {
   const releasePage2 = await fakePreview(page)
   await page.goto('/#/add/collection')
   const name = unique('Swipe')
@@ -52,7 +52,7 @@ test('US3: swipe a BGG preview into an Essen collection', async ({ page }) => {
 
   const card = page.getByRole('group', { name: /^game:/i })
   await expect(page.getByRole('heading', { level: 1, name: `Add to ${name}` })).toBeVisible()
-  await expect(page.getByText('Booth, price and publisher are kept')).toBeVisible()
+  await expect(page.getByText('Right adds the game, left passes on it.')).toBeVisible()
   await expect(card.getByRole('heading', { name: 'Kalypso' })).toBeVisible()
   await expect(card).toContainText('2026')
   await expect(card).toContainText('Salvage debris')

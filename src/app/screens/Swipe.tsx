@@ -3,13 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '../../client/api.ts'
 import { LIST_ERROR } from '../../client/lists.ts'
 import type { Game, StoredListEntry } from '../../client/types.ts'
-import { factsRule } from '../../domain/facts.ts'
+import { rowInfos } from '../../domain/game-info.ts'
 import type { ListRef } from '../../domain/lists.ts'
 import { type SwipeDirection, swipeQueue } from '../../domain/swipe.ts'
-import { EssenBadge } from '../components/EssenBadge.tsx'
 import { Header } from '../components/Header.tsx'
 import { ListPicker } from '../components/ListPicker.tsx'
-import { SwipeCard, factsLine } from '../components/SwipeCard.tsx'
+import { SwipeCard } from '../components/SwipeCard.tsx'
 import { useServices, useStoreData } from '../context.tsx'
 import { href, navigate } from '../router.ts'
 import { decideSwipe, loadCardDetails } from '../swipe-actions.ts'
@@ -163,7 +162,7 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
 
   const topDetails = top ? shown?.get(top.bggId) : undefined
   const card = top
-    ? [top.name, topDetails?.year, list?.isEssen ? factsLine(top.facts) : null].filter(Boolean).join(', ')
+    ? [top.name, topDetails?.year, ...rowInfos(top.facts, { ...top.info, ...topDetails }).map(i => i.text)].filter(Boolean).join(', ')
     : queue?.allDecided
       ? "You've seen every game on this list"
       : list?.error
@@ -173,7 +172,7 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
 
   return (
     <>
-      <Header title={`Add to ${collection.name}`} back={back} badge={collection.type === 'essen' ? <EssenBadge /> : undefined} />
+      <Header title={`Add to ${collection.name}`} back={back} />
       <main className="screen swipe-screen">
         <p className="visually-hidden" aria-live="polite" aria-atomic="true">
           {announcement}
@@ -187,12 +186,12 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
         )}
         {list && queue && (
           <>
-            <p className={`swipe-note${list.isEssen && collection.type === 'essen' ? ' warm' : ''}`}>
+            <p className="swipe-note">
               <i className="hex" aria-hidden="true" />
               <span>
-                From <b>{list.title}</b> {list.isEssen && <EssenBadge />}
+                From <b>{list.title}</b>
                 <br />
-                {factsRule(list.isEssen, collection.type).reason}
+                Right adds the game, left passes on it.
               </span>
             </p>
             {queue.allDecided ? (
@@ -218,7 +217,6 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
                       key={top.bggId}
                       game={top}
                       details={topDetails}
-                      isEssen={list.isEssen}
                       place="top"
                       enter={decided.size > 0}
                       reducedMotion={reducedMotion}
@@ -244,7 +242,6 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
                       key={`leaving-${leaving.key}`}
                       game={leaving.game}
                       details={leaving.details}
-                      isEssen={list.isEssen}
                       place="leaving"
                       leaving={leaving}
                       reducedMotion={reducedMotion}

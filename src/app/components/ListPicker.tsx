@@ -2,10 +2,8 @@ import { type FormEvent, useId, useState } from 'react'
 
 import type { StoredList } from '../../client/types.ts'
 import type { Collection, Entry } from '../../domain/collection.ts'
-import { factsRule } from '../../domain/facts.ts'
 import { type ListRef, parseListLink } from '../../domain/lists.ts'
 import { swipeQueue } from '../../domain/swipe.ts'
-import { EssenBadge } from './EssenBadge.tsx'
 import { Sheet } from './Sheet.tsx'
 
 const games = (n: number) => `${n} ${n === 1 ? 'game' : 'games'}`
@@ -73,7 +71,7 @@ export function ListPicker({
                 const isChosen = selected?.kind === list.kind && selected.id === list.id
                 const text = queue.allDecided
                   ? "You've seen every game on it"
-                  : `${left > 0 ? `${games(left)} to go through` : 'More games are loading'}. ${factsRule(list.isEssen, collection.type).reason}.`
+                  : `${left > 0 ? `${games(left)} to go through` : 'More games are loading'}.`
                 return (
                   <li key={`${list.kind}:${list.id}`}>
                     <button
@@ -84,7 +82,7 @@ export function ListPicker({
                       onClick={() => setSelected({ kind: list.kind, id: list.id })}
                     >
                       <span className="pick-title">
-                        {list.title} {list.isEssen && <EssenBadge />}
+                        {list.title}
                       </span>
                       <small>{text}</small>
                     </button>

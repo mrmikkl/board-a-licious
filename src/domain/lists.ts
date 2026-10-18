@@ -19,6 +19,7 @@ type MergeFacts = {
   currency?: string | null
   publisherId?: number | null
   publisher?: string | null
+  edition?: string | null
 }
 
 const joinUnique = (values: (string | null | undefined)[], separator: string) => {
@@ -29,7 +30,7 @@ const joinUnique = (values: (string | null | undefined)[], separator: string) =>
 /**
  * One row per game. A BGG preview lists one item per edition or publisher, so a game can appear
  * several times (other booth, other publisher, sometimes on another page). The merged row keeps the
- * first position and every booth ("7-C111 / 3-V300") and publisher ("Ruse.Games, HABA"); the price
+ * first position and every booth ("7-C111 / 3-V300") and publisher ("Ruse.Games, HABA") and edition; the price
  * is the first one listed.
  */
 export function mergeListEntries<E extends { position: number; bggId: number; facts?: MergeFacts }>(items: E[]): E[] {
@@ -52,6 +53,7 @@ export function mergeListEntries<E extends { position: number; bggId: number; fa
         currency: priced?.currency ?? null,
         publisherId: all.find(f => f.publisherId != null)?.publisherId ?? null,
         publisher: joinUnique(all.map(f => f.publisher), ', '),
+        edition: joinUnique(all.map(f => f.edition), ', '),
       },
     }
   })
@@ -62,7 +64,6 @@ export type LoadedList = {
   kind: ListKind
   id: number
   title: string
-  isEssen: boolean
   updatedAt: string
   deleted: boolean
 }
@@ -73,7 +74,6 @@ export function validateLoadedList(l: LoadedList): string | null {
   if (l.kind !== 'preview' && l.kind !== 'geeklist') return 'The list kind must be "preview" or "geeklist".'
   if (!Number.isSafeInteger(l.id) || l.id <= 0) return 'The list id must be a positive whole number.'
   if (typeof l.title !== 'string' || l.title.trim().length === 0 || l.title.length > 300) return 'The list needs a title of up to 300 characters.'
-  if (typeof l.isEssen !== 'boolean') return 'isEssen must be true or false.'
   if (typeof l.updatedAt !== 'string' || Number.isNaN(Date.parse(l.updatedAt))) return 'updatedAt must be a timestamp.'
   if (typeof l.deleted !== 'boolean') return 'deleted must be true or false.'
   return null

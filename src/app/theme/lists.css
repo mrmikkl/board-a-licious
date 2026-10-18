@@ -1,9 +1,5 @@
 /* BGG lists: list cards, list rows with +, progress, list game sheet (docs/design.md §7) */
 
-.list-card.essen .cluster i {
-  background: var(--grad-hot);
-  filter: drop-shadow(0 0 6px rgba(255, 122, 26, 0.6));
-}
 .example {
   color: var(--text);
   font-weight: 700;
@@ -84,26 +80,6 @@
   margin: 8px 0 12px;
   color: var(--muted);
   font-size: 14px;
-}
-.facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--gap);
-  margin: 0 0 8px;
-}
-.facts div {
-  padding: 8px 10px;
-  border-radius: var(--r-md);
-  background: var(--deck-2);
-}
-.facts dt {
-  font-size: 12px;
-  color: var(--muted);
-}
-.facts dd {
-  margin: 2px 0 0;
-  font-weight: 700;
-  overflow-wrap: anywhere;
 }
 
 /* Multi-choice list: a hexagon tick per collection; the ticks always show the current truth */

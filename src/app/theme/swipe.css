@@ -25,12 +25,6 @@
   margin-top: 2px;
   background: var(--grad-dusk);
 }
-.swipe-note.warm > .hex {
-  background: var(--grad-hot);
-}
-.swipe-note .badge-essen {
-  vertical-align: 1px;
-}
 
 /* Card stack */
 .deck {
@@ -113,19 +107,6 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   line-clamp: 3;
-}
-.swipe-facts {
-  margin: auto 0 0;
-  padding: 8px 12px;
-  border-radius: var(--r-md);
-  background: var(--raised);
-  font-size: 13px;
-  font-weight: 600;
-}
-.swipe-nofacts {
-  margin: auto 0 0;
-  color: var(--muted);
-  font-size: 13px;
 }
 .swipe-wait {
   justify-content: center;
@@ -294,4 +275,25 @@
 }
 .pick-intro {
   margin: 0 0 14px;
+}
+
+/* All game info on the card (FR-010): compact, left-aligned; a long card scrolls up and down
+   (pan-y), sideways stays the swipe */
+.swipe-card.top {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.swipe-card .info-list {
+  width: 100%;
+  margin: 4px 0 0;
+  gap: 4px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+.swipe-card .info-list dt {
+  font-size: 13px;
+}
+.swipe-card .info-list dd {
+  font-weight: 600;
 }

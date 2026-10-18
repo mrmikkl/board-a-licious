@@ -6,7 +6,7 @@ import type { AppServices } from '../../src/app/context.tsx'
 import { applyMembership } from '../../src/app/list-actions.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
-const preview: StoredList = { kind: 'preview', id: 93, title: 'SPIEL', isEssen: true, pageCount: 1, loadedPages: 1, entries: [], openedAt: T1 }
+const preview: StoredList = { kind: 'preview', id: 93, title: 'SPIEL', pageCount: 1, loadedPages: 1, entries: [], openedAt: T1 }
 const item: StoredListEntry = {
   position: 1,
   bggId: 446453,
@@ -23,7 +23,7 @@ afterEach(async () => {
 
 async function setup() {
   store = await openStore('anna@example.com')
-  await store.saveCollection({ id: 'essen', name: 'Essen 2026', type: 'essen', updatedAt: T1, deleted: false })
+  await store.saveCollection({ id: 'essen', name: 'Essen 2026', updatedAt: T1, deleted: false })
   const calls = { schedule: 0, details: 0 }
   const services = {
     store,

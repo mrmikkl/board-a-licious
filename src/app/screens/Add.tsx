@@ -53,7 +53,7 @@ function CollectionForm() {
   )
 }
 
-/** Load a BGG list by its link (FR-012): previews are Essen lists, geeklists have no facts. */
+/** Load a BGG list by its link (FR-012): previews bring booth, price and edition, geeklists only games. */
 function ListForm() {
   const linkId = useId()
   const hintId = useId()
@@ -64,7 +64,7 @@ function ListForm() {
     : !list
       ? 'Paste a link to a BoardGameGeek preview or geeklist, like boardgamegeek.com/geekpreview/93.'
       : list.kind === 'preview'
-        ? 'Preview: an Essen list with booth, price and publisher.'
+        ? 'Preview: games with booth, price, publisher and edition.'
         : 'Geeklist: games without booth and price.'
 
   const submit = (event: FormEvent) => {
@@ -78,7 +78,7 @@ function ListForm() {
         Load a BGG list
       </h2>
       <form className="form" onSubmit={submit}>
-        <p className="lead">Paste the link of a BoardGameGeek preview (like SPIEL Essen 2026, with booth, price and publisher) or a geeklist.</p>
+        <p className="lead">Paste the link of a BoardGameGeek preview (like SPIEL Essen 2026, with booth, price and edition) or a geeklist.</p>
         <div>
           <label className="label" htmlFor={linkId}>
             BGG list link
@@ -172,8 +172,8 @@ function GameForm() {
               </select>
             </div>
             {already && collection && <p className="hint error">This game is already in {collection.name}. Pick another collection.</p>}
-            {!already && collection?.type === 'essen' && parsed && (
-              <p className="hint">Added by link, the game has no booth, price and publisher; you can type them in later.</p>
+            {!already && collection && parsed && (
+              <p className="hint">Added by link, the game has no booth or price; you can type them in later.</p>
             )}
           </div>
           <button type="submit" className="btn btn-primary btn-block" disabled={!ready}>

@@ -16,7 +16,7 @@ export async function decideSwipe(services: AppServices, collection: Collection,
     await store.putGames([{ bggId: game.bggId, name: game.name, year: null, thumbnailUrl: game.thumbnailUrl, description: null, kind: 'boardgame' }])
   }
   const now = new Date().toISOString()
-  await store.saveEntry(swipeDecision({ collection, game, listIsEssen: list.isEssen, direction, now, detailsPending: !known }))
+  await store.saveEntry(swipeDecision({ collection, game, direction, now, detailsPending: !known }))
   void services.sync.schedule()
   if (!known) void services.completeDetails()
 }

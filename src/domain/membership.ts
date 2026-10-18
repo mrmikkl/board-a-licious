@@ -16,7 +16,6 @@ export function membershipChanges(input: {
   after: Set<string>
   collections: Collection[]
   entries: Entry[]
-  listIsEssen: boolean
   facts?: ListFacts | null
   now: string
 }): { adds: Entry[]; removals: Entry[] } {
@@ -27,7 +26,7 @@ export function membershipChanges(input: {
     if (collection.deleted) continue
     const id = collection.id
     if (after.has(id) && !before.has(id)) {
-      adds.push({ ...newEntry(id, bggId, now), ...factsFromList(input.facts, input.listIsEssen, collection.type) })
+      adds.push({ ...newEntry(id, bggId, now), ...factsFromList(input.facts) })
     } else if (before.has(id) && !after.has(id)) {
       const current = input.entries.find(e => e.collectionId === id && e.bggId === bggId && !e.deleted)
       if (current) removals.push({ ...current, deleted: true, updatedAt: now })

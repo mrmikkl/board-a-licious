@@ -26,7 +26,6 @@ export type ListPage = {
   kind: ListKind
   id: number
   title: string
-  isEssen: boolean
   page: number
   pageCount: number
   entries: StoredListEntry[]

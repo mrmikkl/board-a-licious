@@ -9,7 +9,6 @@ const T1 = '2026-10-17T09:00:00.000Z'
 const collection: Collection = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Essen 2026',
-  type: 'essen',
   updatedAt: T1,
   deleted: false,
 }
@@ -79,7 +78,7 @@ describe('/api/sync', () => {
 
   it('syncs the loaded BGG lists and rejects invalid ones', async () => {
     const call = testApp(db)
-    const spiel = { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: T1, deleted: false }
+    const spiel = { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', updatedAt: T1, deleted: false }
     expect(await (await call('/api/sync', json({ lists: [spiel] }))).json()).toEqual({ applied: 1, ignored: 0 })
     expect((await (await call('/api/sync')).json()).lists).toEqual([spiel])
     for (const bad of [{ ...spiel, kind: 'other' }, { ...spiel, id: 0 }, { ...spiel, title: '' }]) {

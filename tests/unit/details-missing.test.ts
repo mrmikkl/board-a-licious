@@ -19,7 +19,7 @@ describe('games synced from another device', () => {
     store = await openStore('ben@example.com')
     await store.applyRemote({ collections: [], entries: [{ ...newEntry('c1', 295947, T1), mark: 'poop' }] })
     await store.applyRemote({ collections: [], entries: [newEntry('c1', 1, T1)] })
-    await store.putGames([{ ...cascadia, bggId: 1, name: 'Known' }])
+    await store.putGames([{ ...cascadia, bggId: 1, name: 'Known', designers: [] }])
     const asked: number[][] = []
 
     expect(await completeDetails({ store, api: { games: async ids => (asked.push(ids), [cascadia]) }, now: () => T1 })).toBe(0)

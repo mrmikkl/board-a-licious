@@ -1,3 +1,4 @@
+import type { GameDetails } from '../../src/domain/game-info.ts'
 import type { Game } from '../db/repository.ts'
 
 export type { Game }
@@ -10,6 +11,7 @@ export type ListFacts = {
   currency: string | null
   publisherId: number | null
   publisher: string | null
+  edition: string | null
 }
 
 export type ListEntry = {
@@ -18,13 +20,13 @@ export type ListEntry = {
   name: string
   thumbnailUrl: string | null
   facts?: ListFacts
+  info?: Omit<GameDetails, 'publisher'>
 }
 
 export type ListPage = {
   kind: ListKind
   id: number
   title: string
-  isEssen: boolean
   page: number
   pageCount: number
   entries: ListEntry[]

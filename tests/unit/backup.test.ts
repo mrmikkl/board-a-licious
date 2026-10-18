@@ -13,9 +13,9 @@ const T1 = '2026-10-16T09:00:00.000Z'
 const T2 = '2026-10-17T09:30:00.000Z'
 const NOW = '2026-10-18T12:00:00.000Z'
 
-const essen: Collection = { id: 'c1', name: 'Essen 2026', type: 'essen', updatedAt: T1, deleted: false }
-const wishlist: Collection = { id: 'c2', name: 'Wishlist', type: 'standard', updatedAt: T1, deleted: false }
-const gone: Collection = { id: 'c3', name: 'Old', type: 'standard', updatedAt: T1, deleted: true }
+const essen: Collection = { id: 'c1', name: 'Essen 2026', updatedAt: T1, deleted: false }
+const wishlist: Collection = { id: 'c2', name: 'Wishlist', updatedAt: T1, deleted: false }
+const gone: Collection = { id: 'c3', name: 'Old', updatedAt: T1, deleted: true }
 
 const entry = (collectionId: string, bggId: number, patch: Partial<Entry> = {}): Entry => ({
   ...newEntry(collectionId, bggId, T1),
@@ -64,17 +64,16 @@ describe('backup export', () => {
     expect(backupFileName(T2)).toBe('board-a-licious-backup-2026-10-17.json')
   })
 
-  it('writes version 2 with active rows only', () => {
+  it('writes version 3 with active rows only', () => {
     const file = exportBackup({ collections: [essen, wishlist, gone], entries, games, now: T2 })
     expect(file).toEqual({
       format: 'board-a-licious-backup',
-      version: 2,
+      version: 3,
       exportedAt: T2,
       collections: [
         {
           id: 'c1',
           name: 'Essen 2026',
-          type: 'essen',
           updatedAt: T1,
           entries: [
             {
@@ -106,7 +105,6 @@ describe('backup export', () => {
         {
           id: 'c2',
           name: 'Wishlist',
-          type: 'standard',
           updatedAt: T1,
           entries: [expect.objectContaining({ bggId: 295947, name: 'Cascadia', mark: 'unsure' })],
         },
@@ -201,7 +199,7 @@ describe('backup version 1', () => {
 
   it('imports a version 1 file as one standard collection named "Imported"', () => {
     const plan = planImport({ current: empty, backup: parsed(v1), resolution: 'keep', now: NOW, newId: ids() })
-    expect(plan.collections).toEqual([{ id: 'new-1', name: 'Imported', type: 'standard', updatedAt: NOW, deleted: false }])
+    expect(plan.collections).toEqual([{ id: 'new-1', name: 'Imported', updatedAt: NOW, deleted: false }])
     expect(plan.entries).toEqual([
       { ...newEntry('new-1', 295947, NOW), mark: 'must_have' },
       { ...newEntry('new-1', 414317, NOW), mark: 'poop' },
@@ -210,7 +208,7 @@ describe('backup version 1', () => {
   })
 
   it('imports into the existing "Imported" collection a second time', () => {
-    const imported: Collection = { id: 'imp', name: 'Imported', type: 'standard', updatedAt: T2, deleted: false }
+    const imported: Collection = { id: 'imp', name: 'Imported', updatedAt: T2, deleted: false }
     const current = { collections: [imported], entries: [entry('imp', 295947, { mark: 'interested' })] }
     const plan = planImport({ current, backup: parsed(v1), resolution: 'keep', now: NOW, newId: ids() })
     expect(plan.collections).toEqual([])
@@ -240,9 +238,18 @@ describe('invalid backup files', () => {
     expect(reject(JSON.stringify({ format: 'something-else', version: 2 }))).toBe('This file is not a Board-a-licious backup.')
   })
 
+  it('reads version 2 files, ignoring the collection type they had', () => {
+    const v2 = fileV2()
+    v2.version = 2
+    for (const c of v2.collections) c.type = 'essen'
+    const result = parseBackup(JSON.stringify(v2))
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.backup.collections.map(c => Object.keys(c).sort())).toEqual(v2.collections.map(() => ['entries', 'id', 'name']))
+  })
+
   it('rejects newer versions', () => {
-    expect(reject(JSON.stringify({ ...fileV2(), version: 3 }))).toBe(
-      'This backup comes from a newer version of Board-a-licious (version 3).',
+    expect(reject(JSON.stringify({ ...fileV2(), version: 4 }))).toBe(
+      'This backup comes from a newer version of Board-a-licious (version 4).',
     )
     expect(reject(JSON.stringify({ ...fileV2(), version: 'two' }))).toBe('The backup version is missing or unknown.')
   })
@@ -255,8 +262,8 @@ describe('invalid backup files', () => {
     )
     expect(reject(withFirstEntry({ name: 42 }))).toBe('Collection 1 ("Essen 2026"), game 1: The game name must be text.')
     const file = fileV2()
-    file.collections[1].type = 'party'
-    expect(reject(JSON.stringify(file))).toBe('Collection 2 ("Wishlist"): The type must be "essen" or "standard".')
+    file.collections[1].name = ''
+    expect(reject(JSON.stringify(file))).toBe('Collection 2 (""): The name must not be empty.')
   })
 
   it('rejects missing lists and duplicates', () => {

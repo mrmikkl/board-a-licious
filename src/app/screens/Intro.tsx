@@ -9,12 +9,12 @@ const THRESHOLD = 60
 const CARDS = [
   {
     title: 'Collections',
-    text: 'Keep one collection for Essen and more for anything else. Mark every game: Must Have, Interested, Unsure or Poop.',
+    text: 'Keep a collection for SPIEL Essen and more for anything else. Mark every game: Must Have, Interested, Unsure or Poop.',
     art: ['⭐', '👀', '🤔', '💩'],
   },
   {
     title: 'BGG lists',
-    text: 'Load the SPIEL preview or any geeklist once. Essen collections take booth, price and publisher from it.',
+    text: 'Load the SPIEL preview or any geeklist once. Games keep booth, price and edition wherever a list has them.',
     art: ['📋', '📍', '💶', '🏷️'],
   },
   {

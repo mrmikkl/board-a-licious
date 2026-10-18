@@ -24,7 +24,7 @@ export function shareGroups(collectionId: string, entries: Entry[]) {
 
 function line(entry: Entry, collection: Collection, games: GameNames): string {
   const parts = [`${entry.bought ? '✅ ' : ''}${gameName(games, entry.bggId)}`]
-  if (collection.type === 'essen' && entry.facts) {
+  if (entry.facts) {
     const { booth, priceCents, currency } = entry.facts
     const facts = [booth, priceCents == null ? null : formatMoney(priceCents, currency)].filter(Boolean)
     if (facts.length > 0) parts.push(facts.join(', '))

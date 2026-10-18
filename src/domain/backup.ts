@@ -1,6 +1,5 @@
 import {
   type Collection,
-  type CollectionType,
   type Entry,
   entryKey,
   newEntry,
@@ -9,9 +8,9 @@ import {
 } from './collection.ts'
 import type { GameNames } from './share.ts'
 
-/** Backup file version 2 (contracts/share-and-backup.md). */
+/** Backup file version 3 (contracts/share-and-backup.md); version 2 also had a collection type. */
 export const FORMAT = 'board-a-licious-backup'
-export const VERSION = 2
+export const VERSION = 3
 export const IMPORTED = 'Imported'
 
 type EntryData = Pick<Entry, 'bggId' | 'mark' | 'bought' | 'paidCents' | 'paidCurrency' | 'facts' | 'factsSource'>
@@ -22,12 +21,12 @@ export type BackupFile = {
   format: typeof FORMAT
   version: typeof VERSION
   exportedAt: string
-  collections: Array<Pick<Collection, 'id' | 'name' | 'type' | 'updatedAt'> & { entries: BackupEntry[] }>
+  collections: Array<Pick<Collection, 'id' | 'name' | 'updatedAt'> & { entries: BackupEntry[] }>
 }
 
 /** A checked backup; `id` is null for the version 1 collection, which goes into "Imported". */
 export type Backup = {
-  collections: Array<{ id: string | null; name: string; type: CollectionType; entries: EntryData[] }>
+  collections: Array<{ id: string | null; name: string; entries: EntryData[] }>
   games: Map<number, { name: string; year: number | null }>
 }
 
@@ -56,7 +55,6 @@ export function exportBackup(input: { collections: Collection[]; entries: Entry[
       .map(c => ({
         id: c.id,
         name: c.name,
-        type: c.type,
         updatedAt: c.updatedAt,
         entries: input.entries
           .filter(e => e.collectionId === c.id && !e.deleted)
@@ -134,7 +132,7 @@ function read(data: unknown): Backup {
   if (version === 1) {
     if (!Array.isArray(data.entries)) throw new Invalid('The backup has no list of games.')
     const entries = readEntries(data.entries, i => `Game ${i + 1}`, games, true)
-    return { collections: [{ id: null, name: IMPORTED, type: 'standard', entries }], games }
+    return { collections: [{ id: null, name: IMPORTED, entries }], games }
   }
 
   if (!Array.isArray(data.collections)) throw new Invalid('The backup has no list of collections.')
@@ -144,12 +142,12 @@ function read(data: unknown): Backup {
     const where = `Collection ${i + 1}${typeof c.name === 'string' ? ` ("${c.name}")` : ''}`
     const error = validateCollection({ ...c, deleted: false } as Collection)
     if (error) throw new Invalid(`${where}: ${error}`)
-    const { id, name, type } = c as Collection
+    const { id, name } = c as Collection
     if (ids.has(id)) throw new Invalid(`${where}: The id "${id}" is used twice.`)
     ids.add(id)
     if (!Array.isArray(c.entries)) throw new Invalid(`${where}: The collection has no list of games.`)
     const entries = readEntries(c.entries, j => `${where}, game ${j + 1}`, games, false)
-    return { id, name: name.trim(), type, entries }
+    return { id, name: name.trim(), entries }
   })
   return { collections, games }
 }
@@ -201,12 +199,12 @@ export function planImport(input: {
   for (const bc of backup.collections) {
     const existing =
       bc.id === null
-        ? current.collections.find(c => !c.deleted && c.type === 'standard' && c.name === IMPORTED)
+        ? current.collections.find(c => !c.deleted && c.name === IMPORTED)
         : current.collections.find(c => c.id === bc.id)
     const id = existing?.id ?? bc.id ?? input.newId()
-    const fresh: Collection = { id, name: bc.name, type: bc.type, updatedAt: now, deleted: false }
+    const fresh: Collection = { id, name: bc.name, updatedAt: now, deleted: false }
     if (!existing || existing.deleted) plan.collections.push(fresh)
-    else if (existing.name !== bc.name || existing.type !== bc.type) {
+    else if (existing.name !== bc.name) {
       plan.conflicts.push({ collectionId: id, bggId: null })
       if (resolution === 'backup') plan.collections.push(fresh)
     }

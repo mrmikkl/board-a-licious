@@ -17,7 +17,6 @@ export async function applyMembership(services: AppServices, list: StoredList, i
     after,
     collections: await store.collections(),
     entries: await store.allEntries(),
-    listIsEssen: list.isEssen,
     facts: item.facts,
     now: now(),
   })

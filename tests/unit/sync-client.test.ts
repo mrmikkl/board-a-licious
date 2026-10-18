@@ -121,8 +121,8 @@ describe('sync', () => {
 
   it('pushes loaded lists and shows lists loaded on other devices, ready to load here', async () => {
     store = await openStore('anna@example.com')
-    await store.saveListRef({ kind: 'geeklist', id: 66420, title: 'Top games', isEssen: false, updatedAt: T1, deleted: false })
-    const spiel = { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: T2, deleted: false }
+    await store.saveListRef({ kind: 'geeklist', id: 66420, title: 'Top games', updatedAt: T1, deleted: false })
+    const spiel = { kind: 'preview', id: 93, title: 'SPIEL Essen 2026', updatedAt: T2, deleted: false }
     const server = fakeServer((_, init) =>
       init?.method === 'POST'
         ? Response.json({ applied: 1, ignored: 0 })
@@ -131,7 +131,7 @@ describe('sync', () => {
     await createSync({ store, api: createApi({ fetch: server.fetch }) }).syncNow()
     expect(server.calls[0]?.body).toMatchObject({ lists: [{ kind: 'geeklist', id: 66420 }] })
     const here = await store.list('preview', 93)
-    expect(here).toMatchObject({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', isEssen: true, loadedPages: 0, pageCount: 0, entries: [] })
+    expect(here).toMatchObject({ kind: 'preview', id: 93, title: 'SPIEL Essen 2026', loadedPages: 0, pageCount: 0, entries: [] })
     expect(here?.items).toBeUndefined()
   })
 

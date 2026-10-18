@@ -6,8 +6,8 @@ import { DEFAULT_SHARE_MARKS, shareGroups, shareText } from '../../src/domain/sh
 
 const T1 = '2026-10-17T09:00:00.000Z'
 
-const essen: Collection = { id: 'c1', name: 'Essen 2026', type: 'essen', updatedAt: T1, deleted: false }
-const standard: Collection = { id: 'c2', name: 'Wishlist', type: 'standard', updatedAt: T1, deleted: false }
+const essen: Collection = { id: 'c1', name: 'Essen 2026', updatedAt: T1, deleted: false }
+const standard: Collection = { id: 'c2', name: 'Wishlist', updatedAt: T1, deleted: false }
 
 const entry = (bggId: number, patch: Partial<Entry> = {}): Entry => ({ ...newEntry('c1', bggId, T1), ...patch })
 
@@ -69,7 +69,7 @@ describe('share text', () => {
     ])
   })
 
-  it('leaves out booth and price for standard collections but keeps ✅', () => {
+  it('shows booth and price in every collection that has them, and ✅', () => {
     const own = entries.map(e => ({ ...e, collectionId: 'c2' }))
     const result = shareText(standard, own, ['must_have'], games)
     if (!result.ok) throw new Error(result.reason)
@@ -78,8 +78,8 @@ describe('share text', () => {
         '🎲 Wishlist',
         '',
         '⭐ Must Have (2)',
-        '• Another Game – https://boardgamegeek.com/boardgame/123456',
-        '• ✅ Example Game – https://boardgamegeek.com/boardgame/446453',
+        '• Another Game – 1-A202, €45 – https://boardgamegeek.com/boardgame/123456',
+        '• ✅ Example Game – 3-R400, €60 – https://boardgamegeek.com/boardgame/446453',
       ].join('\n'),
     )
   })

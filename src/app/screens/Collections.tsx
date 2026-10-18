@@ -14,7 +14,7 @@ export function Collections() {
     <>
       <Header title="Collections" />
       <main className="screen">
-        <p className="lead">Each collection is your own. An Essen collection also keeps booth, price and publisher from Essen lists such as the SPIEL preview.</p>
+        <p className="lead">Each collection is your own. Games keep booth, price and edition from lists that have them, such as the SPIEL preview.</p>
         {data && (
           <div className="cards">
             {data.collections.map(c => (

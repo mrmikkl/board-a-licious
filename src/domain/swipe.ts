@@ -28,18 +28,17 @@ export function swipeQueue<G extends SwipeGame>(list: SwipeList<G>, entries: Pic
 
 /** Right adds the game as Not yet marked, left as Not interested; facts follow FR-010. */
 export function swipeDecision(input: {
-  collection: Pick<Collection, 'id' | 'type'>
+  collection: Pick<Collection, 'id'>
   game: SwipeGame
-  listIsEssen: boolean
   direction: SwipeDirection
   now: string
   detailsPending?: boolean
 }): Entry {
-  const { collection, game, listIsEssen, direction, now } = input
+  const { collection, game, direction, now } = input
   return {
     ...newEntry(collection.id, game.bggId, now),
     mark: direction === 'right' ? 'new' : 'skip',
-    ...factsFromList(game.facts, listIsEssen, collection.type),
+    ...factsFromList(game.facts),
     detailsPending: input.detailsPending ?? false,
   }
 }

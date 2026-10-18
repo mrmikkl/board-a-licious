@@ -43,10 +43,9 @@ async function fakeLists(page: Page) {
   return { releasePage2: () => release() }
 }
 
-async function createCollection(page: Page, name: string, essen: boolean) {
+async function createCollection(page: Page, name: string) {
   await page.goto('/#/add/collection')
   await page.getByLabel('Name').fill(name)
-  if (!essen) await page.getByRole('switch', { name: /essen collection/i }).uncheck()
   await page.getByRole('button', { name: 'Create collection' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 }
@@ -56,8 +55,8 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   const lists = await fakeLists(page)
   const essen = unique('Essen fair')
   const standard = unique('Wishlist')
-  await createCollection(page, essen, true)
-  await createCollection(page, standard, false)
+  await createCollection(page, essen)
+  await createCollection(page, standard)
 
   // Lists: empty on a new device, with the SPIEL preview link as example
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Lists' }).click()
@@ -75,16 +74,16 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await link.fill('https://boardgamegeek.com/geeklist/66420/top-games')
   await expect(page.getByText(/^geeklist: games without booth and price/i)).toBeVisible()
   await link.fill('https://boardgamegeek.com/geekpreview/93/spiel-essen-2026')
-  await expect(page.getByText(/^preview: an essen list with booth, price and publisher/i)).toBeVisible()
+  await expect(page.getByText(/^preview: games with booth, price, publisher and edition/i)).toBeVisible()
   await expectAccessible(page)
   await load.click()
 
   // List: the first page appears at once, the rest follows with visible progress
   await expect(page.getByRole('heading', { level: 1, name: 'SPIEL Essen 2026' })).toBeVisible()
-  await expect(page.locator('.top .badge-essen')).toBeVisible()
   const kalypso = page.getByRole('button', { name: /^kalypso/i })
   await expect(kalypso).toBeVisible({ timeout: 10_000 })
-  await expect(kalypso).toContainText('3-R400 · €60 · …')
+  await expect(kalypso).toContainText('…')
+  await expect(kalypso).toContainText('€60 · Booth 3-R400')
   await expect(page.getByText('Loading 1 of 3 pages')).toBeVisible()
   await expectAccessible(page)
 
@@ -93,7 +92,7 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await expect(page.getByText(/boardgamegeek is not reachable/i)).toBeVisible()
   await page.getByRole('button', { name: 'Retry' }).click()
   await expect(page.getByRole('button', { name: /^shape it/i })).toBeVisible()
-  await expect(kalypso).toContainText('3-R400 · €60 · Inside Up Games')
+  await expect(kalypso).toContainText('Inside Up Games')
   await expect(page.getByText(/loading \d+ of 3 pages/i)).toHaveCount(0)
 
   // name filter
@@ -113,9 +112,9 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   const standardTick = sheet.getByRole('checkbox', { name: standard })
   await expect(essenTick).not.toBeChecked()
   await essenTick.check()
-  await expect(sheet.getByText(/will be added\. booth, price and publisher are kept/i)).toBeVisible()
+  await expect(sheet.getByText(/^will be added$/i)).toBeVisible()
   await standardTick.check()
-  await expect(sheet.getByText(/will be added\. added without booth and price: standard collection/i)).toBeVisible()
+  await expect(sheet.getByText(/^will be added$/i)).toHaveCount(2)
   await expectAccessible(page)
   await sheet.getByRole('button', { name: 'Cancel' }).click()
   await expect(sheet).toBeHidden()
@@ -130,19 +129,18 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await expect(sheet).toBeHidden()
   await expect(kalypso).toContainText('in a collection')
 
-  // facts only in the Essen collection
+  // booth, price and publisher in both collections (FR-010)
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Collections' }).click()
-  await page.getByRole('link', { name: new RegExp(essen) }).click()
-  await expect(page.getByRole('button', { name: /^kalypso/i })).toContainText('3-R400 · €60 · Inside Up Games')
-  await page.goBack()
-  await page.getByRole('link', { name: new RegExp(standard) }).click()
-  await expect(page.getByRole('button', { name: /^kalypso/i })).toBeVisible()
-  await expect(page.getByRole('button', { name: /^kalypso/i })).not.toContainText('3-R400')
+  for (const name of [essen, standard]) {
+    await page.getByRole('link', { name: new RegExp(name) }).click()
+    await expect(page.getByRole('button', { name: /^kalypso/i })).toContainText('Inside Up Games')
+    await expect(page.getByRole('button', { name: /^kalypso/i })).toContainText('€60 · Booth 3-R400')
+    await page.goBack()
+  }
 
   // the list is remembered on the device; Done also removes what was unticked
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Lists' }).click()
   const card = page.getByRole('link', { name: /spiel essen 2026/i })
-  await expect(card).toContainText('Essen')
   await expect(card).toContainText('5 games')
   await expectAccessible(page)
   await card.click()

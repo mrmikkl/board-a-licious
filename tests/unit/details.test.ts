@@ -8,7 +8,7 @@ import { newEntry } from '../../src/domain/collection.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
-const cascadia: Game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: 'https://cf.geekdo-images.com/x.jpg', description: 'Tiles.', kind: 'boardgame' }
+const cascadia: Game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: 'https://cf.geekdo-images.com/x.jpg', description: 'Tiles.', kind: 'boardgame', minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games' }
 
 let store: Store
 afterEach(async () => {
@@ -19,6 +19,24 @@ afterEach(async () => {
 const pendingEntry = () => ({ ...newEntry('c1', 295947, T1), detailsPending: true, mark: 'must_have' as const, bought: true, paidCents: 5200, paidCurrency: 'EUR' })
 
 describe('completing link-added games (FR-017)', () => {
+  it('fetches games again once that were stored before players, designers and mechanisms existed', async () => {
+    store = await openStore('anna@example.com')
+    const { minPlayers: _a, maxPlayers: _b, designers: _c, mechanisms: _d, publisher: _e, ...old } = cascadia
+    await store.putGames([old])
+    await store.saveEntry({ ...newEntry('c1', 295947, T1), mark: 'must_have' as const })
+    const asked: number[][] = []
+    const api = { games: async (ids: number[]) => (asked.push(ids), [cascadia]) }
+    await completeDetails({ store, api, now: () => T2 })
+    expect(asked).toEqual([[295947]])
+    expect(await store.game(295947)).toEqual(cascadia)
+    await completeDetails({ store, api, now: () => T2 })
+    expect(asked).toHaveLength(1)
+    await store.putGames([{ ...cascadia, designers: '["Randy Flynn"]' as never }])
+    await completeDetails({ store, api, now: () => T2 })
+    expect(asked).toHaveLength(2)
+    expect((await store.entries('c1'))[0]).toMatchObject({ mark: 'must_have', updatedAt: T1 })
+  })
+
   it('fills in name, year, cover and description and keeps mark, bought and price', async () => {
     store = await openStore('anna@example.com')
     await store.putGames([{ ...cascadia, name: 'Cascadia (from link)', year: null, thumbnailUrl: null, description: null }])

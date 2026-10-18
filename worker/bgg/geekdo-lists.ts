@@ -1,4 +1,5 @@
 import { BggError, type BggClient, TTL } from './cache.ts'
+import { type GeekItemInfo, gameDetails } from './geekdo-games.ts'
 import type { ListEntry, ListFacts, ListKind, ListPage } from './source.ts'
 
 const BASE = 'https://api.geekdo.com/api'
@@ -16,7 +17,8 @@ type PreviewItem = {
   links?: { objecttype: string; objectid: string }[]
   publishers?: { item?: { objectid?: number | string; primaryname?: { name?: string } } }[]
   thumbnail?: { src?: string }
-  geekitem?: { item?: { primaryname?: { name?: string }; images?: { square200?: string; thumb?: string } } }
+  geekitem?: { item?: GeekItemInfo & { primaryname?: { name?: string }; images?: { square200?: string; thumb?: string } } }
+  version?: { item?: { versionname?: string; primaryname?: { name?: string } } } | null
 }
 
 type GeeklistInfo = { name: string }
@@ -32,7 +34,7 @@ function cents(amount: unknown): number | null {
   return Number.isFinite(value) && value > 0 ? Math.round(value * 100) : null
 }
 
-/** Booth, price (fair price, else msrp) and publisher; the name only when BGG embeds it (no lookups). */
+/** Booth, price (fair price, else msrp), publisher and edition; the name only when BGG embeds it (no lookups). */
 function previewFacts(item: PreviewItem): ListFacts {
   const show = cents(item.showprice)
   const msrp = cents(item.msrp)
@@ -43,7 +45,9 @@ function previewFacts(item: PreviewItem): ListFacts {
   const companyId = item.links?.find(l => l.objecttype === 'company')?.objectid
   const publisherId = companyId ? Number(companyId) : null
   const named = item.publishers?.find(p => Number(p.item?.objectid) === publisherId)?.item?.primaryname?.name
-  return { booth: item.location?.trim() || null, ...price, publisherId, publisher: publisherId !== null ? (named ?? null) : null }
+  const version = item.version?.item
+  const edition = (version?.versionname || version?.primaryname?.name)?.trim() || null
+  return { booth: item.location?.trim() || null, ...price, publisherId, publisher: publisherId !== null ? (named ?? null) : null, edition }
 }
 
 async function previewPage(client: BggClient, id: number, page: number): Promise<ListPage> {
@@ -61,9 +65,10 @@ async function previewPage(client: BggClient, id: number, page: number): Promise
       name: game?.primaryname?.name ?? '',
       thumbnailUrl: game?.images?.square200 ?? game?.images?.thumb ?? item.thumbnail?.src ?? null,
       facts: previewFacts(item),
+      info: (({ publisher: _, ...info }) => info)(gameDetails(game)),
     })
   })
-  return { kind: 'preview', id, title: info.title, isEssen: true, page, pageCount, entries }
+  return { kind: 'preview', id, title: info.title, page, pageCount, entries }
 }
 
 const GAME_HREF = /^\/boardgame(expansion)?\//
@@ -79,7 +84,7 @@ async function geeklistPage(client: BggClient, id: number, page: number): Promis
     entries.push({ position: (page - 1) * perPage + i + 1, bggId: Number(item.id), name: item.name, thumbnailUrl: item.imageSets?.square100?.src ?? null })
   })
   const pageCount = Math.max(1, Math.ceil(items.pagination.total / perPage))
-  return { kind: 'geeklist', id, title: info.name, isEssen: false, page, pageCount, entries }
+  return { kind: 'geeklist', id, title: info.name, page, pageCount, entries }
 }
 
 /** T045: one page of a preview (`api/geekpreviewitems`) or a geeklist (`api/listitems`), research R9. */

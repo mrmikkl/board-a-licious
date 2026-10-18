@@ -1,4 +1,5 @@
 import type { Collection, Entry } from '../../src/domain/collection.ts'
+import type { GameDetails } from '../../src/domain/game-info.ts'
 import type { LoadedList } from '../../src/domain/lists.ts'
 import type { Mark } from '../../src/domain/marks.ts'
 import type { Db } from './db.ts'
@@ -10,14 +11,14 @@ export type Game = {
   thumbnailUrl: string | null
   description: string | null
   kind: 'boardgame' | 'expansion'
-}
+} & GameDetails
 
 export type Changes = { collections: Collection[]; entries: Entry[]; lists?: LoadedList[] }
 
 /** An entry points at a collection that does not exist for this user. */
 export class ForeignCollectionError extends Error {}
 
-type CollectionRow = { id: string; name: string; type: 'essen' | 'standard'; updated_at: Date | string; deleted: boolean }
+type CollectionRow = { id: string; name: string; updated_at: Date | string; deleted: boolean }
 type EntryRow = {
   collection_id: string
   bgg_id: number
@@ -29,6 +30,7 @@ type EntryRow = {
   price_cents: number | null
   currency: string | null
   publisher: string | null
+  edition: string | null
   facts_source: 'preview' | 'manual' | null
   details_pending: boolean
   updated_at: Date | string
@@ -43,13 +45,12 @@ const pgArray = (values: (string | number)[]) => `{${values.map(v => String(v).r
 const toCollection = (r: CollectionRow): Collection => ({
   id: r.id,
   name: r.name,
-  type: r.type,
   updatedAt: iso(r.updated_at),
   deleted: r.deleted,
 })
 
 function toEntry(r: EntryRow): Entry {
-  const hasFacts = [r.booth, r.price_cents, r.currency, r.publisher].some(v => v !== null) || r.facts_source !== null
+  const hasFacts = [r.booth, r.price_cents, r.currency, r.publisher, r.edition].some(v => v !== null) || r.facts_source !== null
   return {
     collectionId: r.collection_id,
     bggId: r.bgg_id,
@@ -57,7 +58,7 @@ function toEntry(r: EntryRow): Entry {
     bought: r.bought,
     paidCents: r.paid_cents,
     paidCurrency: r.paid_currency,
-    facts: hasFacts ? { booth: r.booth, priceCents: r.price_cents, currency: r.currency, publisher: r.publisher } : null,
+    facts: hasFacts ? { booth: r.booth, priceCents: r.price_cents, currency: r.currency, publisher: r.publisher, edition: r.edition } : null,
     factsSource: r.facts_source,
     detailsPending: r.details_pending,
     updatedAt: iso(r.updated_at),
@@ -78,25 +79,25 @@ export async function syncCursor(db: Db, marginSeconds = 5): Promise<string> {
 export async function listChanges(db: Db, email: string, since?: string): Promise<Changes> {
   const after = since ?? '1970-01-01T00:00:00.000Z'
   const collections = await db.query<CollectionRow>(
-    `SELECT id, name, type, updated_at, deleted FROM collection
+    `SELECT id, name, updated_at, deleted FROM collection
      WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
   const entries = await db.query<EntryRow>(
     `SELECT collection_id, bgg_id, mark, bought, paid_cents, paid_currency, booth, price_cents, currency,
-            publisher, facts_source, details_pending, updated_at, deleted
+            publisher, edition, facts_source, details_pending, updated_at, deleted
      FROM collection_entry WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
   const lists = await db.query<ListRow>(
-    `SELECT kind, list_id, title, is_essen, updated_at, deleted FROM loaded_list
+    `SELECT kind, list_id, title, updated_at, deleted FROM loaded_list
      WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
   return {
     collections: collections.map(toCollection),
     entries: entries.map(toEntry),
-    lists: lists.map(r => ({ kind: r.kind, id: r.list_id, title: r.title, isEssen: r.is_essen, updatedAt: iso(r.updated_at), deleted: r.deleted })),
+    lists: lists.map(r => ({ kind: r.kind, id: r.list_id, title: r.title, updatedAt: iso(r.updated_at), deleted: r.deleted })),
   }
 }
 
@@ -108,13 +109,13 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
   let applied = 0
   for (const c of changes.collections) {
     const rows = await db.query(
-      `INSERT INTO collection AS t (id, user_email, name, type, updated_at, deleted)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (id) DO UPDATE SET name = excluded.name, type = excluded.type,
+      `INSERT INTO collection AS t (id, user_email, name, updated_at, deleted)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (id) DO UPDATE SET name = excluded.name,
          updated_at = excluded.updated_at, deleted = excluded.deleted, synced_at = now()
        WHERE t.user_email = excluded.user_email AND excluded.updated_at > t.updated_at
        RETURNING id`,
-      [c.id, email, c.name, c.type, c.updatedAt, c.deleted],
+      [c.id, email, c.name, c.updatedAt, c.deleted],
     )
     applied += rows.length
   }
@@ -133,11 +134,11 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
   for (const e of changes.entries) {
     const rows = await db.query(
       `INSERT INTO collection_entry AS t (collection_id, bgg_id, user_email, mark, bought, paid_cents, paid_currency,
-         booth, price_cents, currency, publisher, facts_source, details_pending, updated_at, deleted)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         booth, price_cents, currency, publisher, edition, facts_source, details_pending, updated_at, deleted)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
        ON CONFLICT (collection_id, bgg_id) DO UPDATE SET mark = excluded.mark, bought = excluded.bought,
          paid_cents = excluded.paid_cents, paid_currency = excluded.paid_currency, booth = excluded.booth,
-         price_cents = excluded.price_cents, currency = excluded.currency, publisher = excluded.publisher,
+         price_cents = excluded.price_cents, currency = excluded.currency, publisher = excluded.publisher, edition = excluded.edition,
          facts_source = excluded.facts_source, details_pending = excluded.details_pending,
          updated_at = excluded.updated_at, deleted = excluded.deleted, synced_at = now()
        WHERE t.user_email = excluded.user_email AND excluded.updated_at > t.updated_at
@@ -154,6 +155,7 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
         e.facts?.priceCents ?? null,
         e.facts?.currency ?? null,
         e.facts?.publisher ?? null,
+        e.facts?.edition ?? null,
         e.factsSource,
         e.detailsPending,
         e.updatedAt,
@@ -164,13 +166,13 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
   }
   for (const l of changes.lists ?? []) {
     const rows = await db.query(
-      `INSERT INTO loaded_list AS t (user_email, kind, list_id, title, is_essen, updated_at, deleted)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (user_email, kind, list_id) DO UPDATE SET title = excluded.title, is_essen = excluded.is_essen,
+      `INSERT INTO loaded_list AS t (user_email, kind, list_id, title, updated_at, deleted)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (user_email, kind, list_id) DO UPDATE SET title = excluded.title,
          updated_at = excluded.updated_at, deleted = excluded.deleted, synced_at = now()
        WHERE excluded.updated_at > t.updated_at
        RETURNING list_id`,
-      [email, l.kind, l.id, l.title, l.isEssen, l.updatedAt, l.deleted],
+      [email, l.kind, l.id, l.title, l.updatedAt, l.deleted],
     )
     applied += rows.length
   }
@@ -178,7 +180,7 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
   return { applied, ignored: total - applied }
 }
 
-type ListRow = { kind: 'preview' | 'geeklist'; list_id: number; title: string; is_essen: boolean; updated_at: Date | string; deleted: boolean }
+type ListRow = { kind: 'preview' | 'geeklist'; list_id: number; title: string; updated_at: Date | string; deleted: boolean }
 
 type GameRow = {
   bgg_id: number
@@ -187,13 +189,24 @@ type GameRow = {
   thumbnail_url: string | null
   description: string | null
   kind: 'boardgame' | 'expansion'
+  min_players: number | null
+  max_players: number | null
+  designers: string[] | string | null
+  mechanisms: string[] | string | null
+  publisher: string | null
+}
+
+/** A jsonb list of names; the production driver hands jsonb over as text, PGlite as parsed JSON. */
+function names(value: string[] | string | null): string[] {
+  const list: unknown = typeof value === 'string' ? JSON.parse(value) : value
+  return Array.isArray(list) ? list.filter((v): v is string => typeof v === 'string') : []
 }
 
 /** Cached games fetched after `freshAfter` (older ones are refreshed from BGG). */
 export async function getCachedGames(db: Db, ids: number[], freshAfter: string): Promise<Game[]> {
   if (ids.length === 0) return []
   const rows = await db.query<GameRow>(
-    `SELECT bgg_id, name, year, thumbnail_url, description, kind FROM game
+    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
     [pgArray(ids), freshAfter],
   )
@@ -204,18 +217,38 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
     thumbnailUrl: r.thumbnail_url,
     description: r.description,
     kind: r.kind,
+    minPlayers: r.min_players,
+    maxPlayers: r.max_players,
+    designers: names(r.designers),
+    mechanisms: names(r.mechanisms),
+    publisher: r.publisher,
   }))
 }
 
 export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
   for (const g of games) {
     await db.query(
-      `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, fetched_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers,
+         mechanisms, publisher, fetched_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12)
        ON CONFLICT (bgg_id) DO UPDATE SET name = excluded.name, year = excluded.year,
          thumbnail_url = excluded.thumbnail_url, description = excluded.description, kind = excluded.kind,
-         fetched_at = excluded.fetched_at`,
-      [g.bggId, g.name, g.year, g.thumbnailUrl, g.description, g.kind, fetchedAt],
+         min_players = excluded.min_players, max_players = excluded.max_players, designers = excluded.designers,
+         mechanisms = excluded.mechanisms, publisher = excluded.publisher, fetched_at = excluded.fetched_at`,
+      [
+        g.bggId,
+        g.name,
+        g.year,
+        g.thumbnailUrl,
+        g.description,
+        g.kind,
+        g.minPlayers,
+        g.maxPlayers,
+        JSON.stringify(g.designers),
+        JSON.stringify(g.mechanisms),
+        g.publisher,
+        fetchedAt,
+      ],
     )
   }
 }

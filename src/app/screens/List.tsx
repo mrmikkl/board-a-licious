@@ -3,10 +3,9 @@ import { useCallback, useEffect, useId, useState } from 'react'
 import { ApiError } from '../../client/api.ts'
 import { LIST_ERROR } from '../../client/lists.ts'
 import type { ListKind, StoredList, StoredListEntry } from '../../client/types.ts'
-import { EssenBadge } from '../components/EssenBadge.tsx'
+import { InfoLine } from '../components/GameInfo.tsx'
 import { Header } from '../components/Header.tsx'
 import { HexCover } from '../components/HexCover.tsx'
-import { factsLine } from '../components/ListFacts.tsx'
 import { MembershipSheet } from '../components/MembershipSheet.tsx'
 import { useServices, useStoreData } from '../context.tsx'
 import { href } from '../router.ts'
@@ -95,7 +94,7 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   const current = list.entries.find(e => e.bggId === openGame)
   return (
     <>
-      <Header title={list.title} back={back} badge={list.isEssen ? <EssenBadge /> : undefined} />
+      <Header title={list.title} back={back} />
       <main className="screen">
         <ListProgress list={list} onRetry={() => void services.lists.retry(kind, listId)} />
         <label className="visually-hidden" htmlFor={filterId}>
@@ -115,7 +114,7 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
           <ul className="rows">
             {shown.map(entry => (
               <li key={entry.bggId} className="list-item">
-                <ListRow entry={entry} isEssen={list.isEssen} inCollection={data!.inCollection.has(entry.bggId)} onOpen={() => setOpenGame(entry.bggId)} />
+                <ListRow entry={entry} inCollection={data!.inCollection.has(entry.bggId)} onOpen={() => setOpenGame(entry.bggId)} />
               </li>
             ))}
           </ul>
@@ -126,8 +125,9 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   )
 }
 
-function ListRow({ entry, isEssen, inCollection, onOpen }: { entry: StoredListEntry; isEssen: boolean; inCollection: boolean; onOpen: () => void }) {
-  const sub = isEssen ? factsLine(entry.facts) || 'No booth or price yet' : ''
+/** A list game like a collection row: name, publisher ("…" while its name is looked up), three infos. */
+function ListRow({ entry, inCollection, onOpen }: { entry: StoredListEntry; inCollection: boolean; onOpen: () => void }) {
+  const sub = entry.facts?.publisher ?? (entry.facts?.publisherId != null ? '…' : null)
   return (
     <>
       <button type="button" className="row" onClick={onOpen}>
@@ -135,6 +135,7 @@ function ListRow({ entry, isEssen, inCollection, onOpen }: { entry: StoredListEn
         <span className="row-meta">
           <span className="row-name">{entry.name}</span>
           {sub && <span className="row-sub">{sub}</span>}
+          <InfoLine facts={entry.facts} details={entry.info} />
           {inCollection && <span className="in-mark">in a collection</span>}
         </span>
       </button>

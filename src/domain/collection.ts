@@ -1,22 +1,21 @@
 import { MARKS, type Mark, type MarkInfo, isMark } from './marks.ts'
 import { formatSpent } from './money.ts'
 
-export type CollectionType = 'essen' | 'standard'
-
 export type Collection = {
   id: string
   name: string
-  type: CollectionType
   updatedAt: string
   deleted: boolean
 }
 
-/** Booth, price and publisher of a game at the fair; every part optional. */
+/** Booth, price, publisher and edition of a game, from a list or typed in; every part optional. */
 export type Facts = {
   booth?: string | null
   priceCents?: number | null
   currency?: string | null
   publisher?: string | null
+  /** The edition a list offers, e.g. "English edition". */
+  edition?: string | null
 }
 
 export type Entry = {
@@ -42,10 +41,10 @@ function checkName(name: unknown): string | null {
   return null
 }
 
-export function newCollection(input: { id: string; name: string; type: CollectionType; now: string }): Collection {
+export function newCollection(input: { id: string; name: string; now: string }): Collection {
   const error = checkName(input.name)
   if (error) throw new Error(error)
-  return { id: input.id, name: input.name.trim(), type: input.type, updatedAt: input.now, deleted: false }
+  return { id: input.id, name: input.name.trim(), updatedAt: input.now, deleted: false }
 }
 
 export function renameCollection(collection: Collection, name: string, now: string): Collection {
@@ -151,7 +150,6 @@ export function validateCollection(c: Collection): string | null {
   if (typeof c.id !== 'string' || c.id.length === 0 || c.id.length > 64) return 'A collection needs an id.'
   const nameError = checkName(c.name)
   if (nameError) return nameError
-  if (c.type !== 'essen' && c.type !== 'standard') return 'The type must be "essen" or "standard".'
   if (!isTimestamp(c.updatedAt)) return 'updatedAt must be a timestamp.'
   if (typeof c.deleted !== 'boolean') return 'deleted must be true or false.'
   return null
@@ -173,7 +171,8 @@ export function validateEntry(e: Entry): string | null {
     if (!isCents(e.facts.priceCents)) return 'The listed price must be a whole number of cents, 0 or more.'
     if (e.facts.currency !== null && e.facts.currency !== undefined && !isCurrency(e.facts.currency))
       return 'The currency of the listed price must be a 3-letter code.'
-    if (!isOptionalText(e.facts.booth) || !isOptionalText(e.facts.publisher)) return 'Booth and publisher must be text.'
+    if (!isOptionalText(e.facts.booth) || !isOptionalText(e.facts.publisher) || !isOptionalText(e.facts.edition))
+      return 'Booth, publisher and edition must be text.'
   }
   if (![null, 'preview', 'manual'].includes(e.factsSource)) return 'factsSource must be "preview", "manual" or null.'
   if (typeof e.detailsPending !== 'boolean') return 'detailsPending must be true or false.'

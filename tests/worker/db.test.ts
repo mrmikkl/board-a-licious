@@ -13,7 +13,6 @@ const BEN = 'ben@example.com'
 const collection = (patch: Partial<Collection> = {}): Collection => ({
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Essen 2026',
-  type: 'essen',
   updatedAt: T1,
   deleted: false,
   ...patch,
@@ -25,7 +24,7 @@ const entry = (patch: Partial<Entry> = {}): Entry => ({
   bought: true,
   paidCents: 5200,
   paidCurrency: 'EUR',
-  facts: { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisher: 'Inside Up Games' },
+  facts: { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisher: 'Inside Up Games', edition: 'English edition' },
   factsSource: 'preview',
   detailsPending: false,
   updatedAt: T1,
@@ -99,15 +98,8 @@ describe('repository', () => {
 
   it('enforces the CHECKs of the schema', async () => {
     const bad = (sql: string, params: unknown[]) => expect(db.query(sql, params)).rejects.toThrow()
-    await bad(`INSERT INTO collection (id, user_email, name, type, updated_at) VALUES ($1, $2, '', 'essen', now())`, [
-      collection().id,
-      ANNA,
-    ])
-    await bad(`INSERT INTO collection (id, user_email, name, type, updated_at) VALUES ($1, $2, 'x', 'other', now())`, [
-      collection().id,
-      ANNA,
-    ])
-    await db.query(`INSERT INTO collection (id, user_email, name, type, updated_at) VALUES ($1, $2, 'x', 'essen', now())`, [
+    await bad(`INSERT INTO collection (id, user_email, name, updated_at) VALUES ($1, $2, '', now())`, [collection().id, ANNA])
+    await db.query(`INSERT INTO collection (id, user_email, name, updated_at) VALUES ($1, $2, 'x', now())`, [
       collection().id,
       ANNA,
     ])
@@ -120,7 +112,7 @@ describe('repository', () => {
   })
 
   it('keeps the BGG lists a person loaded, last write wins, per person', async () => {
-    const spiel = { kind: 'preview' as const, id: 93, title: 'SPIEL Essen 2026', isEssen: true, updatedAt: T1, deleted: false }
+    const spiel = { kind: 'preview' as const, id: 93, title: 'SPIEL Essen 2026', updatedAt: T1, deleted: false }
     expect(await applyChanges(db, ANNA, { collections: [], entries: [], lists: [spiel] })).toEqual({ applied: 1, ignored: 0 })
     expect((await listChanges(db, ANNA)).lists).toEqual([spiel])
     expect((await listChanges(db, BEN)).lists).toEqual([])
@@ -133,7 +125,7 @@ describe('repository', () => {
   })
 
   it('caches games and returns only fresh ones', async () => {
-    const game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: 'Tiles.', kind: 'boardgame' as const }
+    const game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: 'Tiles.', kind: 'boardgame' as const, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ["Tile Placement", 'Drafting'], publisher: 'Flatout Games' }
     await upsertGames(db, [game], '2026-10-01T00:00:00.000Z')
     expect(await getCachedGames(db, [295947], '2026-09-30T00:00:00.000Z')).toEqual([game])
     expect(await getCachedGames(db, [295947], '2026-10-02T00:00:00.000Z')).toEqual([])

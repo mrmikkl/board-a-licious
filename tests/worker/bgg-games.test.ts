@@ -16,7 +16,7 @@ const bgg = async (url: URL) =>
     : new Response('null', { status: 404 })
 
 describe('GET /api/bgg/games', () => {
-  it('returns name, year, thumbnail and short description from BGG', async () => {
+  it('returns name, year, thumbnail, short description, players, designers, mechanisms and first publisher', async () => {
     const res = await testApp(db, { bgg })('/api/bgg/games?ids=295947')
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({
@@ -28,6 +28,11 @@ describe('GET /api/bgg/games', () => {
           thumbnailUrl: expect.stringContaining('cf.geekdo-images.com'),
           description: 'Create the most harmonious ecosystem as you puzzle together habitats and wildlife.',
           kind: 'boardgame',
+          minPlayers: 1,
+          maxPlayers: 4,
+          designers: ['Randy Flynn'],
+          mechanisms: expect.arrayContaining(['Hexagon Grid', 'Tile Placement']),
+          publisher: 'Flatout Games',
         },
       ],
     })
@@ -41,7 +46,7 @@ describe('GET /api/bgg/games', () => {
 
   it('serves games from the game table when fresher than 7 days, and stores what it fetched', async () => {
     const calls: string[] = []
-    await upsertGames(db, [{ bggId: 1, name: 'Cached', year: 2020, thumbnailUrl: null, description: null, kind: 'boardgame' }], '2026-10-15T00:00:00.000Z')
+    await upsertGames(db, [{ bggId: 1, name: 'Cached', year: 2020, thumbnailUrl: null, description: null, kind: 'boardgame', minPlayers: null, maxPlayers: null, designers: [], mechanisms: [], publisher: null }], '2026-10-15T00:00:00.000Z')
     const res = await testApp(db, { bgg, bggCalls: calls })('/api/bgg/games?ids=1,295947')
     expect((await res.json()).games.map((g: { name: string }) => g.name)).toEqual(['Cached', 'Cascadia'])
     expect(calls).toHaveLength(1)

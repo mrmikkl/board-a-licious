@@ -3,21 +3,19 @@ import { countMarks } from '../../domain/collection.ts'
 import { MARKS } from '../../domain/marks.ts'
 import { href } from '../router.ts'
 import { Counter } from './Counter.tsx'
-import { EssenBadge } from './EssenBadge.tsx'
 
-/** A collection with its type and the number of games per mark and bought (FR-002). */
+/** A collection with the number of games per mark and bought (FR-002). */
 export function CollectionCard({ collection, entries }: { collection: Collection; entries: Entry[] }) {
   const counts = countMarks(entries)
-  const essen = collection.type === 'essen'
   return (
-    <a className={`card collection-card${essen ? ' essen' : ''}`} href={href({ name: 'collection', id: collection.id })}>
+    <a className="card collection-card" href={href({ name: 'collection', id: collection.id })}>
       <span className="cluster" aria-hidden="true">
         <i className="hex" />
         <i className="hex" />
         <i className="hex" />
       </span>
       <h2 className="card-title">
-        <span className="card-name">{collection.name}</span> {essen && <EssenBadge />}
+        <span className="card-name">{collection.name}</span>
       </h2>
       <p className="card-sub">{counts.total === 0 ? 'No games yet' : counts.byMark.new > 0 ? `${counts.byMark.new} not marked` : 'All marked'}</p>
       <p className="counts">

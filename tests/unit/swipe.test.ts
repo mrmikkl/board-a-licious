@@ -8,7 +8,7 @@ const T2 = '2026-10-17T10:00:00.000Z'
 
 const facts = { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisherId: 34183, publisher: 'Inside Up Games' }
 const game = (position: number, bggId: number) => ({ position, bggId, name: `Game ${bggId}`, facts })
-const list = (entries: ReturnType<typeof game>[], loadedPages = 1, pageCount = 1) => ({ isEssen: true, loadedPages, pageCount, entries })
+const list = (entries: ReturnType<typeof game>[], loadedPages = 1, pageCount = 1) => ({ loadedPages, pageCount, entries })
 
 const ids = (queue: { games: { bggId: number }[] }) => queue.games.map(g => g.bggId)
 
@@ -54,30 +54,30 @@ describe('swipe decision (FR-015)', () => {
   const essen = { id: 'c1', type: 'essen' as const }
 
   it('right adds the game as Not yet marked', () => {
-    const entry = swipeDecision({ collection: essen, game: game(1, 10), listIsEssen: true, direction: 'right', now: T1 })
+    const entry = swipeDecision({ collection: essen, game: game(1, 10), direction: 'right', now: T1 })
     expect(entry).toMatchObject({ collectionId: 'c1', bggId: 10, mark: 'new', bought: false, deleted: false, updatedAt: T1 })
     expect(validateEntry(entry)).toBeNull()
   })
 
   it('left adds the game as Not interested', () => {
-    const entry = swipeDecision({ collection: essen, game: game(1, 10), listIsEssen: true, direction: 'left', now: T1 })
+    const entry = swipeDecision({ collection: essen, game: game(1, 10), direction: 'left', now: T1 })
     expect(entry).toMatchObject({ collectionId: 'c1', bggId: 10, mark: 'skip', deleted: false })
     expect(validateEntry(entry)).toBeNull()
   })
 
-  it('keeps booth, price and publisher only from a preview into an Essen collection (FR-010)', () => {
-    const kept = swipeDecision({ collection: essen, game: game(1, 10), listIsEssen: true, direction: 'right', now: T1 })
+  it('keeps what the list says about the game, in any collection (FR-010)', () => {
+    const kept = swipeDecision({ collection: essen, game: game(1, 10), direction: 'right', now: T1 })
     expect(kept).toMatchObject({ facts: { booth: '3-R400', priceCents: 6000, currency: 'EUR', publisher: 'Inside Up Games' }, factsSource: 'preview' })
 
-    const standard = swipeDecision({ collection: { id: 'c2', type: 'standard' }, game: game(1, 10), listIsEssen: true, direction: 'left', now: T1 })
-    expect(standard).toMatchObject({ facts: null, factsSource: null })
+    const other = swipeDecision({ collection: { id: 'c2' }, game: game(1, 10), direction: 'left', now: T1 })
+    expect(other).toMatchObject({ facts: { booth: '3-R400' }, factsSource: 'preview' })
 
-    const geeklist = swipeDecision({ collection: essen, game: { position: 1, bggId: 10 }, listIsEssen: false, direction: 'right', now: T1 })
+    const geeklist = swipeDecision({ collection: essen, game: { position: 1, bggId: 10 }, direction: 'right', now: T1 })
     expect(geeklist).toMatchObject({ facts: null, factsSource: null })
   })
 
   it('marks the details as pending when the device has none yet', () => {
-    const entry = swipeDecision({ collection: essen, game: game(1, 10), listIsEssen: true, direction: 'right', now: T1, detailsPending: true })
+    const entry = swipeDecision({ collection: essen, game: game(1, 10), direction: 'right', now: T1, detailsPending: true })
     expect(entry.detailsPending).toBe(true)
   })
 })

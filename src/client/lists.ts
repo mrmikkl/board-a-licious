@@ -72,7 +72,7 @@ export function createListLoader(deps: {
 
   /** Queues the list for the person's other devices once, and asks for a sync right away. */
   async function share(list: StoredList): Promise<StoredList> {
-    await store.saveListRef({ kind: list.kind, id: list.id, title: list.title, isEssen: list.isEssen, updatedAt: iso(), deleted: false })
+    await store.saveListRef({ kind: list.kind, id: list.id, title: list.title, updatedAt: iso(), deleted: false })
     deps.onQueued?.()
     return update(list.kind, list.id, old => ({ ...(old ?? list), shared: true }))
   }
@@ -97,7 +97,7 @@ export function createListLoader(deps: {
 
   /** Fresh preview data updates the facts of collection entries that came from a preview. */
   async function refreshCollections(list: StoredList, entries: StoredListEntry[]) {
-    if (!list.isEssen) return
+    if (list.kind !== 'preview') return
     const fresh = new Map(entries.filter(e => e.facts).map(e => [e.bggId, e.facts!]))
     // one transaction: a mark made while the list loads is never overwritten by an older copy
     const at = iso()
@@ -115,7 +115,6 @@ export function createListLoader(deps: {
       kind,
       id,
       title: page.title,
-      isEssen: page.isEssen,
       pageCount: page.pageCount,
       loadedPages: page.page,
       items,

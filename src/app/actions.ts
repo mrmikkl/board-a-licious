@@ -1,6 +1,5 @@
 import {
   type Collection,
-  type CollectionType,
   type Entry,
   type Facts,
   type Paid,
@@ -22,8 +21,8 @@ import type { AppServices } from './context.tsx'
 /** Local changes: saved on the device (with the outbox), then a sync is scheduled. */
 const now = () => new Date().toISOString()
 
-export async function createCollection(services: AppServices, name: string, type: CollectionType): Promise<Collection> {
-  const collection = newCollection({ id: crypto.randomUUID(), name, type, now: now() })
+export async function createCollection(services: AppServices, name: string): Promise<Collection> {
+  const collection = newCollection({ id: crypto.randomUUID(), name, now: now() })
   await services.store.saveCollection(collection)
   void services.sync.schedule()
   return collection

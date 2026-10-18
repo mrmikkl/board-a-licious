@@ -176,17 +176,6 @@ a {
   font-size: 13px;
   font-weight: 700;
 }
-.badge-essen {
-  border: 1px solid var(--orange);
-  color: var(--orange-2);
-}
-.badge-essen::before {
-  content: '';
-  width: 9px;
-  height: 10px;
-  clip-path: var(--hex);
-  background: var(--grad-hot);
-}
 
 /* Empty state */
 .empty {

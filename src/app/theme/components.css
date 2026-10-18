@@ -261,10 +261,6 @@
   background: var(--grad-dusk);
   filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
 }
-.collection-card.essen .cluster i {
-  background: var(--grad-hot);
-  filter: drop-shadow(0 0 6px rgba(255, 122, 26, 0.6));
-}
 .cluster i:nth-child(1) {
   top: 0;
   right: 0;
@@ -322,9 +318,6 @@
   -webkit-line-clamp: 2;
   white-space: normal;
   overflow-wrap: anywhere;
-}
-.top .badge-essen {
-  flex: none;
 }
 .row-actions {
   display: grid;
@@ -567,4 +560,62 @@
 /* Cancel and the main action side by side, the main action on the right */
 .sheet-actions-row {
   grid-template-columns: 1fr 1fr;
+}
+
+/* Game info (docs/design.md §7 "Game info"): year beside the name, publisher, then three infos */
+.row-year {
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row-info > span:first-child {
+  flex: none;
+}
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.row-info .info-pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.info-pill {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.info-list > div {
+  display: contents;
+}
+.info-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.info-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
