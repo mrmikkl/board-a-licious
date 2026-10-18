@@ -64,5 +64,17 @@ npm run deploy                        # wrangler deploy (assets + /api)
 | 19 | Fresh account without collections: + → Game → paste a link | Offered to create "SPIEL 2026" first, then the game is in it (FR-016) |
 | 20 | Collection with a preview game and a game added by link; open each | Row: name and year, publisher, then the first three of price, players, booth, edition, designer, mechanisms; details show all, mechanisms as badges (FR-005, FR-010) |
 
+### Validation run 2026-10-17/18 (T078)
+
+All 20 scenarios passed on the deployed app (Samsung Galaxy S23 Ultra, second device a MacBook).
+Found and fixed on the way:
+
+- Scenario 12: game names and covers never arrived on a new device; game details now come in
+  batches of 10 (one request for 50 waited about a minute for BGG and was cancelled).
+- Scenario 14 (setup): a list loaded on another device showed "You've seen every game" in Add by
+  list; it now loads when selected.
+- Access login: the only login method was the Cloudflare account login; One-time PIN added and
+  made the only method (docs/hosting/setup.md step 6).
+
 Details: [contracts/api.md](contracts/api.md), [contracts/share-and-backup.md](contracts/share-and-backup.md),
 [data-model.md](data-model.md), design: [design.md](design.md).

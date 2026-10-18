@@ -212,7 +212,7 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 - [X] T075 Offline: precache app shell, fonts and loaded data; end-to-end test `tests/e2e/offline.spec.ts` (airplane mode: mark, buy, reload; online: synced) — SC-004
 - [X] T076 Accessibility and reduced-motion pass over all screens at 360×740 in `tests/e2e/a11y.spec.ts` (axe, no horizontal scroll, focus order, labels) — FR-024, FR-026, SC-006
 - [X] T077 Production setup: Neon migration, Hyperdrive, Access application (one-time PIN), secrets; setup steps in `README.md`
-- [ ] T078 Run the 20 validation scenarios of `quickstart.md` on the deployed app (phone), note results in `specs/001-bgg-game-collection/quickstart.md`
+- [X] T078 Run the 20 validation scenarios of `quickstart.md` on the deployed app (phone), note results in `specs/001-bgg-game-collection/quickstart.md`
 
 ---
 
