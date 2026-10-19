@@ -44,10 +44,11 @@ One brief per worker, self-contained (the worker does not see the coordinator's 
 ### 3. Run
 
 ```bash
-orca orchestration run-create --title "F002 wave 1"
-orca orchestration task-create --run <run> --title "US1 share sheet" --brief-file brief-us1.md
-orca orchestration worker-start --run <run> --task <task> \
-  --worktree new-child --base-branch NNN-<short-name> --setup skip --agent claude
+orca orchestration run-create --objective "F002: implement US1–US3" --json        # → run id
+orca orchestration task-create --task-title "F002 A: share sheet" --display-name "F002 A: share sheet" \
+  --spec "$(cat brief-a.md)" --json                                                   # → task id
+orca orchestration worker-start --task <task> --worktree new-child --name f002-worker-a-sheet \
+  --base-branch NNN-<short-name> --setup skip --agent claude --json                   # → dispatch id
 ```
 
 - Start each worker with its own call (in zsh, one command per line, no loops over arrays).
@@ -57,11 +58,12 @@ orca orchestration worker-start --run <run> --task <task> \
 ### 4. Coordinate
 
 - Wait for events in the background:
-  `orca orchestration check --wait --types worker_done,escalation,question`; acknowledge each
-  delivery.
-- Answer questions with `orca orchestration reply`.
+  `orca orchestration check --run <run> --wait --types worker_done,escalation,question --json`
+  (one waiter per run at a time); acknowledge each batch with `--ack <deliveryId>`. Heartbeats
+  ("alive") arrive in between and need no action.
+- Answer questions with `orca orchestration reply --run <run> --id <msg_id> --body "…"`.
 - A worker that goes quiet usually waits for a permission prompt: look with
-  `orca orchestration worker-read --source terminal` and tell the user which prompt to approve
+  `orca orchestration worker-read --dispatch <dispatch> --source terminal` (or `--source transcript`) and tell the user which prompt to approve
   (never approve on their behalf).
 
 ### 5. Merge (per finished worker)
@@ -75,7 +77,7 @@ orca orchestration worker-start --run <run> --task <task> \
 ### 6. Clean up
 
 ```bash
-orca orchestration worker-release --worker <worker>
+orca orchestration worker-release --dispatch <dispatch>
 orca worktree rm --worktree branch:<worker-branch> --force   # removes worktree and merged branch
 git worktree list                                             # only the main folders remain
 ```
@@ -89,3 +91,12 @@ git worktree list                                             # only the main fo
   combination.
 - Remove worktrees and branches right after merging; stale ones confuse later `git worktree list`
   and branch-based numbering (Extension 3).
+
+## Lessons from F002
+
+- New worktrees have no `node_modules`: every worker first asks to run `npm install` (a permission
+  prompt the user approves in the worker's terminal).
+- The dev server on :5173 serves the main checkout, not a worker's worktree: workers that run e2e
+  tests start their own Vite on another port with a local, uncommitted Playwright config.
+- Tests that need another worker's part: each worker asserts only what it owns; the coordinator runs
+  all suites together after merging (and enables any test left pending).
