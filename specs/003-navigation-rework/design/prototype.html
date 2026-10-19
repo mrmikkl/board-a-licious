@@ -2336,6 +2336,23 @@ a {
 .screen-head h1 { margin: 0; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
 .screen-head .back { width: 36px; height: 36px; min-width: 36px; }
 
+/* Collection heading: name, then the pencil; a name too long for the row runs left like a ticker */
+.screen-head .marquee { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; overflow-wrap: normal; }
+.marquee > span { display: inline-block; }
+.marquee.is-long { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent); padding-left: 10px; margin-left: -10px; }
+.marquee.is-long > span { animation: ticker var(--ticker-time, 8s) linear infinite; }
+@keyframes ticker {
+  0%, 18% { transform: translateX(0); }        /* read the start */
+  82%, 100% { transform: translateX(calc(-1 * var(--ticker-shift))); } /* the end is visible, then start over */
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee.is-long > span { animation: none; }
+  .marquee.is-long { text-overflow: ellipsis; -webkit-mask-image: none; mask-image: none; }
+  .marquee.is-long > span { display: inline; }
+}
+.edit-btn { flex: none; width: 40px; height: 40px; min-width: 40px; }
+.edit-btn svg { width: 18px; height: 18px; }
+
 /* Menu: panel under the app bar, right-aligned */
 .menu-scrim { position: fixed; inset: 0; z-index: 26; background: rgba(5, 6, 14, 0.5); animation: fade-in 0.2s ease-out; }
 .menu {
@@ -2369,7 +2386,9 @@ a {
 .act:hover { color: var(--text); }
 .act.is-active svg { color: var(--orange); }
 .act.is-active span::after { content: ' •'; color: var(--orange); }
-.main-btn { grid-column: 3; justify-self: center; border: 0; cursor: pointer; }
+.act.at-2 { grid-column: 2; }
+.act.at-4 { grid-column: 4; }
+.main-btn { grid-column: 3; grid-row: 1; justify-self: center; border: 0; cursor: pointer; }
 .main-btn:disabled { background: var(--raised); color: var(--placeholder); cursor: not-allowed; }
 .main-btn:disabled::after { display: none; }
 @media (min-width: 768px) { .actionbar { max-width: 560px; border-radius: var(--r-lg) var(--r-lg) 0 0; } }
@@ -2393,6 +2412,7 @@ a {
   <select id="start">
     <option value="collections">Collections</option>
     <option value="collection">A collection (Essen 2026)</option>
+    <option value="long">A collection with a long name</option>
     <option value="lists">BGG lists</option>
     <option value="search">Search</option>
     <option value="config">Config</option>
@@ -2420,6 +2440,7 @@ const ICON = {
   config: svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>'),
   burger: svg('<path d="M4 7h16M4 12h16M4 17h16"/>', 2.4),
   filter: svg('<path d="M3 5h18l-7 8v5l-4 2v-7z"/>'),
+  pencil: svg('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
   more: svg('<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>', 2.4),
 }
 const MARK = { must_have: ['Must Have', '⭐'], interested: ['Interested', '👀'], unsure: ['Unsure', '🤔'], poop: ['Poop', '💩'], new: ['Not yet marked', '⬡'], skip: ['Not interested', '🛑'] }
@@ -2440,6 +2461,10 @@ const START = () => ({
       ['Twilight Inscription', 'Fantasy Flight', '€75 · 1–8 players · Booth 3-A200', 'skip'],
     ].map(([name, publisher, info, mark]) => ({ name, publisher, info, mark })) },
     { id: 'wish', name: 'Wishlist', games: [] },
+    { id: 'long', name: 'Saturday at SPIEL with the whole family and the neighbours', games: [
+      { name: 'Faraway', publisher: 'Catch Up Games', info: '€22 · 2–6 players · Booth 1-H112', mark: 'interested' },
+      { name: 'Harmonies', publisher: 'Libellud', info: '€32 · 1–4 players · Booth 2-A101', mark: 'new' },
+    ] },
   ],
   lists: [{ id: 'p93', title: 'SPIEL Essen 2026 Preview', sub: '1,370 games · loaded' }],
   route: { name: 'collections' },
@@ -2472,10 +2497,11 @@ const appbar = () => `
     <button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="${state.menu}">${ICON.burger}</button>
   </header>`
 
-const heading = (title, back) => `
+const heading = (title, back, edit) => `
   <div class="screen-head">
     ${back ? `<button type="button" class="icon-btn back" data-go="${back}" aria-label="Back">‹</button>` : ''}
-    <h1>${esc(title)}</h1>
+    <h1 class="${edit ? 'marquee' : ''}" title="${esc(title)}"><span>${esc(title)}</span></h1>
+    ${edit ? `<button type="button" class="icon-btn edit-btn" id="edit" aria-label="Edit ${esc(title)}" aria-haspopup="dialog">${ICON.pencil}</button>` : ''}
   </div>`
 
 const menu = () => !state.menu ? '' : `
@@ -2494,10 +2520,9 @@ function actionbar() {
     case 'lists': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.plus, 'Load a BGG list')}</nav>`
     case 'search': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.searchBold, 'Search (not available yet)', true)}</nav>`
     case 'collection': return `<nav class="actionbar" aria-label="Actions">
-        ${act('filter', 'Filter', ICON.filter, state.filterOn ? 'is-active' : '')}
-        ${act('add-game', 'Add game', ICON.plusThin)}
+        ${act('add-game', 'Add game', ICON.plusThin, 'at-2')}
         ${mainBtn(ICON.heart, 'Add by list')}
-        ${act('options', 'Options', ICON.more)}
+        ${act('filter', 'Filter', ICON.filter, 'at-4' + (state.filterOn ? ' is-active' : ''))}
       </nav>`
     default: return '' // config, a single list, swipe: no action bar
   }
@@ -2527,18 +2552,20 @@ const row = g => `<button type="button" class="row${g.fresh ? ' is-just-added' :
 
 function collectionScreen() {
   const c = state.collections.find(x => x.id === state.route.id)
-  if (c.games.length === 0) return heading(c.name, 'collections') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No games in ${esc(c.name)} yet</h2>
+  if (c.games.length === 0) return heading(c.name, null, true) + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No games in ${esc(c.name)} yet</h2>
     <p>Tap the <b>heart</b> below to go through a BGG list and swipe the games you care about into it, or <b>Add game</b> to add a single game by its BoardGameGeek link.</p></div></main>`
   const shown = state.filterOn ? c.games.filter(g => g.mark === 'must_have') : c.games
   const groups = GROUP_ORDER.map(k => [k, shown.filter(g => g.mark === k)]).filter(([, gs]) => gs.length)
-  return heading(c.name, 'collections') + `<main class="screen">
+  return heading(c.name, null, true) + `<main class="screen">
     ${state.filterOn ? `<button type="button" class="filter-summary" id="filter-summary">⭐ Must Have · ${shown.length} games</button>` : ''}
     <hr class="separator" />
-    ${groups.map(([k, gs]) => {
+    ${groups.map(([k, gs], i) => {
       const folds = k === 'new' || k === 'skip'
+      // the marked games and the rest (Not yet marked, Not interested) are two parts, split by the line
+      const split = folds && i > 0 && !(groups[i - 1][0] === 'new' || groups[i - 1][0] === 'skip')
       const open = k === 'new' ? state.foldNew : state.foldSkip
       const title = `<i class="hex" aria-hidden="true"></i><span>${MARK[k][0]}</span><b class="group-count">${gs.length}</b>`
-      return `<section class="group"><h2 class="group-title" data-mark="${k}">${folds ? `<button type="button" class="fold" data-fold="${k}" aria-expanded="${open}">${title}<span class="chev" aria-hidden="true">›</span></button>` : title}</h2>
+      return `${split ? '<hr class="separator" />' : ''}<section class="group"><h2 class="group-title" data-mark="${k}">${folds ? `<button type="button" class="fold" data-fold="${k}" aria-expanded="${open}">${title}<span class="chev" aria-hidden="true">›</span></button>` : title}</h2>
         <ul class="rows" ${folds && !open ? 'hidden' : ''}>${gs.map(g => `<li>${row(g)}</li>`).join('')}</ul></section>`
     }).join('')}
   </main>`
@@ -2589,7 +2616,9 @@ const SHEETS = {
   addGame: () => sheet('Add game', `<p class="lead">For games that are not on any list.</p><form class="form" id="f"><div><label class="label" for="glink">BoardGameGeek link</label><div class="field"><input id="glink" placeholder="boardgamegeek.com/boardgame/295947/cascadia" autocomplete="off" /></div></div>
     <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary">Add to collection</button></div></form>`),
   filter: () => sheet('Filter and group', `<p class="lead">(The existing filter sheet, unchanged.)</p><div class="sheet-actions sheet-actions-row"><button type="button" class="btn" id="filter-all">Show all</button><button type="button" class="btn btn-primary" id="filter-must">Only Must Have</button></div>`),
-  options: () => sheet(state.collections.find(c => c.id === state.route.id).name, `<div class="sheet-actions"><button type="button" class="btn btn-block" data-close>Rename</button><button type="button" class="btn btn-block" data-close>Share as text</button><button type="button" class="btn btn-block btn-danger" data-close>Delete collection</button></div>`),
+  edit: () => sheet('Edit collection', `<form class="form" id="f"><div><label class="label" for="ename">Name</label><div class="field"><input id="ename" maxlength="60" value="${esc(state.collections.find(c => c.id === state.route.id).name)}" autocomplete="off" /></div></div>
+    <button type="submit" class="btn btn-primary btn-block">Save name</button></form>
+    <div class="sheet-actions"><button type="button" class="btn btn-block btn-danger" id="delete">Delete collection…</button><button type="button" class="btn btn-block" data-close>Cancel</button></div>`),
 }
 
 /* ---------- render and events ---------- */
@@ -2599,6 +2628,14 @@ function render() {
   const bar = actionbar()
   root.innerHTML = `<div class="app band-${$('#band').value}${bar ? '' : ' no-actions'}">${appbar()}${SCREENS[state.route.name]()}${bar}</div>${menu()}${state.sheet ? SHEETS[state.sheet]() : ''}`
   wire()
+  // a collection name wider than its room runs left until its end shows, then starts over
+  const h = root.querySelector('.marquee')
+  if (h) {
+    const shift = h.firstElementChild.scrollWidth - h.clientWidth + 24
+    h.classList.toggle('is-long', shift > 24)
+    h.style.setProperty('--ticker-shift', shift + 'px')
+    h.style.setProperty('--ticker-time', Math.max(6, shift / 30 / 0.64) + 's') // ~30 px/s while moving
+  }
   // the menu hangs just below the app bar
   const m = root.querySelector('.menu')
   if (m) m.style.top = root.querySelector('.appbar').getBoundingClientRect().bottom + 6 + 'px'
@@ -2622,7 +2659,8 @@ function wire() {
   on('#main', () => openSheet({ collections: 'newCollection', lists: 'loadList', collection: 'pickList' }[state.route.name]))
   on('#add-game', () => openSheet('addGame'))
   on('#filter', () => openSheet('filter')); on('#filter-summary', () => openSheet('filter'))
-  on('#options', () => openSheet('options'))
+  on('#edit', () => openSheet('edit'))
+  on('#delete', () => { state.collections = state.collections.filter(c => c.id !== state.route.id); go({ name: 'collections' }); toast('Deleted (after the existing confirmation)') })
   on('#filter-all', () => { state.filterOn = false; close() })
   on('#filter-must', () => { state.filterOn = true; close() })
   on('#to-load', () => { go({ name: 'lists' }); openSheet('loadList') })
@@ -2654,6 +2692,10 @@ function wire() {
       const id = 'l' + Date.now()
       state.lists.unshift({ id, title: 'SPIEL Essen 2026 Preview', sub: 'Loading 1 of 138 pages' })
       go({ name: 'list', id }); toast('Loading SPIEL Essen 2026 Preview')
+    } else if (state.sheet === 'edit') {
+      const c = state.collections.find(x => x.id === state.route.id)
+      const name = root.querySelector('#ename').value.trim()
+      if (name) { c.name = name; close(); toast(`Renamed to ${name}`) }
     } else if (state.sheet === 'addGame') {
       const c = state.collections.find(x => x.id === state.route.id)
       c.games.forEach(g => (g.fresh = false))
@@ -2668,7 +2710,7 @@ function start() {
   state = START()
   const s = $('#start').value
   if (s === 'empty') { state.collections = []; state.lists = [] }
-  state.route = s === 'collection' ? { name: 'collection', id: 'essen' } : { name: s === 'empty' ? 'collections' : s }
+  state.route = s === 'long' ? { name: 'collection', id: 'long' } : s === 'collection' ? { name: 'collection', id: 'essen' } : { name: s === 'empty' ? 'collections' : s }
   render()
 }
 $('#start').onchange = start
