@@ -1,6 +1,7 @@
 # Design rules
 
-**Version**: 1.8.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-18 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html)
+**Version**: 1.9.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-19 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html),
+[share prototype](../specs/002-share-from-bgg/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -110,12 +111,15 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 | **Sheet** | bottom sheet for details and for adding; a sheet that asks for a choice ends with Cancel (left) and its one action (right) side by side, the action named for what it does (Select, Load list, Add to collection); closes with Esc, scrim tap, Cancel or by pulling it down on a touch screen (from the handle, or anywhere while scrolled to the top; 100px, or a quick flick of 40px); never saves without an explicit button. |
 | **Add by list** | sheet titled "Add by list", one line explaining the swiping (right adds the game, left passes on it, decided games don't come back), then a segment "Select list" / "Add new list" (Select list first when lists are loaded). Select list: the loaded lists as cards; the chosen one gets an orange border, glow and a hexagon tick; lists with every game seen are dimmed and disabled; action "Select". Add new list: the BGG list link with its hint; action "Load list". Either opens Swipe for that list. |
 | **Add game** | sheet titled "Add game": one line saying it is for games not on any list, the BoardGameGeek link with the recognised game and editable name, a note when the game is already in the collection; action "Add to collection". |
+| **Shared game** | what opens when a BoardGameGeek page is shared to the app (from the BGG app or the browser): the "Add game" sheet over the collection shared into last (else the collections screen). Top: the hexagon cover beside the editable name and a muted "Shared from BoardGameGeek". Then the **collection dropdown** with the collection shared into last preselected and marked "(last used)"; collections that already hold the game are marked "(already in it)". One hint line below the dropdown: "Preselected: the collection you last shared into", or in red "<Game> is already in <collection>. Pick another collection." (then the action is disabled). Offline: a framed note that the game is added now and its cover and details follow. Actions: Cancel / **Add to collection**; adding opens that collection with the new row highlighted and the toast "Added <game> to <collection>". No collection yet: a collection name prefilled "SPIEL 2026" and the action **Create and add**. A shared page that is no game: sheet "Not a BoardGameGeek game" with the shared link, Close / **Add game by link**. A shared BGG list opens that list. |
+| **Choosing a collection** | in a sheet, one collection out of many is chosen with a **dropdown** (cards grow too long with many collections); cards are for a few rich choices such as loaded lists. |
 | **Hidden taps** | a heading that counts taps (Config: five taps within 4 s show or hide the developer section) does not select text, does not zoom on double tap and takes the title's full width. |
 | **Multi-choice list** | rows with a hexagon tick; the ticks always show the current truth; changes apply on "Done". |
 | **Inputs** | solid field with label or icon; the primary button stays disabled until the input is valid. Dropdowns use the same field look with an orange hexagon as arrow. |
 | **Swipe card** | big cover, name, year, publisher, description (3 lines), all game infos; ✓/✕ hexagon buttons below; arrow keys work. |
 | **Empty state** | centred: decorative hexagon (no symbol), one heading, one hint, the actions as buttons. |
 | **Toast** | dark pill above the tab bar, one short sentence. |
+| **Share hint** | in Config, only while the app is not installed to the home screen: a card "📲 Share from BoardGameGeek" saying that once board-a-licious is on the home screen, games can be shared to it from the BGG app or website, and how (Chrome menu ⋮ → Add to Home screen). |
 | **Tab bar** | 4 tabs + the big hot hexagon "+" in the middle (opens the add choice); a light shimmer passes over it every 5 s. |
 
 ## 8. Interaction states
@@ -138,6 +142,10 @@ Unsure, Poop, Not interested. Bought is shown as a badge, never as a group.
 - **Swipe**: card follows the finger with tilt and growing ADD/NOPE stamps; snaps back with
   overshoot; leaves with a fling; the next card pops up from behind.
 - **Counters** roll from the old to the new value (650ms) and flash amber.
+- **Sheets** slide up only when they open (and down when they close); what changes inside an open
+  sheet (a dropdown choice, a hint, an enabled button) updates in place, without replaying the slide.
+- **Just added**: a game row that was just added (e.g. from a share) carries the orange border and
+  glow of the hover state until the user scrolls or taps elsewhere.
 - **Background**: a faint honeycomb on a deep blue-violet gradient; slow light waves fill cells in
   violet→orange, and every ~0.5–1.2s a single cell lights up orange or teal and fades. Low contrast,
   brightest at the top, ~30fps, paused in hidden tabs.

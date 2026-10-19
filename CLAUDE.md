@@ -16,7 +16,7 @@ Access (Zitadel login) in front; shared pure domain logic in `src/domain/`.
 
 ## Rules that apply to all work
 
-- Look and feel: `docs/design.md` (design rules v1.8.0) is binding for every UI change; the
+- Look and feel: `docs/design.md` (design rules v1.9.0) is binding for every UI change; the
   feature's screens are in `specs/<NNN>/design.md`.
 - Project principles (mobile-first and accessible, test-first, domain logic separate from the UI,
   YAGNI, respectful BGG integration): `.specify/memory/constitution.md`. Plans and reviews check

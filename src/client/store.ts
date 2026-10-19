@@ -14,6 +14,8 @@ export type MetaValues = {
   activeFilter: Record<string, unknown>
   /** How each collection's games are grouped: by mark (default) or by fair hall. */
   groupBy: Record<string, 'mark' | 'booth'>
+  /** F002: the collection a game was last shared into on this device (preselected in the share sheet). */
+  lastShareCollection: string
 }
 
 interface Schema extends DBSchema {

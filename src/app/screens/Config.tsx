@@ -54,6 +54,7 @@ export function Config() {
     <>
       <Header title="Config" onTitleClick={tapTitle} />
       <main className="screen config">
+        <ShareHint />
         <SoundSetting />
         <hr className="separator" />
         <h2 className="section-title">Introduction</h2>
@@ -85,6 +86,28 @@ export function Config() {
           </section>
         )}
       </main>
+    </>
+  )
+}
+
+/**
+ * F002 Share hint (docs/design.md "Share hint", research R6): only in a browser tab, as the share
+ * menu offers board-a-licious only once it is on the home screen (opened from there it runs standalone).
+ */
+function ShareHint() {
+  if (window.matchMedia('(display-mode: standalone)').matches) return null
+  return (
+    <>
+      <section className="card hint-card" aria-labelledby="share-hint-title">
+        <h2 id="share-hint-title" className="card-title">
+          📲 Share from BoardGameGeek
+        </h2>
+        <p className="card-sub">Once board-a-licious is on your home screen, you can share any game from the BGG app or website straight into a collection.</p>
+        <p className="card-sub">
+          In Chrome: menu ⋮ → <b>Add to Home screen</b>. Afterwards, open board-a-licious from its icon.
+        </p>
+      </section>
+      <hr className="separator" />
     </>
   )
 }

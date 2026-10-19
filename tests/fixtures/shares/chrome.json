@@ -1,0 +1,15 @@
+{
+  "source": "Chrome on Android shares the page link as url and the page title as title (text empty). Titles follow BoardGameGeek's '<name> | Board Game | BoardGameGeek' pattern. Written from that format, not recorded on a phone.",
+  "shares": [
+    { "title": "Cascadia | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/295947/cascadia", "bggId": 295947, "name": "Cascadia" },
+    { "title": "Ark Nova | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/342942/ark-nova", "bggId": 342942, "name": "Ark Nova" },
+    { "title": "Wingspan | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/266192/wingspan", "bggId": 266192, "name": "Wingspan" },
+    { "title": "Heat: Pedal to the Metal | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/366013/heat-pedal-to-the-metal", "bggId": 366013, "name": "Heat: Pedal to the Metal" },
+    { "title": "Brass: Birmingham | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/224517/brass-birmingham", "bggId": 224517, "name": "Brass: Birmingham" },
+    { "title": "Spirit Island | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/162886/spirit-island", "bggId": 162886, "name": "Spirit Island" },
+    { "title": "Azul | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/230802/azul", "bggId": 230802, "name": "Azul" },
+    { "title": "Dune: Imperium | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/316554/dune-imperium", "bggId": 316554, "name": "Dune: Imperium" },
+    { "title": "Harmonies | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/414317/harmonies", "bggId": 414317, "name": "Harmonies" },
+    { "title": "Kalypso | Board Game | BoardGameGeek", "url": "https://boardgamegeek.com/boardgame/446453/kalypso", "bggId": 446453, "name": "Kalypso" }
+  ]
+}
