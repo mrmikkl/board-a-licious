@@ -27,8 +27,8 @@ As features 001/002: `src/domain/`, `src/app/`, `tests/{unit,e2e}/`, plus `vite.
 
 **Purpose**: icons and test helpers every story uses.
 
-- [ ] T001 [P] Write `scripts/make-icons.mjs` (research R6): with the Playwright Chromium (`@playwright/test`, already a dev dependency) read `specs/003-navigation-rework/design/icons/Hexagon Icons/hex-gradient-colour.png` and `Favicons/favicon-color.png`, trim transparent margins and write `public/icons/logo.png` (120px wide), `icon-192.png`, `icon-512.png` (transparent corners, `purpose: any`), `icon-maskable-512.png` (the hexagon at 80% on a full `#0D0F1F` square, inside the maskable safe zone), `apple-touch-icon.png` (180px on `#0D0F1F`) and `favicon.png` (48px); run it and commit `public/icons/`
-- [ ] T002 [P] Add e2e helpers to `tests/e2e/helpers.ts` (research R8, contracts/navigation.md): `openMenu(page)`, `goTo(page, 'Collections' | 'BGG lists' | 'Search' | 'Config')` (☰ "Menu" → link in `nav` "Menu"), `mainButton(page)` (the action bar's main button), `createCollection(page, name)` (Collections → main ＋ → Name → Create collection), `loadList(page, link)` (BGG lists → main ＋ → link → Load list)
+- [X] T001 [P] Write `scripts/make-icons.mjs` (research R6): with the Playwright Chromium (`@playwright/test`, already a dev dependency) read `specs/003-navigation-rework/design/icons/Hexagon Icons/hex-gradient-colour.png` and `Favicons/favicon-color.png`, trim transparent margins and write `public/icons/logo.png` (120px wide), `icon-192.png`, `icon-512.png` (transparent corners, `purpose: any`), `icon-maskable-512.png` (the hexagon at 80% on a full `#0D0F1F` square, inside the maskable safe zone), `apple-touch-icon.png` (180px on `#0D0F1F`) and `favicon.png` (48px); run it and commit `public/icons/`
+- [X] T002 [P] Add e2e helpers to `tests/e2e/helpers.ts` (research R8, contracts/navigation.md): `openMenu(page)`, `goTo(page, 'Collections' | 'BGG lists' | 'Search' | 'Config')` (☰ "Menu" → link in `nav` "Menu"), `mainButton(page)` (the action bar's main button), `createCollection(page, name)` (Collections → main ＋ → Name → Create collection), `loadList(page, link)` (BGG lists → main ＋ → link → Load list)
 
 ---
 
@@ -38,8 +38,8 @@ As features 001/002: `src/domain/`, `src/app/`, `tests/{unit,e2e}/`, plus `vite.
 
 **⚠️ CRITICAL**: no user story work before this phase is complete.
 
-- [ ] T003 Unit tests in `tests/unit/router.test.ts` (data-model "Routes", contracts/navigation.md "Sheets opened by routes", "Old addresses"): `#/collections?new` → `{ name: 'collections', create: true }`; `#/lists?load` → `{ name: 'lists', load: true }`; `#/collections/<id>?add=game` / `?add=list` → `{ name: 'collection', id, open: 'game' | 'list' }`; `href` round-trips each; `#/add` → collections, `#/add/collection` → collections create, `#/add/list` → lists load, `#/add/game` → collections; existing routes (swipe with list, list, shared with query, config/share) unchanged
-- [ ] T004 Implement the query flags in `src/app/router.ts` (parse and `href`) and the `#/add…` redirects; remove the `add` route from the `Route` type; T003 passes (`tsc` will flag `Add.tsx`, `TabBar.tsx` and the `href({ name: 'add' … })` links: give them temporary targets per contracts/navigation.md "Links that pointed at the add screen" so the build stays green until US1/US2 remove them)
+- [X] T003 Unit tests in `tests/unit/router.test.ts` (data-model "Routes", contracts/navigation.md "Sheets opened by routes", "Old addresses"): `#/collections?new` → `{ name: 'collections', create: true }`; `#/lists?load` → `{ name: 'lists', load: true }`; `#/collections/<id>?add=game` / `?add=list` → `{ name: 'collection', id, open: 'game' | 'list' }`; `href` round-trips each; `#/add` → collections, `#/add/collection` → collections create, `#/add/list` → lists load, `#/add/game` → collections; existing routes (swipe with list, list, shared with query, config/share) unchanged
+- [X] T004 Implement the query flags in `src/app/router.ts` (parse and `href`) and the `#/add…` redirects; remove the `add` route from the `Route` type; T003 passes (`tsc` will flag `Add.tsx`, `TabBar.tsx` and the `href({ name: 'add' … })` links: give them temporary targets per contracts/navigation.md "Links that pointed at the add screen" so the build stays green until US1/US2 remove them)
 
 **Checkpoint**: every sheet the old add screen offered has an address; old links still land somewhere sensible.
 
@@ -58,7 +58,7 @@ As features 001/002: `src/domain/`, `src/app/`, `tests/{unit,e2e}/`, plus `vite.
 
 ### Implementation for User Story 1
 
-- [ ] T007 [P] [US1] Add `IconMenu` (☰), `IconHeart`, `IconPencil` to `src/app/components/icons.tsx`
+- [X] T007 [P] [US1] Add `IconMenu` (☰), `IconHeart`, `IconPencil` to `src/app/components/icons.tsx`
 - [ ] T008 [US1] Create `src/app/components/Menu.tsx` (research R2): `nav` "Menu" with a list of links (Collections, BGG lists, Search, Config; `aria-current="page"` by place as in contracts/navigation.md "Menu"), scrim; focus to the current link on open; Esc, scrim tap and choosing a link call `onClose`
 - [ ] T009 [US1] Create `src/app/components/AppBar.tsx`: logo `<img src="/icons/logo.png" alt="">`, the text "Board-a-licious", ☰ button "Menu" with `aria-expanded`/`aria-controls`; renders `Menu` while open; closes on route change; focus back to ☰ on Esc/scrim
 - [ ] T010 [US1] Styles in `src/app/theme/shell.css` (docs/design.md v2.0.0 "App bar", "Menu"): sticky orange band (hot gradient, ~48px, dark name in Chakra Petch 19px, 34px logo, 38px translucent ☰ with a ≥ 44px touch area), menu panel below the app bar at the right (rows ≥ 48px, raised current row with orange icon), scrim, 180ms grow-in, none under `prefers-reduced-motion`; remove `.tabbar`, `.tab`, `.logo` letter styles that are no longer used
