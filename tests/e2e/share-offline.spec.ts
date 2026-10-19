@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { fakeBgg, unique } from './helpers.ts'
+
 /**
  * F002 against the production build (`vite preview`), where the manifest and the service worker
  * exist: the app is a share target (contracts/share-target.md) and a share opens offline too.
@@ -23,4 +25,61 @@ test('a share opens the app on #/shared, also offline (T004)', async ({ page, co
   expect(new URL(page.url()).pathname).toBe('/')
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
   await context.setOffline(false)
+})
+
+test('offline share: framed note, added on the phone at once, synced once back online (T015)', async ({ page, context }) => {
+  await fakeBgg(page)
+  const name = unique('Shared Offline')
+  await page.goto('/#/add/collection')
+  await page.evaluate(() => navigator.serviceWorker.ready)
+  await page.getByLabel('Name').fill(name)
+  await page.getByRole('button', { name: 'Create collection' }).click()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+  await page.reload()
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
+
+  // a game this device has never seen, so its details are still to come
+  const bggId = 900_000 + Math.floor(Math.random() * 99_999)
+  await context.setOffline(true)
+  await page.goto(`/share-target?url=${encodeURIComponent(`https://boardgamegeek.com/boardgame/${bggId}/offline-fair-game`)}`)
+  const sheet = page.getByRole('dialog', { name: 'Add game' })
+  await expect(sheet).toContainText(
+    'You are offline: the game is added on this phone now; its cover and details follow once you are back online.',
+  )
+  const select = sheet.getByLabel('Collection', { exact: true })
+  await select.selectOption(await select.locator('option').filter({ hasText: name }).getAttribute('value'))
+  await sheet.getByRole('button', { name: 'Add to collection' }).click()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+  await expect(page.getByRole('button', { name: /offline fair game/i })).toContainText('Details follow from BoardGameGeek')
+
+  await context.setOffline(false)
+  await expect
+    .poll(
+      async () => {
+        const pulled = await (await page.request.get('/api/sync')).json()
+        const collection = pulled.collections.find((c: { name: string }) => c.name === name)
+        return Boolean(collection && pulled.entries.some((e: { collectionId: string; bggId: number }) => e.collectionId === collection.id && e.bggId === bggId))
+      },
+      { timeout: 15_000 },
+    )
+    .toBe(true)
+})
+
+test('share while signed out (API 401): the game is added on the phone and "Sign in again" shows (T015)', async ({ page }) => {
+  await fakeBgg(page)
+  await page.addInitScript(() => localStorage.setItem('bal-last-email', 'you@example.com'))
+  await page.route('**/api/**', route =>
+    route.fulfill({ status: 401, json: { error: 'unauthenticated', message: 'Sign in to use the app.', retryable: false } }),
+  )
+  await page.goto(`/share-target?text=${encodeURIComponent(`Cascadia ${CASCADIA}`)}`)
+  const sheet = page.getByRole('dialog', { name: 'Add game' })
+  await expect(sheet).toBeVisible()
+  // a fresh browser that cannot sync has no collection yet
+  const created = unique('Shared Signed Out')
+  await sheet.getByLabel('Collection name').fill(created)
+  await sheet.getByRole('button', { name: 'Create and add' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: created })).toBeVisible()
+  await expect(page.getByRole('button', { name: /cascadia/i })).toBeVisible()
+  const banner = page.getByRole('status').filter({ hasText: /sign-in has expired/i })
+  await expect(banner.getByRole('link', { name: 'Sign in again' })).toBeVisible()
 })
