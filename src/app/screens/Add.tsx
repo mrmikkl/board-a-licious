@@ -27,13 +27,14 @@ const KINDS = [
 ]
 
 /** The + button: add a collection, a BGG list or a single game. */
-export function Add({ what }: { what?: What }) {
+export function Add({ what: initial }: { what?: What }) {
+  const [what, setWhat] = useState(initial)
   return (
     <>
       <Header title="Add" />
       <main className="screen">
         <p className="lead">What do you want to add?</p>
-        <HexPicker label="What to add" options={KINDS} value={what} onPick={key => navigate({ name: 'add', what: key })} />
+        <HexPicker label="What to add" options={KINDS} value={what} onPick={setWhat} />
         {what === 'collection' && <CollectionForm />}
         {what === 'list' && <ListForm />}
         {what === 'game' && <GameForm />}

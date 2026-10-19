@@ -17,7 +17,7 @@ export function TabBar({ route }: { route: Route }) {
     <nav className="tabbar" aria-label="Main">
       {tab('collections', 'Collections', <IconCollections />)}
       {tab('lists', 'Lists', <IconLists />)}
-      <a className="tab-add hex hex-btn" href={href({ name: 'add' })} aria-label="Add a collection, BGG list or game" aria-current={current === 'add' ? 'page' : undefined}>
+      <a className="tab-add hex hex-btn" href={href({ name: 'collections', create: true })} aria-label="Add a collection, BGG list or game" >
         <IconPlus />
       </a>
       {tab('search', 'Search', <IconSearch />)}

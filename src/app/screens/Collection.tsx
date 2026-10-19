@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useId, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useId, useState } from 'react'
 
 import { groupByHall } from '../../domain/booths.ts'
 import { type Collection as CollectionRow, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
@@ -23,7 +23,7 @@ import { href, navigate } from '../router.ts'
  * One collection: games grouped by mark, Not yet marked first, Not interested collapsed (FR-005);
  * filtered by groups and bought (FR-009), with the games bought and the money spent (FR-008).
  */
-export function Collection({ id }: { id: string }) {
+export function Collection({ id, open }: { id: string; open?: 'game' | 'list' }) {
   const services = useServices()
   const [openGame, setOpenGame] = useState<number>()
   // the filter picked on this screen, shown at once while it is saved to the device
@@ -33,6 +33,10 @@ export function Collection({ id }: { id: string }) {
   const [viewOpen, setViewOpen] = useState(false)
   // the "Add by list" and "Add game" sheets open over the collection
   const [adding, setAdding] = useState<'list' | 'game' | null>(null)
+  // F003: `?add=game|list` in the address opens the sheet (contracts/navigation.md)
+  useEffect(() => {
+    if (open) setAdding(open)
+  }, [open])
   const closeAdding = useCallback(() => setAdding(null), [])
   const closeView = useCallback(() => setViewOpen(false), [])
   const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: 'mark' | 'booth' }>()

@@ -22,7 +22,7 @@ export function Search() {
               <input id="search-bgg" type="search" placeholder="Game name" disabled />
             </div>
           </div>
-          <a className="btn btn-primary btn-block" href={href({ name: 'add', what: 'game' })}>
+          <a className="btn btn-primary btn-block" href={href({ name: 'collections' })}>
             Add a game by link instead
           </a>
         </div>

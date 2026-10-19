@@ -22,17 +22,17 @@ import { Swipe } from './screens/Swipe.tsx'
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
     case 'collections':
-      return <Collections />
+      // F003 transition: the old add screen serves the New collection sheet until US2 (tasks T017)
+      return route.create ? <Add key="collection" what="collection" /> : <Collections />
     case 'collection':
-      return <Collection key={route.id} id={route.id} />
+      return <Collection key={route.id} id={route.id} open={route.open} />
     case 'swipe':
       return <Swipe key={`${route.id}:${route.list?.kind}:${route.list?.id}`} id={route.id} list={route.list} />
     case 'lists':
-      return <Lists />
+      // F003 transition: the old add screen serves the Load a BGG list sheet until US2 (tasks T018)
+      return route.load ? <Add key="list" what="list" /> : <Lists />
     case 'list':
       return <List key={`${route.kind}:${route.listId}`} kind={route.kind} listId={route.listId} />
-    case 'add':
-      return <Add what={route.what} />
     case 'search':
       return <Search />
     case 'share':

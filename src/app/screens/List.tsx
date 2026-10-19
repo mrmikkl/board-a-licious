@@ -158,7 +158,7 @@ function OpenFailure({ error, onRetry }: { error: ApiError; onRetry: () => void 
       <p>{missing ? 'Check the link and load the list again.' : error.code === 'offline' ? 'You are offline. Connect and try again.' : 'Try again in a moment.'}</p>
       <div className="actions">
         {missing ? (
-          <a className="btn btn-primary" href={href({ name: 'add', what: 'list' })}>
+          <a className="btn btn-primary" href={href({ name: 'lists', load: true })}>
             Load a BGG list
           </a>
         ) : (

@@ -81,7 +81,7 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
       <h3 className="section-title">In collections</h3>
       {ready && ready.collections.length === 0 ? (
         <p className="lead">
-          You have no collection yet. <a href={href({ name: 'add', what: 'collection' })}>Create a collection</a>, then come back to this list.
+          You have no collection yet. <a href={href({ name: 'collections', create: true })}>Create a collection</a>, then come back to this list.
         </p>
       ) : (
         <>

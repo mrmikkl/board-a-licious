@@ -34,8 +34,8 @@ export function Shared({ title, text, url }: { title?: string; text?: string; ur
   }, [preselected])
   const addByLink = useCallback(() => {
     close()
-    navigate({ name: 'add', what: 'game' })
-  }, [close])
+    navigate(preselected ? { name: 'collection', id: preselected, open: 'game' } : { name: 'collections', create: true })
+  }, [close, preselected])
 
   if (result.kind === 'list' || !data) return null
   return (

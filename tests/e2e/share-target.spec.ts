@@ -143,8 +143,9 @@ test('"Add game by link" opens Add game with an empty link (T013)', async ({ pag
   const sheet = page.getByRole('dialog', { name: 'Not a BoardGameGeek game' })
   await expect(sheet.getByText('https://example.com/not-bgg')).toBeVisible()
   await sheet.getByRole('button', { name: 'Add game by link' }).click()
-  await expect(page).toHaveURL(/#\/add\/game$/)
-  await expect(page.getByLabel(/boardgamegeek link/i)).toHaveValue('')
+  // F003: the collection behind opens with its Add game sheet (contracts/navigation.md)
+  await expect(page).toHaveURL(new RegExp(`#/collections/${id}\\?add=game$`))
+  await expect(page.getByRole('dialog', { name: 'Add game' }).getByLabel(/boardgamegeek link/i)).toHaveValue('')
   // Back from Add game goes to the collection, not to the share
   await page.goBack()
   await expect(page).toHaveURL(new RegExp(`#/collections/${id}$`))

@@ -15,7 +15,7 @@ function progress(list: StoredList) {
 /** BGG lists loaded on this device (FR-012), newest first, and the "Load a BGG list" card. */
 export function Lists() {
   const lists = useStoreData(async store => (await store.lists()).sort((a, b) => b.openedAt.localeCompare(a.openedAt)))
-  const load = href({ name: 'add', what: 'list' })
+  const load = href({ name: 'lists', load: true })
   return (
     <>
       <Header title="BGG lists" />

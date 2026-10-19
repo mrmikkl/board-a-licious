@@ -20,7 +20,7 @@ export function Collections() {
             {data.collections.map(c => (
               <CollectionCard key={c.id} collection={c} entries={data.entries.filter(e => e.collectionId === c.id)} />
             ))}
-            <a className="card new-card" href={href({ name: 'add', what: 'collection' })}>
+            <a className="card new-card" href={href({ name: 'collections', create: true })}>
               <span className="hex" aria-hidden="true" />
               Create a collection
             </a>
