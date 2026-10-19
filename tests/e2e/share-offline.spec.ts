@@ -18,6 +18,25 @@ test('the manifest is fetched with credentials, so Chrome gets it through Cloudf
   expect(html).toMatch(/<link rel="manifest" href="\/manifest\.webmanifest" crossorigin="use-credentials"/)
 })
 
+test('the manifest and the page carry the PNG app icons (F003 T006)', async ({ request }) => {
+  const manifest = await (await request.get('/manifest.webmanifest')).json()
+  expect(manifest.icons).toEqual([
+    { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+  ])
+  const html = await (await request.get('/')).text()
+  expect(html).toMatch(/<link rel="icon" href="\/icons\/favicon\.png"/)
+  expect(html).toMatch(/<link rel="apple-touch-icon" href="\/icons\/apple-touch-icon\.png"/)
+  for (const src of [...manifest.icons.map((icon: { src: string }) => icon.src), '/icons/favicon.png', '/icons/apple-touch-icon.png']) {
+    const response = await request.get(src)
+    expect(response.ok(), src).toBe(true)
+    expect(response.headers()['content-type'], src).toBe('image/png')
+    // the PNG signature
+    expect([...(await response.body()).subarray(0, 8)], src).toEqual([137, 80, 78, 71, 13, 10, 26, 10])
+  }
+})
+
 test('a share opens the app on #/shared, also offline (T004)', async ({ page, context }) => {
   await page.goto('/#/collections')
   await page.evaluate(() => navigator.serviceWorker.ready)
@@ -28,7 +47,7 @@ test('a share opens the app on #/shared, also offline (T004)', async ({ page, co
   await page.goto(`/share-target?text=${encodeURIComponent(`Cascadia ${CASCADIA}`)}`)
   await expect(page).toHaveURL(/\/#\/shared\?/)
   expect(new URL(page.url()).pathname).toBe('/')
-  await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeVisible()
   await context.setOffline(false)
 })
 
