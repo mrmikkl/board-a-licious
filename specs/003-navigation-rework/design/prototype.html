@@ -2634,7 +2634,7 @@ function render() {
     const shift = h.firstElementChild.scrollWidth - h.clientWidth + 24
     h.classList.toggle('is-long', shift > 24)
     h.style.setProperty('--ticker-shift', shift + 'px')
-    h.style.setProperty('--ticker-time', Math.max(6, shift / 30 / 0.64) + 's') // ~30 px/s while moving
+    h.style.setProperty('--ticker-time', Math.max(4, shift / 50 / 0.64) + 's') // ~50 px/s while moving
   }
   // the menu hangs just below the app bar
   const m = root.querySelector('.menu')
