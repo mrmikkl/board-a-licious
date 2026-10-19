@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { type Entry, countMarks, groupByMark, markEntry, newEntry, removeEntry } from '../../src/domain/collection.ts'
+import { MARKS } from '../../src/domain/marks.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
@@ -16,15 +17,32 @@ describe('grouping a collection (FR-005)', () => {
     entry(5, { deleted: true }),
   ]
 
-  it('groups by mark in mark order, Not yet marked first, empty groups and deleted entries left out', () => {
+  it('groups in collection order: marked games first, then Not yet marked and Not interested (R5)', () => {
+    const all = (['skip', 'new', 'poop', 'unsure', 'interested', 'must_have'] as const).map((mark, i) => entry(10 + i, { mark }))
+    const groups = groupByMark(all, e => String(e.bggId))
+    expect(groups.map(g => [g.mark.key, g.part])).toEqual([
+      ['must_have', 'marked'],
+      ['interested', 'marked'],
+      ['unsure', 'marked'],
+      ['poop', 'marked'],
+      ['new', 'rest'],
+      ['skip', 'rest'],
+    ])
+  })
+
+  it('leaves out empty groups and deleted entries', () => {
     const groups = groupByMark(entries, e => names[e.bggId] ?? '')
-    expect(groups.map(g => g.mark.key)).toEqual(['new', 'must_have', 'skip'])
-    expect(groups[0]?.entries.map(e => e.bggId)).toEqual([2])
+    expect(groups.map(g => g.mark.key)).toEqual(['must_have', 'new', 'skip'])
+    expect(groups[1]?.entries.map(e => e.bggId)).toEqual([2])
   })
 
   it('sorts games by name inside a group', () => {
     const groups = groupByMark(entries, e => names[e.bggId] ?? '')
-    expect(groups[1]?.entries.map(e => names[e.bggId])).toEqual(['Azul', 'Cascadia'])
+    expect(groups[0]?.entries.map(e => names[e.bggId])).toEqual(['Azul', 'Cascadia'])
+  })
+
+  it('keeps MARKS in its own order, Not yet marked first, for pickers, filters and share text', () => {
+    expect(MARKS.map(m => m.key)).toEqual(['new', 'must_have', 'interested', 'unsure', 'poop', 'skip'])
   })
 
   it('counts games per mark and bought (FR-002)', () => {

@@ -1,4 +1,4 @@
-import { MARKS, type Mark, type MarkInfo, isMark } from './marks.ts'
+import { MARKS, type Mark, type MarkInfo, isMark, markInfo } from './marks.ts'
 import { formatSpent } from './money.ts'
 
 export type Collection = {
@@ -122,12 +122,18 @@ export function boughtLine(entries: Entry[]): string | null {
   return `✅ ${count} ${count === 1 ? 'game' : 'games'} bought${spent.length > 0 ? `, ${formatSpent(spent)} spent` : ''}`
 }
 
-/** Live entries grouped by mark in mark order (FR-005), empty groups left out, games sorted by name. */
-export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string): { mark: MarkInfo; entries: Entry[] }[] {
+export type CollectionGroup = { mark: MarkInfo; part: 'marked' | 'rest'; entries: Entry[] }
+
+/** The collection view's order (R5): marked games first, then Not yet marked and Not interested. */
+const GROUP_ORDER: Mark[] = ['must_have', 'interested', 'unsure', 'poop', 'new', 'skip']
+
+/** Live entries grouped by mark in collection order (FR-005), empty groups left out, games sorted by name. */
+export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string): CollectionGroup[] {
   const live = entries.filter(e => !e.deleted)
-  return MARKS.map(mark => ({
-    mark,
-    entries: live.filter(e => e.mark === mark.key).sort((a, b) => nameOf(a).localeCompare(nameOf(b))),
+  return GROUP_ORDER.map(key => ({
+    mark: markInfo(key),
+    part: key === 'new' || key === 'skip' ? ('rest' as const) : ('marked' as const),
+    entries: live.filter(e => e.mark === key).sort((a, b) => nameOf(a).localeCompare(nameOf(b))),
   })).filter(group => group.entries.length > 0)
 }
 
