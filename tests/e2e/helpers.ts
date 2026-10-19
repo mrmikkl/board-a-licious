@@ -25,3 +25,39 @@ export async function expectAccessible(page: Page) {
   expect(results.violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([])
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
 }
+
+/** F003 navigation (contracts/navigation.md): the four places live in the app bar's menu. */
+export type Place = 'Collections' | 'BGG lists' | 'Search' | 'Config'
+
+export async function openMenu(page: Page) {
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await expect(page.getByRole('navigation', { name: 'Menu' })).toBeVisible()
+}
+
+export async function goTo(page: Page, place: Place) {
+  await openMenu(page)
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: place, exact: true }).click()
+  await expect(page.getByRole('heading', { level: 1, name: place, exact: true })).toBeVisible()
+}
+
+/** The big hexagon in the action bar; its accessible name says what it does on the screen. */
+export const mainButton = (page: Page) => page.getByRole('navigation', { name: 'Actions' }).locator('.main-btn')
+
+/** Collections → main ＋ → New collection sheet → Create collection; ends in the new collection. */
+export async function createCollection(page: Page, name: string) {
+  await goTo(page, 'Collections')
+  await mainButton(page).click()
+  const sheet = page.getByRole('dialog', { name: 'New collection' })
+  await sheet.getByLabel('Name').fill(name)
+  await sheet.getByRole('button', { name: 'Create collection' }).click()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+}
+
+/** BGG lists → main ＋ → Load a BGG list sheet → Load list; ends in the list. */
+export async function loadList(page: Page, link: string) {
+  await goTo(page, 'BGG lists')
+  await mainButton(page).click()
+  const sheet = page.getByRole('dialog', { name: 'Load a BGG list' })
+  await sheet.getByLabel(/link/i).fill(link)
+  await sheet.getByRole('button', { name: 'Load list' }).click()
+}
