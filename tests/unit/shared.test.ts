@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { describe, expect, it } from 'vitest'
 
 import { readShare } from '../../src/domain/shared.ts'
@@ -68,4 +70,14 @@ describe('reading a share (F002 research R4)', () => {
       expect(readShare({ url: 'https://boardgamegeek.com/boardgame/12345' })).toMatchObject({ suggestedName: 'Game 12345' })
     })
   })
+})
+
+describe('share fixtures (SC-002, T021)', () => {
+  const chrome = JSON.parse(readFileSync(new URL('../fixtures/shares/chrome.json', import.meta.url), 'utf8')) as {
+    shares: { title: string; url: string; bggId: number; name: string }[]
+  }
+  it.each(chrome.shares.map(s => [s.name, s] as const))('Chrome: %s', (_name, share) => {
+    expect(readShare({ title: share.title, url: share.url, text: '' })).toEqual({ kind: 'game', bggId: share.bggId, suggestedName: share.name })
+  })
+  // the BGG Android app's format is still to be recorded from a phone (tests/fixtures/shares/bgg-app.json)
 })

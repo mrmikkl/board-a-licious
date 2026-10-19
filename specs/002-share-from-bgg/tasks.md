@@ -112,8 +112,10 @@ As feature 001: `src/domain/`, `src/client/`, `src/app/`, `tests/{unit,e2e,fixtu
 - [X] T019 Playwright test (fail first) in `tests/e2e/share-target.spec.ts`: Config in a browser tab shows the "📲 Share from BoardGameGeek" card at the top; with `display-mode: standalone` emulated it is absent (FR-011, research R6)
 - [X] T020 Implement the Share hint card in `src/app/screens/Config.tsx` (docs/design.md v1.9.0 "Share hint", shown while `matchMedia("(display-mode: standalone)")` does not match); T019 passes
 - [ ] T021 [P] Record real share texts as fixtures in `tests/fixtures/shares/` (≥ 10 game links from the BGG Android app and ≥ 10 from Chrome, SC-002) and run them through `readShare` in `tests/unit/shared.test.ts`; adjust the name rules if real texts differ (research R4 open point)
+  - 2026-10-20: Chrome format done (`tests/fixtures/shares/chrome.json`, 10 games, green); the BGG Android app's texts are still to be recorded from a phone.
 - [X] T022 [P] Add sharing to the docs: README feature list, `docs/hosting/setup.md` (after deploying: open the app from its icon so Chrome refreshes it; reinstall if board-a-licious is missing from the share menu)
 - [ ] T023 Run `npx tsc --noEmit`, `npm test`, `npm run test:e2e` (all projects green), deploy, and walk through the 10 scenarios of `quickstart.md` on the phone; note the results there
+  - 2026-10-20: type-check, 314 unit tests and 88 e2e tests green (us4-fair once flaky under the full parallel run, 3/3 alone), deployed; the phone walk-through is still open.
 
 ---
 
