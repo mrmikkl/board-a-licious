@@ -54,3 +54,22 @@ export const IconLink = () => (
     <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
   </svg>
 )
+/** F003: the app bar's menu button */
+export const IconMenu = () => (
+  <svg {...common} strokeWidth={2.4}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+)
+/** F003: the main button inside a collection (BG-Tinder) */
+export const IconHeart = () => (
+  <svg {...common} strokeWidth={2.6}>
+    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+  </svg>
+)
+/** F003: edit a collection, beside its name */
+export const IconPencil = () => (
+  <svg {...common}>
+    <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
+    <path d="m13.5 6.5 4 4" />
+  </svg>
+)
