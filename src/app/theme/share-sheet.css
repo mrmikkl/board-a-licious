@@ -1,0 +1,21 @@
+/* F002 "Shared game" sheet (docs/design.md v1.9.0): cover beside the name, framed offline note */
+.shared-game {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.shared-game > div {
+  flex: 1;
+  min-width: 0;
+}
+.shared-game .muted {
+  display: block;
+  margin-top: 6px;
+}
+.shared-offline {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}

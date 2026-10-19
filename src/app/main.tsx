@@ -14,6 +14,7 @@ import './theme/swipe.css'
 import './theme/lists.css'
 import './theme/interaction.css'
 import './theme/share.css'
+import './theme/share-sheet.css'
 import './theme/intro.css'
 import './theme/celebrate.css'
 
