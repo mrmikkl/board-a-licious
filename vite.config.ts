@@ -9,6 +9,9 @@ export default defineConfig({
     cloudflare(),
     VitePWA({
       registerType: 'autoUpdate',
+      // the manifest sits behind Cloudflare Access: fetch it with the sign-in cookie, or Chrome gets the
+      // login page instead and never sees share_target (F002)
+      useCredentials: true,
       manifest: {
         name: 'Board-a-licious',
         short_name: 'Board-a-licious',

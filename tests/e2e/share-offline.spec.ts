@@ -13,6 +13,11 @@ test('the manifest announces the app as a GET share target (T001)', async ({ req
   expect(manifest.share_target).toEqual({ action: '/share-target', method: 'GET', params: { title: 'title', text: 'text', url: 'url' } })
 })
 
+test('the manifest is fetched with credentials, so Chrome gets it through Cloudflare Access (T002)', async ({ request }) => {
+  const html = await (await request.get('/')).text()
+  expect(html).toMatch(/<link rel="manifest" href="\/manifest\.webmanifest" crossorigin="use-credentials"/)
+})
+
 test('a share opens the app on #/shared, also offline (T004)', async ({ page, context }) => {
   await page.goto('/#/collections')
   await page.evaluate(() => navigator.serviceWorker.ready)
