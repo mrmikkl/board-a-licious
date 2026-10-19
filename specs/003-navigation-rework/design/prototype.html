@@ -2522,7 +2522,7 @@ function actionbar() {
     case 'search': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.searchBold, 'Search (not available yet)', true)}</nav>`
     case 'collection': return `<nav class="actionbar" aria-label="Actions">
         ${act('add-game', 'Add game', ICON.plusThin, 'at-2')}
-        ${mainBtn(ICON.heart, 'Add by list')}
+        ${mainBtn(ICON.heart, 'BG-Tinder: swipe a BGG list into this collection')}
         ${act('filter', 'Filter', ICON.filter, 'at-4' + (state.filterOn ? ' is-active' : ''))}
       </nav>`
     default: return '' // config, a single list, swipe: no action bar
@@ -2611,7 +2611,7 @@ const SHEETS = {
     <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary">Create collection</button></div></form>`),
   loadList: () => sheet('Load a BGG list', `<form class="form" id="f"><div><label class="label" for="link">Link to a BoardGameGeek preview or geeklist</label><div class="field"><input id="link" placeholder="boardgamegeek.com/geekpreview/93" autocomplete="off" /></div><p class="hint" id="hint">For example the SPIEL preview: boardgamegeek.com/geekpreview/93</p></div>
     <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary" id="load" disabled>Load list</button></div></form>`),
-  pickList: () => sheet('Add by list', `<p class="lead pick-intro">Which list do you want to go through? Games already in ${esc(state.collections.find(c => c.id === state.route.id).name)} are skipped.</p>
+  pickList: () => sheet('BG-Tinder', `<p class="lead pick-intro">Which list do you want to go through? Games already in ${esc(state.collections.find(c => c.id === state.route.id).name)} are skipped.</p>
     ${state.lists.length ? `<div class="cards">${state.lists.map(l => `<a class="card list-card" data-swipe="${l.id}"><h2 class="card-title"><span class="card-name">${esc(l.title)}</span></h2><p class="card-sub">${esc(l.sub)}</p></a>`).join('')}</div>`
       : `<p class="hint">No BGG list loaded yet.</p><div class="sheet-actions"><button type="button" class="btn btn-primary btn-block" id="to-load">Load a BGG list</button></div>`}`),
   addGame: () => sheet('Add game', `<p class="lead">For games that are not on any list.</p><form class="form" id="f"><div><label class="label" for="glink">BoardGameGeek link</label><div class="field"><input id="glink" placeholder="boardgamegeek.com/boardgame/295947/cascadia" autocomplete="off" /></div></div>
