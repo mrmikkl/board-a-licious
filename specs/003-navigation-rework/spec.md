@@ -37,7 +37,7 @@ screen. This frees room at the top and makes adding new screens later (via the m
 ### User Story 1 - Navigate with the app bar and its menu (Priority: P1)
 
 On every screen the user sees the same app bar at the top: the app logo on the left, the name
-"board-a-licious" in the middle and a menu button (three lines) on the right, set apart as its own
+"Board-a-licious" in the middle and a menu button (three lines) on the right, set apart as its own
 band. Below it is the heading of the current screen (e.g. "Collections", a collection's name). Tapping
 the menu button opens the menu with Collections, BGG lists, Search and Config; tapping an entry goes
 there and closes the menu. The bottom navigation bar is gone.
@@ -50,11 +50,11 @@ Collections; no bottom navigation bar is visible anywhere.
 
 **Acceptance Scenarios**:
 
-1. **Given** any screen, **When** the user looks at the top, **Then** they see the logo (left), "board-a-licious" (centre) and the menu button (right) in a band set apart from the content, and below it the current screen's heading.
+1. **Given** any screen, **When** the user looks at the top, **Then** they see the logo (left), "Board-a-licious" (centre) and the menu button (right) in a band set apart from the content, and below it the current screen's heading.
 2. **Given** the menu is closed, **When** the user taps the menu button, **Then** a menu opens listing Collections, BGG lists, Search and Config, with the current place marked.
 3. **Given** the menu is open, **When** the user taps "BGG lists", **Then** the BGG lists screen opens and the menu closes.
 4. **Given** the menu is open, **When** the user taps outside it, presses Back or Escape, **Then** the menu closes and the screen stays as it was.
-5. **Given** a screen one level deep (a collection, a BGG list, Share and backup, swipe mode), **When** the user looks at the screen heading, **Then** a back button next to it leads one level up.
+5. **Given** a screen reached from another screen's content (a single BGG list, Share and backup, swipe mode), **When** the user looks at the screen heading, **Then** a back button next to it leads one level up; a collection has no back button (the menu leads back).
 6. **Given** any screen, **When** the user looks at the bottom, **Then** there is no navigation bar with Collections, Lists, Search and Config.
 
 ---
@@ -67,7 +67,7 @@ screen's own actions next to it. The main button changes with the screen:
 | Screen | Main button | Tapping it |
 |---|---|---|
 | Collections | plus | creates a collection (name the new collection, then it opens) |
-| A collection | heart | asks which BGG list, then opens the swipe mode for that list into this collection |
+| A collection | heart | opens "❤️ BG-Tinder ❤️": choose a BGG list, then the swipe mode for that list into this collection |
 | BGG lists | plus | opens a sheet from the bottom to load a BGG list by its link |
 | Search | magnifying glass | nothing yet: shown disabled |
 | Config | — | no bottom area at all |
@@ -87,7 +87,7 @@ link; the list opens. On Search the magnifying glass is disabled; Config has no 
 
 1. **Given** the Collections screen, **When** the user taps the main button (plus), **Then** a form to name a new collection opens, and creating it opens the new collection.
 2. **Given** the Collections screen, **When** the user looks at the content, **Then** there is no separate "Create a collection" entry; with no collections yet, the empty screen points to the main button.
-3. **Given** a collection, **When** the user taps the main button (heart), **Then** the BGG list choice opens, and picking a list opens the swipe mode for that list into this collection (as "Add by list" does today).
+3. **Given** a collection, **When** the user taps the main button (heart), **Then** the BGG list choice opens titled "❤️ BG-Tinder ❤️", and picking a list opens the swipe mode for that list into this collection (as "Add by list" does today).
 4. **Given** a collection and no BGG list loaded yet, **When** the user taps the heart, **Then** the choice says so and offers loading a BGG list by link (as today).
 5. **Given** the BGG lists screen, **When** the user taps the main button (plus), **Then** a sheet slides up from the bottom with a field for a BoardGameGeek preview or geeklist link; a valid link opens that list and starts loading it, an invalid one shows the existing hint.
 6. **Given** the BGG lists screen, **When** the user looks at the content, **Then** there is no separate "Load a BGG list" entry; with no lists yet, the empty screen points to the main button.
@@ -98,27 +98,31 @@ link; the list opens. On Search the magnifying glass is disabled; Config has no 
 
 ---
 
-### User Story 3 - A collection's actions at the bottom (Priority: P2)
+### User Story 3 - A collection's actions at the bottom, editing at its name (Priority: P2)
 
-Inside a collection, the actions that today sit in a row at the top (add a game, filter and group,
-the collection's ⋯ options) move into the bottom action area next to the heart. Adding a single game
-shows a plus instead of the link icon. The top of the collection shows only the heading and the
-content starts right below it.
+Inside a collection, the actions that today sit in a row at the top move: add a game (now a plus
+instead of the link icon) and filter and group go into the bottom action area beside the heart
+(Add game · ♥ · Filter). The collection's ⋯ options are replaced by a pencil directly after the
+collection's name, which opens "Edit collection" (rename, delete). A name too long for the row
+scrolls left like a ticker until its end shows, then starts over. The collection has no back
+button.
 
 **Why this priority**: Gains room at the top and keeps all actions in one place, but the collection
 works without it (P1 already moved "Add by list" to the heart).
 
-**Independent Test**: Open a collection with games: at the bottom are the heart and next to it add
-game (plus), filter and group, and options (⋯); at the top only the app bar and the collection's
-name. Each of them opens the same sheet as before.
+**Independent Test**: Open a collection with games: at the bottom are Add game (plus), the heart and
+Filter; at the top only the app bar and the collection's name with a pencil. Add game and Filter open
+the same sheets as before; the pencil opens "Edit collection".
 
 **Acceptance Scenarios**:
 
-1. **Given** a collection with games, **When** the user looks at the bottom, **Then** the heart main button is there with add game (plus), filter and group, and options next to it.
+1. **Given** a collection with games, **When** the user looks at the bottom, **Then** Add game (plus), the heart main button and Filter are there, in this order.
 2. **Given** a collection, **When** the user taps the plus next to the heart, **Then** the "Add game" sheet opens (add a single game by its BoardGameGeek link) as today.
 3. **Given** a collection with an active filter or grouping, **When** the user looks at the filter action, **Then** it shows that it is active (as today), and the summary of what is shown stays above the games.
 4. **Given** an empty collection, **When** the user looks at the screen, **Then** the empty state explains the heart (go through a BGG list) and the plus (add a single game) and the same bottom actions are there.
-5. **Given** a collection, **When** the user looks at the top, **Then** there is no tool row with Add by list, Add game, filter and options any more.
+5. **Given** a collection, **When** the user looks at the top, **Then** there is no tool row and no back button, only the name with a pencil after it.
+6. **Given** a collection, **When** the user taps the pencil, **Then** "Edit collection" opens with the name to change (Save name) and Delete collection… (with the existing confirmation).
+7. **Given** a collection whose name does not fit beside the pencil, **When** the screen shows, **Then** the pencil stays at the right edge and the name scrolls left until its end is visible, pauses and starts over; with reduced motion the name ends in "…" instead.
 
 ---
 
@@ -126,7 +130,7 @@ name. Each of them opens the same sheet as before.
 
 In a collection grouped by mark, the group "Not yet marked" comes after Poop and directly above
 "Not interested" instead of first, and it can be collapsed and expanded by tapping its heading, like
-"Not interested".
+"Not interested". A separator line splits the marked games from these two groups.
 
 **Why this priority**: Puts the games the user already cares about at the top; small and
 independent.
@@ -141,6 +145,7 @@ tapping again shows them.
 2. **Given** the "Not yet marked" group is expanded, **When** the user taps its heading, **Then** its games are hidden and the heading still shows the count; tapping again shows them.
 3. **Given** the user opens a collection, **When** the screen appears, **Then** "Not yet marked" is expanded and "Not interested" is collapsed (as today).
 4. **Given** the mark picker on a game, the swipe mode and the shared lists, **When** marks are listed there, **Then** their order is unchanged (only the group order in a collection changes).
+5. **Given** a collection with marked games and games in Not yet marked or Not interested, **When** the user looks at the groups, **Then** a separator line sits between Poop (or the last marked group) and Not yet marked.
 
 ### Edge Cases
 
@@ -168,10 +173,11 @@ tapping again shows them.
 **App bar and menu**
 
 - **FR-001**: Every screen MUST show the app bar at the top: app logo on the left, the name
-  "board-a-licious" centred, a menu button (three lines) on the right, visually set apart from the
+  "Board-a-licious" centred, a menu button (three lines) on the right, visually set apart from the
   content as its own band.
 - **FR-002**: Below the app bar every screen MUST show its heading (the screen name or the
-  collection's or list's name), with a back button on screens one level deep.
+  collection's or list's name), with a back button only on screens reached from another screen's
+  content (a single BGG list, swipe mode, Share and backup); a collection has none.
 - **FR-003**: The menu button MUST open a menu listing Collections, BGG lists, Search and Config,
   marking the current place; choosing an entry MUST go there and close the menu; tapping outside,
   Back or Escape MUST close it without navigating.
@@ -185,9 +191,9 @@ tapping again shows them.
   defined, the current screen's own actions next to it.
 - **FR-007**: On Collections the main button MUST show a plus and create a collection; the "Create a
   collection" entry on the screen MUST be removed.
-- **FR-008**: Inside a collection the main button MUST show a heart and start adding by list (choose
-  a BGG list, then the swipe mode into this collection); the separate "Add by list" button MUST be
-  removed.
+- **FR-008**: Inside a collection the main button MUST show a heart and open the list choice titled
+  "❤️ BG-Tinder ❤️" (choose a BGG list, then the swipe mode into this collection); the separate "Add
+  by list" button MUST be removed.
 - **FR-009**: On BGG lists the main button MUST show a plus and open a bottom sheet to load a
   BoardGameGeek preview or geeklist by its link, with the same link checks and hints as today; the
   "Load a BGG list" entry on the screen MUST be removed.
@@ -203,21 +209,29 @@ tapping again shows them.
 
 **Collection screen**
 
-- **FR-015**: Inside a collection, add game, filter and group, and the collection's options MUST be
-  in the action area next to the heart, not at the top; add game MUST show a plus instead of the link
+- **FR-015**: Inside a collection, add game and filter and group MUST be in the action area beside
+  the heart (Add game, heart, Filter), not at the top; add game MUST show a plus instead of the link
   icon.
+- **FR-015a**: The collection's options button (⋯) MUST be removed; a pencil directly after the
+  collection's name MUST open "Edit collection" (rename, delete with confirmation).
+- **FR-015b**: A collection name too long for its row MUST scroll left until its end is visible,
+  pause and start over (at about 50 px/s); with reduced motion it MUST end in "…" instead.
 - **FR-016**: The filter action MUST show when a filter or grouping is active; the summary of what is
   shown MUST stay above the games.
 - **FR-017**: When grouped by mark, the groups MUST be ordered Must Have, Interested, Unsure, Poop,
   Not yet marked, Not interested; the order of marks elsewhere MUST stay unchanged.
 - **FR-018**: The "Not yet marked" group MUST collapse and expand by tapping its heading, showing its
   count while collapsed; it MUST be expanded when the collection opens.
+- **FR-018a**: A separator line MUST split the marked groups from Not yet marked and Not interested
+  when both parts have games.
 
 **Look**
 
 - **FR-019**: No button at the top of any screen MUST be highlighted orange as primary; the orange
   primary look is reserved for the main button (and for primary actions inside sheets and empty
   states, as today).
+- **FR-019a**: The logo MUST be the Board-a-licious hexagon icon (`hex-gradient-colour`), and the
+  installed app MUST use it as its home-screen icon.
 - **FR-020**: The app bar, menu, action area and main button MUST meet the existing accessibility
   rules (touch targets, contrast, keyboard and screen-reader use) and the motion rules (reduced
   motion respected).
@@ -249,14 +263,14 @@ No stored data changes.
 
 ## Assumptions
 
-- The menu opens as a panel from the top right (exact look decided in the design step); it holds
-  only navigation, no actions.
+- The menu opens as a panel below the app bar at the right; it holds only navigation, no actions.
+- The look was agreed in the design review on 2026-10-20 (orange app bar; see
+  [design.md](design.md)).
 - "Above Not interested" means directly above it, i.e. "Not yet marked" moves from first to second
   last; only the grouping in a collection changes, not the mark order in pickers or shared text.
 - Whether "Not yet marked" was collapsed is not remembered between visits (like "Not interested"
   today).
-- The collection's ⋯ options (rename, delete, share) stay as they are, only their button moves to the
-  bottom.
+- "Edit collection" holds what the ⋯ sheet held (rename, delete with confirmation).
 - Creating a collection from the plus uses the existing new-collection form (its name) in a sheet.
 - Search stays a placeholder screen; the disabled magnifying glass becomes active with a later search
   feature.
