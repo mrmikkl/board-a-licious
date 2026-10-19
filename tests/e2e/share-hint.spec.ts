@@ -35,7 +35,7 @@ test('Config in the installed app (standalone) has no Share hint (T019)', async 
 })
 
 // Enabled by the coordinator after the merge: the share sheet (worker A, T011) calls markJustAdded.
-test.fixme('the game just added from a share keeps the hover highlight until the user scrolls or taps (T010)', async ({ page }) => {
+test('the game just added from a share keeps the hover highlight until the user scrolls or taps (T010)', async ({ page }) => {
   await fakeBgg(page)
   await page.goto('/#/collections')
   const name = unique('Essen 2026')
