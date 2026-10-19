@@ -1,0 +1,2679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>F003 Navigation rework – prototype</title>
+<!-- Prototype for feature 003 (Spec Kit extended, Ext 2). Styles: the app's theme CSS (src/app/theme, 2026-10-20), inlined; fonts from Google Fonts here, self-hosted in the app. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ---- src/app/theme/tokens.css ---- */
+/* Design tokens: docs/design.md §3–§6, one-to-one */
+:root {
+  --ink: #0d0f1f;
+  --deck: #151831;
+  --deck-2: #1d2142;
+  --rim: #2c3160;
+  --border: #3a4078;
+  --border-2: #4a5196;
+  --raised: #232852;
+  --text: #eceeff;
+  --muted: #9aa0c8;
+  --placeholder: #6e74a0;
+  --orange: #ff7a1a;
+  --orange-2: #ffb020;
+  --indigo: #4c5bff;
+  --teal: #14c8c8;
+  --violet: #8b5cf6;
+  --danger: #ff4d5e;
+  --got: #0fb98f;
+
+  --grad-hot: linear-gradient(135deg, #ff7a1a 0%, #ffb020 100%);
+  --grad-cool: linear-gradient(135deg, #4c5bff 0%, #14c8c8 100%);
+  --grad-violet: linear-gradient(135deg, #6d4ae0 0%, #a78bfa 100%);
+  --grad-mud: linear-gradient(135deg, #7a6046 0%, #b0916e 100%);
+  --grad-red: linear-gradient(135deg, #c2183a 0%, #ff4d5e 100%);
+  --grad-got: linear-gradient(135deg, #0fb98f 0%, #7cf0c5 100%);
+  --grad-dusk: linear-gradient(135deg, #8b5cf6 0%, #4c5bff 55%, #14c8c8 100%);
+  --grad-white: linear-gradient(135deg, #ffffff 0%, #c9cdf0 100%);
+  --grad-separator: linear-gradient(90deg, #ff7a1a 0%, #8b5cf6 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --lift: 0 8px 22px rgba(3, 4, 12, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glow: 0 0 0 1px var(--orange), 0 0 18px rgba(255, 122, 26, 0.45);
+
+  --font-display: 'Chakra Petch', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --tap: 44px;
+  --gutter: 16px;
+  --column: 440px;
+  --gap: 8px;
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- src/app/theme/base.css ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--ink);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+a {
+  color: var(--orange-2);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Layout: the phone column (docs/design.md §6) */
+.app {
+  position: relative;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.screen {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--gutter);
+}
+.lead {
+  color: var(--muted);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.hex {
+  clip-path: var(--hex);
+}
+.separator {
+  height: 2px;
+  border: 0;
+  margin: 16px 0;
+  background: var(--grad-separator);
+  border-radius: 2px;
+}
+
+/* Surfaces */
+.card {
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift);
+  padding: 16px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  padding: 0 14px;
+  min-height: 50px;
+}
+.field:focus-within {
+  border-color: var(--orange);
+}
+.field input,
+.field select {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  padding: 12px 0;
+}
+.field input::placeholder {
+  color: var(--placeholder);
+}
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+/* Buttons (docs/design.md §7): text on gradients follows the contrast rule of §3 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  font-weight: 700;
+  box-shadow: var(--lift);
+  text-decoration: none;
+  color: var(--text);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--grad-hot);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-bought {
+  background: var(--grad-got);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-danger {
+  /* --danger itself reaches only 4.4:1 on the raised surface; text needs 4.5:1 (docs/design.md §3) */
+  color: #ff6b78;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Badges and pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Empty state */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 8px;
+}
+.empty .hex {
+  width: 72px;
+  height: 82px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.empty h2 {
+  font-size: 18px;
+}
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+.empty .actions {
+  display: grid;
+  gap: var(--gap);
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---- src/app/theme/hexboard.css ---- */
+/* Background: the living hexagon board behind the phone column (docs/design.md §2, §9).
+   Below every other layer and never in the way of a tap. */
+.hexboard {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: 100%;
+  max-width: var(--column);
+  height: 100%;
+  height: 100lvh;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* ---- src/app/theme/shell.css ---- */
+/* App shell: header, tab bar, sheet, toast (docs/design.md §7) */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--gutter) 10px;
+}
+.top-title {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.top h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  /* at most two lines, then "…" */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.top-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .top h1 {
+    font-size: 26px;
+  }
+}
+.logo {
+  flex: none;
+  width: 34px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 15px var(--font-display);
+}
+.back {
+  font-size: 26px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--column);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.tab {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.tab[aria-current='page'] {
+  color: var(--text);
+}
+.tab[aria-current='page'] svg {
+  color: var(--orange);
+}
+.tab svg {
+  transition:
+    transform 0.25s var(--spring),
+    color 0.2s;
+}
+.tab:active svg {
+  transform: scale(0.85);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover {
+    color: var(--text);
+  }
+  .tab:hover svg {
+    color: var(--orange-2);
+  }
+}
+.tab-add {
+  position: relative;
+  justify-self: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.tab-add svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+.tab-add::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: shimmer 5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 6, 14, 0.6);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 31;
+  width: 100%;
+  max-width: var(--column);
+  max-height: 88dvh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1e3e 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-grip {
+  /* a 5px bar with a 44px tall touch area around it */
+  width: 88px;
+  height: 25px;
+  margin: -10px auto 2px;
+  background: linear-gradient(var(--rim), var(--rim)) center / 44px 5px no-repeat;
+  border-radius: 3px;
+}
+.sheet-title {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+@keyframes sheet-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(100px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast i {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: var(--orange);
+}
+
+/* Expired sign-in: above the screen, solid like every interactive surface */
+.signin-banner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  margin: 12px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--deck-2);
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+}
+.signin-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* Tablets and laptops use more of the screen (docs/design.md §6): a wider column, cards and game
+   rows in a grid; sheets and the swipe card keep a readable width. */
+@media (min-width: 768px) {
+  :root {
+    --column: 1040px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .rows {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .sheet {
+    max-width: 560px;
+  }
+  .hexboard {
+    max-width: none;
+  }
+  .tabbar {
+    max-width: 560px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  .swipe-screen,
+  .intro {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .form,
+  .share {
+    max-width: 640px;
+  }
+}
+
+/* Dragging a sheet down to close it follows the finger; it springs back if let go early */
+.sheet.is-dragging {
+  transition: none;
+  animation: none;
+}
+.sheet.is-settling {
+  transition: transform 0.2s ease-out;
+}
+.sheet-grip {
+  touch-action: none;
+}
+/* a heading that reacts to taps (Config: five taps show the developer section): no text selection,
+   no double-tap zoom swallowing taps, and the whole title width as target */
+.top h1.tappable {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  justify-self: stretch;
+}
+
+/* ---- src/app/theme/components.css ---- */
+/* Feature components: docs/design.md §7 (collection card, game row, group heading, hexagon picker, forms) */
+
+/* Mark gradients (docs/design.md §4), used by pickers, pills and group dots */
+[data-mark='new'],
+[data-tone='new'] {
+  --tone: var(--grad-white);
+  --tone-text: var(--ink);
+}
+[data-mark='must_have'],
+[data-tone='must_have'],
+[data-tone='hot'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='interested'],
+[data-tone='interested'] {
+  --tone: var(--grad-cool);
+  --tone-text: var(--ink);
+}
+[data-mark='unsure'],
+[data-tone='unsure'] {
+  --tone: var(--grad-violet);
+  --tone-text: #fff;
+}
+[data-mark='poop'],
+[data-tone='poop'] {
+  --tone: var(--grad-mud);
+  --tone-text: #fff;
+}
+[data-mark='skip'],
+[data-tone='skip'] {
+  --tone: var(--grad-red);
+  --tone-text: #fff;
+}
+[data-mark='bought'] {
+  --tone: var(--grad-got);
+  --tone-text: var(--ink);
+}
+/* hall groups (group by booth): halls in the hot gradient, "No booth yet" muted */
+[data-mark='hall'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='none'] {
+  --tone: linear-gradient(135deg, #6e74a0, #9aa0c8);
+  --tone-text: var(--ink);
+}
+
+.section-title {
+  font-size: 18px;
+  margin: 20px 0 10px;
+}
+.section-title small {
+  font: 600 13px var(--font-body);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hint.error {
+  color: #ff8a95;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field.is-disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.field svg {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Dropdown: field look with an orange hexagon as arrow */
+.field.select {
+  position: relative;
+}
+.field.select select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.field.select select option {
+  background: var(--deck);
+}
+.field.select::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  pointer-events: none;
+}
+
+/* Switch ("Essen collection") */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.toggle-text {
+  flex: 1;
+  font-weight: 600;
+}
+.toggle-text small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 6px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  clip-path: var(--hex);
+  background: var(--muted);
+  transition: transform 0.25s var(--spring);
+}
+.switch:checked {
+  background: var(--grad-hot);
+  border-color: transparent;
+}
+.switch:checked::after {
+  background: var(--ink);
+  transform: translateX(20px);
+}
+
+/* Hexagon picker: honeycomb, every second hexagon offset down */
+/* one straight, centred row of equal hexagons, whatever their labels and the phone's text scaling */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 84px));
+  justify-content: center;
+  align-items: start;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+.picker-btn {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+.picker-hex {
+  display: block;
+  aspect-ratio: 0.88;
+  padding: 2px;
+  background: var(--border-2);
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.picker-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.picker-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.picker-btn[aria-pressed='true'] .picker-hex {
+  background: var(--orange);
+}
+.picker-btn[aria-pressed='true'] .picker-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.picker-btn:is([data-tone='unsure'], [data-tone='poop'])[aria-pressed='true'] .picker-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Collection cards with the hexagon cluster in the top-right corner */
+.cards {
+  display: grid;
+  gap: var(--gap);
+}
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  padding-right: 64px;
+}
+.card-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+/* the six counts always in one row; the text shrinks on narrow phones instead of wrapping */
+.counts {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 10px 0 0;
+  font: 700 clamp(12px, 3.7vw, 15px) var(--font-display);
+  white-space: nowrap;
+}
+.cluster {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 58px;
+  height: 52px;
+  animation: sway 6s ease-in-out infinite;
+}
+.cluster i {
+  position: absolute;
+  width: 22px;
+  height: 25px;
+  background: var(--grad-dusk);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+.cluster i:nth-child(1) {
+  top: 0;
+  right: 0;
+}
+.cluster i:nth-child(2) {
+  top: 0;
+  right: 24px;
+  opacity: 0.7;
+}
+.cluster i:nth-child(3) {
+  top: 20px;
+  right: 12px;
+  opacity: 0.85;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.new-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  border: 1px dashed var(--orange);
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.new-card .hex {
+  width: 22px;
+  height: 25px;
+  background: var(--grad-hot);
+}
+@media (hover: hover) and (pointer: fine) {
+  .new-card:hover {
+    background: var(--grad-hot);
+    color: var(--ink);
+  }
+}
+.soon-card {
+  margin-bottom: 16px;
+}
+.soon-card .card-title {
+  padding-right: 0;
+}
+/* F002 Share hint at the top of Config */
+.hint-card .card-title {
+  padding-right: 0;
+}
+
+/* Collection screen: long names wrap to two lines instead of being cut after a few letters */
+.top h1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.row-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.row-actions .btn {
+  padding-inline: 10px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.group-title i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  background: var(--tone);
+}
+.group-count {
+  color: var(--muted);
+  font-weight: 700;
+}
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.chev {
+  margin-left: auto;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.fold[aria-expanded='true'] .chev {
+  transform: rotate(90deg);
+}
+
+.rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows[hidden] {
+  display: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+.row-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-sub {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* F002 "Just added": the hover highlight, kept until the user scrolls or taps (not an animation) */
+.row.is-just-added {
+  border-color: var(--orange);
+  box-shadow: var(--lift), var(--glow);
+}
+.row.skip .row-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.row.skip .cover {
+  opacity: 0.5;
+}
+.row .pill,
+.detail-head .pill {
+  flex: none;
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.mark-pill {
+  padding: 4px 8px;
+}
+
+/* Hexagon covers */
+.cover {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.cover-hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--grad-dusk);
+}
+.cover-hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-initials {
+  font: 700 17px var(--font-display);
+  color: var(--ink);
+}
+.cover-got {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Game details sheet */
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.detail-sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+.sheet-actions {
+  display: grid;
+  gap: var(--gap);
+  margin-top: 12px;
+}
+
+/* "Group by" under the filter in a collection */
+.group-by {
+  margin-top: 12px;
+}
+
+/* Config → Developer: plain links, each a full-width 44px target */
+.dev-links {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dev-links a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Collection tools (docs/design.md §6): on phones four equal icon buttons in one row
+   (Add by list, Add by link, Filter, ⋯); from 600px the two text buttons, filter and ⋯ in the header */
+.collection-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+}
+.collection-tools .tool {
+  padding-inline: 6px;
+}
+.collection-tools .icon-btn {
+  width: 100%;
+  border-radius: var(--r-md);
+}
+.collection-tools .tool-text {
+  /* only the icon on phones; the link keeps its name for screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.phone-only {
+  display: contents;
+}
+.wide-only {
+  display: none;
+}
+@media (min-width: 600px) {
+  .collection-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+  .collection-tools .tool svg {
+    display: none;
+  }
+  .collection-tools .tool-text {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+  .phone-only {
+    display: none;
+  }
+  .wide-only {
+    display: contents;
+  }
+}
+/* Cancel and the main action side by side, the main action on the right */
+.sheet-actions-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Game info (docs/design.md §7 "Game info"): year beside the name, publisher, then three infos */
+.row-year {
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row-info > span:first-child {
+  flex: none;
+}
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.row-info .info-pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.info-pill {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.info-list > div {
+  display: contents;
+}
+.info-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.info-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* ---- src/app/theme/fair.css ---- */
+/* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
+
+/* Filter: one full-width button, a panel below it */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--raised);
+  box-shadow: var(--glow);
+}
+.seg-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg {
+  /* one column per option, all in one row */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.seg button {
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0 4px;
+  overflow-wrap: anywhere;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  border-top: 1px solid var(--rim);
+  cursor: pointer;
+}
+.filter-row:first-child {
+  border-top: 0;
+}
+.filter-row input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+}
+.filter-row span {
+  flex: 1;
+}
+.filter-row small {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+.chip:active,
+.seg button:active {
+  scale: 0.96;
+}
+
+/* "✅ 1 game bought, €52 spent" under the filter */
+.bought-line {
+  margin: 10px 2px 0;
+  font-weight: 700;
+  color: #7cf0c5;
+}
+
+/* Game details: description, facts, price question */
+.detail-head .pill {
+  margin-top: 4px;
+}
+.desc {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+.muted {
+  color: var(--muted);
+}
+.facts-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.facts-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.facts-by {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.link-btn {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-2);
+  font-weight: 700;
+  text-align: left;
+}
+.facts-add {
+  margin-bottom: 8px;
+}
+.facts-form {
+  margin-bottom: 12px;
+}
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: var(--gap);
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.currency {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* "Groups" with Select all / Select none on the same line */
+.seg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.seg-actions {
+  display: flex;
+  gap: 4px;
+}
+.seg-actions .link-btn {
+  min-height: var(--tap);
+  padding: 0 8px;
+}
+
+/* filter icon in the collection header; a dot while a filter or the hall grouping is active */
+.filter-icon {
+  position: relative;
+}
+.filter-icon.is-active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 11px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+}
+/* what is shown while narrowed; a tap opens "Filter and group" */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* ---- src/app/theme/swipe.css ---- */
+/* Swipe screen and list picker: docs/design.md §7 (swipe card), §9 (swipe motion) */
+
+/* A card dragged or flung past the edge never scrolls the page sideways */
+.swipe-screen {
+  overflow-x: clip;
+}
+
+/* Source note: which list, whether facts are kept */
+.swipe-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.swipe-note b {
+  color: var(--text);
+}
+.swipe-note > .hex {
+  flex: none;
+  width: 14px;
+  height: 16px;
+  margin-top: 2px;
+  background: var(--grad-dusk);
+}
+
+/* Card stack */
+.deck {
+  position: relative;
+  height: min(400px, 54vh);
+  min-height: 340px;
+  margin: 0 0 14px;
+}
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #1f2350 0%, var(--deck) 70%);
+  box-shadow: var(--lift);
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-card > * {
+  flex-shrink: 0;
+}
+.swipe-card.behind {
+  transform: scale(0.95) translateY(14px);
+  opacity: 0.6;
+}
+.swipe-card.top {
+  touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.5s var(--spring);
+}
+.swipe-card.top.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.swipe-card.enter {
+  animation: swipe-card-in 0.45s var(--spring);
+}
+@keyframes swipe-card-in {
+  from {
+    transform: scale(0.94) translateY(16px);
+    opacity: 0.6;
+  }
+}
+.swipe-card.leaving {
+  pointer-events: none;
+  animation: swipe-fling 0.38s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes swipe-fling {
+  from {
+    transform: translateX(var(--from-x)) rotate(calc(var(--from-x) / 14px * 1deg));
+  }
+  to {
+    transform: translate(calc(var(--dir) * 520px), -40px) rotate(calc(var(--dir) * 30deg));
+    opacity: 0;
+  }
+}
+.swipe-card .cover {
+  margin-bottom: 12px;
+}
+.swipe-name {
+  margin: 0;
+  font: 700 24px/1.15 var(--font-display);
+}
+.swipe-year {
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+.swipe-desc {
+  display: -webkit-box;
+  margin: 0 0 10px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.swipe-wait {
+  justify-content: center;
+  gap: 12px;
+  cursor: default;
+}
+.swipe-wait .hex {
+  width: 56px;
+  height: 64px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.swipe-wait p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ADD / NOPE stamps grow while dragging; the leaving card shows its stamp in full */
+.swipe-stamp {
+  position: absolute;
+  top: 20px;
+  padding: 4px 10px;
+  border: 2px solid;
+  border-radius: 10px;
+  font: 700 18px var(--font-display);
+  opacity: 0;
+  scale: 0.7;
+}
+.swipe-stamp.add {
+  left: 16px;
+  color: var(--teal);
+  rotate: -12deg;
+}
+.swipe-stamp.nope {
+  right: 16px;
+  color: var(--danger);
+  rotate: 12deg;
+}
+.leaving-right .swipe-stamp.add,
+.leaving-left .swipe-stamp.nope {
+  opacity: 1;
+  scale: 1.2;
+}
+
+/* ✕ / ✓ hexagon buttons */
+.swipe-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+.swipe-btn {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 80px;
+  border: 0;
+  clip-path: var(--hex);
+  font: 700 28px var(--font-display);
+  cursor: pointer;
+}
+.swipe-btn.no {
+  background: var(--grad-red);
+  color: #fff;
+}
+.swipe-btn.yes {
+  background: var(--grad-cool);
+  color: #04161a;
+}
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.swipe-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* List picker */
+.pick-list {
+  display: grid;
+  gap: var(--gap);
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.pick {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pick-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.pick small {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not(:disabled):hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .swipe-btn:not(:disabled):hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Reduced motion: no tilt, fling or pop-in; the card just changes */
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card.leaving {
+    display: none;
+  }
+}
+
+/* "Add by list": the chosen list is clearly marked (orange edge, glow and a tick) */
+.pick[aria-pressed='true'] {
+  position: relative;
+  border: 2px solid var(--orange);
+  box-shadow: var(--lift), var(--glow);
+  padding-right: 44px;
+}
+.pick[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 27px;
+  transform: translateY(-50%);
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  color: var(--ink);
+  font-weight: 700;
+}
+.pick-list,
+.pick-new,
+.pick-empty {
+  margin-top: 16px;
+}
+.pick-intro {
+  margin: 0 0 14px;
+}
+
+/* All game info on the card (FR-010): compact, left-aligned; a long card scrolls up and down
+   (pan-y), sideways stays the swipe */
+.swipe-card.top {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.swipe-card .info-list {
+  width: 100%;
+  margin: 4px 0 0;
+  gap: 4px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+.swipe-card .info-list dt {
+  font-size: 13px;
+}
+.swipe-card .info-list dd {
+  font-weight: 600;
+}
+
+/* ---- src/app/theme/lists.css ---- */
+/* BGG lists: list cards, list rows with +, progress, list game sheet (docs/design.md §7) */
+
+.example {
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Loading progress: pages loaded so far */
+.progress {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: var(--r-pill);
+  background: var(--rim);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-hot);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .progress span {
+    transition: width 0.4s ease-out;
+  }
+}
+.list-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.list-status p {
+  margin: 0;
+}
+.list-status.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #ff8a95;
+}
+
+/* List rows: the row opens the game, the hexagon + next to it does the same */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-item .row {
+  flex: 1;
+  min-width: 0;
+}
+.in-mark {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.add-mini {
+  flex: none;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.add-mini .hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 26px var(--font-display);
+}
+
+/* List game sheet */
+.description {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Multi-choice list: a hexagon tick per collection; the ticks always show the current truth */
+.picks {
+  display: grid;
+  gap: var(--gap);
+}
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  cursor: pointer;
+}
+.pick:has(.pick-input:focus-visible) {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.pick-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.tick {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  background: var(--border-2);
+}
+.tick::before {
+  content: '';
+  width: 24px;
+  height: 28px;
+  clip-path: var(--hex);
+  background: var(--raised);
+}
+.pick-input:checked + .tick {
+  background: var(--orange);
+}
+.pick-input:checked + .tick::before {
+  background: var(--grad-hot);
+}
+.pick-input:checked + .tick::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 800;
+}
+.pick-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.pick-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.pick-text small {
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+
+/* ---- src/app/theme/interaction.css ---- */
+/* Interaction states: docs/design.md §8. Nothing moves on hover; press squishes; focus is orange. */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn,
+.icon-btn,
+.card,
+.row,
+.tile {
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    scale 0.25s var(--spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not([aria-disabled='true']):hover,
+  .row:hover,
+  .tile:hover,
+  .field:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .btn:not(:disabled):not(.btn-primary):not(.btn-bought):hover,
+  .icon-btn:hover {
+    background: var(--grad-hot);
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--grad-red);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover,
+  .btn-bought:not(:disabled):hover {
+    box-shadow: var(--lift), 0 0 22px rgba(255, 176, 32, 0.55);
+  }
+  .hex-btn:hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Press: a short squish that springs back (touch and pointer) */
+.card:active,
+.row:active,
+.tile:active {
+  scale: 0.98;
+  transition-duration: 0.08s;
+}
+.btn:not(:disabled):active,
+.icon-btn:active {
+  scale: 0.96;
+  transition-duration: 0.08s;
+}
+.hex-btn {
+  transition:
+    scale 0.25s var(--spring),
+    filter 0.2s;
+}
+.hex-btn:active {
+  scale: 0.9;
+  transition-duration: 0.08s;
+}
+
+/* Tap pulse: an orange hexagon expanding from the tap point */
+.tap-pulse {
+  position: fixed;
+  z-index: 60;
+  width: 56px;
+  height: 64px;
+  margin: -32px 0 0 -28px;
+  clip-path: var(--hex);
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.55), rgba(255, 122, 26, 0) 70%);
+  pointer-events: none;
+  animation: tap-pulse 0.5s ease-out forwards;
+}
+@keyframes tap-pulse {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion (docs/design.md §9): every animation and press squish off */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .card:active,
+  .row:active,
+  .tile:active,
+  .btn:active,
+  .icon-btn:active,
+  .hex-btn:active,
+  .hex-btn:hover {
+    scale: none;
+  }
+  .tap-pulse {
+    display: none;
+  }
+}
+
+/* ---- src/app/theme/share.css ---- */
+/* Share & backup screen (specs/001-bgg-game-collection/design.md): group checkboxes, message preview */
+.share-groups {
+  border: 0;
+  margin: 16px 0 0;
+  padding: 0;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  font-weight: 600;
+  cursor: pointer;
+}
+.check input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--orange);
+}
+.check small {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 500;
+}
+/* the message as it lands in a chat: text, not a control, so no lift */
+.share-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 260px;
+  overflow: auto;
+  margin: 12px 0 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #e2f5ec;
+  background: #0f2b22;
+  border: 1px solid #1e4a3c;
+  border-radius: var(--r-md) var(--r-md) var(--r-md) 4px;
+}
+.share-preview:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.share-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+
+/* ---- src/app/theme/share-sheet.css ---- */
+/* F002 "Shared game" sheet (docs/design.md v1.9.0): cover beside the name, framed offline note */
+.shared-game {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.shared-game > div {
+  flex: 1;
+  min-width: 0;
+}
+.shared-game .muted {
+  display: block;
+  margin-top: 6px;
+}
+.shared-offline {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+
+/* ---- src/app/theme/intro.css ---- */
+/* Intro on first start (docs/design.md §12): three cards with floating hexagons, Skip and Next */
+.intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.intro-track {
+  /* horizontal moves belong to the swipe, vertical ones still scroll the page */
+  touch-action: pan-y;
+  user-select: none;
+}
+.intro-card {
+  padding: 0 28px;
+  text-align: center;
+}
+.intro-card.from-next {
+  animation: intro-in 0.35s var(--spring);
+  --intro-from: 40px;
+}
+.intro-card.from-back {
+  animation: intro-in 0.35s var(--spring);
+  --intro-from: -40px;
+}
+@keyframes intro-in {
+  from {
+    opacity: 0;
+    translate: var(--intro-from) 0;
+  }
+}
+.intro-card h2 {
+  font-size: 30px;
+  margin: 10px 0 8px;
+}
+.intro-card p {
+  max-width: 32ch;
+  margin: 0 auto;
+  color: #c9cdf0;
+  font-size: 16px;
+}
+
+/* decoration, not controls: no border, no lift (docs/design.md §2) */
+.intro-art {
+  position: relative;
+  width: 240px;
+  height: 210px;
+  margin: 0 auto 10px;
+}
+.intro-art .hex {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 108px;
+  font-size: 40px;
+  animation: intro-float 3.2s ease-in-out infinite alternate;
+}
+.intro-art .hex:nth-child(1) {
+  left: 22px;
+  top: 0;
+  background: var(--grad-hot);
+}
+.intro-art .hex:nth-child(2) {
+  left: 122px;
+  top: 0;
+  background: var(--grad-cool);
+  animation-delay: -0.8s;
+}
+.intro-art .hex:nth-child(3) {
+  left: 72px;
+  top: 88px;
+  background: var(--grad-violet);
+  animation-delay: -1.6s;
+}
+.intro-art .hex:nth-child(4) {
+  left: 172px;
+  top: 88px;
+  width: 60px;
+  height: 67px;
+  font-size: 26px;
+  background: var(--grad-mud);
+  animation-delay: -2.4s;
+}
+@keyframes intro-float {
+  to {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+.intro-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 26px 0 18px;
+}
+.intro-dots i {
+  width: 10px;
+  height: 11px;
+  background: var(--border);
+  transition:
+    background 0.2s,
+    scale 0.2s;
+}
+.intro-dots i.on {
+  background: var(--grad-hot);
+  scale: 1.3;
+}
+.intro-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 28px;
+}
+.intro-actions .link-btn {
+  padding: 0 8px;
+}
+.intro-actions .btn {
+  min-width: 140px;
+}
+
+
+/* ---- src/app/theme/celebrate.css ---- */
+/* Celebrations and rolling counters: docs/design.md §9. Never in the way: no pointer events, short. */
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Must Have and Bought: ~20 small hexagons flying out of the tapped button */
+.burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.burst-hex {
+  position: absolute;
+  width: var(--size);
+  height: calc(var(--size) * 1.15);
+  margin: calc(var(--size) * -0.575) 0 0 calc(var(--size) * -0.5);
+  clip-path: var(--hex);
+  animation: burst 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes burst {
+  from {
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(1) rotate(120deg);
+    opacity: 0;
+  }
+}
+
+/* Bought: "GOT IT!" stamped into the centre of the screen */
+.got-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 10px 22px;
+  border: 3px solid var(--ink);
+  border-radius: var(--r-md);
+  background: var(--grad-got);
+  box-shadow: var(--lift), 0 0 32px rgba(15, 185, 143, 0.55);
+  color: var(--ink);
+  font: 700 40px/1 var(--font-display);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  translate: -50% -50%;
+  animation: got-stamp 1.05s var(--spring) forwards;
+}
+@keyframes got-stamp {
+  from {
+    transform: scale(2.2) rotate(-14deg);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.05) rotate(-8deg);
+    opacity: 0;
+  }
+}
+
+/* Counters: rolling digits drawn over the final value, then an amber flash */
+.counter {
+  position: relative;
+  display: inline-block;
+  border-radius: 6px;
+}
+.counter.flash {
+  animation: counter-flash 0.65s ease-out;
+}
+.counter-final {
+  color: transparent;
+}
+.counter-roll {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+}
+@keyframes counter-flash {
+  from {
+    color: var(--orange-2);
+    text-shadow: 0 0 10px rgba(255, 176, 32, 0.7);
+  }
+  to {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate {
+    display: none;
+  }
+}
+
+/* ---- F003 prototype: app bar, menu, action bar (new components) ---- */
+.proto-bar {
+  position: sticky; top: 0; z-index: 70; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 16px; background: #000; color: #ddd; font: 600 13px var(--font-body, system-ui);
+}
+.proto-bar select { flex: 1; min-width: 0; padding: 6px; border-radius: 8px; background: #222; color: #fff; border: 1px solid #444; }
+.proto-bar label { white-space: nowrap; }
+
+/* App bar: its own band on every screen */
+.appbar {
+  position: sticky; top: 0; z-index: 25;
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+  padding: 10px var(--gutter) 10px;
+}
+.appbar .logo { justify-self: start; }
+.appbar-name {
+  margin: 0; text-align: center; font: 700 21px/1 var(--font-display); letter-spacing: 0.02em;
+}
+.menu-btn { justify-self: end; }
+.menu-btn svg { width: 22px; height: 22px; }
+/* variant A: hot band */
+.band-hot .appbar { background: var(--grad-hot); color: var(--ink); box-shadow: 0 6px 18px rgba(255, 122, 26, 0.25); }
+.band-hot .appbar .logo { background: var(--ink); color: var(--orange); }
+.band-hot .appbar .menu-btn { background: rgba(13, 15, 31, 0.14); border-color: rgba(13, 15, 31, 0.25); color: var(--ink); box-shadow: none; }
+/* variant B: dark band, orange name, gradient rule below */
+.band-dark .appbar { background: rgba(13, 15, 31, 0.96); border-bottom: 2px solid transparent; border-image: var(--grad-separator) 1; }
+.band-dark .appbar-name { background: var(--grad-hot); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Screen heading below the app bar */
+.screen-head { display: flex; align-items: center; gap: 8px; padding: 14px var(--gutter) 10px; }
+.screen-head h1 { margin: 0; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
+.screen-head .back { width: 36px; height: 36px; min-width: 36px; }
+
+/* Menu: panel under the app bar, right-aligned */
+.menu-scrim { position: fixed; inset: 0; z-index: 26; background: rgba(5, 6, 14, 0.5); animation: fade-in 0.2s ease-out; }
+.menu {
+  position: fixed; z-index: 27; top: 64px; right: max(var(--gutter), calc(50% - var(--column) / 2 + var(--gutter)));
+  width: min(260px, calc(100% - 32px)); padding: 8px; margin: 0; list-style: none;
+  background: var(--deck-2); border: 1px solid var(--rim); border-radius: var(--r-md); box-shadow: var(--lift);
+  transform-origin: top right; animation: menu-in 0.18s ease-out;
+}
+@keyframes menu-in { from { opacity: 0; transform: scale(0.94); } }
+.menu a {
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 12px;
+  color: var(--text); font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.menu a svg { color: var(--muted); }
+.menu a[aria-current='page'] { background: var(--raised); }
+.menu a[aria-current='page'] svg { color: var(--orange); }
+.menu a:hover { background: var(--raised); }
+
+/* Action bar: the main button and the screen's own actions */
+.actionbar {
+  position: fixed; bottom: 0; left: 50%; z-index: 20; transform: translateX(-50%);
+  width: 100%; max-width: var(--column);
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.act {
+  display: grid; justify-items: center; gap: 3px; min-height: 52px; padding: 6px 0;
+  border: 0; background: none; color: var(--muted); font: 600 11px var(--font-body); cursor: pointer;
+}
+.act:hover { color: var(--text); }
+.act.is-active svg { color: var(--orange); }
+.act.is-active span::after { content: ' •'; color: var(--orange); }
+.main-btn { grid-column: 3; justify-self: center; border: 0; cursor: pointer; }
+.main-btn:disabled { background: var(--raised); color: var(--placeholder); cursor: not-allowed; }
+.main-btn:disabled::after { display: none; }
+@media (min-width: 768px) { .actionbar { max-width: 560px; border-radius: var(--r-lg) var(--r-lg) 0 0; } }
+.app.no-actions { padding-bottom: 32px; }
+
+/* fold of "Not yet marked" (same look as "Not interested") */
+.rows[hidden] { display: none; }
+
+/* swipe mock */
+.proto-swipe { display: grid; gap: 16px; justify-items: center; padding-top: 8px; }
+.proto-swipecard { width: 100%; max-width: 360px; aspect-ratio: 3 / 4; display: grid; place-items: center; align-content: center; gap: 8px;
+  border-radius: var(--r-lg); background: var(--deck-2); border: 1px solid var(--rim); box-shadow: var(--lift); text-align: center; padding: 24px; }
+.proto-swipecard .cover-hex { width: 120px; height: 134px; }
+.proto-note { margin: 0 0 12px; font-size: 12px; color: var(--placeholder); }
+@media (prefers-reduced-motion: reduce) { .menu, .menu-scrim { animation: none; } }
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <label for="start">Start on</label>
+  <select id="start">
+    <option value="collections">Collections</option>
+    <option value="collection">A collection (Essen 2026)</option>
+    <option value="lists">BGG lists</option>
+    <option value="search">Search</option>
+    <option value="config">Config</option>
+    <option value="empty">New person: nothing yet</option>
+  </select>
+  <label for="band">App bar</label>
+  <select id="band">
+    <option value="hot">A · orange band</option>
+    <option value="dark">B · dark band, orange name</option>
+  </select>
+</div>
+<div id="root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const svg = (body, w = 2) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`
+const ICON = {
+  collections: svg('<path d="M12 2 20 6.5v11L12 22l-8-4.5v-11z"/><path d="M12 22V12M20 6.5 12 12 4 6.5"/>'),
+  lists: svg('<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>'),
+  plus: svg('<path d="M12 5v14M5 12h14"/>', 3),
+  plusThin: svg('<path d="M12 5v14M5 12h14"/>'),
+  heart: svg('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>', 2.6),
+  search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+  searchBold: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', 3),
+  config: svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>'),
+  burger: svg('<path d="M4 7h16M4 12h16M4 17h16"/>', 2.4),
+  filter: svg('<path d="M3 5h18l-7 8v5l-4 2v-7z"/>'),
+  more: svg('<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>', 2.4),
+}
+const MARK = { must_have: ['Must Have', '⭐'], interested: ['Interested', '👀'], unsure: ['Unsure', '🤔'], poop: ['Poop', '💩'], new: ['Not yet marked', '⬡'], skip: ['Not interested', '🛑'] }
+// F003: in a collection, "Not yet marked" sits directly above "Not interested"
+const GROUP_ORDER = ['must_have', 'interested', 'unsure', 'poop', 'new', 'skip']
+
+const START = () => ({
+  collections: [
+    { id: 'essen', name: 'Essen 2026', games: [
+      ['Kalypso', 'Inside Up Games', '€60 · 1–4 players · Booth 3-R400', 'new'],
+      ['Arcs', 'Leder Games', '€70 · 1–4 players · Booth 6-B114', 'new'],
+      ['Faraway', 'Catch Up Games', '€22 · 2–6 players · Booth 1-H112', 'new'],
+      ['Harmonies', 'Libellud', '€32 · 1–4 players · Booth 2-A101', 'must_have'],
+      ['Sky Team', 'Le Scorpion Masqué', '€25 · 2 players · Booth 4-C210', 'must_have'],
+      ['Ark Nova: Marine Worlds', 'Feuerland', '€35 · 1–4 players · Booth 3-J105', 'interested'],
+      ['Castle Combo', 'Catch Up Games', '€20 · 2–5 players · Booth 1-H112', 'unsure'],
+      ['Endless Winter', 'Fantasia Games', '€80 · 1–4 players · Booth 5-D301', 'poop'],
+      ['Twilight Inscription', 'Fantasy Flight', '€75 · 1–8 players · Booth 3-A200', 'skip'],
+    ].map(([name, publisher, info, mark]) => ({ name, publisher, info, mark })) },
+    { id: 'wish', name: 'Wishlist', games: [] },
+  ],
+  lists: [{ id: 'p93', title: 'SPIEL Essen 2026 Preview', sub: '1,370 games · loaded' }],
+  route: { name: 'collections' },
+  menu: false, sheet: null, foldNew: true, foldSkip: false, filterOn: false,
+})
+
+let state
+const $ = s => document.querySelector(s)
+const root = $('#root')
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const initials = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('')
+const cover = (name, size = 56) => `<span class="cover" style="width:${size}px;height:${Math.round(size * 1.12)}px" aria-hidden="true"><span class="cover-hex hex"><span class="cover-initials">${esc(initials(name))}</span></span></span>`
+
+function toast(text) {
+  const t = $('#toast')
+  t.innerHTML = '<i class="hex" aria-hidden="true"></i>' + esc(text)
+  t.classList.add('show')
+  clearTimeout(toast.timer)
+  toast.timer = setTimeout(() => t.classList.remove('show'), 2600)
+}
+
+/* ---------- app bar, heading, menu ---------- */
+const PLACES = [['collections', 'Collections', ICON.collections], ['lists', 'BGG lists', ICON.lists], ['search', 'Search', ICON.search], ['config', 'Config', ICON.config]]
+const place = r => (r.name === 'collection' || r.name === 'swipe' ? 'collections' : r.name === 'list' ? 'lists' : r.name)
+
+const appbar = () => `
+  <header class="appbar">
+    <span class="logo hex" aria-hidden="true">B</span>
+    <p class="appbar-name">board-a-licious</p>
+    <button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="${state.menu}">${ICON.burger}</button>
+  </header>`
+
+const heading = (title, back) => `
+  <div class="screen-head">
+    ${back ? `<button type="button" class="icon-btn back" data-go="${back}" aria-label="Back">‹</button>` : ''}
+    <h1>${esc(title)}</h1>
+  </div>`
+
+const menu = () => !state.menu ? '' : `
+  <div class="menu-scrim" id="menu-scrim"></div>
+  <ul class="menu" role="menu" aria-label="Menu">
+    ${PLACES.map(([key, label, icon]) => `<li role="none"><a role="menuitem" data-go="${key}" ${place(state.route) === key ? 'aria-current="page"' : ''}>${icon}<span>${label}</span></a></li>`).join('')}
+  </ul>`
+
+/* ---------- action bar: main button + the screen's own actions ---------- */
+const act = (id, label, icon, extra = '') => `<button type="button" class="act ${extra}" id="${id}">${icon}<span>${label}</span></button>`
+const mainBtn = (icon, label, disabled) => `<button type="button" class="tab-add hex hex-btn main-btn" id="main" aria-label="${label}" ${disabled ? 'disabled aria-disabled="true"' : ''}>${icon}</button>`
+
+function actionbar() {
+  switch (state.route.name) {
+    case 'collections': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.plus, 'Create a collection')}</nav>`
+    case 'lists': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.plus, 'Load a BGG list')}</nav>`
+    case 'search': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.searchBold, 'Search (not available yet)', true)}</nav>`
+    case 'collection': return `<nav class="actionbar" aria-label="Actions">
+        ${act('filter', 'Filter', ICON.filter, state.filterOn ? 'is-active' : '')}
+        ${act('add-game', 'Add game', ICON.plusThin)}
+        ${mainBtn(ICON.heart, 'Add by list')}
+        ${act('options', 'Options', ICON.more)}
+      </nav>`
+    default: return '' // config, a single list, swipe: no action bar
+  }
+}
+
+/* ---------- screens ---------- */
+function collectionsScreen() {
+  const cs = state.collections
+  if (cs.length === 0) return heading('Collections') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No collections yet</h2><p>Tap <b>+</b> below to create your first one, e.g. for SPIEL 2026.</p></div></main>`
+  return heading('Collections') + `<main class="screen">
+    <p class="lead">Each collection is your own. Games keep booth, price and edition from lists that have them, such as the SPIEL preview.</p>
+    <div class="cards">${cs.map(c => {
+      const n = k => c.games.filter(g => g.mark === k).length
+      const fresh = n('new')
+      return `<a class="card collection-card" data-open="${c.id}">
+        <span class="cluster" aria-hidden="true"><i class="hex"></i><i class="hex"></i><i class="hex"></i></span>
+        <h2 class="card-title"><span class="card-name">${esc(c.name)}</span></h2>
+        <p class="card-sub">${c.games.length === 0 ? 'No games yet' : fresh ? `${fresh} not marked` : 'All marked'}</p>
+        <p class="counts"><span>⭐ ${n('must_have')}</span><span>👀 ${n('interested')}</span><span>🤔 ${n('unsure')}</span><span>💩 ${n('poop')}</span><span>✅ 0</span><span>🛑 ${n('skip')}</span></p>
+      </a>`
+    }).join('')}</div></main>`
+}
+
+const row = g => `<button type="button" class="row${g.fresh ? ' is-just-added' : ''}">${cover(g.name)}
+  <span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${esc(g.publisher)}</span><span class="row-info"><span>${esc(g.info)}</span></span></span>
+  ${g.mark !== 'new' && g.mark !== 'skip' ? `<span class="pill mark-pill" data-mark="${g.mark}" aria-hidden="true">${MARK[g.mark][1]}</span>` : ''}</button>`
+
+function collectionScreen() {
+  const c = state.collections.find(x => x.id === state.route.id)
+  if (c.games.length === 0) return heading(c.name, 'collections') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No games in ${esc(c.name)} yet</h2>
+    <p>Tap the <b>heart</b> below to go through a BGG list and swipe the games you care about into it, or <b>Add game</b> to add a single game by its BoardGameGeek link.</p></div></main>`
+  const shown = state.filterOn ? c.games.filter(g => g.mark === 'must_have') : c.games
+  const groups = GROUP_ORDER.map(k => [k, shown.filter(g => g.mark === k)]).filter(([, gs]) => gs.length)
+  return heading(c.name, 'collections') + `<main class="screen">
+    ${state.filterOn ? `<button type="button" class="filter-summary" id="filter-summary">⭐ Must Have · ${shown.length} games</button>` : ''}
+    <hr class="separator" />
+    ${groups.map(([k, gs]) => {
+      const folds = k === 'new' || k === 'skip'
+      const open = k === 'new' ? state.foldNew : state.foldSkip
+      const title = `<i class="hex" aria-hidden="true"></i><span>${MARK[k][0]}</span><b class="group-count">${gs.length}</b>`
+      return `<section class="group"><h2 class="group-title" data-mark="${k}">${folds ? `<button type="button" class="fold" data-fold="${k}" aria-expanded="${open}">${title}<span class="chev" aria-hidden="true">›</span></button>` : title}</h2>
+        <ul class="rows" ${folds && !open ? 'hidden' : ''}>${gs.map(g => `<li>${row(g)}</li>`).join('')}</ul></section>`
+    }).join('')}
+  </main>`
+}
+
+function listsScreen() {
+  if (state.lists.length === 0) return heading('BGG lists') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No BGG list loaded yet</h2><p>Tap <b>+</b> below and paste the link of a BoardGameGeek preview or geeklist, for example the SPIEL preview: <span class="example">boardgamegeek.com/geekpreview/93</span></p></div></main>`
+  return heading('BGG lists') + `<main class="screen"><p class="lead">Loaded lists stay on this phone for browsing, also offline. Open one to put its games into your collections.</p>
+    <div class="cards">${state.lists.map(l => `<a class="card list-card" data-list="${l.id}"><span class="cluster" aria-hidden="true"><i class="hex"></i><i class="hex"></i><i class="hex"></i></span><h2 class="card-title"><span class="card-name">${esc(l.title)}</span></h2><p class="card-sub">${esc(l.sub)}</p></a>`).join('')}</div></main>`
+}
+
+function listScreen() {
+  const l = state.lists.find(x => x.id === state.route.id)
+  const games = [['Kalypso', 'Inside Up Games', '€60 · 1–4 players · Booth 3-R400'], ['Cascadia', 'Kosmos', '€35 · 1–4 players · Booth 1-C110'], ['Harmonies', 'Libellud', '€32 · 1–4 players · Booth 2-A101']]
+  return heading(l.title, 'lists') + `<main class="screen"><p class="lead">${esc(l.sub)}</p><hr class="separator" />
+    <ul class="rows">${games.map(([name, publisher, info]) => `<li class="list-item">${row({ name, publisher, info, mark: 'new' })}<button type="button" class="add-mini hex-btn" aria-label="Add ${name}"><span class="hex">+</span></button></li>`).join('')}</ul>
+    <p class="proto-note">A single list has no main button (spec FR-012).</p></main>`
+}
+
+function swipeScreen() {
+  const c = state.collections.find(x => x.id === state.route.id)
+  return heading(`Add to ${c.name}`, 'collection') + `<main class="screen proto-swipe">
+    <div class="proto-swipecard">${cover('Cascadia', 120)}<h2 class="swipe-name">Cascadia</h2><p class="swipe-year">2021 · Kosmos</p></div>
+    <div class="swipe-buttons"><button type="button" class="swipe-btn no hex-btn" id="nope" aria-label="Not interested">✕</button><button type="button" class="swipe-btn yes hex-btn" id="yes" aria-label="Add to collection">✓</button></div>
+    <p class="proto-note">Swipe mode keeps its own buttons; no main button here.</p></main>`
+}
+
+const searchScreen = () => heading('Search') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>Search comes later</h2><p>Finding games across your collections and lists is planned. The magnifying glass below stays off until then.</p></div></main>`
+
+const configScreen = () => heading('Config') + `<main class="screen config">
+  <h2 class="section-title">Introduction</h2><p class="lead">The three cards from the first start, once more.</p><button type="button" class="btn btn-block">Show the introduction</button>
+  <hr class="separator" />
+  <h2 class="section-title">Share and backup</h2><p class="lead">Send a collection to a chat, or save all collections to a file and load them back.</p><button type="button" class="btn btn-primary btn-block">Share and backup</button>
+  <hr class="separator" />
+  <h2 class="section-title">Sound</h2><p class="muted">… (rest of Config unchanged)</p>
+  <p class="proto-note">Config has no action bar: the whole height is content.</p></main>`
+
+/* ---------- sheets ---------- */
+const sheet = (title, inner) => `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="sheet-grip" aria-hidden="true"></div><h2 id="sheet-title" class="sheet-title">${esc(title)}</h2>${inner}</div>`
+const SHEETS = {
+  newCollection: () => sheet('New collection', `<form class="form" id="f"><div><label class="label" for="cname">Name</label><div class="field"><input id="cname" placeholder="e.g. SPIEL 2026" autocomplete="off" /></div></div>
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary">Create collection</button></div></form>`),
+  loadList: () => sheet('Load a BGG list', `<form class="form" id="f"><div><label class="label" for="link">Link to a BoardGameGeek preview or geeklist</label><div class="field"><input id="link" placeholder="boardgamegeek.com/geekpreview/93" autocomplete="off" /></div><p class="hint" id="hint">For example the SPIEL preview: boardgamegeek.com/geekpreview/93</p></div>
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary" id="load" disabled>Load list</button></div></form>`),
+  pickList: () => sheet('Add by list', `<p class="lead pick-intro">Which list do you want to go through? Games already in ${esc(state.collections.find(c => c.id === state.route.id).name)} are skipped.</p>
+    ${state.lists.length ? `<div class="cards">${state.lists.map(l => `<a class="card list-card" data-swipe="${l.id}"><h2 class="card-title"><span class="card-name">${esc(l.title)}</span></h2><p class="card-sub">${esc(l.sub)}</p></a>`).join('')}</div>`
+      : `<p class="hint">No BGG list loaded yet.</p><div class="sheet-actions"><button type="button" class="btn btn-primary btn-block" id="to-load">Load a BGG list</button></div>`}`),
+  addGame: () => sheet('Add game', `<p class="lead">For games that are not on any list.</p><form class="form" id="f"><div><label class="label" for="glink">BoardGameGeek link</label><div class="field"><input id="glink" placeholder="boardgamegeek.com/boardgame/295947/cascadia" autocomplete="off" /></div></div>
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary">Add to collection</button></div></form>`),
+  filter: () => sheet('Filter and group', `<p class="lead">(The existing filter sheet, unchanged.)</p><div class="sheet-actions sheet-actions-row"><button type="button" class="btn" id="filter-all">Show all</button><button type="button" class="btn btn-primary" id="filter-must">Only Must Have</button></div>`),
+  options: () => sheet(state.collections.find(c => c.id === state.route.id).name, `<div class="sheet-actions"><button type="button" class="btn btn-block" data-close>Rename</button><button type="button" class="btn btn-block" data-close>Share as text</button><button type="button" class="btn btn-block btn-danger" data-close>Delete collection</button></div>`),
+}
+
+/* ---------- render and events ---------- */
+const SCREENS = { collections: collectionsScreen, collection: collectionScreen, lists: listsScreen, list: listScreen, swipe: swipeScreen, search: searchScreen, config: configScreen }
+
+function render() {
+  const bar = actionbar()
+  root.innerHTML = `<div class="app band-${$('#band').value}${bar ? '' : ' no-actions'}">${appbar()}${SCREENS[state.route.name]()}${bar}</div>${menu()}${state.sheet ? SHEETS[state.sheet]() : ''}`
+  wire()
+  // the menu hangs just below the app bar
+  const m = root.querySelector('.menu')
+  if (m) m.style.top = root.querySelector('.appbar').getBoundingClientRect().bottom + 6 + 'px'
+}
+const go = route => { state.route = route; state.menu = false; state.sheet = null; window.scrollTo(0, 0); render() }
+const openSheet = name => { state.sheet = name; render(); setTimeout(() => root.querySelector('.sheet input')?.focus(), 50) }
+const close = () => { state.sheet = null; render() }
+
+function wire() {
+  const on = (sel, fn) => root.querySelectorAll(sel).forEach(el => (el.onclick = fn))
+  on('#menu-btn', () => { state.menu = !state.menu; render() })
+  on('#menu-scrim', () => { state.menu = false; render() })
+  on('[data-go]', e => {
+    const to = e.currentTarget.dataset.go
+    go(to === 'collection' ? { name: 'collection', id: state.route.id } : { name: to })
+  })
+  on('[data-open]', e => go({ name: 'collection', id: e.currentTarget.dataset.open }))
+  on('[data-list]', e => go({ name: 'list', id: e.currentTarget.dataset.list }))
+  on('[data-fold]', e => { const k = e.currentTarget.dataset.fold; if (k === 'new') state.foldNew = !state.foldNew; else state.foldSkip = !state.foldSkip; render() })
+  on('#scrim', close); on('[data-close]', close)
+  on('#main', () => openSheet({ collections: 'newCollection', lists: 'loadList', collection: 'pickList' }[state.route.name]))
+  on('#add-game', () => openSheet('addGame'))
+  on('#filter', () => openSheet('filter')); on('#filter-summary', () => openSheet('filter'))
+  on('#options', () => openSheet('options'))
+  on('#filter-all', () => { state.filterOn = false; close() })
+  on('#filter-must', () => { state.filterOn = true; close() })
+  on('#to-load', () => { go({ name: 'lists' }); openSheet('loadList') })
+  on('[data-swipe]', () => go({ name: 'swipe', id: state.route.id }))
+  on('#yes', () => {
+    const c = state.collections.find(x => x.id === state.route.id)
+    if (!c.games.some(g => g.name === 'Cascadia')) c.games.push({ name: 'Cascadia', publisher: 'Kosmos', info: '€35 · 1–4 players · Booth 1-C110', mark: 'new' })
+    toast(`Added Cascadia to ${c.name}`)
+  })
+  on('#nope', () => toast('Cascadia: Not interested'))
+  const f = root.querySelector('#f')
+  if (!f) return
+  const link = root.querySelector('#link')
+  if (link) link.oninput = () => {
+    const ok = /boardgamegeek\.com\/(geekpreview|geeklist)\/\d+/.test(link.value)
+    const hint = root.querySelector('#hint')
+    hint.className = link.value && !ok ? 'hint error' : 'hint'
+    hint.textContent = !link.value ? 'For example the SPIEL preview: boardgamegeek.com/geekpreview/93' : ok ? (link.value.includes('preview') ? 'Preview: games with booth, price, publisher and edition.' : 'Geeklist: games without booth and price.') : 'Paste a link to a BoardGameGeek preview or geeklist, like boardgamegeek.com/geekpreview/93.'
+    root.querySelector('#load').disabled = !ok
+  }
+  f.onsubmit = e => {
+    e.preventDefault()
+    if (state.sheet === 'newCollection') {
+      const name = root.querySelector('#cname').value.trim() || 'SPIEL 2026'
+      const id = 'c' + Date.now()
+      state.collections.push({ id, name, games: [] })
+      go({ name: 'collection', id }); toast(`Created ${name}`)
+    } else if (state.sheet === 'loadList') {
+      const id = 'l' + Date.now()
+      state.lists.unshift({ id, title: 'SPIEL Essen 2026 Preview', sub: 'Loading 1 of 138 pages' })
+      go({ name: 'list', id }); toast('Loading SPIEL Essen 2026 Preview')
+    } else if (state.sheet === 'addGame') {
+      const c = state.collections.find(x => x.id === state.route.id)
+      c.games.forEach(g => (g.fresh = false))
+      c.games.push({ name: 'Cascadia', publisher: 'Kosmos', info: '€35 · 1–4 players · Booth 1-C110', mark: 'new', fresh: true })
+      state.foldNew = true; close(); toast(`Added Cascadia to ${c.name}`)
+    }
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (state.menu || state.sheet)) { state.menu = false; state.sheet = null; render() } })
+
+function start() {
+  state = START()
+  const s = $('#start').value
+  if (s === 'empty') { state.collections = []; state.lists = [] }
+  state.route = s === 'collection' ? { name: 'collection', id: 'essen' } : { name: s === 'empty' ? 'collections' : s }
+  render()
+}
+$('#start').onchange = start
+$('#band').onchange = render
+start()
+</script>
+</body>
+</html>
