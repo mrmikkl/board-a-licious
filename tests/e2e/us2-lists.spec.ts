@@ -51,6 +51,8 @@ async function createCollection(page: Page, name: string) {
 }
 
 test('US2: load the SPIEL preview, browse and filter it, put a game into collections', async ({ page }) => {
+  // loads a three-page list with deliberate waits; under a full parallel run it needs more than 30 s
+  test.setTimeout(60_000)
   await fakeBgg(page)
   const lists = await fakeLists(page)
   const essen = unique('Essen fair')

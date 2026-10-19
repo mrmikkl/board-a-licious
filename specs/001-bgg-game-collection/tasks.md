@@ -8,7 +8,8 @@ design rules `docs/design.md` v1.8.0; ADRs 0001–0006.
 the code it covers and must fail first. BGG is only ever tested against recorded fixtures.
 
 **Organization**: by user story (spec.md US1–US6), so each story can be built, tested and shown on
-its own. Release 0.5 = Phases 1–7 and 9 plus T066; Release 1.0 adds T067–T070.
+its own. Release 0.5 = Phases 1–7 and 9 plus T066. Full search (former T067–T070) is a later, separate
+feature (spec Clarifications 2026-10-18).
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -190,16 +191,14 @@ Single package (plan.md): `src/domain/`, `src/app/`, `src/client/`, `worker/`, `
 
 ---
 
-## Phase 8: User Story 6 - Search all of BoardGameGeek (Priority: P6, Release 1.0)
+## Phase 8: User Story 6 - Search placeholder (Priority: P6)
 
-**Goal**: official XML API with token; search.
-**Independent Test**: spec US6 — with a token, search "Cascadia" and add it.
+**Goal**: the Search tab says search comes later and offers adding by link.
+**Independent Test**: spec US6 — open Search, see the note and the link to add by link.
 
 - [X] T066 [US6] Keep the 0.5 Search screen (T038) wired to `GET /api/me` `bggSearch`; ship 0.5 with it switched off
-- [ ] T067 [P] [US6] Worker tests in `tests/worker/bgg-xml.test.ts` with recorded XML fixtures (`search`, `thing`, geeklist): mapping to `Game`, 202/429 handling
-- [ ] T068 [US6] Implement `worker/bgg/xmlapi.ts` (`XmlApiSource`, `fast-xml-parser`, `Authorization: Bearer <BGG_TOKEN>`), selected in `worker/bgg/source.ts` when `BGG_TOKEN` is set; previews stay on `GeekdoSource` (research R9)
-- [ ] T069 [US6] Implement `GET /api/bgg/search` in `worker/routes/search.ts` (`q` 2–100 chars, max 50 results)
-- [ ] T070 [US6] Enable search results in `src/app/screens/Search.tsx` (results with cover and year, add to a collection via the dropdown)
+- T067–T070 (XML API with token, `/api/bgg/search`, search results) moved to a later search
+  feature.
 
 ---
 
@@ -237,7 +236,7 @@ infos; details show all.
 ### Phase Dependencies
 
 - Setup (1) → Foundational (2) → user stories (3–7) → Polish (9). T006 (spike) decides whether US2/US3 use BGG lists or fall back.
-- US6 (8) needs the BGG token; it can happen any time after Phase 2.
+- US6 (8) is the switched-off Search tab (T066); search itself is a later feature.
 - Phase 10 (2026-10-18 change) builds on all of Release 0.5: T079 first; T080 and T081 in parallel; then T082 and T083.
 
 ### User Story Dependencies
@@ -247,7 +246,7 @@ infos; details show all.
 - **US3** (P3): needs US2's lists (T045, T046).
 - **US4** (P4): needs US1 (collection screen, game sheet).
 - **US5** (P5): needs US1 data; independent of US2–US4.
-- **US6** (P6): needs Phase 2 and the token.
+- **US6** (P6): needs Phase 2.
 
 ### Within Each User Story
 
@@ -289,8 +288,8 @@ Task: "T045 worker/bgg/geekdo.ts + worker/routes/lists.ts + worker/routes/compan
 
 ### Incremental Delivery
 
-Each story ends with a deploy and its quickstart scenarios; Release 1.0 (US6) follows once BGG grants
-the token.
+Each story ends with a deploy and its quickstart scenarios. Full search follows as its own feature
+once BGG grants the token.
 
 ---
 

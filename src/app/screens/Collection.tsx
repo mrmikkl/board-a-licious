@@ -16,6 +16,7 @@ import { ListPicker } from '../components/ListPicker.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
+import { useJustAdded } from '../just-added.ts'
 import { href, navigate } from '../router.ts'
 
 /**
@@ -37,6 +38,7 @@ export function Collection({ id }: { id: string }) {
   const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: 'mark' | 'booth' }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
   const closeMenu = useCallback(() => setMenu(false), [])
+  const justAdded = useJustAdded(id)
   const data = useStoreData(
     async store => {
       const collection = (await store.collections()).find(c => c.id === id && !c.deleted)
@@ -195,7 +197,7 @@ export function Collection({ id }: { id: string }) {
                   <ul className="rows" hidden={folds && !showSkip}>
                     {group.entries.map(entry => (
                       <li key={entry.bggId}>
-                        <GameRow entry={entry} game={games.get(entry.bggId)} onOpen={() => setOpenGame(entry.bggId)} />
+                        <GameRow entry={entry} game={games.get(entry.bggId)} onOpen={() => setOpenGame(entry.bggId)} justAdded={entry.bggId === justAdded} />
                       </li>
                     ))}
                   </ul>
