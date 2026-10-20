@@ -11,7 +11,7 @@ const games = (n: number) => `${n} ${n === 1 ? 'game' : 'games'}`
 type Mode = 'select' | 'new'
 
 /**
- * "Add by list" (FR-012, FR-015): a sheet over the collection with two ways in, chosen in a button
+ * "❤️ BG-Tinder ❤️" (FR-012, FR-015; was "Add by list"), opened by the collection's main ♥: a sheet over the collection with two ways in, chosen in a button
  * group: "Select list" (one of the lists loaded, highlighted when chosen; Select) or "Add new list"
  * (paste a BGG list link; Load list). Either leads to swiping that list.
  */
@@ -45,7 +45,7 @@ export function ListPicker({
   }
 
   return (
-    <Sheet open title="Add by list" onClose={onClose}>
+    <Sheet open title="❤️ BG-Tinder ❤️" onClose={onClose}>
       <form onSubmit={submit}>
         <p className="lead pick-intro">
           Go through a list game by game, Tinder style: swipe right to add a game to {collection.name}, swipe left to pass on it. Games you've
