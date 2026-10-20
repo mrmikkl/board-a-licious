@@ -63,3 +63,17 @@ export async function loadList(page: Page, link: string) {
   await sheet.getByLabel(/link/i).fill(link)
   await sheet.getByRole('button', { name: 'Load list' }).click()
 }
+
+/** F004: `/api/bgg/images` from the recorded gallery of Cascadia (main image first); other games have none. */
+export async function fakeGallery(page: Page) {
+  const recorded = JSON.parse(fixture('images-295947.json')) as {
+    images: { imageid: string; imageurl_lg: string; imageurl: string; caption: string | null }[]
+    pagination: { total: number }
+  }
+  const images = recorded.images.map(i => ({ id: Number(i.imageid), large: i.imageurl_lg, small: i.imageurl, caption: i.caption || null }))
+  const ordered = [...images.filter(i => i.id === 5100691), ...images.filter(i => i.id !== 5100691)]
+  await page.route('**/api/bgg/images?**', async route => {
+    const id = Number(new URL(route.request().url()).searchParams.get('id'))
+    await route.fulfill({ json: id === 295947 ? { bggId: id, total: recorded.pagination.total, images: ordered } : { bggId: id, total: 0, images: [] } })
+  })
+}
