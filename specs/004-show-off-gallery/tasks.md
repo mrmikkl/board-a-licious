@@ -94,8 +94,8 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T019 [P] Accessibility: extend `tests/e2e/a11y.spec.ts` with axe, focus and reduced-motion checks for the viewer, the Show-off sheet and the Show-off screen (SC-006)
-- [ ] T020 [P] Docs: mention `GET /api/bgg/images` where the API routes are listed (e.g. `specs/001-bgg-game-collection/contracts` index or README if they list routes); update `CLAUDE.md` "Code layout" only if a new folder appears
+- [X] T019 [P] Accessibility: extend `tests/e2e/a11y.spec.ts` with axe, focus and reduced-motion checks for the viewer, the Show-off sheet and the Show-off screen (SC-006)
+- [X] T020 [P] Docs: mention `GET /api/bgg/images` where the API routes are listed (e.g. `specs/001-bgg-game-collection/contracts` index or README if they list routes); update `CLAUDE.md` "Code layout" only if a new folder appears
 - [X] T021 Run `npx tsc -b`, `npm test`, `npm run test:e2e` (fresh local DB, docs/orca-swarm.md), `npm run build`; fix what fails
   *Result (2026-10-21, fresh local database)*: `tsc` clean, 361 unit and worker tests, build, e2e 129/129.
 - [X] T022 Quickstart validation on a phone (quickstart.md scenarios 1–11) after deploying
