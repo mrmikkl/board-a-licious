@@ -1,8 +1,7 @@
 import { AppProvider, SIGN_IN_URL, useServices, useSignedOut } from './context.tsx'
+import { AppBar } from './components/AppBar.tsx'
 import { Celebrate } from './components/Celebrate.tsx'
-import { Header } from './components/Header.tsx'
 import { HexBoard } from './components/HexBoard.tsx'
-import { TabBar } from './components/TabBar.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import { useIntroOpen } from './intro.ts'
@@ -62,8 +61,8 @@ function Shell() {
   return (
     <div className="app">
       <SignInBanner />
+      <AppBar route={route} />
       <Screen route={route} />
-      <TabBar route={route} />
     </div>
   )
 }
@@ -71,7 +70,7 @@ function Shell() {
 function Boot({ message, signIn = false }: { message?: string; signIn?: boolean }) {
   return (
     <div className="app">
-      <Header title="Board-a-licious" />
+      <AppBar />
       <main className="screen">
         <div className="empty">
           <div className="hex" />

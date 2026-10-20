@@ -1,6 +1,6 @@
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { expectAccessible, fakeBgg, openMenu, unique } from './helpers.ts'
 
 /** A touch drag on an element, as a finger would do it. */
 async function pull(page: Page, selector: string, dy: number, steps = 6) {
@@ -42,7 +42,9 @@ test('game details close when pulled down, stay on a short pull', async ({ page 
 test('Config: sound is switched here and nowhere else, and stays switched', async ({ page }) => {
   await page.goto('/#/config')
   await expect(page.getByRole('heading', { level: 1, name: 'Config' })).toBeVisible()
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Config' })).toHaveAttribute('aria-current', 'page')
+  await openMenu(page)
+  await expect(page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Config' })).toHaveAttribute('aria-current', 'page')
+  await page.keyboard.press('Escape')
   const sw = page.getByRole('switch', { name: /sound and vibration/i })
   await expect(sw).toBeChecked()
   await sw.uncheck()
@@ -73,6 +75,8 @@ test('Config: sound is switched here and nowhere else, and stays switched', asyn
   await expectAccessible(page)
   await page.getByRole('link', { name: 'Share and backup' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Share and backup' })).toBeVisible()
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Config' })).toHaveAttribute('aria-current', 'page')
+  await openMenu(page)
+  await expect(page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Config' })).toHaveAttribute('aria-current', 'page')
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '#/config')
 })
