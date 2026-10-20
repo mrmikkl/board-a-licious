@@ -1,5 +1,7 @@
 import { useCallback } from 'react'
 
+import type { Entry } from '../../domain/collection.ts'
+
 import { ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { CollectionCard } from '../components/CollectionCard.tsx'
 import { Header } from '../components/Header.tsx'
@@ -13,7 +15,13 @@ import { href, navigate } from '../router.ts'
 export function Collections({ create }: { create?: boolean }) {
   const data = useStoreData(async store => {
     const collections = (await store.collections()).filter(c => !c.deleted).sort((a, b) => a.name.localeCompare(b.name))
-    const entries = await store.allEntries()
+    // grouped once: filtering all entries per card is slow with many collections
+    const entries = new Map<string, Entry[]>()
+    for (const e of await store.allEntries()) {
+      const list = entries.get(e.collectionId)
+      if (list) list.push(e)
+      else entries.set(e.collectionId, [e])
+    }
     return { collections, entries }
   })
   const close = useCallback(() => navigate({ name: 'collections' }, { replace: true }), [])
@@ -33,7 +41,7 @@ export function Collections({ create }: { create?: boolean }) {
             <p className="lead">Each collection is your own. Games keep booth, price and edition from lists that have them, such as the SPIEL preview.</p>
             <div className="cards">
               {data.collections.map(c => (
-                <CollectionCard key={c.id} collection={c} entries={data.entries.filter(e => e.collectionId === c.id)} />
+                <CollectionCard key={c.id} collection={c} entries={data.entries.get(c.id) ?? []} />
               ))}
             </div>
           </>

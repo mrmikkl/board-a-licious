@@ -213,6 +213,11 @@
   display: grid;
   gap: var(--gap);
 }
+/* off-screen cards skip layout, paint and their cluster animation (long lists stay fast) */
+.cards > .card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
 .card {
   position: relative;
   display: block;
