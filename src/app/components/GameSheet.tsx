@@ -12,6 +12,7 @@ import { useServices } from '../context.tsx'
 import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
 import { HexPicker } from './HexPicker.tsx'
+import { ImageViewer } from './ImageViewer.tsx'
 import { Sheet } from './Sheet.tsx'
 import { useToast } from './Toast.tsx'
 
@@ -36,7 +37,9 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
   const services = useServices()
   const toast = useToast()
   const [step, setStep] = useState<'details' | 'paid' | 'facts'>('details')
+  const [viewer, setViewer] = useState(false)
   const name = game?.name ?? `Game ${entry.bggId}`
+  const pending = entry.detailsPending && !game?.thumbnailUrl
   // the tapped picker button, where the Must Have burst starts
   const tapped = useRef<Element | null>(null)
   // choosing a mark is the answer: the sheet closes and the game moves to its group
@@ -68,7 +71,9 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
   return (
     <Sheet open title={name} onClose={onClose}>
       <div className="detail-head">
-        <HexCover game={game} name={name} pending={entry.detailsPending && !game?.thumbnailUrl} bought={entry.bought} size={84} />
+        <button type="button" className="cover-zoom" aria-label={`Show the images of ${name} big`} onClick={() => setViewer(true)}>
+          <HexCover game={game} name={name} pending={pending} bought={entry.bought} size={84} />
+        </button>
         <div>
           <p className="detail-sub">
             {game?.year ? `${game.year} · ${collection.name}` : entry.detailsPending ? 'Details follow from BoardGameGeek' : `Year unknown · ${collection.name}`}
@@ -122,6 +127,7 @@ export function GameSheet({ entry, game, collection, onClose }: { entry: Entry; 
           </button>
         </div>
       )}
+      {viewer && <ImageViewer game={{ bggId: entry.bggId, name }} cover={pending ? null : (game?.thumbnailUrl ?? null)} pending={pending} onClose={() => setViewer(false)} />}
     </Sheet>
   )
 }

@@ -1,7 +1,8 @@
 # Design rules
 
-**Version**: 2.0.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-20 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html),
-[share prototype](../specs/002-share-from-bgg/design/prototype.html), [navigation prototype](../specs/003-navigation-rework/design/prototype.html)
+**Version**: 2.1.0 | **Agreed**: 2026-10-17 | **Amended**: 2026-10-20 | **Reference**: [prototype](../specs/001-bgg-game-collection/design/prototype.html),
+[share prototype](../specs/002-share-from-bgg/design/prototype.html), [navigation prototype](../specs/003-navigation-rework/design/prototype.html),
+[show-off prototype](../specs/004-show-off-gallery/design/prototype.html)
 
 The look and feel of Board-a-licious for every feature. Plans and implementations follow these
 rules; changing one means a new version of this file (see [Spec Kit extended](speckit-extended.md),
@@ -92,7 +93,7 @@ Bought is shown as a badge, never as a group.
   screen is an orange primary button.
 - **Screen heading**: the screen title (22px on phones, 26px from 600px) on the background below
   the app bar; a back button (‹) before it only on screens reached from another screen's content
-  (a single BGG list, Swipe, Share and backup). Places in the menu have none.
+  (a single BGG list, Swipe, Share and backup, Show-off). Places in the menu have none.
 - **Collection screen**: heading = the collection's name and a pencil (✏️ icon button) directly after
   it, which opens "Edit collection". No back button (the menu leads back). Below: the filter summary
   (while narrowed), the bought line, the separator, the groups. Action bar: Add game · ♥ · Filter.
@@ -126,7 +127,9 @@ Bought is shown as a badge, never as a group.
 | **Share hint** | in Config, only while the app is not installed to the home screen: a card "📲 Share from BoardGameGeek" saying that once board-a-licious is on the home screen, games can be shared to it from the BGG app or website, and how (Chrome menu ⋮ → Add to Home screen). |
 | **App bar** | its own band at the very top of every screen, about 48px high, sticky: hot gradient background; the **logo** at the left (34px, `hex-gradient-colour`, the colourful meeple on the teal→orange hexagon); "Board-a-licious" centred (Chakra Petch 19px, dark text); the **menu button** (☰, 38px, translucent dark) at the right. Nothing else goes in it. |
 | **Menu** | opened by ☰: a solid panel just below the app bar at the right, one row per place (icon + label, ≥ 48px): Collections, BGG lists, Search, Config; the current place has a raised background and an orange icon. Choosing a row goes there and closes the menu; a scrim tap, Back or Esc closes it. New places are added here, not elsewhere. |
-| **Action bar** | fixed at the bottom on screens with actions, phone-sized and centred, fading into the page like a dock: a 5-column row with the **main button** in the middle and the screen's own actions (icon + small label, muted, ≥ 52px) beside it. Not shown on Config, a single BGG list, Swipe, Share and backup. Sheets cover it. |
+| **Image viewer** | opened by tapping a cover in a game's details sheet (collection or BGG list; the cover carries a small ⤢ badge) or a hexagon in Show-off: full screen on near-black (`#05060E`, opaque); top row: the game's name, the position ("3 / 24") when there are several images, ✕ (44px, round); the image fitted (never cropped) in the middle; below: hexagon dots (current one orange, at most 12) and a caption ("Components · from BoardGameGeek"). Swipe sideways or ←/→ (‹ › buttons on pointer devices) to move through the game's BoardGameGeek gallery; no wrap-around: past the first or last image the drag resists (a third of the finger's way) and springs back. Swipe down (100px), ✕, Back or Esc closes it, back to where it was opened. One image only: no position, dots or arrows; a muted line says why (offline, no more images, details pending). |
+| **Show-off** | a collection's action (honeycomb icon of three hexagons) opens a sheet "Show-off" with the six groups as a multi-choice list (emoji, label, count; hexagon tick filled hot when chosen), Cancel / **Show off** (disabled while none is chosen); the choice is remembered per collection, first time Must Have. The Show-off screen (‹ back to the collection) has the heading "Show-off", a muted line "<collection> · <marks> · <n> games", and the **honeycomb**: the covers as pointy-top hexagons filled edge to edge, three per row, every other row shifted by half a hexagon, rows interlocking (4px gaps); bought games carry the ✓ badge at the bottom; no names on the hexagons (accessible name: game and mark). Tapping a hexagon opens the image viewer. |
+| **Action bar** | fixed at the bottom on screens with actions, phone-sized and centred, fading into the page like a dock: a 5-column row with the **main button** in the middle and the screen's own actions (icon + small label, muted, ≥ 52px) beside it; the columns next to the main button come first, a fourth action takes the outer right column (a collection: Add game · ♥ · Filter · Show-off). Not shown on Config, a single BGG list, Swipe, Share and backup. Sheets cover it. |
 | **Main button** | the big hot hexagon in the action bar, the screen's one orange action; its icon says what it does: Collections ＋ (New collection sheet), a collection ♥ (BG-Tinder), BGG lists ＋ (Load a BGG list sheet), Search 🔍 (disabled until search exists: raised grey, no shimmer). A light shimmer passes over it every 5 s. Its accessible name says the action ("Create a collection", "BG-Tinder: swipe a BGG list into this collection", "Load a BGG list", "Search (not available yet)"). |
 | **New collection** | sheet from the Collections main button: Name, Cancel / **Create collection**; opens the new collection. |
 | **Load a BGG list** | sheet from the BGG lists main button: while the SPIEL Essen 2026 preview is not on the device, a chip "✨ Try the SPIEL Essen 2026 preview" above the link field fills in its link (also in BG-Tinder's "Add new list"); the preview or geeklist link with its hint (example, preview / geeklist, or what is wrong), Cancel / **Load list** (disabled until the link is valid); opens the list and starts loading. |
@@ -162,11 +165,14 @@ Bought is shown as a badge, never as a group.
   violet→orange, and every ~0.5–1.2s a single cell lights up orange or teal and fades. Low contrast,
   brightest at the top, ~30fps, paused in hidden tabs.
 - **Menu**: fades and grows in from the menu button (180ms); closes at once.
+- **Image viewer**: fades in (180ms); a step slides the images (280ms) and updates the position,
+  dots and caption in place, never redrawing the viewer (nothing of the screen behind may flash);
+  dragging follows the finger; swiping down moves the image with the finger and fades the backdrop.
 - **Ticker**: see Components; one loop is at least 4 s.
 - **Reduced motion**: all of the above is switched off: background (one still frame), bursts,
   stamp, counter rolls and flashes, tap pulses, press squish, the shimmer on the main button, the
-  menu's grow-in, the ticker (the name ends in "…" instead), and the swipe tilt, fling and pop-in
-  (the card changes without animation).
+  menu's grow-in, the ticker (the name ends in "…" instead), the image viewer's fade and slide (images
+  change at once), and the swipe tilt, fling and pop-in (the card changes without animation).
 
 ## 10. Sound and haptics
 

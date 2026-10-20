@@ -61,3 +61,11 @@ export const IconPencil = () => (
     <path d="m13.5 6.5 4 4" />
   </svg>
 )
+/** F004: Show-off, three hexagons of a honeycomb */
+export const IconShowOff = () => (
+  <svg {...common} strokeWidth={1.8}>
+    <path d="M7 3.5 10.5 5.5v4L7 11.5 3.5 9.5v-4z" />
+    <path d="M17 3.5 20.5 5.5v4L17 11.5 13.5 9.5v-4z" />
+    <path d="M12 12.5 15.5 14.5v4L12 20.5 8.5 18.5v-4z" />
+  </svg>
+)

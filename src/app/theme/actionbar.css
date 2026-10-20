@@ -16,7 +16,8 @@
   background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
 }
 .actionbar-left,
-.actionbar-right {
+.actionbar-right,
+.actionbar-outer {
   display: contents;
 }
 .actionbar-left > .act {
@@ -25,6 +26,11 @@
 }
 .actionbar-right > .act {
   grid-column: 4;
+  grid-row: 1;
+}
+/* F004: the fourth action at the outer right (docs/design.md "Action bar") */
+.actionbar-outer > .act {
+  grid-column: 5;
   grid-row: 1;
 }
 

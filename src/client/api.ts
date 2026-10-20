@@ -1,4 +1,5 @@
 import type { Collection, Entry } from '../domain/collection.ts'
+import type { GameGallery } from '../domain/gallery.ts'
 import type { LoadedList } from '../domain/lists.ts'
 import type { Game, ListKind, StoredListEntry } from './types.ts'
 
@@ -61,6 +62,18 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
     throw new ApiError(body.error ?? 'internal', body.message ?? `The server answered ${res.status}.`, body.retryable ?? res.status >= 500)
   }
 
+  // F004: galleries asked for in this session, by game; a failure is not kept (research R3)
+  const galleries = new Map<number, Promise<GameGallery>>()
+  const gallery = (bggId: number) => {
+    let pending = galleries.get(bggId)
+    if (!pending) {
+      pending = call<GameGallery>(`/api/bgg/images?id=${bggId}`)
+      galleries.set(bggId, pending)
+      pending.catch(() => galleries.delete(bggId))
+    }
+    return pending
+  }
+
   const post = (body: unknown): RequestInit => ({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -76,6 +89,7 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
     listPage: (kind: ListKind, id: number, page: number) => call<ListPage>(`/api/bgg/lists/${kind}/${id}?page=${page}`),
     companies: (ids: number[]) =>
       call<{ companies: { id: number; name: string }[] }>(`/api/bgg/companies?ids=${ids.join(',')}`).then(r => r.companies),
+    gallery,
     search: (q: string) => call<{ games: Game[] }>(`/api/bgg/search?q=${encodeURIComponent(q)}`).then(r => r.games),
   }
 }

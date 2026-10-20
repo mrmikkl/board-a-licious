@@ -1,4 +1,5 @@
 import type { GameDetails } from '../../src/domain/game-info.ts'
+import type { GameGallery } from '../../src/domain/gallery.ts'
 import type { Game } from '../db/repository.ts'
 
 export type { Game }
@@ -40,5 +41,7 @@ export interface BggSource {
   getGames(ids: number[]): Promise<Game[]>
   getListPage(kind: ListKind, id: number, page: number): Promise<ListPage>
   getCompanies(ids: number[]): Promise<{ id: number; name: string }[]>
+  /** F004: the game's image gallery; the official API has none, so it stays on the exception (research R1). */
+  getGallery(bggId: number): Promise<GameGallery>
   search(query: string): Promise<Game[]>
 }

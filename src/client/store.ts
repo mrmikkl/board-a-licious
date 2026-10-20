@@ -2,6 +2,7 @@ import { type DBSchema, type IDBPDatabase, deleteDB, openDB } from 'idb'
 
 import { type Collection, type Entry, entryKey, merge } from '../domain/collection.ts'
 import type { LoadedList } from '../domain/lists.ts'
+import type { Mark } from '../domain/marks.ts'
 import type { Game, ListKind, StoredList } from './types.ts'
 
 export type Change = { kind: 'collection'; row: Collection } | { kind: 'entry'; row: Entry } | { kind: 'list'; row: LoadedList }
@@ -16,6 +17,8 @@ export type MetaValues = {
   groupBy: Record<string, 'mark' | 'booth'>
   /** F002: the collection a game was last shared into on this device (preselected in the share sheet). */
   lastShareCollection: string
+  /** F004: the groups last shown off per collection (data-model "Show-off choice"); missing → Must Have. */
+  showOff: Record<string, Mark[]>
 }
 
 interface Schema extends DBSchema {

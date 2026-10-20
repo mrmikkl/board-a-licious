@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, type TestInfo, expect, test } from '@playwright/test'
 
-import { createCollection, expectAccessible, fakeBgg, mainButton, openMenu, unique } from './helpers.ts'
+import { createCollection, expectAccessible, fakeBgg, fakeGallery, mainButton, openMenu, unique } from './helpers.ts'
 
 const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
@@ -59,6 +59,7 @@ async function check(page: Page, testInfo: TestInfo, focus = true) {
 test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, still with reduced motion', async ({ page }, testInfo) => {
   test.setTimeout(90_000)
   await fakeBgg(page)
+  await fakeGallery(page)
   await fakePreview(page)
   const name = unique('A11y')
 
@@ -98,7 +99,23 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   await page.getByRole('button', { name: /cascadia/i }).first().click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await check(page, testInfo)
+  // F004: the cover opens the image viewer
+  await page.getByRole('button', { name: 'Show the images of Cascadia big' }).click()
+  await expect(page.getByRole('dialog', { name: 'Images of Cascadia' })).toBeVisible()
+  await check(page, testInfo)
   await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Images of Cascadia' })).toBeHidden()
+  await page.keyboard.press('Escape')
+
+  // F004: Show-off, its sheet and the honeycomb
+  await page.getByRole('navigation', { name: 'Actions' }).getByRole('link', { name: 'Show-off' }).or(page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: 'Show-off' })).click()
+  await expect(page.getByRole('dialog', { name: 'Show-off' })).toBeVisible()
+  await check(page, testInfo)
+  await page.getByRole('button', { name: 'Show off' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Show-off' })).toBeVisible()
+  await check(page, testInfo)
+  await page.getByRole('link', { name: 'Back' }).click()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 
   // swipe: list picker, then the card stack
   await mainButton(page).click()

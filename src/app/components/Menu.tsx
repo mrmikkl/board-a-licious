@@ -16,6 +16,7 @@ const PLACES: { name: Place; label: string; icon: ReactNode }[] = [
 function place(route: Route): Place {
   switch (route.name) {
     case 'collection':
+    case 'showoff':
     case 'swipe':
     case 'shared':
       return 'collections'
