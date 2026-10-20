@@ -1,6 +1,6 @@
 import { type Locator, type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible } from './helpers.ts'
+import { expectAccessible, goTo } from './helpers.ts'
 
 // a fresh device: every other test starts on one that has seen the intro (playwright.config.ts)
 test.use({ storageState: { cookies: [], origins: [] } })
@@ -34,7 +34,7 @@ test('intro: shown on first start, Skip lands on Collections, not shown again un
   await expect(intro).toBeHidden()
 
   // the intro can be shown again from Config
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Config' }).click()
+  await goTo(page, 'Config')
   await page.getByRole('button', { name: 'Show the intro again' }).click()
   await expect(intro.getByRole('group', { name: '1 of 3' })).toBeVisible()
   await intro.getByRole('button', { name: 'Skip' }).click()

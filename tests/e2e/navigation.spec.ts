@@ -50,14 +50,14 @@ test('US1: every screen has the app bar, the menu marks the current place, back 
   await fakeBgg(page)
   await fakePreview(page)
   const collection = await newCollection(page)
-  const back = page.getByRole('link', { name: 'Back' })
+  const back = page.getByRole('link', { name: 'Back', exact: true })
 
   const screens: { hash: string; heading: string | RegExp; place: Place; back?: string }[] = [
     { hash: '#/collections', heading: 'Collections', place: 'Collections' },
     { hash: collection.hash, heading: collection.name, place: 'Collections' },
     { hash: '#/lists', heading: 'BGG lists', place: 'BGG lists' },
     { hash: '#/lists/preview/9093', heading: /spiel/i, place: 'BGG lists', back: '#/lists' },
-    { hash: `${collection.hash}/swipe`, heading: `Add to ${collection.name}`, place: 'Collections', back: collection.hash },
+    { hash: `${collection.hash}/swipe/preview/9093`, heading: `Add to ${collection.name}`, place: 'Collections', back: collection.hash },
     { hash: '#/search', heading: 'Search', place: 'Search' },
     { hash: '#/config', heading: 'Config', place: 'Config' },
     { hash: '#/config/share', heading: 'Share and backup', place: 'Config', back: '#/config' },
