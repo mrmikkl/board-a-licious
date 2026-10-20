@@ -1,6 +1,6 @@
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { createCollection, expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 /**
  * F002 US1, the "Shared game" sheet (docs/design.md v1.9.0 "Shared game", "Choosing a collection";
@@ -10,13 +10,6 @@ const CASCADIA = 'https://boardgamegeek.com/boardgame/295947/cascadia'
 const share = (page: Page) => page.goto(`/share-target?text=${encodeURIComponent(`Cascadia ${CASCADIA}`)}`)
 const sheet = (page: Page) => page.getByRole('dialog', { name: 'Add game' })
 const collectionSelect = (page: Page) => sheet(page).getByLabel('Collection', { exact: true })
-
-async function createCollection(page: Page, name: string) {
-  await page.goto('/#/add/collection')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-}
 
 /** Picks a collection by its name; the option text may carry "(last used)" or "(already in it)". */
 async function choose(page: Page, name: string) {

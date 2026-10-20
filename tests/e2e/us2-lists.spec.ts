@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, goTo, unique } from './helpers.ts'
+import { createCollection, expectAccessible, fakeBgg, goTo, mainButton, unique } from './helpers.ts'
 
 const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
@@ -43,13 +43,6 @@ async function fakeLists(page: Page) {
   return { releasePage2: () => release() }
 }
 
-async function createCollection(page: Page, name: string) {
-  await page.goto('/#/add/collection')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-}
-
 test('US2: load the SPIEL preview, browse and filter it, put a game into collections', async ({ page }) => {
   // loads a three-page list with deliberate waits; under a full parallel run it needs more than 30 s
   test.setTimeout(60_000)
@@ -66,8 +59,8 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await expect(page.getByText(/geekpreview\/93/)).toBeVisible()
   await expectAccessible(page)
 
-  // Add (+) ↳ BGG list: "Load list" stays disabled until the link is a preview or geeklist
-  await page.getByRole('link', { name: /load a bgg list/i }).first().click()
+  // main ＋ ↳ Load a BGG list: "Load list" stays disabled until the link is a preview or geeklist
+  await mainButton(page).click()
   const link = page.getByLabel(/bgg list link/i)
   const load = page.getByRole('button', { name: 'Load list' })
   await link.fill('https://boardgamegeek.com/boardgame/295947/cascadia')

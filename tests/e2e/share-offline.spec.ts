@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { fakeBgg, unique } from './helpers.ts'
+import { createCollection, fakeBgg, unique } from './helpers.ts'
 
 /**
  * F002 against the production build (`vite preview`), where the manifest and the service worker
@@ -54,13 +54,12 @@ test('a share opens the app on #/shared, also offline (T004)', async ({ page, co
 test('offline share: framed note, added on the phone at once, synced once back online (T015)', async ({ page, context }) => {
   await fakeBgg(page)
   const name = unique('Shared Offline')
-  await page.goto('/#/add/collection')
+  await page.goto('/#/collections')
   await page.evaluate(() => navigator.serviceWorker.ready)
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await page.reload()
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
+  // created once the service worker controls the page, so its first takeover cannot reload the sheet away
+  await createCollection(page, name)
 
   // a game this device has never seen, so its details are still to come
   const bggId = 900_000 + Math.floor(Math.random() * 99_999)

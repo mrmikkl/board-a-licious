@@ -45,6 +45,7 @@ export const mainButton = (page: Page) => page.getByRole('navigation', { name: '
 
 /** Collections → main ＋ → New collection sheet → Create collection; ends in the new collection. */
 export async function createCollection(page: Page, name: string) {
+  if (page.url() === 'about:blank') await page.goto('/#/collections')
   await goTo(page, 'Collections')
   await mainButton(page).click()
   const sheet = page.getByRole('dialog', { name: 'New collection' })
@@ -55,6 +56,7 @@ export async function createCollection(page: Page, name: string) {
 
 /** BGG lists → main ＋ → Load a BGG list sheet → Load list; ends in the list. */
 export async function loadList(page: Page, link: string) {
+  if (page.url() === 'about:blank') await page.goto('/#/lists')
   await goTo(page, 'BGG lists')
   await mainButton(page).click()
   const sheet = page.getByRole('dialog', { name: 'Load a BGG list' })
