@@ -169,15 +169,17 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   await addGame(page, ARK_NOVA, 'Ark Nova')
   await addGame(page, WINGSPAN, 'Wingspan')
   const headings = page.locator('main .group-title')
+  // the counts roll for 650 ms after each mark; give them room under the load of a full run
+  const slow = expect.configure({ timeout: 15_000 })
   const separators = page.locator('main hr.separator')
 
   // only Not yet marked: no line between the parts (only the one under the heading)
-  await expect(headings).toHaveText([/not yet marked3/i])
+  await slow(headings).toHaveText([/not yet marked3/i])
   await expect(separators).toHaveCount(1)
 
   // Not interested starts collapsed, below Not yet marked; now both parts are "rest": still one line
   await markAs(page, /not yet marked/i, 'Wingspan', /not interested/i)
-  await expect(headings).toHaveText([/not yet marked2/i, /not interested1/i])
+  await slow(headings).toHaveText([/not yet marked2/i, /not interested1/i])
   await expect(separators).toHaveCount(1)
   const skipFold = page.getByRole('region', { name: /not interested/i }).getByRole('button', { name: /not interested/i })
   await expect(skipFold).toHaveAttribute('aria-expanded', 'false')
@@ -185,7 +187,7 @@ test('US4: groups in the collection order, one separator between the parts, Not 
 
   // marked games above the line, Not yet marked and Not interested below it
   await markAs(page, /not yet marked/i, 'Ark Nova', /must have/i)
-  await expect(headings).toHaveText([/must have1/i, /not yet marked1/i, /not interested1/i])
+  await slow(headings).toHaveText([/must have1/i, /not yet marked1/i, /not interested1/i])
   await expect(separators).toHaveCount(2)
   const lineBox = (await separators.nth(1).boundingBox())!
   const mustHaveBox = (await headings.nth(0).boundingBox())!
@@ -193,21 +195,21 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   expect(lineBox.y).toBeGreaterThan(mustHaveBox.y)
   expect(lineBox.y).toBeLessThan(newBox.y)
   await markAs(page, /not yet marked/i, 'Cascadia', /unsure/i)
-  await expect(headings).toHaveText([/must have1/i, /unsure1/i, /not interested1/i])
+  await slow(headings).toHaveText([/must have1/i, /unsure1/i, /not interested1/i])
   await expect(separators).toHaveCount(2)
   await markAs(page, /unsure/i, 'Cascadia', /^(👀 )?interested/i)
-  await expect(headings).toHaveText([/must have1/i, /interested1/i, /not interested1/i])
+  await slow(headings).toHaveText([/must have1/i, /interested1/i, /not interested1/i])
 
   // every game marked, none left: the parts are marked and Not interested
   await markAs(page, /^interested/i, 'Cascadia', /poop/i)
-  await expect(headings).toHaveText([/must have1/i, /poop1/i, /not interested1/i])
+  await slow(headings).toHaveText([/must have1/i, /poop1/i, /not interested1/i])
   await expect(separators).toHaveCount(2)
 
   // all marked games gone from the rest: one part only, no second line
   await skipFold.click()
   await expect(skipFold).toHaveAttribute('aria-expanded', 'true')
   await markAs(page, /not interested/i, 'Wingspan', /mark as not yet decided/i)
-  await expect(headings).toHaveText([/must have1/i, /poop1/i, /not yet marked1/i])
+  await slow(headings).toHaveText([/must have1/i, /poop1/i, /not yet marked1/i])
   await expect(separators).toHaveCount(2)
 
   // Not yet marked is a fold button, open on arrival; folding keeps the count visible
