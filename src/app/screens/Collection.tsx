@@ -56,12 +56,12 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' })
     [id],
   )
   const back = href({ name: 'collections' })
-  if (!data || data.id !== id) return <Header title="" back={back} />
+  if (!data || data.id !== id) return <Header title="" />
   const { collection, entries, games, storedFilter, storedGroupBy, lists } = data
   if (!collection) {
     return (
       <>
-        <Header title="Collection" back={back} />
+        <Header title="Collection" />
         <main className="screen">
           <div className="empty">
             <div className="hex" />
@@ -130,9 +130,7 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' })
     <>
       <Header
         title={collection.name}
-        back={back}
-        lead={false}
-        actions={
+        trailing={
           // wide screens: filter and ⋯ in the header; phones: in the tool row below (an empty
           // collection has no tool row, so ⋯ stays in the header there)
           entries.length > 0 ? (
