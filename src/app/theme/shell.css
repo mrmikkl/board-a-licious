@@ -342,3 +342,16 @@ body:has(.actionbar) .toast {
 .app:not(:has(.actionbar)) {
   padding-bottom: calc(24px + env(safe-area-inset-bottom));
 }
+
+/* Collection heading (docs/design.md v2.0.0 "Collection screen", "Ticker"): the name runs as a
+   ticker before the pencil instead of wrapping to two lines; the pencil keeps its place after it */
+.top h1.ticker {
+  flex: 0 1 auto;
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow-wrap: normal;
+}
+.edit-btn svg {
+  width: 18px;
+  height: 18px;
+}

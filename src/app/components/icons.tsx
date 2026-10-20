@@ -42,18 +42,6 @@ export const IconFilter = () => (
     <path d="M3 5h18l-7 8v5l-4 2v-7z" />
   </svg>
 )
-export const IconAddList = () => (
-  <svg {...common}>
-    <path d="M4 6h11M4 12h11M4 18h7" />
-    <path d="M18 14v6M15 17h6" />
-  </svg>
-)
-export const IconLink = () => (
-  <svg {...common}>
-    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
-    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
-  </svg>
-)
 /** F003: the app bar's menu button */
 export const IconMenu = () => (
   <svg {...common} strokeWidth={2.4}>
