@@ -2704,7 +2704,15 @@ function wire() {
   on('#zoom', () => { state.viewer = state.game; state.viewerIndex = 0; render() })
   on('#scrim', () => { state.sheet = null; render() }); on('#cancel', () => { state.sheet = null; render() })
   on('#showoff', () => { state.sheet = 'groups'; render() })
-  on('[data-group]', e => { const k = e.currentTarget.dataset.group; state.groups = state.groups.includes(k) ? state.groups.filter(x => x !== k) : [...state.groups, k]; render() })
+  // only the tick and the button change; the sheet stays put (design rule: no slide replay)
+  on('[data-group]', e => {
+    const btn = e.currentTarget, k = btn.dataset.group
+    state.groups = state.groups.includes(k) ? state.groups.filter(x => x !== k) : [...state.groups, k]
+    const on = state.groups.includes(k)
+    btn.setAttribute('aria-pressed', on)
+    btn.querySelector('.gtick').textContent = on ? '✓' : ''
+    root.querySelector('#show').disabled = state.groups.length === 0
+  })
   on('#show', () => { state.sheet = null; state.screen = 'showoff'; window.scrollTo(0, 0); render() })
   on('#back', () => { state.screen = 'collection'; render() })
   on('#regroup', () => { state.sheet = 'groups'; render() })
