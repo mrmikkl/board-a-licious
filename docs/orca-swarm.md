@@ -113,4 +113,7 @@ git worktree list                                             # only the main fo
   `/api/sync` poll during a run (the request waits behind the app's own sync for the one
   connection), although the same request answers at once afterwards. A smaller local database
   (fresh `.pglite/`) is the fix; it is not a code failure.
+- A fresh local database fixed most of it: move `.pglite/` aside and start `npm run db:local`
+  again (migrations run on start). After that the full suite passed except `offline.spec.ts`,
+  which also fails about 1 in 4 runs on `main` (its sync after going back online is timing-bound).
 

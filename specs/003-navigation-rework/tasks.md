@@ -137,9 +137,11 @@ As features 001/002: `src/domain/`, `src/app/`, `tests/{unit,e2e}/`, plus `vite.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T031 [P] Accessibility: extend `tests/e2e/a11y.spec.ts` with axe on every screen with the menu open, with each new sheet open (New collection, Load a BGG list, Edit collection, ❤️ BG-Tinder ❤️) and with the disabled main button (SC-006)
-- [ ] T032 [P] Docs: remove leftover tab bar / "+" / add-screen wording from `docs/design.md` (e.g. §12 Onboarding "shown again from the collections screen" → from Config), `docs/vision.md` and `README.md` if they describe the old navigation; record the icon script in `CLAUDE.md` "Commands"
-- [ ] T033 Run `npx tsc -b`, `npm test`, `npm run test:e2e`, `npm run build`; fix what fails
+- [X] T031 [P] Accessibility: extend `tests/e2e/a11y.spec.ts` with axe on every screen with the menu open, with each new sheet open (New collection, Load a BGG list, Edit collection, ❤️ BG-Tinder ❤️) and with the disabled main button (SC-006)
+- [X] T032 [P] Docs: remove leftover tab bar / "+" / add-screen wording from `docs/design.md` (e.g. §12 Onboarding "shown again from the collections screen" → from Config), `docs/vision.md` and `README.md` if they describe the old navigation; record the icon script in `CLAUDE.md` "Commands"
+- [X] T033 Run `npx tsc -b`, `npm test`, `npm run test:e2e`, `npm run build`; fix what fails
+  *Result (2026-10-20, fresh local database)*: `tsc` clean, 332 unit tests, build, e2e 116/117; the
+  one failure is `offline.spec.ts`, which fails 2 of 8 repeats on `main` too (pre-existing flake).
 - [ ] T034 Quickstart validation on a phone (quickstart.md scenarios 1–14), including installing the app to see the new home-screen icon
 
 ---
