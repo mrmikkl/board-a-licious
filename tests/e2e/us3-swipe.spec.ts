@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Locator, type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, unique } from './helpers.ts'
+import { createCollection, expectAccessible, mainButton, unique } from './helpers.ts'
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
@@ -35,15 +35,12 @@ async function drag(page: Page, card: Locator, dx: number) {
 
 test('US3: swipe a BGG preview into a collection', async ({ page }) => {
   const releasePage2 = await fakePreview(page)
-  await page.goto('/#/add/collection')
   const name = unique('Swipe')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+  await createCollection(page, name)
 
-  // pick the list by its link
-  await page.getByRole('button', { name: /^add by list$/i }).click()
-  const picker = page.getByRole('dialog', { name: /^add by list$/i })
+  // ♥ BG-Tinder: pick the list by its link
+  await mainButton(page).click()
+  const picker = page.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
   await expect(picker).toBeVisible()
   await expectAccessible(page)
   await picker.getByRole('button', { name: 'Add new list' }).click()
@@ -99,8 +96,8 @@ test('US3: swipe a BGG preview into a collection', async ({ page }) => {
   for (const game of ['Cascadia', 'Arcs', 'Faraway']) await expect(skipped.getByRole('button', { name: game })).toBeVisible()
 
   // decided games are never offered again
-  await page.getByRole('button', { name: /^add by list$/i }).click()
-  const again = page.getByRole('dialog', { name: /^add by list$/i })
+  await mainButton(page).click()
+  const again = page.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
   await expect(again.getByRole('button', { name: /spiel essen 2026 preview/i })).toBeDisabled()
   await expect(again).toContainText("You've seen every game on it")
 })

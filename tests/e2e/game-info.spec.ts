@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { expectAccessible, unique } from './helpers.ts'
+import { createCollection, expectAccessible, unique } from './helpers.ts'
 
 const cascadia = {
   bggId: 295947,
@@ -18,10 +18,7 @@ const cascadia = {
 
 test('game rows show publisher and three infos; the details show all of them (FR-010)', async ({ page }) => {
   await page.route('**/api/bgg/games?**', route => route.fulfill({ json: { games: [cascadia] } }))
-  await page.goto('/#/add/collection')
-  const name = unique('Info')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await createCollection(page, unique('Info'))
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
   await page.getByRole('button', { name: 'Add to collection' }).click()

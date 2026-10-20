@@ -1,6 +1,6 @@
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, openMenu, unique } from './helpers.ts'
+import { createCollection, expectAccessible, fakeBgg, openMenu, unique } from './helpers.ts'
 
 /** A touch drag on an element, as a finger would do it. */
 async function pull(page: Page, selector: string, dy: number, steps = 6) {
@@ -24,9 +24,7 @@ async function pull(page: Page, selector: string, dy: number, steps = 6) {
 test('game details close when pulled down, stay on a short pull', async ({ page }) => {
   await fakeBgg(page)
   const name = unique('Pull')
-  await page.goto('/#/add/collection')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await createCollection(page, name)
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
   await page.getByRole('button', { name: 'Add to collection' }).click()
