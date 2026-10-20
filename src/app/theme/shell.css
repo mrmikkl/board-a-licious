@@ -1,4 +1,135 @@
-/* App shell: header, tab bar, sheet, toast (docs/design.md §7) */
+/* App shell: app bar, menu, screen heading, sheet, toast (docs/design.md §6, §7) */
+
+/* App bar: its own sticky band on every screen; above the menu's scrim, so ☰ closes it again */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 28;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 2px var(--gutter);
+  background: var(--grad-hot);
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(255, 122, 26, 0.25);
+}
+.appbar-logo {
+  width: 34px;
+  height: auto;
+}
+.appbar-name {
+  grid-column: 2;
+  text-align: center;
+  font: 700 19px/1 var(--font-display);
+  letter-spacing: 0.02em;
+}
+/* a 38px translucent circle inside a 44px touch area */
+.menu-btn {
+  grid-column: 3;
+  justify-self: end;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(13, 15, 31, 0.14);
+  border: 1px solid rgba(13, 15, 31, 0.25);
+  transition: background 0.2s;
+}
+.menu-btn svg {
+  position: relative;
+}
+.menu-btn[aria-expanded='true']::before {
+  background: rgba(13, 15, 31, 0.28);
+}
+.menu-btn:focus-visible {
+  outline-color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu-btn:hover::before {
+    background: rgba(13, 15, 31, 0.24);
+  }
+}
+
+/* Menu: a solid panel just below the app bar at the right; between the action bar and sheets */
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  background: rgba(5, 6, 14, 0.5);
+  animation: fade-in 0.18s ease-out;
+}
+.menu {
+  position: fixed;
+  z-index: 27;
+  right: max(var(--gutter), calc(50% - var(--column) / 2 + var(--gutter)));
+  width: min(260px, calc(100% - 2 * var(--gutter)));
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  transform-origin: top right;
+  animation: menu-in 0.18s ease-out;
+}
+.menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.menu a svg {
+  color: var(--muted);
+}
+.menu a[aria-current='page'] {
+  background: var(--raised);
+}
+.menu a[aria-current='page'] svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu a:hover {
+    background: var(--raised);
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menu-scrim {
+    animation: none;
+  }
+}
+
+/* Screen heading: back (only where it belongs), title, an element right after it */
 .top {
   position: relative;
   z-index: 2;
@@ -34,95 +165,13 @@
     font-size: 26px;
   }
 }
-.logo {
-  flex: none;
-  width: 34px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  background: var(--grad-hot);
-  color: var(--ink);
-  font: 700 15px var(--font-display);
-}
 .back {
   font-size: 26px;
   text-decoration: none;
   color: var(--text);
 }
 
-.tabbar {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  z-index: 20;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: var(--column);
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  align-items: end;
-  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
-}
-.tab {
-  display: grid;
-  justify-items: center;
-  gap: 3px;
-  min-height: 52px;
-  padding: 6px 0;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  text-decoration: none;
-}
-.tab[aria-current='page'] {
-  color: var(--text);
-}
-.tab[aria-current='page'] svg {
-  color: var(--orange);
-}
-.tab svg {
-  transition:
-    transform 0.25s var(--spring),
-    color 0.2s;
-}
-.tab:active svg {
-  transform: scale(0.85);
-}
-@media (hover: hover) and (pointer: fine) {
-  .tab:hover {
-    color: var(--text);
-  }
-  .tab:hover svg {
-    color: var(--orange-2);
-  }
-}
-.tab-add {
-  position: relative;
-  justify-self: center;
-  width: 62px;
-  height: 68px;
-  margin-top: -26px;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: var(--grad-hot);
-  color: var(--ink);
-}
-.tab-add svg {
-  position: relative;
-  z-index: 1;
-  width: 26px;
-  height: 26px;
-}
-.tab-add::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
-  transform: translateX(-130%);
-  animation: shimmer 5s ease-in-out infinite;
-}
+/* the light passing over the main button every 5 s */
 @keyframes shimmer {
   0%,
   70% {
@@ -185,7 +234,7 @@
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(100px + env(safe-area-inset-bottom));
+  bottom: calc(24px + env(safe-area-inset-bottom));
   z-index: 40;
   display: flex;
   align-items: center;
@@ -201,6 +250,10 @@
   border-radius: var(--r-pill);
   font-size: 14px;
   font-weight: 600;
+}
+/* above the action bar, near the bottom where there is none (research R7) */
+body:has(.actionbar) .toast {
+  bottom: calc(100px + env(safe-area-inset-bottom));
 }
 .toast.show {
   opacity: 1;
@@ -250,10 +303,6 @@
   .hexboard {
     max-width: none;
   }
-  .tabbar {
-    max-width: 560px;
-    border-radius: var(--r-lg) var(--r-lg) 0 0;
-  }
   .swipe-screen,
   .intro {
     max-width: 480px;
@@ -287,4 +336,22 @@
   touch-action: manipulation;
   cursor: pointer;
   justify-self: stretch;
+}
+
+/* the page keeps room at the bottom only while an action bar is shown (research R7) */
+.app:not(:has(.actionbar)) {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+/* Collection heading (docs/design.md v2.0.0 "Collection screen", "Ticker"): the name runs as a
+   ticker before the pencil instead of wrapping to two lines; the pencil keeps its place after it */
+.top h1.ticker {
+  flex: 0 1 auto;
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow-wrap: normal;
+}
+.edit-btn svg {
+  width: 18px;
+  height: 18px;
 }

@@ -16,7 +16,7 @@ Access (Zitadel login) in front; shared pure domain logic in `src/domain/`.
 
 ## Rules that apply to all work
 
-- Look and feel: `docs/design.md` (design rules v1.9.0) is binding for every UI change; the
+- Look and feel: `docs/design.md` (design rules v2.0.0) is binding for every UI change; the
   feature's screens are in `specs/<NNN>/design.md`.
 - Project principles (mobile-first and accessible, test-first, domain logic separate from the UI,
   YAGNI, respectful BGG integration): `.specify/memory/constitution.md`. Plans and reviews check
@@ -58,6 +58,7 @@ npx vitest run tests/unit/marks.test.ts   # one test file
 npm run test:e2e                 # Playwright at 360×740 (+ reduced motion), axe
 npm run build                    # tsc + vite build (app, service worker, Worker)
 npm run deploy                   # build + wrangler deploy
+node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigation-rework/design/icons
 ```
 
 ## Code layout

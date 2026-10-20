@@ -1,13 +1,11 @@
 import { AppProvider, SIGN_IN_URL, useServices, useSignedOut } from './context.tsx'
+import { AppBar } from './components/AppBar.tsx'
 import { Celebrate } from './components/Celebrate.tsx'
-import { Header } from './components/Header.tsx'
 import { HexBoard } from './components/HexBoard.tsx'
-import { TabBar } from './components/TabBar.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import { useIntroOpen } from './intro.ts'
 import { type Route, href, useRoute } from './router.ts'
-import { Add } from './screens/Add.tsx'
 import { Collection } from './screens/Collection.tsx'
 import { Collections } from './screens/Collections.tsx'
 import { Intro } from './screens/Intro.tsx'
@@ -22,17 +20,15 @@ import { Swipe } from './screens/Swipe.tsx'
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
     case 'collections':
-      return <Collections />
+      return <Collections create={route.create} />
     case 'collection':
-      return <Collection key={route.id} id={route.id} />
+      return <Collection key={route.id} id={route.id} open={route.open} />
     case 'swipe':
       return <Swipe key={`${route.id}:${route.list?.kind}:${route.list?.id}`} id={route.id} list={route.list} />
     case 'lists':
-      return <Lists />
+      return <Lists load={route.load} />
     case 'list':
       return <List key={`${route.kind}:${route.listId}`} kind={route.kind} listId={route.listId} />
-    case 'add':
-      return <Add what={route.what} />
     case 'search':
       return <Search />
     case 'share':
@@ -62,8 +58,8 @@ function Shell() {
   return (
     <div className="app">
       <SignInBanner />
+      <AppBar route={route} />
       <Screen route={route} />
-      <TabBar route={route} />
     </div>
   )
 }
@@ -71,7 +67,7 @@ function Shell() {
 function Boot({ message, signIn = false }: { message?: string; signIn?: boolean }) {
   return (
     <div className="app">
-      <Header title="Board-a-licious" />
+      <AppBar />
       <main className="screen">
         <div className="empty">
           <div className="hex" />

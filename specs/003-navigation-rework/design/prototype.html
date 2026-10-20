@@ -1,0 +1,2722 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>F003 Navigation rework – prototype</title>
+<!-- Prototype for feature 003 (Spec Kit extended, Ext 2). Styles: the app's theme CSS (src/app/theme, 2026-10-20), inlined; fonts from Google Fonts here, self-hosted in the app. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ---- src/app/theme/tokens.css ---- */
+/* Design tokens: docs/design.md §3–§6, one-to-one */
+:root {
+  --ink: #0d0f1f;
+  --deck: #151831;
+  --deck-2: #1d2142;
+  --rim: #2c3160;
+  --border: #3a4078;
+  --border-2: #4a5196;
+  --raised: #232852;
+  --text: #eceeff;
+  --muted: #9aa0c8;
+  --placeholder: #6e74a0;
+  --orange: #ff7a1a;
+  --orange-2: #ffb020;
+  --indigo: #4c5bff;
+  --teal: #14c8c8;
+  --violet: #8b5cf6;
+  --danger: #ff4d5e;
+  --got: #0fb98f;
+
+  --grad-hot: linear-gradient(135deg, #ff7a1a 0%, #ffb020 100%);
+  --grad-cool: linear-gradient(135deg, #4c5bff 0%, #14c8c8 100%);
+  --grad-violet: linear-gradient(135deg, #6d4ae0 0%, #a78bfa 100%);
+  --grad-mud: linear-gradient(135deg, #7a6046 0%, #b0916e 100%);
+  --grad-red: linear-gradient(135deg, #c2183a 0%, #ff4d5e 100%);
+  --grad-got: linear-gradient(135deg, #0fb98f 0%, #7cf0c5 100%);
+  --grad-dusk: linear-gradient(135deg, #8b5cf6 0%, #4c5bff 55%, #14c8c8 100%);
+  --grad-white: linear-gradient(135deg, #ffffff 0%, #c9cdf0 100%);
+  --grad-separator: linear-gradient(90deg, #ff7a1a 0%, #8b5cf6 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --lift: 0 8px 22px rgba(3, 4, 12, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glow: 0 0 0 1px var(--orange), 0 0 18px rgba(255, 122, 26, 0.45);
+
+  --font-display: 'Chakra Petch', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --tap: 44px;
+  --gutter: 16px;
+  --column: 440px;
+  --gap: 8px;
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- src/app/theme/base.css ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--ink);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+a {
+  color: var(--orange-2);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Layout: the phone column (docs/design.md §6) */
+.app {
+  position: relative;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.screen {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--gutter);
+}
+.lead {
+  color: var(--muted);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.hex {
+  clip-path: var(--hex);
+}
+.separator {
+  height: 2px;
+  border: 0;
+  margin: 16px 0;
+  background: var(--grad-separator);
+  border-radius: 2px;
+}
+
+/* Surfaces */
+.card {
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift);
+  padding: 16px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  padding: 0 14px;
+  min-height: 50px;
+}
+.field:focus-within {
+  border-color: var(--orange);
+}
+.field input,
+.field select {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  padding: 12px 0;
+}
+.field input::placeholder {
+  color: var(--placeholder);
+}
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+/* Buttons (docs/design.md §7): text on gradients follows the contrast rule of §3 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  font-weight: 700;
+  box-shadow: var(--lift);
+  text-decoration: none;
+  color: var(--text);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--grad-hot);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-bought {
+  background: var(--grad-got);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-danger {
+  /* --danger itself reaches only 4.4:1 on the raised surface; text needs 4.5:1 (docs/design.md §3) */
+  color: #ff6b78;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Badges and pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Empty state */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 8px;
+}
+.empty .hex {
+  width: 72px;
+  height: 82px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.empty h2 {
+  font-size: 18px;
+}
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+.empty .actions {
+  display: grid;
+  gap: var(--gap);
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---- src/app/theme/hexboard.css ---- */
+/* Background: the living hexagon board behind the phone column (docs/design.md §2, §9).
+   Below every other layer and never in the way of a tap. */
+.hexboard {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: 100%;
+  max-width: var(--column);
+  height: 100%;
+  height: 100lvh;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* ---- src/app/theme/shell.css ---- */
+/* App shell: header, tab bar, sheet, toast (docs/design.md §7) */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--gutter) 10px;
+}
+.top-title {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.top h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  /* at most two lines, then "…" */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.top-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .top h1 {
+    font-size: 26px;
+  }
+}
+.logo {
+  flex: none;
+  width: 34px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 15px var(--font-display);
+}
+.back {
+  font-size: 26px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--column);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.tab {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.tab[aria-current='page'] {
+  color: var(--text);
+}
+.tab[aria-current='page'] svg {
+  color: var(--orange);
+}
+.tab svg {
+  transition:
+    transform 0.25s var(--spring),
+    color 0.2s;
+}
+.tab:active svg {
+  transform: scale(0.85);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover {
+    color: var(--text);
+  }
+  .tab:hover svg {
+    color: var(--orange-2);
+  }
+}
+.tab-add {
+  position: relative;
+  justify-self: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.tab-add svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+.tab-add::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: shimmer 5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 6, 14, 0.6);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 31;
+  width: 100%;
+  max-width: var(--column);
+  max-height: 88dvh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1e3e 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-grip {
+  /* a 5px bar with a 44px tall touch area around it */
+  width: 88px;
+  height: 25px;
+  margin: -10px auto 2px;
+  background: linear-gradient(var(--rim), var(--rim)) center / 44px 5px no-repeat;
+  border-radius: 3px;
+}
+.sheet-title {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+@keyframes sheet-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(100px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast i {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: var(--orange);
+}
+
+/* Expired sign-in: above the screen, solid like every interactive surface */
+.signin-banner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  margin: 12px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--deck-2);
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+}
+.signin-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* Tablets and laptops use more of the screen (docs/design.md §6): a wider column, cards and game
+   rows in a grid; sheets and the swipe card keep a readable width. */
+@media (min-width: 768px) {
+  :root {
+    --column: 1040px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .rows {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .sheet {
+    max-width: 560px;
+  }
+  .hexboard {
+    max-width: none;
+  }
+  .tabbar {
+    max-width: 560px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  .swipe-screen,
+  .intro {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .form,
+  .share {
+    max-width: 640px;
+  }
+}
+
+/* Dragging a sheet down to close it follows the finger; it springs back if let go early */
+.sheet.is-dragging {
+  transition: none;
+  animation: none;
+}
+.sheet.is-settling {
+  transition: transform 0.2s ease-out;
+}
+.sheet-grip {
+  touch-action: none;
+}
+/* a heading that reacts to taps (Config: five taps show the developer section): no text selection,
+   no double-tap zoom swallowing taps, and the whole title width as target */
+.top h1.tappable {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  justify-self: stretch;
+}
+
+/* ---- src/app/theme/components.css ---- */
+/* Feature components: docs/design.md §7 (collection card, game row, group heading, hexagon picker, forms) */
+
+/* Mark gradients (docs/design.md §4), used by pickers, pills and group dots */
+[data-mark='new'],
+[data-tone='new'] {
+  --tone: var(--grad-white);
+  --tone-text: var(--ink);
+}
+[data-mark='must_have'],
+[data-tone='must_have'],
+[data-tone='hot'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='interested'],
+[data-tone='interested'] {
+  --tone: var(--grad-cool);
+  --tone-text: var(--ink);
+}
+[data-mark='unsure'],
+[data-tone='unsure'] {
+  --tone: var(--grad-violet);
+  --tone-text: #fff;
+}
+[data-mark='poop'],
+[data-tone='poop'] {
+  --tone: var(--grad-mud);
+  --tone-text: #fff;
+}
+[data-mark='skip'],
+[data-tone='skip'] {
+  --tone: var(--grad-red);
+  --tone-text: #fff;
+}
+[data-mark='bought'] {
+  --tone: var(--grad-got);
+  --tone-text: var(--ink);
+}
+/* hall groups (group by booth): halls in the hot gradient, "No booth yet" muted */
+[data-mark='hall'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='none'] {
+  --tone: linear-gradient(135deg, #6e74a0, #9aa0c8);
+  --tone-text: var(--ink);
+}
+
+.section-title {
+  font-size: 18px;
+  margin: 20px 0 10px;
+}
+.section-title small {
+  font: 600 13px var(--font-body);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hint.error {
+  color: #ff8a95;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field.is-disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.field svg {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Dropdown: field look with an orange hexagon as arrow */
+.field.select {
+  position: relative;
+}
+.field.select select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.field.select select option {
+  background: var(--deck);
+}
+.field.select::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  pointer-events: none;
+}
+
+/* Switch ("Essen collection") */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.toggle-text {
+  flex: 1;
+  font-weight: 600;
+}
+.toggle-text small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 6px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  clip-path: var(--hex);
+  background: var(--muted);
+  transition: transform 0.25s var(--spring);
+}
+.switch:checked {
+  background: var(--grad-hot);
+  border-color: transparent;
+}
+.switch:checked::after {
+  background: var(--ink);
+  transform: translateX(20px);
+}
+
+/* Hexagon picker: honeycomb, every second hexagon offset down */
+/* one straight, centred row of equal hexagons, whatever their labels and the phone's text scaling */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 84px));
+  justify-content: center;
+  align-items: start;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+.picker-btn {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+.picker-hex {
+  display: block;
+  aspect-ratio: 0.88;
+  padding: 2px;
+  background: var(--border-2);
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.picker-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.picker-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.picker-btn[aria-pressed='true'] .picker-hex {
+  background: var(--orange);
+}
+.picker-btn[aria-pressed='true'] .picker-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.picker-btn:is([data-tone='unsure'], [data-tone='poop'])[aria-pressed='true'] .picker-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Collection cards with the hexagon cluster in the top-right corner */
+.cards {
+  display: grid;
+  gap: var(--gap);
+}
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  padding-right: 64px;
+}
+.card-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+/* the six counts always in one row; the text shrinks on narrow phones instead of wrapping */
+.counts {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 10px 0 0;
+  font: 700 clamp(12px, 3.7vw, 15px) var(--font-display);
+  white-space: nowrap;
+}
+.cluster {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 58px;
+  height: 52px;
+  animation: sway 6s ease-in-out infinite;
+}
+.cluster i {
+  position: absolute;
+  width: 22px;
+  height: 25px;
+  background: var(--grad-dusk);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+.cluster i:nth-child(1) {
+  top: 0;
+  right: 0;
+}
+.cluster i:nth-child(2) {
+  top: 0;
+  right: 24px;
+  opacity: 0.7;
+}
+.cluster i:nth-child(3) {
+  top: 20px;
+  right: 12px;
+  opacity: 0.85;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.new-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  border: 1px dashed var(--orange);
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.new-card .hex {
+  width: 22px;
+  height: 25px;
+  background: var(--grad-hot);
+}
+@media (hover: hover) and (pointer: fine) {
+  .new-card:hover {
+    background: var(--grad-hot);
+    color: var(--ink);
+  }
+}
+.soon-card {
+  margin-bottom: 16px;
+}
+.soon-card .card-title {
+  padding-right: 0;
+}
+/* F002 Share hint at the top of Config */
+.hint-card .card-title {
+  padding-right: 0;
+}
+
+/* Collection screen: long names wrap to two lines instead of being cut after a few letters */
+.top h1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.row-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.row-actions .btn {
+  padding-inline: 10px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.group-title i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  background: var(--tone);
+}
+.group-count {
+  color: var(--muted);
+  font-weight: 700;
+}
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.chev {
+  margin-left: auto;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.fold[aria-expanded='true'] .chev {
+  transform: rotate(90deg);
+}
+
+.rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows[hidden] {
+  display: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+.row-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-sub {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* F002 "Just added": the hover highlight, kept until the user scrolls or taps (not an animation) */
+.row.is-just-added {
+  border-color: var(--orange);
+  box-shadow: var(--lift), var(--glow);
+}
+.row.skip .row-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.row.skip .cover {
+  opacity: 0.5;
+}
+.row .pill,
+.detail-head .pill {
+  flex: none;
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.mark-pill {
+  padding: 4px 8px;
+}
+
+/* Hexagon covers */
+.cover {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.cover-hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--grad-dusk);
+}
+.cover-hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-initials {
+  font: 700 17px var(--font-display);
+  color: var(--ink);
+}
+.cover-got {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Game details sheet */
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.detail-sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+.sheet-actions {
+  display: grid;
+  gap: var(--gap);
+  margin-top: 12px;
+}
+
+/* "Group by" under the filter in a collection */
+.group-by {
+  margin-top: 12px;
+}
+
+/* Config → Developer: plain links, each a full-width 44px target */
+.dev-links {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dev-links a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Collection tools (docs/design.md §6): on phones four equal icon buttons in one row
+   (Add by list, Add by link, Filter, ⋯); from 600px the two text buttons, filter and ⋯ in the header */
+.collection-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+}
+.collection-tools .tool {
+  padding-inline: 6px;
+}
+.collection-tools .icon-btn {
+  width: 100%;
+  border-radius: var(--r-md);
+}
+.collection-tools .tool-text {
+  /* only the icon on phones; the link keeps its name for screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.phone-only {
+  display: contents;
+}
+.wide-only {
+  display: none;
+}
+@media (min-width: 600px) {
+  .collection-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+  .collection-tools .tool svg {
+    display: none;
+  }
+  .collection-tools .tool-text {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+  .phone-only {
+    display: none;
+  }
+  .wide-only {
+    display: contents;
+  }
+}
+/* Cancel and the main action side by side, the main action on the right */
+.sheet-actions-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Game info (docs/design.md §7 "Game info"): year beside the name, publisher, then three infos */
+.row-year {
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row-info > span:first-child {
+  flex: none;
+}
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.row-info .info-pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.info-pill {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.info-list > div {
+  display: contents;
+}
+.info-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.info-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* ---- src/app/theme/fair.css ---- */
+/* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
+
+/* Filter: one full-width button, a panel below it */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--raised);
+  box-shadow: var(--glow);
+}
+.seg-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg {
+  /* one column per option, all in one row */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.seg button {
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0 4px;
+  overflow-wrap: anywhere;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  border-top: 1px solid var(--rim);
+  cursor: pointer;
+}
+.filter-row:first-child {
+  border-top: 0;
+}
+.filter-row input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+}
+.filter-row span {
+  flex: 1;
+}
+.filter-row small {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+.chip:active,
+.seg button:active {
+  scale: 0.96;
+}
+
+/* "✅ 1 game bought, €52 spent" under the filter */
+.bought-line {
+  margin: 10px 2px 0;
+  font-weight: 700;
+  color: #7cf0c5;
+}
+
+/* Game details: description, facts, price question */
+.detail-head .pill {
+  margin-top: 4px;
+}
+.desc {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+.muted {
+  color: var(--muted);
+}
+.facts-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.facts-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.facts-by {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.link-btn {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-2);
+  font-weight: 700;
+  text-align: left;
+}
+.facts-add {
+  margin-bottom: 8px;
+}
+.facts-form {
+  margin-bottom: 12px;
+}
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: var(--gap);
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.currency {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* "Groups" with Select all / Select none on the same line */
+.seg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.seg-actions {
+  display: flex;
+  gap: 4px;
+}
+.seg-actions .link-btn {
+  min-height: var(--tap);
+  padding: 0 8px;
+}
+
+/* filter icon in the collection header; a dot while a filter or the hall grouping is active */
+.filter-icon {
+  position: relative;
+}
+.filter-icon.is-active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 11px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+}
+/* what is shown while narrowed; a tap opens "Filter and group" */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* ---- src/app/theme/swipe.css ---- */
+/* Swipe screen and list picker: docs/design.md §7 (swipe card), §9 (swipe motion) */
+
+/* A card dragged or flung past the edge never scrolls the page sideways */
+.swipe-screen {
+  overflow-x: clip;
+}
+
+/* Source note: which list, whether facts are kept */
+.swipe-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.swipe-note b {
+  color: var(--text);
+}
+.swipe-note > .hex {
+  flex: none;
+  width: 14px;
+  height: 16px;
+  margin-top: 2px;
+  background: var(--grad-dusk);
+}
+
+/* Card stack */
+.deck {
+  position: relative;
+  height: min(400px, 54vh);
+  min-height: 340px;
+  margin: 0 0 14px;
+}
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #1f2350 0%, var(--deck) 70%);
+  box-shadow: var(--lift);
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-card > * {
+  flex-shrink: 0;
+}
+.swipe-card.behind {
+  transform: scale(0.95) translateY(14px);
+  opacity: 0.6;
+}
+.swipe-card.top {
+  touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.5s var(--spring);
+}
+.swipe-card.top.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.swipe-card.enter {
+  animation: swipe-card-in 0.45s var(--spring);
+}
+@keyframes swipe-card-in {
+  from {
+    transform: scale(0.94) translateY(16px);
+    opacity: 0.6;
+  }
+}
+.swipe-card.leaving {
+  pointer-events: none;
+  animation: swipe-fling 0.38s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes swipe-fling {
+  from {
+    transform: translateX(var(--from-x)) rotate(calc(var(--from-x) / 14px * 1deg));
+  }
+  to {
+    transform: translate(calc(var(--dir) * 520px), -40px) rotate(calc(var(--dir) * 30deg));
+    opacity: 0;
+  }
+}
+.swipe-card .cover {
+  margin-bottom: 12px;
+}
+.swipe-name {
+  margin: 0;
+  font: 700 24px/1.15 var(--font-display);
+}
+.swipe-year {
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+.swipe-desc {
+  display: -webkit-box;
+  margin: 0 0 10px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.swipe-wait {
+  justify-content: center;
+  gap: 12px;
+  cursor: default;
+}
+.swipe-wait .hex {
+  width: 56px;
+  height: 64px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.swipe-wait p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ADD / NOPE stamps grow while dragging; the leaving card shows its stamp in full */
+.swipe-stamp {
+  position: absolute;
+  top: 20px;
+  padding: 4px 10px;
+  border: 2px solid;
+  border-radius: 10px;
+  font: 700 18px var(--font-display);
+  opacity: 0;
+  scale: 0.7;
+}
+.swipe-stamp.add {
+  left: 16px;
+  color: var(--teal);
+  rotate: -12deg;
+}
+.swipe-stamp.nope {
+  right: 16px;
+  color: var(--danger);
+  rotate: 12deg;
+}
+.leaving-right .swipe-stamp.add,
+.leaving-left .swipe-stamp.nope {
+  opacity: 1;
+  scale: 1.2;
+}
+
+/* ✕ / ✓ hexagon buttons */
+.swipe-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+.swipe-btn {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 80px;
+  border: 0;
+  clip-path: var(--hex);
+  font: 700 28px var(--font-display);
+  cursor: pointer;
+}
+.swipe-btn.no {
+  background: var(--grad-red);
+  color: #fff;
+}
+.swipe-btn.yes {
+  background: var(--grad-cool);
+  color: #04161a;
+}
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.swipe-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* List picker */
+.pick-list {
+  display: grid;
+  gap: var(--gap);
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.pick {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pick-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.pick small {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not(:disabled):hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .swipe-btn:not(:disabled):hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Reduced motion: no tilt, fling or pop-in; the card just changes */
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card.leaving {
+    display: none;
+  }
+}
+
+/* "Add by list": the chosen list is clearly marked (orange edge, glow and a tick) */
+.pick[aria-pressed='true'] {
+  position: relative;
+  border: 2px solid var(--orange);
+  box-shadow: var(--lift), var(--glow);
+  padding-right: 44px;
+}
+.pick[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 27px;
+  transform: translateY(-50%);
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  color: var(--ink);
+  font-weight: 700;
+}
+.pick-list,
+.pick-new,
+.pick-empty {
+  margin-top: 16px;
+}
+.pick-intro {
+  margin: 0 0 14px;
+}
+
+/* All game info on the card (FR-010): compact, left-aligned; a long card scrolls up and down
+   (pan-y), sideways stays the swipe */
+.swipe-card.top {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.swipe-card .info-list {
+  width: 100%;
+  margin: 4px 0 0;
+  gap: 4px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+.swipe-card .info-list dt {
+  font-size: 13px;
+}
+.swipe-card .info-list dd {
+  font-weight: 600;
+}
+
+/* ---- src/app/theme/lists.css ---- */
+/* BGG lists: list cards, list rows with +, progress, list game sheet (docs/design.md §7) */
+
+.example {
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Loading progress: pages loaded so far */
+.progress {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: var(--r-pill);
+  background: var(--rim);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-hot);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .progress span {
+    transition: width 0.4s ease-out;
+  }
+}
+.list-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.list-status p {
+  margin: 0;
+}
+.list-status.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #ff8a95;
+}
+
+/* List rows: the row opens the game, the hexagon + next to it does the same */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-item .row {
+  flex: 1;
+  min-width: 0;
+}
+.in-mark {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.add-mini {
+  flex: none;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.add-mini .hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 26px var(--font-display);
+}
+
+/* List game sheet */
+.description {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Multi-choice list: a hexagon tick per collection; the ticks always show the current truth */
+.picks {
+  display: grid;
+  gap: var(--gap);
+}
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  cursor: pointer;
+}
+.pick:has(.pick-input:focus-visible) {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.pick-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.tick {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  background: var(--border-2);
+}
+.tick::before {
+  content: '';
+  width: 24px;
+  height: 28px;
+  clip-path: var(--hex);
+  background: var(--raised);
+}
+.pick-input:checked + .tick {
+  background: var(--orange);
+}
+.pick-input:checked + .tick::before {
+  background: var(--grad-hot);
+}
+.pick-input:checked + .tick::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 800;
+}
+.pick-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.pick-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.pick-text small {
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+
+/* ---- src/app/theme/interaction.css ---- */
+/* Interaction states: docs/design.md §8. Nothing moves on hover; press squishes; focus is orange. */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn,
+.icon-btn,
+.card,
+.row,
+.tile {
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    scale 0.25s var(--spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not([aria-disabled='true']):hover,
+  .row:hover,
+  .tile:hover,
+  .field:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .btn:not(:disabled):not(.btn-primary):not(.btn-bought):hover,
+  .icon-btn:hover {
+    background: var(--grad-hot);
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--grad-red);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover,
+  .btn-bought:not(:disabled):hover {
+    box-shadow: var(--lift), 0 0 22px rgba(255, 176, 32, 0.55);
+  }
+  .hex-btn:hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Press: a short squish that springs back (touch and pointer) */
+.card:active,
+.row:active,
+.tile:active {
+  scale: 0.98;
+  transition-duration: 0.08s;
+}
+.btn:not(:disabled):active,
+.icon-btn:active {
+  scale: 0.96;
+  transition-duration: 0.08s;
+}
+.hex-btn {
+  transition:
+    scale 0.25s var(--spring),
+    filter 0.2s;
+}
+.hex-btn:active {
+  scale: 0.9;
+  transition-duration: 0.08s;
+}
+
+/* Tap pulse: an orange hexagon expanding from the tap point */
+.tap-pulse {
+  position: fixed;
+  z-index: 60;
+  width: 56px;
+  height: 64px;
+  margin: -32px 0 0 -28px;
+  clip-path: var(--hex);
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.55), rgba(255, 122, 26, 0) 70%);
+  pointer-events: none;
+  animation: tap-pulse 0.5s ease-out forwards;
+}
+@keyframes tap-pulse {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion (docs/design.md §9): every animation and press squish off */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .card:active,
+  .row:active,
+  .tile:active,
+  .btn:active,
+  .icon-btn:active,
+  .hex-btn:active,
+  .hex-btn:hover {
+    scale: none;
+  }
+  .tap-pulse {
+    display: none;
+  }
+}
+
+/* ---- src/app/theme/share.css ---- */
+/* Share & backup screen (specs/001-bgg-game-collection/design.md): group checkboxes, message preview */
+.share-groups {
+  border: 0;
+  margin: 16px 0 0;
+  padding: 0;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  font-weight: 600;
+  cursor: pointer;
+}
+.check input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--orange);
+}
+.check small {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 500;
+}
+/* the message as it lands in a chat: text, not a control, so no lift */
+.share-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 260px;
+  overflow: auto;
+  margin: 12px 0 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #e2f5ec;
+  background: #0f2b22;
+  border: 1px solid #1e4a3c;
+  border-radius: var(--r-md) var(--r-md) var(--r-md) 4px;
+}
+.share-preview:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.share-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+
+/* ---- src/app/theme/share-sheet.css ---- */
+/* F002 "Shared game" sheet (docs/design.md v1.9.0): cover beside the name, framed offline note */
+.shared-game {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.shared-game > div {
+  flex: 1;
+  min-width: 0;
+}
+.shared-game .muted {
+  display: block;
+  margin-top: 6px;
+}
+.shared-offline {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+
+/* ---- src/app/theme/intro.css ---- */
+/* Intro on first start (docs/design.md §12): three cards with floating hexagons, Skip and Next */
+.intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.intro-track {
+  /* horizontal moves belong to the swipe, vertical ones still scroll the page */
+  touch-action: pan-y;
+  user-select: none;
+}
+.intro-card {
+  padding: 0 28px;
+  text-align: center;
+}
+.intro-card.from-next {
+  animation: intro-in 0.35s var(--spring);
+  --intro-from: 40px;
+}
+.intro-card.from-back {
+  animation: intro-in 0.35s var(--spring);
+  --intro-from: -40px;
+}
+@keyframes intro-in {
+  from {
+    opacity: 0;
+    translate: var(--intro-from) 0;
+  }
+}
+.intro-card h2 {
+  font-size: 30px;
+  margin: 10px 0 8px;
+}
+.intro-card p {
+  max-width: 32ch;
+  margin: 0 auto;
+  color: #c9cdf0;
+  font-size: 16px;
+}
+
+/* decoration, not controls: no border, no lift (docs/design.md §2) */
+.intro-art {
+  position: relative;
+  width: 240px;
+  height: 210px;
+  margin: 0 auto 10px;
+}
+.intro-art .hex {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 108px;
+  font-size: 40px;
+  animation: intro-float 3.2s ease-in-out infinite alternate;
+}
+.intro-art .hex:nth-child(1) {
+  left: 22px;
+  top: 0;
+  background: var(--grad-hot);
+}
+.intro-art .hex:nth-child(2) {
+  left: 122px;
+  top: 0;
+  background: var(--grad-cool);
+  animation-delay: -0.8s;
+}
+.intro-art .hex:nth-child(3) {
+  left: 72px;
+  top: 88px;
+  background: var(--grad-violet);
+  animation-delay: -1.6s;
+}
+.intro-art .hex:nth-child(4) {
+  left: 172px;
+  top: 88px;
+  width: 60px;
+  height: 67px;
+  font-size: 26px;
+  background: var(--grad-mud);
+  animation-delay: -2.4s;
+}
+@keyframes intro-float {
+  to {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+.intro-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 26px 0 18px;
+}
+.intro-dots i {
+  width: 10px;
+  height: 11px;
+  background: var(--border);
+  transition:
+    background 0.2s,
+    scale 0.2s;
+}
+.intro-dots i.on {
+  background: var(--grad-hot);
+  scale: 1.3;
+}
+.intro-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 28px;
+}
+.intro-actions .link-btn {
+  padding: 0 8px;
+}
+.intro-actions .btn {
+  min-width: 140px;
+}
+
+
+/* ---- src/app/theme/celebrate.css ---- */
+/* Celebrations and rolling counters: docs/design.md §9. Never in the way: no pointer events, short. */
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Must Have and Bought: ~20 small hexagons flying out of the tapped button */
+.burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.burst-hex {
+  position: absolute;
+  width: var(--size);
+  height: calc(var(--size) * 1.15);
+  margin: calc(var(--size) * -0.575) 0 0 calc(var(--size) * -0.5);
+  clip-path: var(--hex);
+  animation: burst 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes burst {
+  from {
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(1) rotate(120deg);
+    opacity: 0;
+  }
+}
+
+/* Bought: "GOT IT!" stamped into the centre of the screen */
+.got-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 10px 22px;
+  border: 3px solid var(--ink);
+  border-radius: var(--r-md);
+  background: var(--grad-got);
+  box-shadow: var(--lift), 0 0 32px rgba(15, 185, 143, 0.55);
+  color: var(--ink);
+  font: 700 40px/1 var(--font-display);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  translate: -50% -50%;
+  animation: got-stamp 1.05s var(--spring) forwards;
+}
+@keyframes got-stamp {
+  from {
+    transform: scale(2.2) rotate(-14deg);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.05) rotate(-8deg);
+    opacity: 0;
+  }
+}
+
+/* Counters: rolling digits drawn over the final value, then an amber flash */
+.counter {
+  position: relative;
+  display: inline-block;
+  border-radius: 6px;
+}
+.counter.flash {
+  animation: counter-flash 0.65s ease-out;
+}
+.counter-final {
+  color: transparent;
+}
+.counter-roll {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+}
+@keyframes counter-flash {
+  from {
+    color: var(--orange-2);
+    text-shadow: 0 0 10px rgba(255, 176, 32, 0.7);
+  }
+  to {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate {
+    display: none;
+  }
+}
+
+/* ---- F003 prototype: app bar, menu, action bar (new components) ---- */
+.proto-bar {
+  position: sticky; top: 0; z-index: 70; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 16px; background: #000; color: #ddd; font: 600 13px var(--font-body, system-ui);
+}
+.proto-bar select { flex: 1; min-width: 0; padding: 6px; border-radius: 8px; background: #222; color: #fff; border: 1px solid #444; }
+.proto-bar label { white-space: nowrap; }
+
+/* App bar: its own band on every screen */
+.appbar {
+  position: sticky; top: 0; z-index: 25;
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+  padding: 5px var(--gutter);
+}
+.appbar .logo { justify-self: start; width: 34px; height: 37px; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAACICAYAAAAs9i/LAAAQAElEQVR4Ady8B4AlR3Xv/avuvnHi7sxmrTZIq5W0yjkgoYSQkEQSiJwMBj8yGAdsP3vNw885EN8TJidjYTJCBKGIclilXW3OafLMnZtvd9f3r+57Z2aF/T0/PwzCtXX6nDrnVNWpcyp135E8/gunN37uc/kbPv+xC1/5hY//3qu+8Il/ftUXP3HXq7/w8btf/cWPfePVX/zoH73uix997uv++q+7/gu7gP+SAX75TTdlX/nFj51V9Wq3Gs/7oTFmPca+1GAvMIbzBS/04Y8wfN9bnLv9DV/+2IVv/Nz6/H/FQP+XCvAl69cHL/nCx48z9dGvWvxbPGPPMdANNi8cCHxjrK9BBwpyTmUnO93Y+HsmmPeN133xr096641vzfBfKGmsv/6jOfPGGzMv/Md/WDS4atEfBsa7WSN6oVbngHBGq1akqCTb5KmAJ1gBdrIAY/qld2XGBN+Puk7409/4p48tfavaTJR+zR+/1gHWVuxrxQ6sKkQvzuZyP9Hq/KCBYxWsjLFWi3Q2OuIpjpBgEEYpDbjTVSEwmBUGftsPW7fbYvWGN332owsuuX19INmvbf71DLCCd92NNxab5cNrfeP/k7V8XoE7WcHJCSfBE41bqQ4nPBHKM7KEJ42UZ9v8BGeNMcd5hk9lc9E31+7vWffW791YXL9+/a+lr37djDZuO3755z+5KJO3H88EmTsVoysUjKILlAuoyu2cBCsNnITKou2MzBEdXgdLwbEFTs+qTXuhMdzmT05/Zv+yQrpt21ktKT7r869TgM2Vf/3XxeV5+/bI8x/SCnyDvDsorBiIIvV8J1gpBm3bOLoTfEfPQloHl8RUlm7KS2hrjRw0XxPohlzeeyjTXXr/u76yvkfqTiz07M+y/9lv5JVf/Ouul3zpf1/RtajnPhn8VwrqMkVVfk+D4UbgPJ5CyktoY51IYBU42pDQolOMktpTGUHKS+q2J0x7YnjGmEV6tfqQMV0PvOtLf/GCt9+0XjdwnvVJ/nr22uhusi/5wqeOK8Y937Ix31C8TpTDs4qEi8GM4XMDNMNUgBw9K3Ml6x5HQCJXawmWRKSatwIV1EZaBu0Ejszqscb3vH/Ktgo3v++rf7Fu/U3rszyL07MywC9/+cv9F3zuE4sP5/i7GKvbsXmuHKut0eo9FkQL0iAYUkw7zchEdGQiJU31HD3LF08MZck72XYI9UEbZnmaYFrI9Kjb8z1rflhq5j/6vps+vOzlN73c8Xm2pWdVgN1rz3VfvXGwfu0Vbwm84FZjeItguZyqlWMRjQvGbIBm3TnLm6vXkYsn8si64jmG+Gr/59rttOdkTuhUOzyHPUPGGtxR8Ua/5d+2onXGf3vPV/9skRtD0uSz5PGsCLBzyiU3faK72pg817TMTXLmPwhOlCPz7h1VNHODO+s7BUkF6ZHoiHZESltXUtEKaMMc2imB+HN4oLKDlOeCO7dfV2VuX23b9Gpm1ijgf5Oz3jdW250X/u53/rLHjYlnQfrVBli31Ks/+tFcpVU6qruW+ZwX8UM59VI5Up8WrfNt6nCTOtw51/lMcvFneWkZdE7iaLWBS46eBetYAmG1J0K6VkAbLGnqYNp8h21Cc0RKeUn7JrE1p/4v9KLoZr8SffmY1qYV7/rBR3NWYzyi2i+58CsLsJvhV3z9U71+X+H3/TC+S9G8Xg7qSRwmJ8zijiOtuCSOdoFO5bZdFt9YXJqVIZkVpBiltA4zvNmyxaWfqysF5UT/SLlNeIlM/TrsJlWKTbfaeaFvgrt6J0p//L7P/2nfr/J8/pUE+BL9jFepTt2Qq3n3QfxHct7y9naXOA7dYJyz5CiMI6TgsiMTngopLSLJNnl2eCm2OJwI9HB0UldEgufwREo31Zc4pUUoS2QFpDwQngupbNZeJ7OJjqil2rZ/tzcbPHRC69RXv++m9xX4FaRfaoDdV6irv/Dp07tMeIuc/GnBcQYTCCdxNIkDOg6ytD0lZAWuaJlNKa26uMqurqNn5SnleDMyR6Ts9rPTBhwhminYhN9pgyTZ5OmC6oROdRasYyXgYR1b37HtatX/333hvB996GsfOvuX/Vr1jAC3bf8FIxfYa7/wv5Ytyvqf10r9ER7PMZ4pyAO+Bp84RLR6nXXQ3KA5mQMptHU7esISKItvnVgYgRXMxaKlpCz+vyLD4lJiS3vLTWgx0zoilGd5lmfalwRcOmm2CUrqGjzj4cZ6AZG92Qv50oc/+4fL9W07yy8h/acG2J2zV37xfy1cmDXvj+LMT/Wju85ZFijIgUA+Sh2RjtOSOEQFncVt2qrUyXaGN6tHwus4N+X/vJ76xaXZAJHU6+ijlMjEUJas04YEc4OvYiLXQznREyvJaZmEl9KuDUtim7toWeuroLHzYpv1fxocE33gz776B4tuuukmx5foPyf/5wRYA7rkc3/fX66UXuDHmW9ivD82xq41hlziyDljmXUGco5AK4gkOeeQ8uTkuXokKZUzI0O6VoCSFXSyTXhpfRLa1SFJNnk+U9YpO70OPYtt0oYbh6uc8md5adlJUkjKdlaOtVmDWWOM+UMT+d/Z2Xrq2j//5O/Paw8jrfQLfHq/wLZg/Xrv/L/7u8JVn/3scTl6Ph97fFXtXyBnFI2h7RiSJF673Bk8KnfoDp7LczRJSuom7f283hFB0WSZ7TfVPUKu1tRM2q+IpF3x0pzqi53KE6ZFBTpprszV7fBn+7DJ5tHRU3CT6k5XvKLwOcTxV7yezJf+5vMfXPt3uohp6/6FxuQX05i1yc94VyxZ0tMzr+9/ajO6W469zrO4VwaTjCoZvU2eGljCMio5EFLZojoihfV0/CP1rLiQ8CRUFu3KDmxCozTLT3mu7Abp4UnHJE9HeaCyA+lJSRmXHE76UOFIelZvVi5eW09otj0VjtSx4tCWt7G1KhujPrqMja+2vnd3WC/8JSsme2+88a2ZRMz/e3Lj/H9txVz42c92z8/4v+Hl/Edk9Xs0uAVqVG1bVHZZYAWuaJlNKS19EiF0EG4V6NHOs3rOIykz5aV0+nTtyGFJGxk/IO/lKPrdLMytYn6wgj67nO5wGf1mJX3BErJegVxQIB/kFXgwyT+rp6MdWNIkbGjzbRt3yih1eEdiFKXOOIxoNaG60hGtSsq2I/ZEDOrm/c4ev/BIOTfvLX/6sXf1SMFVEfqPZzX8H698yfr1wfM+/enLCp652XjmIwazSkYalBJni1ImoRMeojtg59CzPJTSOrTlc/ScAMSfw2sfXm4gGc9nXqFPV9YCTOfZ9/Q0d/5oI5/5/Hf4x89+k8988bt8/is/4NNf+BZf+uqt/PSWp9n48Ajl4SxB1EVfbh7duW7ctbfdVdqXCsooCIJOtm3CSocESJJNni64rk4CCqjDc+vP+sTO1nWkZSXG/ENfX/Hmv/vCBy53q5n/h+T88n9f3Vpz8T/+46rMyuXfJfC+qQvU+WokJ6OT9txgjB7KiCegDRaXjuAZS6orLOGRdebwnF4in8NrB9c3HvMLPXTHBXZsOMC3v3w3X/j0d/jhT+5h286DlGstWtYj8jxCz9AyPtVGzKGhMg8+uo2vfP0nfPmLd3D7LZsoD8UM5Ae1srO4waT2qON2X2m5Y0MHd+Ttsm1jV8eCq+OC63C6km3CS2knV3m2judZshrueb71v9HI9n/vY//4gVX/0bPZjYF/b7pEK/aSG28cvOKLn/+f2Yx/K5jLAfd5MXDGi04NdwNTwQVSqJ1tgh3P6SagUSTMOY9ZuU3aSkU2RTPtIpnF18zIatXmI58dD+/iG1/9Cbfe9gAT03X8YhfZXB4ThUS1acLKOFF5DKpjWEFLdLM2BcRki0UFPsvGHfu46Vt38YNvP0R5JCIwAZ4mRGKrNFNs1TeCDkbJ0Q7QpaqNZStJsnpa8REIg+qCW+F6KtuEntu2GI4vn9oeKV8qQ346cPT0n994428PKtCBhP/u/O8KsHufff6nPz3fW7H8tX4uc4uMe596WCVDsgqI3IzssII2lrXKuOSwdNoyZrDq4tKR8k4bTpJCUldKCRZLpNpIg9utszOYtDx46wZuu/1RRiZqWONDpAC3KszPxpyyahHXXHw6b375VbzvN67nt9/yct77xhfzm6+4iusuPYt1qwYpmjqEVdU1VCOPTbuH+cEtj7Bry4j4PoEmkYGkX4c7tpOkWZs7K7IjT8sdeYoT2exqVdBRu7Mg386URRu14Xy8UoF6T5jhh4uWl1776U+/b/5N/87fn1WPfztZa6784he7xmu1c1pB8DmM93EN8CxVcNuxEd02JjXeIOyYUnADcWTCU3kuncjEUFZ91ZmRozJKHZ6wlJQTforT4OYJmNo1wfe/eQdPbz5IZDL4NiZv66xZ0sNvXn85H/3jd/DJD72bv/jtN/DBt7yYd7/6Kt75iit5z6tfwO++6UV8+N2v5aN/+A7+/LffyAvOP5EFXaiNph4+4+WIu362nScfOKBXgX6yfiaxQcYl2IgwbrxzsEhl2aynAjOrZ1NeMm4nSyDlzW1DAW3XkczSpulUk8850xo+3jJ8YWRyyblf/OIHuv5Pv1b9mwG+Wj/jXfKpTw00o/jjsbU3q5frZIxcgDq2AodRsoJ2dqMWKb05cjGS3NGzuJnhVDt6iVjO6uBUxoye+sYlp+9hdDPOMbVznO9/5w7GpptYrTCaNRZ1B/zWq1/IVz/+l/z333oNzzt1NWvnZ1mWazEvnCA/vZ9C5aDO6gl6TYnBfINjF+W59qJT+dsPvp+//oN3c9ZxS/DDaTAxDZvl4Sf28JNbNhCIdn07G1L7NA6QNSlOg5PSs8FV2dJOFmMR2CPqkCSLG/5MuyomjLZsbp+epcuDa4LA/369EX7yU59628BHP/quXKL6rzykeyRXe7x3ySc+0V3r7n4X2ezDnrGvUwfzBC4uM8Y5Y5wRDicg6xMsS1Ps2rXSR9DBjk7B1aWd1LZ0EMzqyROkaZZnpNGXK1LeM8UtP7iXaujLrzGBttfLz1vHp/7ig/z+m1/Bqm6PYnmKYGQMb3wcr1ZmcufTPHHbD5javwXTmsJoW47jKs24Qb3VJPJrXHT28XzsQ+/hzS+7jG5fW3ZYJ/azPL5tP5ue2oun7d85zMgwB0JpTlZo207RbWaKEn9IZsGNk05KyqhNgXievOtJwyRg9UQgrPYMtGmUrANjYjtPPnyt7+cfLubNuz7xibd3u9hJeET25pbOvPHGzK1HH30ZXV13gPfnxpijJfedYUZEB0QqW3VKCs8ILknqyDsY6Yp2jSSDdmUH4kEqA2GUOjySsqvibPBEVMbKWlH30LSBhJai1+J1L7qMj/zx+7nwxBXkSqMEe/Yzcet9bPnCN3nqi19n6olN5Pv6WLr2GLoG+rFBQGQNTS/LgbrHDzcf5huP7eHxoRH65vm85zdeyHvfcJ3O8BZETfx8D3fdtZWpoRa+dguZgUvGjWMmAOJYgXLCd3iOzPHE3BAYfgAAEABJREFU0nhsMndd2TeeLooZBTlPJliK583D09Ejv8/RI6HVFQpoQrv+XX1j8ARHC/68mPXvOHrp2GU36iMJc5LXod2qLWazr/GN9w3t66cbY90tTnVRo7STTXDSuKhORyKVU5kI6VsBM0CSLAkDEtSp67AznJlkcZ06/mw/OncxFLVNbrjnKaZqEcbz9GG7xWteeDm/91uvY3GuhTc1QvWJp9j2z99l+Ed3wZbd1LbtpLR3L12D81iydg3BvEHqmW5quQVUc0exJ5rPHXvr3Pz0CN+46yEOHN5NJhrSpDmPt73qSorUiJpNQpPjgQe2EIfgGWSN7JwJoMWlWXtJgugZk+h60jamTQv7ngLr5ShXsjz48BjfvnkTH//sj/nMV+/h+3pVm5yMkAYzflHzR7YthqSOR4xatIF0T/ew38ia4DVuNUucZM89L9EP8BS6X+lhPmKM6fHA2YaRMGmkjdMybb7DFiOmMrMgHrTLHVpYCsrii4YZjFLKJ+WpoJzSkGBPz4zxGd02wo6dw/i5PHGjytUXn8M7Xv8yuoMaplWmvmUzW7/3A7z9h8i3GgRZS8+KQRatWwU0tZ1bGl6eXaWAbz56gK89McyPd0wxYnqJc72Uq2XKpRHyfo1cPMIrrjmTV113Prau1ysFc8/+KfZvL5FVcJxNzk45Vm2jgM4dlyGj3cE3RcJWlkbDp9nQJc12kc9qZzXz+dmDY3zma/dz6wM7eGLHOAdGptm5f5yHntjHps2jGnGAB8KuXQdt2jrswKrPNtbyli2Kme3xrflIb2Be+bn1b8yj5GnUkgXnWcN6BavH2NgYcZSTxlFKaVR2oIZBtLATQErDHJzSJCnVc6omNWRGz4mP4ElJeY7cOhUC41HQJN2wYTPo1ajVaLLm6EUK7stZ2OuTo4ZPldLIPqrVEZrZCnaRoXjKQo59wXnkVgyAiTVUiOX4J7bu41Z94Lhv+xA7hyapVyYoNoY4c/UgxywbwLdNsqbBQKHOK689l/NPWkbcLNGK4InH9pMzvfiyacZPCn5qt8xT+616jqc2TfGt723ma994in/65ma+8s1NfO27m7n9/km+8u0nuXvDXkrNDA012l3McfKaZTz37BVcdM5K1h7TJ1ub4PzVbtvRKiY8R+tUxPlOjDQ7V1mxjO2RfH2wLH+eq+pd+aUvFS3Re2TsIjVgpJJWUAFRJgFXU0Sb56gOuE6cTqecYpsgx1e7SZP/ml6HN1dPxiV1HXZ8Xw0EgtGdI0xM1d2ORD6w/OarX8raowfI2IqcXZd6hb6V/QycuoTiWYtYfO3JLL32NPLHzMdzP7cTKcYxXhSzeME8rdKYZmUUv3aYVYUyLzixl6tPW0Z/1uCDQLrxNMcsyfG6lzyHvoL2Qs9wcKzEvv3DaB1o4gUCXyvNJGP0CDh0sMV3f7CZn9y1g737K5QnoTFlqZaMVmmL2x/cys7hGg1y5PM5Lj77WB0zZ/LqF53G8y5azhUXr2ZQN38je2fdbekE1EDSF21h4kPreFZ8gbJ0Fnmxec+X/uZ1Ra/aah0r5YuxNkiUIVUEYQeWTlLFGZ58LtoKUum/WtdZlYht8nSPWT1m6qp/0mQT3mw/4ALcJWc8uXEnkZeh1ahx6toVXH7+aRS9plZbXYOvSbFJ4ag+jr/6PFZddRbFkxZhBg1km2q6JZ0IP27pFajMiYuzvPKCFVy7xueGdXneeMFSXnT6UpbkI52/0rGgWBKYCM+WuPQ5J3LOaccShjXqkeHuB7azY3OZ6eEMeW8QT6vW0xm9d09Nwd3I0GiDomwe0E5zdK3COt3SV7Vi5ocBvX6BnMnjJsiiwQGuuOhEjloUQzyiPiN8LxZW2SJfWIGwFSigBlRWwS1NSGjn4tSnVmNMeegaKbjY9BSP9Tzjv8VguhIlkyoIqXJKo5TIOh2oRSMF5URHYmE1LiLVQ2UH/yeexaWkjhpTbtdD2AocBk/U5Mg0w6MVYuNWTKhZfzKL+gsEVltzJP70uD5DTkCgOv1F0C3CUoLmKERTgoqgjtUrUSaapt+OcvHKDK86Yx4vXJvntL46fY0JctU6XjXCNuXgyILOLY+YjB/xkhe9gEI+S6xb9I59ZW7+6dN8+ev38qWv/ozdO2DXroAf37GTWiuD14yYH7d4wWnH857rLud1p53IJfP6WN0MWVgq01ep0OcFjA+Ps2XbFJlMl/qyCpD6tQ40DlQGjd5hS5qElY0KCSS0HtJ1WY1IgtqxeJauwJq3aKLaCxSwrECNMSe5iohnBQ47SOm0IYtLRi0nnanQwYncFebwOnqJTHyXE570lNWHFSCwdJLj2zhmZGyCin4ccPSC/m7OOvk4ckGMR4up3Vt46NtfZ8tttxHVQ3QDA31/nj64lZHN91I9+CS2MQy2DHFNg68nEyMTlSgq2NnGJLl6Fb9UJ9wzytj9TzO9eR9xVW3ph+0YXZL0vv3Iho20tAo99WplYKhHJfbYN1rjmz/ewLd+8hhlXaQymhiDsuv1V1/Ee975Ol6gV7jzTlpNz8gBFu/fy5XZgKvm9bK4oZ2nEfGjOx6iNG21cn21qqx2zYxPVdBqFTfxi1FxRia+oxNZwkc6DmyCNdis4AJPgS1K0ZCkVKhyouSYHUCdJkzpdXhzcSKXzGG1majOtmMTiXvMrdPRc3WcrINTHStXou0sYHpCK9D4xAr2UUsWcPwxR0lWB62SqYlJJqdrunv1YLT9GXLYyKdZmiYuHaZ++GnCsa0Q6vZtyrJL9ajj2yaBXn8yLpCHSlQf282+793HYzf9mMd+fA+NklZ85BHaInfes5FvfOdH2qJjaGoHyDQYLDR0057SLbmMNQa3u2Q0zHmNBs9dvZxrLjyDgQXd+L0BBe0yx+c8rl99FNctnM/z+/s4t7eXXk2YesPw+OZxfD+PZ5B9HVBjymKJZzUxHV8Y0jIWl4zwjI6jxXY8kFFGp5jxTICSY6aKMIttQuMqiqmscsqbSydykEwggbLojp7FpWfyjKbjkTxUpwM2pWWj37CM7B9DOyOBiTl25TIW9veCPkB4fsCi407ijKtfwooLLsPL98mUDF6mV299A/h4BLVJ6gc2Ut69gVbpAMR1PPcyq5XmJkJ95xj7vn0vjXu20Tcasdj0sKR3kMDPYnS2TpZjvveTh5iqWKx2hpOOWcSfvv81/NXvvYY/evtLeLnO+wW96lM/cOSiFquzhrUe2rN3YA4cwOzdh3dgP2u7s5zdl+foeoll05Ocls+yxEDGBGzeulu7Qwu5WeO2CczSJMFNhLhkZ0gjJbkx1RftckdotMI9awNPhEkUVVf9tZVVSLUdIR5tsAkmSTZ5ugbTevCvBQ2lVG5JMahDUtriUoc+EoNrb7pcoaQzy/O0mv2Yk45bTVYXkThs6GsUZOctYsGx68j2LsCaDFZbqjVFCguOxe8+imbLJy6XFODNjO/aiG1NYxRgE0J97wQHfvoobBvD183W6ANKvq+bZaeegN+VIw6y7D00ztY9Q1gFu5iF5+vCdeXZy/TVrIeXX3EcH3jzdVx/1fla2RWyYYulMnRprU719nsY+dI/M/q1b+PeyxcHHvn6NF3NBj26dA1It1+OsJFu2LWmdocQxQLnTw2C2ZjYhGf0THgqJtiVRSf6bXqWb5P6ju12BRVEJtkmzxlFlRLate56VdnlhCdiFqswR+5KKdik7Y5ehzcXu6adPOWlz4SnRy7I0NDga40mGd+jR9vcqccfQ0yTSEt6UlvxiO2llBmkHnTR8nK4IMc2g9e1hN6VZ0HP0VSiPA2dd2FLqyTpQrNF5+fwjj0MbdqlL2ANpkfG2T28n/za5eRXLoGMp7YME6UKk9MN0T75DKxaqgtRZZ8+pBykKzzMwnyVpf0ZnesN7ReWXGzp0WWqb2Ka3A61t+cQ2fFpMhqHryPBNFug8cQKso0iYkGko8fdL5wfjEU+swKUrOJnE/qZss5kkJsk7+iQ0MxJnlpIikkDotIKSNGBKjoGtMsOiwcqdzBKoqWnPIcvniSOJ5TkpA8xEiyOSD2tANVzYOUk8DWzHRRNjvFD04RuuzERK5YMsmbFUlpRDf18yQO7DvPdpw7xyLjHqNdH3SvQci14WslG59/8Y+k/4RKCZWfA4Bq6Fh2Ll+0m2e89S1arNNDWOdnSLuHXyayYT//pa6E7J2Oca2SpVaAFijBuR8nKDi+c1utWST9yTAmmyek2H+i9NbIxUwpiQ2erV7foxyqBxlRrgW7WkW7nURhRE0zqfXxKE04hxsXA05hFYPRw4HhpsEl5iZuSB07mwOnJQq18sXAygXLCE8thb0YpYaDGrKCNJVRWeQ4PVJ6FpCMpKYv/83qJHFKZlJRFu7KDjj4uLAKj4HoM5Hoo6ka6+fGdPLllF9l8kbhZ5eJzT6Xf/VimS0szKrNp315+vGkvX9F76c1bJjloe6n5XWixavv2iP1uvP7VDKy7hOXnXE3vinUKQ07gYU3MohNXc/x1F9N98Vr6Lj+F4196hWIfMfTQBt3JxvG0fXYXC/ToS5MxhpYCNzVVwWiVtvRqZisT+K0yC/tzdOUMoW85EIbsa4RMNC01BTlueTgIW4aqeOMK9LBekbZrlR92q1j7UXc+SybwE7+AxUEaXJvwfm61WlK+dGf1LLO05G5R2MSvcVtZTFcBlyQxDjuwc+Su7MC6h8CiceNU3Wxx2BknQTtLLsrx5+qJpWwFKKgpZIxHX1AgGA955LYn+Zev/pQ779xIXY4hrLNETrzu8vPJmgmyjBFWFPhgkpoXslffe7/z9BDf1k142OYINW2tnF3Xyhunl1JhBdP55ZRNP02vSISPDQQ9GXrOO46Vr76CpS+5GG9RD1vuuot7v/5tDjys1yttqwvn9bN0QS+ebdEKYfP2Q0RxTj8/h7TKZUxtkpWqd9TiHhq2ySHf57Fyje3S3a0b+sFyi2Gd7QeE99Uj9gQ5Nmroj0xXmAgCWlGDE9asIBsECpCVLwWWFEOCnU8NJLSZK2vTKKV8pCNQcEmSxfNEdCqLVLbMDUYqAxdAlBye4YlQTmQOzxrCDM/x3dZGkmzyTHiiPHWU0024YANq+6a5+/v38y833c79G7ZSCa1WbqBVVGLVwizr3/dajjsqrxWzn7Ak5088zAkDUwxEexXsgzQyee7efpif6Ttzy4to6LfezQcP8ZnbHufmnS32eCvZG83nQDWgrgCHMkLHMLEublHOYrMRJqeg53Pa6j1yffNkoWHJQA+n6FzOaCJZP8edj+zkMf3gEAWLqIc+rXqFowYynHvSCvTyTCUX8Lhmwl3ahp/Qb9ebNIWfjgxb/Axb9Gp0f77AT8pVdmoXqAceXXmP00+Yj43q6s8qyMh3KaAFh4JlQDybFNsPIZWdHFTH0Sh1MIm+q+e5h7RxydFGD+UZBUcfIZei4xk1PheLrTq0wbaxym5qwUzZA1ynOW1TWW1fE9tHue0bd/Odb9/J1nhph5cAABAASURBVN2jRLpY+VlPdxw5bp7lLS+/SD/kv5srz11KJtpCOPWkAvw0hXgPa+dPcc0JsLT2GObwg7SmdrHpiZ8RNYcSMH6N3aPjfOu+zXz+zi18/cFDfOuBXewZb9Cy2jqJQWcqJtRoWngFjxMvu5Br3/J6Fp10Ap5v6crGXHXJGSwayGNk/P7xJn/3+R9y37Ym04EucHEPsbbdF11xIccv76UZlxnKwD36kPGTeoN7s0UeLHZznwJ7qy5Ut5RKPGljpgtZTS7LZRedybwuS6xXrI6fUywfWpkHie9koLAVqJwEvU1LYED8dvkIWYxMdsIOWCmiZAWdbBPe3EYSAxyjoyI8N+AqtnNa13XiyZBA+8WCQg+9YYbxHSP86J9u4wffv5ehibouPD2q08JrlVi7tMBbXnwhn/rw2/jdN1zOMQPj+LXHaY09SKu8iWwwRS7fpC83yQXLp/hvz8ny8lWjXDq4j4tWNMnVd0l/F4u7Sqw7uks7fJmd4zEb9O34wX0hD+pLVVMrCEItkJbG19AqqII+YOQWF+lduxS/LwA/hGia009czoufdzZ+a5Igm2fzcMQf/K9b+LMv3MctD43y9I4SC7uKvONVV7Ooq6UvWhMcDCwP25Af6Nv5d3SZ+n7Y4i6dz9s0u0s6c5vG0qUgH78ip48lJY09lg3IFuczge3QyN22zWcOdrTAomTFR/UddkBSx81fdZcyjAKQaElmZqAjQyJLmixGCsq4Oh2cytJnh6fG8aScUWD7A72bliybf7aZW752B7f+4EFKOptymt1G55tpjHH6sX28RwH9+z98LR94w3M5aUmFXO0RTGkD0eST0NqH8ab1c6BlSA7aNHGYA+PbFMgRrjs14PUXDfKcYz1yrYNk41GKrf1ceHTI6fOnYGQbeb079xaKhDWVW5o0TBIwhhcNaREfhOggxoziBWUI6nh+g6xwEI3whhefxYsuWQW1PcS2QSku8MMHd/GXn72FD3/yJh5/ahMXnrqa//7OV3HJ2cvJB5NMx+OM2CkOhpMcjiYpeWUyvR6e++Ql+60mWBQ2FYxIwQGjGBhIaDFJk/zd4TtsHTd5SMVhq3qoThujlKxiEr6HkmvYlZLGXSNtXlpGIotLSVkP5YSXYidBZQd2BrvA5ryAIhlyUzFb7t/MD755F3f87AmGpmoaZEbBb1EwFc5au4Df/c3r+PPffjlvf/lZnH50k3z9CZjaANMbMfUdmHiYSLpVrYw9+lHgrr0H+eGWrTy0ayvN1gi99iDz4730hAfI2kn1WqEoB6/M7Oe64y0XDEywrL6ZxfF+jlsQ4zX2Y2v7qI5tojz0ONXhJwSPUxt5SrvELoiG1ee4Aj9CJj7Egvwh3vnqM/jNl57M6sGG2i8RZXKMhwUe3zPO+HRZR8gEF+tXqT9+18tY//5X8t9efyUvve5cXqTflF/zskt591tfzHveegPziwZjQiK9KrX0WiWXY/QwKCk4eqqMwKJ5IJzSUkFRTcvS69TpYCdz4NpJeVY+VhVXY5aJipbZlNKJXL0lOO2prWKlj6CDwfeMHODRF+bY9eAOvvP127j73o2M6VaZ7+4ll4W8LbPuqAK/95tX83d/8Cre+tJTOUOrrVh/CnSBYloBrm9PVxfTer+tawVoopSmeeDwEMOZDPVCTvwm3UWPLFVygiw1iBugG21GdA8TrOkZ5mWnNbl65QFecOwkpy9rULCHob6Pxtg2bf3bsdPaHab3E0/u1A8U2jHGnyIub6FV2qRzXzbJnqOK+/mN647iL953Bc87U58zoylacUS+u5uu7gAbjWvcY6xeluXFV57Kb2k3es/bruXtb3sh/+03r+E1Lzmf51+8jsE+D0/7Zyyv1XV++54vCqWODx0WWMS3AjQehFPaPDO4FiUrOe0JYekkz3GMSgabKoh2+Zk8Yywd3s/L07rOTLcdF+KA8Z0j/NPnv8v9D2+mqnJBTihoa+o2JU5b1cN/f9f1fPqv3s1rX3ACK7qHyU9txBvaghnaoV92DpGNRvV1aFxdTWsjazCpV6XNY2MccHYuWEgYZMhKetqxq+nTpcyLw8RpEOHp4mScno3wFeQiYywvHOS5x7U4e0WVHg6SCUfVfpmeLg/P1vDCCoEgKzC1ERoTO7XC90PzkOAAXnO/Vv0uulrbOGFRiavOXayV2IKoAeovbNWpTA8TN0bx7aTaG8c3VZqmzrbDexmZGsanQndQZ+nCHoIAYl30Dk4W9LbQj5FztX4wzm4HFqXkgS4KbT4JZm5KVGzC7wTeiRPaWvlCpbRRpISSUyah1Wcbd3gWl1K+PUKW0SxcVOwlHqnys+/ey+0/3UDTz5PtKiYOHNCl6Mozj+J/vPtFfOZ/vpnXXX0sy4p7yVYfw598Cnt4K+N699x+6yNUdk9i6y2snBdrNbbkwJ3Dh9k9XcLvn0dVF5fJ3Ts5ZeECThwcoKDPf5o7oNWES1YPDS5xjHiefmDw42kFdJKMnUjsMVr7qkBQyFNUm7E1NOpNarUaodr3JTe2qqA4aOKpnNELVt6rkWkNsWKBZV5RE0i21VVvulqjXi1TGT9EXBnDd1uwXo2e3DvKw3tLPLZnmLLazgYRK5cP6sOGAb0zHx6b0ns1bp3Jn85wUHyTh9HTWJvwHZ0ILDPluTI3OWgnowZSfdBm2uYmyKoyCSSNgWjxDDPJkZ0GUhqyCm4vWbY/sI1bvnU3B8dr5HV58vRJcX6mzksuPp4/f//L+IsPvITrLz2KeWzBm3wQph6C0kZdog5Q3rGPiaeGCXfFjD8xQjwRIR/hxRZfQRro6dL34mEeu/suxrds4Zwlizl3yRJ6Fdys3jk9rWCj1w+jVUsCsYYg0Fbo7PV0o/W0bRsULNcwkeQtjOTZrgLFwfkEfd36gSJHYX4vue48xrRSHdU1at9T+772E0/Hy6IBnxVLivhUqdYjHtt8kHLYzdT4lM7yA0QuyGENq/fkjByV8yDnJonez5cN9OpyJ7/Kb7sPHNKkqiOVxMemHRxXnkvLkJlJkMieGXjVntG3KiTt2DTASYWEQbsjm2BXISFAaA6PNDm5W7kFvfA/cdcT3PXgE5h8F4Fn8bVVXXn2sfzN772W//HOq7nqzG4GrLbgyUfI1XaQKe/EL+8h2xqB6hRjuw8RTAcsyiymOdyiOVbDRF4S4Ixumkd1F3nOmlWce9QSrlp3IhcsP4r5YaitNpJehI1j+SAShDIuwmhKG9lhjBENRlM54WmczlNGwTIouYec7+k8zw/007VwgPy8fkxGB4DxMck/D+No62PVrqcJ0pVvcfbJy8gZ7QzaBX5039Pc+/QELbOAg4cmGN69m9K+HSzJxRzTDWsHi+S1k0SlYVYt7qOoLcczMDXdZMeQ0Tbdp2AYZxrOrxpIktuPNh/JBAouM0lxsYhvBcKSufqGNHkOdRgps60ogRFDWRVneWKrjMDigjuQ6WGLLlJb9Akvmy/g6ww7fnGWP3/vDYLruGSdzzy7GTP5KKa0BW9qv95G9lPfflCvLtOgjwGe16TQZWhR1qfJKa2pJmGk1RODCvgKXl5BXl3Mcs7SBaxxK04f7v3IEGsShLGwAhZL2TrQIK3KQmrAougLhF172oqt9FWSzOWUslGYjAnPw0qnZQNaNktkCkTkCONAIG/o3PRVLYiqnH3iIMcuDrDaqUpxD5/4lwf53sNTjEbL9BNnhrBU5uhcxNlLsizLNsnoe7pXL7FyQRdrj5qP0b0iU+jm+3dtZtdED5lsr7r3ZIdB80iYFKxNMQ5bXDIJTVvPpvJEz+KSEe2JcMMR6mSbKqpo1INxWA0JtXNHbvGkmfUCDm05zOZt+0GXHi8sc/Fpy/mr33k111+8lEH7tM7Xh0FnbFA+rMtTjek9dcY2NdjzsyH2P3qIuBbjZyIWrull3gk5vGVV5q8tUlyQA51vyFAjhwdxRDGKcbtFBp31ZjGTrcVMRUuo+4u18fYoIB4xiqXA/fWHW9VJoFWeGYZFlmtkalNNu+axOgbQbLYaVazANk2P7g+LKdmjGGosYSxcSs1fRisYVJBll4Ic2AbL54dc//x1FO0I1oYMVQI+8/1H+IebHuY7D4xwz+YKD2lV337PFr78L7dz9yO7qEcB3fph4vJz1tCfqWLDJqWWx1d+sIEHd8SUo/l4hSV4fkEmGWYCqQE4WmiWpwE4nkFJtJ5JduUUNKKUYLYSYIy8wGxKdSxzcSCHFOIsG57YTOxpTmtGH3dUN7//1hdwht5j/cmH9MqhVVvZRtCYwEy3KO1o0hhdRJc5Xau4n9KeiKimdv0WwWCTBacXWHphn3A3fm8MJkpmqBtUrN94Q9tFLR7gid2Gm247zKe+vYt//M4ubr5vgr2T3TSYT0s2xapgXKhtBDo7cVhlK34Csdq2qKQRKdDgqS+f0PXhzWO0MZ/bNpT43Pd284mbtnLjt3fy7btH2Hw4Q91boFM4L19EuhGXuEK36ZddsZpuDmHiGqUoy90K6se/+xQf/tKD/Mln7uGvv/oQn/zWE/zFF+7goW1jsgTOP2U5V55/HF44obJhrO5z0x07+exPDvL9R+s8ud9jrFYk1rFAkhKD1a8VgLEWNAI9lG3KU9moNFemkSFhRyGlUTKJcoffwUiXJPmex8juMcqVVjJ7e7UFvf01V7BmQYVwTJenymadj4fJ2hpe01IdiqiMdDPQf4ouUB718Sr5IIvve1idafh1bL4EPTUo1NHI1a4CpIFYDbIeFZmMlvOtOyf5o4/ex4f/8RE+9s+b+eg/P82HPvUQf3rjgzy6y6NuBwjjTDp26wLpwh3LiXHSXhyrTZUQGKzGYvUUxD6h18/eqT4+/rWn+OP/fR8f+dqTfO77O7jxG0/zZ595hD/93/fzk0drVPyl2rYDMqbGkp4y73rVabzxmtUs0ccQagfxvAibKTCllTnZ9KnRhek9mr2TWT72ldvZPtJiXn8XL7v6LK48byXUh7GaiFZb9K7RFrfcv41P3bKDz/xkP4erBdlnFFAS3xuU5BM922XblgmL2Qmu03Pr1BNvJicDlsRhodkGpJGWrSjEF5bz9u47oBlmiFtVTl6zgDPXFDHlzfoJbTd+NIGv1woTxzSnQ317nqK72k3lqe3sePAOWpkxFh8/D78rxrjbqlarpQXabF3AY7nQKgixumppVTTMAN/46V7+9vMbeOpAP7VgFX7PSkz3aibio7njyZj/+b/uYNtQQEhRTtHQ5AjXBgqqUVtoEEaAowVGWgkYn8jLUWr18VmttK/+aDcHK4uIC0cTdC8j6FpG2VvOw7uy/MOXH+a+pyY1GXqTZrLxFAtzI7zt+hP5hz+4Vl/iTuL0lU0WZPbRb/YwPzgkGMdrTWGDAtv0HftvPv19HtpyiP4FC3jzG17Om1//Cgq5DC29DWTyPXTPX0RhYCkHKlluun+csYov020CJDaT0G4oLohGPFzSeB1K+OI5vuceHYZquZyoXdacAAAQAElEQVSAU3SNpdg9rXtIZjGqEFifSV0iIm1/mSBm7cp+BvIaRHmfglvGty1MHCM/4uJmJysMP76BPQ/9GJM5yDGXLaTn+AJktHIVTM0UmaRVpgo20ipzkbWqbj1VL7JnxPD5f3kMd+5G5PHjEkvmtxjQirdRmdD08MTOFt++dQst0WEM7vw1GnQCssVzgdbElEBCZcmstuhYqzf2u3hk8xjfu3MXTW9hotKbr3HSqgzHLrF6f67iuRU24vGdn25ktOyBvq/78nDWlpnnjXHeasO7X7qKG//gYr76Z5fypfUX8Lk/Op+/fNvpHNc/gmkM6zjL8dTeOus/8UM++Lff4RNf/il33LeRaiMCjbtenqA8NUK9VsF6HvvHqoxM6Nt44n2LsWDkKYVAtAqiUUrG6LDKTiakEnhG6EhwlVAjc8HOlp0y0BtmqU5WCd2rSgCL5mXJROMQTuLbhjqXwQo+2nq8oEmUG6fEDrpXVll7xSIWnNmD6dIg/IjYGCL1YPGwmjhpbxbkfD2JtMIeeWK7vvda4tgjbyd42RVH8w9/+AI+/L6LOes4j6g2BH6Bxzbup1Y3zldYa7FxCgijsnE40kSyKcQKeiRes+Gx4cndjIy38GTzku6qtt7T+cgfXsvffvCFvOSS5XR7UxSzRbboN+ehsQpekJPVRsH3yFUjciMleoaHWVIfYU1xglMGSpzQP8xzjon4ndecxZnL62Rr++WbkKlGhgee2s+P736cLTv34Nk6NIehtp0FfWWKhTotvZFEsi9MbviongCrPoU1Fjr0M7FkJuHF8iiogkU+JmW6sgPx4Eiemz6Q8KycFGtVOPBU2Tch6BZt4qYMEa1bpXEBNk1N9AaLT+tlxZULWHHdEoqnZIgLZVoBNLyCLi5dVLXqKl6vzrfupNwwRa3EjILr4QbSUwiwjTLx9A4uOrWorfA4jp+3lXNXDvGeV5/IuqUNbGUEq+MCOUXjk50GZJs1sSZRhFVQXVvypgau8SmwRooOWpqopYkxTGMSv7KDV1yxkuufo10p3MDRhW2844Z1nLVCbZT20Zc3FDO+mrKgCWc1kMbBkMlHR5l4YJjapjE8fezJ6jfhfGuSfHMf5x8Df/Kmc3jFpYtZWhiF6j5MOAnhFGhymsZejhqc5trnL+e33vpcjj1unu4SNYx87NxukqBpOICjUdLoSMAirAdK0iMZk6PBMypIqtJsdjyjosNC7Zw24HhO5slxxpPztbpactRUpUojko6E1gWWWPW0emjhtuHCIp/563qxg5Z6Pqaa6WbKX8CQt4x9/rHszZ7AvozAX8v+4BgOB8uYCAaomYIWX41zT1mgX3KO4eozYl55ySCD/kGK4SG6wwOcopXx+28+jStPg6svWEh3popnIo0zljNi1ABWtlk5K1bwrZucAosC5oKuSZkP6lx6zlIuPMHy2ucv5GWXqJ14D93+OF2MsSg7zBuuOYaXPKeXd73mAlYtyipA6ke7DHUo756isUuT7JBlasckjdGK5CFe3CKwVTLhEMcuqPGW61bxJ28+ld99xSreeGk/r76whzddNch7XruW9/zW2Vx7/Ul0L4FqXALPEruFkvhS7nSxSgCFzAqE2wFFyYg2Difg5FZ+EEdZyo7BHEySZmQilCUnAS/r4/sppxX57D5cZaSaoeG5lZelpa02BEJNgmbgUctlmMx3MZxdwB6zgi32eDY0j+fe8hrunDyG2ydWc7vwHaVjuKt8LPdWj2VDYzW7wqP0atTHwpzP2645nQ/9xvO5Yu0i5jWbdEUBRQWs145xwVqfP3r7ebz08tU6IqYx+hfr44TiiFVgkZ6beNbhBGKcLNIZHytIJq5z9rr5fOj9z+OdrzqVZb3j5JgmK6dlY6MfGSo8Z80gv/O6S7nk5MX06KUscFunmyA2AgUimTAmxmh1e9mASGNvyEeNwNLwWzTNJIWucU7Rx58rnjvIS65byUtfsobnX3U0p57TR8+yFqPhCHvGhxmbKuFpDKqO7znKqiSwJBiXZJtDRg8jOsGaAA4LqT4JJBWMU5oDslh8BBYjoTJGtTq4ZKr0ze9KGoj0/vj0viobh3KMm8WU/AEqwTxtt/NFz2fcX8gBbylb45U81FzHreUz+OaYYOJMflQ9lztb53JPfBb3Rmfys+gs7midw62N8/jh1BncM7mOodqx2FF9/DjUYulkQG5PC/Zrixzvwm91KxAeRa/CygWGeV0Nme5RbeaoRl20bEGDCGS7kILhGY2HWCOxWh2+PjwUmKzlqLcCMrrNr15kWajzN6eval5soZ4hPAytPTW8fWX6J2qY/RNEwzX0BogagWxI7zHdZI7xiFaI1k4VL8gwmYsZ10IYCQKGBAcCwz6/yQ5NnN2ZMvsLVfbla+zONdgWhGxutjgQ5tmqfibGG9p9fIr5PPlcrm2/xkCajgyoTeUaVSK1rmxFWjQ3HCE6yR3atitAJ7h0KrdxZGIWLBjAaDVEuoXuHoHvbahw9/BSnohO5yl7Bo8LHg5P5+7aafx4ah0/GDqGHw2t4P7ycTzNSezJnMIBbc2Hs2sYCY5hKHMMw6KHMsdxKFjLYf94RqJjOHygmwOPTDP20AhTj4wx8fCY6BLjj1VoHPbx4iIZNyhbl3UBu4YNn/v2dv7l9sMMV/qohTlCG+CSVZCtVmykd+Wmmcfju2I+9S8b+c7texXsorZVBTKuaheIMboIVXfWGbr7IGP6MlV6bJTpxw5RemyIsccO6xidItYnU2uaeEt85p2ziP4Ll1Nb3cs+/ai/yzPsiAzbQwQxO3VL3qlVvzNqsUs/fOzzIo0fDhYy7NYusasMQ1NZnt44Sr3i4UUeC+fPZ35/L1jrzBdYjgwuKqNkBYi2GHkhWYgWZIKYCcNK0KEdRskKXLZtGTPYOWrFmiUUdOFwO9RoJcP9Ow3f2TKPr2xeyjf3reWbh9fxjeFT+IZW64+mz+YhzmVn5jSG/VWUvIVUTTdN8kQ2qwCk0IoDrTrR4sd+L2HUS0lBtGO9dDcW0dMcFCygWB2gcShgbFdNnzuzxDoSrPV0Dyhw88/28/GbtvDXX3yS7987Stksoa5J0FRQQ0HT5mj489kxWtCXsG18/oeH+Nx3N7J9fw38LDa2aH+lPlRn+IkhMtqZ5qu/nrJsKPfQNd2DN+ozfaiMLtw0M1DWT4dD2j22ZcpsMnW2GY+9foFD2R4O53o0cbsYyRQYE0zku5nS++54toDuZmwbq7BDbU2VC+zeWmHv1im8sEAhCDhtVT8DXabtdyvswMWhja2FJH60gysMbdrioWRmwKoBEkgqSaCclFOcyp0sthFBNyxbMj9pxNc2vXPrfvYcbLFjrIsH9uV4fHwBu1orGDOrKWdWUgkWUff6aZiiNsmMmsnIkEDtewnoTqG2XE8SaW9pkaEi3WpmPrXsfAWlJ50QXhex36MYFGlphdhQA9FAjY1Bg/UzWUIvx1RrHv/0o53cuxn1vYqat1j9D1A3CxlpLuXrtx/k3o1aNoWFZLI5uvXbtaIrm2JMHNPSDyHN6QaZSHY2jd7vfQLtVlZ9asFBLktTMBZk2aldYZNW6A4DQ9ksE9k8U77A5Ch7ecpBkUqml+mgj/G4i73THlsONdiiSbVPX/mi1nwmDhgevnMb4XQGP/SY35Xn1BU9+M1p+Sf1vbEkNC5pzGi86hIjOsEqO1EHtII1mKSkmgl2D4uRtjJGFY7EiEeSIhNx8tlrKGattsiQuNHi6YceZ2i/3nkrvoKtmblnkj0HJhkdqVDTF61WXW3HHp62zMB4+AqpJ28lhlsSQ33XoXppeT6lTDdjg0ezZ9EqtnTPZ3ffIHv6B9nRM4+Rgflkli2Agk+spWT0cSXj1Tnn5CUsXxQQ24jth0L+x8d/os+PT3LXJsNjB/q5f0eBj+iL1L/8eKu25Tzo9e7Cs1aydDCDe83yNC50aeqen2dgVR/VfIlpb5KSnWIqLjHhlajN8/BWLOCgLpBbtU3vjHwOBQXGs0UmAwVVwZ32CpT9biYoMtTIsmsy5ukDZTbuLrHjQI3RySytxgDd/grGd8N9Nz9FdTgmpx2mJ7BcdtIAC70hjMaBSwqiQw6MaCMiBTlOtAu2Q6nMyoPIu44jMDMggQrKUhAtfqdiQpLyjLDViukd6OLsM9fqU1yFomZFXJ5m90MPMLblaXzRvlZBNFVm+vAII7v3c3jnXoZ2H2RsaFRfbMpErRBPgTYJ+BiHcb1Dy8swmeti28BSHlt1Ek8dd5rwCTy+ci1PrjmePccdS/WoQSpei9iEmLhJ0Bxj3XJ46yvOZcVASNSsc2gyw+e/v5MP/O3PePuf3cF7//I2vnXHAaZqHlmmufSMQV59zTry8SF8GqDJElPH624wcJq2yIvmYY+zNPWuXVvUpL4yIDp5Ebvn5dgoH+zzcowruNNqrUqOiskzEeXYXzM8Pd7i8cN1njzUZPuoZVjflhu2n8BfpBv6AsLxApt0/j9682ai8SxdWt35sMWlJ/Ry4YpW4lfkazMTUMsRtAuKRR6zAuFEr0Mj34IEbYZryLiyg5SXNA7ScZDypIJiiZPVwirLT1jAueccp62sQsE5ulFhdOtT7Hv4PsY3PkZr/06ypXG6mk3y2sbiWp3p8SnGDiroB0aYGJ2iVWupOU8GBWrXYPBkjUfDzzCW62FP32K2LlzN00uP56nFx/H0otVa0UvZTjdTXkFnuKc6loxtUIhHef7ZA/z2m87ieWf3MJCfxMrOUqXJqG7BpekqfjTFWgXrDdes5t2vOZ3FxQmCaBI3SWKtGEMIpo7pqlFY5TNw1jzmn7eQnC5S9XWD7BvIsCdjGJZ9pSBPmQxVL8+UKbK/4rFJt+zNw3X2TsVMNPPEwQC57FL552ji0gDj2+FpXd4euHkj+x4bwa/myYc+2WaFq06ZxxUnqqxJRmJLx+8OOwAj7+BSElBUFrRpXBKNdDynaMRIQA9llawgza6cgk0bcWxj3VNgcc6IgpATtMVdfslpzC9aijQpCMzkMNM7NjL01MMceOwBhp/ewMSe7TTGR8g0amTDkLhaZXpkjKEDw0wq6K1mpH48ZxueVoezr6VVXcp0cbA4yK7uRewQ7CksYk+wgO3NXkZtHy2bcb7A0w01E1fojvdz5Rl5/uDNZ/DBN5+pjxTHcpUCdOnp83nhRUv5rZecwB/8xum85brlrOobJhfJybqFG23N6M0A9Q0RVkEOgwqN7hqTCyL2zQvZUQzZk4PxTIa6gts0GUKTp2rz7B5v8vTBGkOVAqG3CN9bjGkOUB0NGN5WY9sDQ2zUin3ytj0cfGwS7ekU4x4BLCrEvOrSY7jylC56Mi35wfkCnLsNbZ8nKHmIb6UjuWTGWtJk2zyErZYJnWTbhJWANqR04m3aSb2lASfRQckFueE1WXXaYl58w4WcvW4J84ImvUFEb9aQC2u0xg4zsWurbqUK9gN3s+++O/XD/2NEwwfItrQd7yiXQwAAEABJREFUtpqMj4wyNDREQys8kNFe3KA3Y8llPFrGpx5kqAQ5yn6BslbtlN/HITvIaNxNS0OJFRQr8OOYgqlTaA2xet6Uvj7N572vWMOfvOUU/vRtp/BHbzqR33zR0Txnrcd877Am2rhWfjN5NfKSfi3WffkSHWqwNR/G3FmrSbldk3I44zPt+zR1R2hpU28R0PByHJhssPOQbvVmIbY+yNDWiKfvGuaRH+zkoe9tZ8NPdinAhxnfVcfXb729QR99maKCW5ctffzu9Wt4rmwqeHUFL0r8axQ4IztQSmnm8B2tGEkHJacnc1VXvHYdL2GoYEQop5XnKONkSRnJXMUOTmknR8k5ttwsE2t2n3bJcbzq9Vdw+UXrOGZpkX6/Tg9VuqIyhWaJbGWccPQAo08/zu77fsaOe+6itGcnRW1HrekSYaOOuzTN6+nmmJWDLFncD75REC2R5xHJ2NB41E2eSdvHZFjUGZzVojOy0cNoEnpxRNbWyTTHyNR308culub3cnT3fhZk9uozp46N5kGysdtcI+0WFmINRBc+K1KNEGKoeQETfp5dDcs+baETmRxVbcstZ4PUdYEn0uRqxB5D4w2MN4/De+o89MONPPXTXRx4fIrKXilOdJGv99IVdtEdB3TrfXhRrsX5x3bzvtdcwmsvWcr87LRWe1kBitUzwlbY4tJscG2bz4wMJYP4Dst4R4uUVSB3gTECwAlEJph2SsskvFQvbYgkpXSqYxNOLMfW5dgwV2fFyf1cfs1JvOrlz+EFl53I2ccvYllvRpeZGplWRdeRENOo0jy8n2Gd1xNbN2lG+wSeUYBj6voJbWxCK7vUoKlVqUVFqAGE1gh7OgQyVG2BSpwj0jaJhmRkRuIMg0rgK2oZhSoJdlzVOVsRVNV3i8BEs4GNSBwndbkKmoYkkGNenh11j736TXoy6Nakyqo1TzqGSDaF2jFCh1Uf3aSjkseOh/ZQH/a1Mymgtk87RIZAYymELZZ0+Tx3TTevuGAJ73rBKl57bpE1hT14jTGMfGeSlsGNgXZytMxRSYOTXISyo0n0XB1csinPkc4PyC4vKbjHMyuK5yq6hh1WhMWZzY6XypBotmEVcCmMQxpRk0Zcw/bUWbq2m0uff4KCfS6vfPGZPOfUVSwoeuRMREYr12qbrowMMaCvNsViXk14lBtNdh+eYHiyQiuGsA2RBtKyrmxo2UB8DcMadW3AzULRUsENycPgqZ6n2eGrjqdB+xJ6+pjhnJCCdarEqhdJv2F8prVqD2mH2Nbw2af34CkFumoCmhjpqSG1YwWxbHcBjrQie7sLRHpraJW0c+gWHcRZCh6sXdTNi889indctYL3vvAYbji3i+esbrIgO4GJqsStmmyVkYkViFb7QkZljUgWqdChJZrhaxwdeWcSzMja+lorcyqLnKnQVnBl14PDz6zc4amaU8HIWx2ew8gAWSsUyykR040JGpkpBpYZLr38GM458yg5v06Q8fD1Y8Sak09k6fKluLqRxtvS+qvrdtrUV6rIegqkIVSUY7UbxwqKG6xoI0fbpOwhkljBRJDw1I6GAgoeERhtwQ6j9lQVVUsgwiZnalVfskrZbg7oXXSLgrtHQZrUK5ALrlutqIMgapHTZSwr8BVYF2RrG/QUfRYv6CbwQzx9igxMTI9X502XLeHakwPW6j4wYA4Q2Bpe3MJo9SMwatOofzfun8POyI5MdKqjcczQVmOzic9m6komJg40vzpCpNShOxhkhfhCnU6gXXbY4lLSqbFtfgejsiVNDisgagPtgc6QSrnCpo27sb5PFHgcffxxnPmc8whlXKPVkhaKkUlAMSVUwCI5wqrV2EVfEOiVK6ddoiBH+iobRctYZLIscgEVJJcl8azatUmrFqtVnsRZQQ6twU2ghskwrYvSQa/A5jCTwCFToJItKPABseq4trMKyKAuWSvyGZblArq0rXoKuNWO5ZsGixb4rFzRp7hVND2buN+Zdx/USm1N48tOQ4wLrMFqJBZkF0qmA2I5mYptmZUeqtPGqtepIwVcmqmrgnlGe8kKThWsxM/MNm1cjaY6qGxJU4pTvhWfGSBJNnmmctoym+DAZHnq0X0cPDypgEK+q4tznvtcCvP6mdYNuhVaIgVL8ROGODbOLRqXIVmVFtwrVEY/8fXEU/R5DTytCAmVbaIbK3AOImE3QVqq0xQtTWrGp+plmdYrzmRQZFQ32YNBFzvIsTX02KXL1IhXoKobe1O6oTHEBtzOYeSL3mxANzF9mpw9+ixpNbmsAo028Eyuyon6kpbvampSlomABzcdoKxfq9DoXX1mkhUHQRsnwbG4ZESrS8kQWEGKmeG3eXPKToaS68NYkkmRBBgZjVLaoJ1pTONKaIna2SY41SORucYSApc6cpuwnF6nbYdde74cNjVW494Hn8Jq6wsVxaNPOJ4FK1couA0myzqTdD2KY4j1UBY2xJEgVvA0IITR60omLDHIGIN+SQFuqE9D5LZz9eFeYeom0KUoSIJZ8fK4FTrh53AXp8Mmx34FdKdgs83xeJhlk87aAzp33fnbItDkM2rPCiJBTCyvhRbqCmjo+Vr5hnoYIVM1eAm8UHWqHLWyl9XH9hFFk8Ra2Tv00ePhvRa/0C8bPYFNwZJiSIKB4uB8NhtcK7mTCSRDKZGLTrB8kWCVXXA7tMOuLanLkxI6RgrtBh1PDGXpdHiknYFwh2ddQWWH7DPwXJ5oNea5CGsVPaiv/y05vK7odQ0McsKZp2O1Eg6PlajrNmWth3yYggus6mhnlLMUYAms6rnrTiGcZGlmnH7GNZCQut4JKvrIP5ErMJzrYn+2yK5MgS3aejeaPE8omE/aAo9FAY+1fJ5oGjaFsF2330PaosvSC41PxngEcYR1ICequ8SWUCOsyTeHag326svbnkqD8WaM2yWs+B4RJqpRCKqcffoyFg76tPS2EPsBP92wl2H94ua8ZEABFYBaFKgPF5CEr3Y6GJfaMkd2Au9opz+DLWk77bqoTtoGeAaOEBopJQxcsgmZ6nRo6wQpSKAsHStA0MEoWQHiCTTz3bwNvIBDu0ts3jVM5GWcOzj2tNMYPOpopqp1RidLBNr2Yq3OdNsDty1GWuWxvKwLK45vojp+a5w+RlmUK+EzTTkTMKbg7lWgNjfhqYbliUbME6HHk3rvfEJBfYoCT2ti7dB2vFuBP6DzdTTbxVQmS01BCIGefIHl8+exoKugNYzzFVajULhpyXF10RPar/fVQw63Isp4slGXRJ0DefU70PIYrDY4rb+HS9asojtqSMMwMlXh3i3jmFw/xjivqTO1nHQg0nEcOJZ6FQdNAtezgw6NksqyQy7FxcrV6WAJVVVyESnP4v2cghjKcyozQ6s2Lh0pTxt0/FlIeYmeLHHY16DyURf33b2ZWqitsxkxePTRrDnrTCgW2Xt4FF/b3tIFAywd6CNAW6JWkAtsHFtiBTgSkNxcq/pgsp+lXZPk8xXGg4in8Xi4ZXhUq3GzVuIuwSGdryM6BiYVzGkFs+rnqJgsNS+gIWg6UL2W9fQRxQPZ2JXN0Z3J0J3PERjk7xiry5G7pMVArN2kqRXe8Dya0o+k4ym43Q2PxfqZ75iDPms21zn68VEuz87jjO4esvocm9OOcvdjuxmteOomoBMAVW/TatwFjrbvEhrJHFjSZNtlhNu09EiSyqI77amZhOvRoVRMO2W2MszQTi+t3OapoCw5SfpX67aD68kRPgFPPbWHfSPToFVjc3mOO/OsZPUOTVaZKNfJ5YsUxJ/XW0xWsmKM247dKo5jq9i2MK0qpjnCYHaEgb4Ko3GZzdUK21uGA34BtyInM0WmFdRyoGD6GZ3DfhLAlmeIZYsLSizLregEFCxr0JkKI6Vp9k9Osn9igrqbYOK7m32kUSZ2qOzoMKnvkQmhv+6xfNRn+dYm8+8fpe/+YRY8McGasZCrjl7NfH2GDWT/tFb49x4+pHYzGGO0QsHI/walmeAgvoKFS9Y9kMqMnmnrJQLRDidtiHbtJLSYDnuqqKGhyg4s6hMnSBXbPFySTCjlixahPEdXPFB5LszhWWhULPfctxWT79FWZ1iwYjXHn3m2nOrrE98UKBC1epPhkXH26oeHSqWGbMbKMbFbuTp7Pa3eIJ6i2xtisG+KUnM/e1plDgd5SoKK0cp0K1LgzsVIFsn/SVC1SLE6yGNiYaOViMDqmBCIH4F+nvSZVKd73XGhfuvGl33gPmQkwdU4Qhd0d1YIBzp/+7Qil4x4DD5eYslDUxy7N8MxE90snvRZPNHi1EIPZy9cTE6TMKe7wWPbD7G/FIDJMJPUp1HBKCApqJDQtINtNZIOLexkc+tYx5sFDTDRR0krGBUsLrgckexMKe0cXOd6kKaO3CYsp4M6npGljETm62vT1k2HGK/KjbkiQaHIGZddSmFwAcOlMtNVTW05062Ucq1CJOdlMj7oBmo1EFyA9VuvbyvkzRCLeoYIFOSagt3wDQ0/0HbpJas0VL9xG1xVNDAroyJkvfqw+AqxEXjEWraufSe3oiPpNT2Puu/R9H1kFZGEVnWdCU6e6Inpa8foqwYsPmwY2FBiyfaQo6YKzK9m6Gn55GoxwWSNBdWQ5y5dxoogg6djKdIu89PHD1BVfWNMO4CoB9eLsEXJqkxbNpdGydIJoJG/jTgOCyk/Q6ailyi4h8RO0ZGzGHUkLVwSllA54aUY0bSTTeikroTKKls8DaI00eDhDTvJ9PTr06VlxbqTWHPaqVT1zjE6OS0nejJVc026ff19DMyfj/uDPl/BQ541CrSnT3p+NER/bpT+/JD0xwm9EBdQNUMoK2Jx3UoL3Yq0FhdoLXytQENMRjodCIh0jkZ4OIhlqfv8GcYW9zfeDpqiXbuOHyv4KQ2xtgITeXTVfQZHoe/pMkt2RiyZztNr82Q1gYgtgepQqVOYrnG8zv/zFi+lRztURnY8fXCap4ZksC57xhj1blVQtg5blUmCSyfZWcKITKHNTOqgOjapMyOzKU/+FwWpAgjPBdsuC6umssqiQdhBh+5g8aSkLLnF14op+j1sfPwQNb1rxtpGM7p0nHXpJXiZPBNavZVaE1+XHaNouJ0v1CwPWyGxILkxJ8Ft4kUTdLGXgeKw3nlHifWNO9RnwpYiGAOqjgtwsiKtygq27j6EcnQop1Z1sZtu+pQEFdH12Ec7LLoIK6hokiFdcB9EQjUWOdAoYjQJkgEJx2rXQk438/6Kz8D2Oot2N1lQU2DVXmFeH4X5fcSeQXHTjxqyaGqahWHM+YuWcHxXkWyjpTM4y082TTHGoPQ0sWV/erZaTJsWEt0uaywmAZIg0k7GIh0HNuEndaWHktMXkvV6ukIqRBUsaepgxOuATWiSZJMnanCmrnp0tON50swocIf3VNi07TBku/XrUJMTzzmHpatXy7mWsfGSVJ2mq6UVJweWSlVq9RbjWtmhPiIYrUbP1AkYZ0FPiYI/ojpVtZeqfEcAABAASURBVB6B8ZLeI5kSa9V0IBLteJHxaWhVDZUs27VqtuybYuuBKdxfMB6eivVLVE4BDfRBAgXaojiQ1JUdCR05mwRatSFoZ7QY8bq1ensPN+nb32BRrUAx9MnrG3ZGr2qa1SRgwHP+qFfxpkocm8tx0eIlzFPDBW3TB8aqPLBFfsn1aixGQBssLs3ERCv0SBrpWUEHi7YckUxSB+nEsgFEdMDi0kyDKiS0IdGhnRKe6FkMRoMhSRapq2GPot/LQ49upaFXk6aC0bNgIaeee44+auQYHp/W2dsABUH2aAai5GkShBwenaKiDwlWqwgiTDxFd6FEd3FKbU/iebEC6xyuKsYTbZwWigtuS1UMCPVFqxpn2DfeZPeIJkw1Tznso9zsZbScZe9wgwMjTWr6etVUAFs691vaQkIZE9oYt9W7CZNu2xGh5Fa7QUbBHCj7Cm4Th7t13maQDfopsDYxRV3B9KwFE+EJAlll9Rt3T6XCeQsWcFJPL10NjcnL8rOnhxnSmW2M0bhUByUhI5SAa0d0kmdoK11Ig2hJk015zhPSS+qKdtlDBjgGriRtR8+CKqqgLIloPY30XPlIsJLQ7gTUqC5BPps37pcT9SlAt8dQE+Cks89kwdKjdDS1ODA0oZbcTdLg+pbvhGMcNp5rwSPBulxlmWB+V4mMX9LiaGglhcSqFqtHLVYSnNYmNoZIQW+Q56BusUOTEfVWF54dIBcvIBsNkvUGCaMehidCDo3VtcqzNK1PFEOkoaRBdedxTEt3gEidyG+Y2OD+bqpbrz8DIxF99YBM7MkmK5klrNaxzQgNFWNMGyRraSKXSiyVXZfp3X9pq0Ve9SZqcOtTE7T8blkvfXViEsqqDSsKDFa0ww5Eg8opRikNND+np2oJT6cFSmmFTuNipNkxEqojT3HCci0khEUtuSywAvA0OBoZHnx4KzWtjnoUMX/xItadczaxPiIcHB6n3oyxGrDGBBa0ZBIwIt2rUXKWatV4NClkynRlJvBtFbTKpKJsiNWbC0hn1UaaHZH6a+mqM1qOGJm0hGE3ftjL2K46j9y2lUd+soVDm6fItPqxYQ+jkzHjZUtEjsgEhIpy0l47sDrmkRk4bJpQrBrywy36pwzdOssDvMQWF1RP9vgquzHIUA3LqgS+2qRcJlueZp3O4bP19lDUhcvXVn3PliEOl0KMfGGSlmwSQJEYtTDD69BymOO59l2fjnZ6mvWqYtvATF0PpVSJhIlSUlbtBHcaFr+TXYMzMhHKSd0UQ0afIbdtPaQf6htEom0my7qzzqFn4SJG9WP44ZEpXHCjUOdbApGcHWMji1XZBdvEEMvJNm5QyDa06qYVYK0EN4ZYFmgFxFpZsXqOrCddQyReaDN6BQkUuIhWs4BpdDOyvcK2u3dR2RlS2ROx+2cH2Pf4GEHYK508I9rGWwpW1NIIQqPPoEYTwBA0TIqbwk2Pos7enklDYTykuxHgh0BssbIHfFliNOmsbImJNJY41JhCixdb2dHETk0xoI8e5yxdwopcnow+d0Z+Nzc9PEk9vxTj+WowzQbVEWkUUESLFLIJEqFJgPqzCTixAdFtUB1XdnpepyFXQMkJzL8aXNcYaqSDHd0Bi0uurieiMtXivvu3YfQ1qaFr6uKVKznmlFNx/5PvfYfHqGn1KnZyTJw4wwXKxrJAzkDOQEIrhtFq9UxIxm/KfW71hnhpV1gNQh4hVbe4qqE1Wu9ZxqZjneG+JkQPjXGPvU8cxja6tC32aIvtwog+tHmMyYNNAttHrWyYHo8oNovMr2QZLPksngxYMiEYFy1YOJkRTzLd8XqmLFndpN0klJkacZrdSo9dYGUHbU9ZR8foLSAinp4mp218RTbLOVrFvXqDQGf6pkM1HjwQY3UuG1DNFDRIXEp41rb5KZa3JLICxLeCNm7rObmx4Blcsm0FhFM6UQCVUUp5TncWxFPBTRApJHqenhmTY8vGA0xVIp1rBj9f4HitXr+7l8Nj01ot08lKczPcBcltx2gFWLeNKVqJg4STyCnAxkQyMgIE8qarExNr0lqpOHCWItppBFS02kZKkVZQEdPMcWjrCE0FJKfXtECODjR5gjigNQ0j26fwSjl6G90E+yL69ZPesn2GpVsbLN5YSWDpxqpwlYUqL9reYHBvg76SR0bvwih41kEMVoGVeYkdbuJZ7SrgKUaWdIzCzRbNiUkGwojT+3o5rpgHfae2Xo47Ht9N2R/E1TFYNWjlTQTC1mEHVmXaspQ2NsViJllSZfGskNrxPC1XIzoFi3GEBAkS39VydAqSt3k4RkKTkK7oex7hdI77H9iJly9Srjc46sQTWXzsGkra+vYPjevslfMtuFXrtjBFG+OmvoImLi6AiivOKY6OJZNrcEnV0FwgkpHyJ/KrLLXCDjxauliNTUSECmzW9GqF1hjbP0U2zmBr+uBw9AKuvvgMaYXk9HWtvG8au7PMsv0BKx6pMfDdfay8c5ITHw054YkmJz7V5ISNLU7cGHL8xibLn5hm4e4G8/QO7LvtPGLGTvkZazyZ6aM5hCvHkULlILa4MXlOf7qCr1/NVmkVn7FgMAm2H8KWg2Ue2iV7TKA2TNundgarJ/GV1bARSsAyI3erVb2pbOnQvirJIivXO0UJXC2QUgfEg3Y5pVUHIz1l0gad3GquSiKvP/jQJjk6oKYPFUFXN6tPPpU436ULzzTjE2VizWw32yOt2DSAVpeYWA6ISRzjnKFVoaiBc4hAdzQi1YvVcYTVP0MsA2JRMUhmpJpjuqKttgwZ26WVkeHQtmFibb+BlBf3+lx33gJecHrA884+mm4/xtRCxrYOkd3bZPGuiBW7PUHA2tEix0/2sHaqizUlwWRB5TyrS1kWln2KDfBC2aHxWhltLVjnARFW9qO7gNi4Vy2JFGyD47uz2Ne53BqfoEtb9ck9/azLF8jq50Vrsty1dYpqfhlGE8VoXAmoTdd6h06weusEUS07MQ6nMmZo+Td0e0gVp+KkImYVrRRpgyVNFvkYpzqrR1LWToCnlbJrzyFMJk9D29FKnbv9y1ZQ1m+zhw6Pa5CqJafEiph1OIZkJSsAVk5BZUULtIU5h8TiR1FAs5UhVNuhdGI5UlWJNQkUewUWQaDXmQxjk6GqFgiiom7Nk5QOVnUO++RNxGVnLmdpzzRx9RCXn9LDsn5f37diJvWusv9gCc8rYuIsjXIsHU9tSK5tONuy5EJDQa4q6rzMql8TWxnuALna03Fg26CyxhC78bnAOJUEDElR9YyMjxRcv1Rhhb4BnDcwyPwoJucHbDs8ydN6N4+DQuJT4yrBDG1AtBWgZNuAylaQYiztlFSueqp0r3ZpnVxIyQp4RrJJWSbSCa6GkfDSh0VtYDTwiUNVJqYaNBQYv6uXZccdjyl0MzxaYmqqJh0fF0Abx9gwFDhvqDXZ4gIdKbCxBmvlCBuJr+0t1u221vDVZrH9LdloDMYtkgRb6xOZPOMKTK0VKPxdNEqG/Vq9XsMjZ2HFYJFzTlyk/lsQRxQzIS+46ETyQUwsx+6ZKnNIN9hKsQv9NqCdoI5VcD3jYQQOexqfUVsJjkXIZj2xGqsDDUmTzrrmQbuNm6yO78Ct5KSKJqiVotdSv/pMWyxXOVGreJVenTL1FqEm0q2bxqmYbnDOBowbpeuIOUl9GxUTaNPqNMmJvup40PStuVcBjj4tRW1uqDGSlCqhshU4PAuuFem3+akcJWf4gYPDRHJxLKf0LVpMv16L6trKhvVlCgXCKp6ubXnCNYOWJS7gKKjGgbygbUVOs225kcMCqvW8Xn161HZe4AsM1ho1o9VDllozYFJbsTVF3YqLDO2apKIPGBm9ohX9iMvPO0Fak6gxkBFRq8Kx8+tcdMpiYr2GlXyPx8olDnfnmc4HTOt4qTU1AWUzGo+Vw5Ls7HOgACpOqmtccxIJW2lpUprEF6IVTKdjNQFigVVZCzsxARFhpYrRBas/jli3YCFdzSbZTJbdBw5T1k+lRu25thzIaPnbpjDDV9kiHko2wbJCWLR1LFtpmvjTXs762yW4S6s4FDtVEOEangVLOqGEZ2Qd2mGrwdrEMLwgWRWF/nlktYrH9E25qdlpFBApgbYo45ykgLpVG7tVq3MpFlhNhlSuIYlPohdQr3dRqvQR2m6xPDlUck2WWO+8zTDHRCnWt+SCXqV6qOh158DWw+S9os7ikDOOW8jxR3nqV6vXxhhnfxyTocGZaxaxaH4XesVlj5y+VV+YpnqKlAKPqUYLxVgB9LFazaoiGhx2YBVkNUeyOjWWZGLKstiqqxiSDyYaq9NFAU7A+UBgBXEY6tVNQZXC4lyeefJbRvyKXp0aupySJDVmrWx2gHagNlY/LpM82rxETzokSQeKvcv37Xbvb173garxzEfADBmDuhAFSaMkyaICLiXOESE1PWez47vOwjjC+NqGPY8gVyCKPaZLVYkMnkm1VFC2atIkBruVj+rFcaiJHRLrvTkZvALsgo7O4KjVy6QuOvVmr9rMy6meLnJGAc9QqnuU6xm114Xf6mLf5sPENaOVjH43zvHc0xbqdWlUwQlJkhyRYGKW9sVcfMpyMDHlbMCmRoXdwiW9vkwrUu7/PmedRxwoaFaBsi6wCSBbtNUqiI6vIbhhaAxWEKO44epaV88dNRE4OrbqzoH4oVatCWPyWHoyAW7qujruAoq1GCtd0NgEoklSShjVSQHp2URHPQhbWWuHYms+csoHflz1MMZO1iv3S7geG0+7squIknGghzKO18Fiq4zAChwWSOgruJoseAowckKt0qTZCKVjUlDXsgs3241VXXnByDMmwbEMFSjQRCFohscKcqSFF4V56tVuJiYKNKN+GvqBoKVNt6LgT2gIke1RqZexfWUm9OqT9wro6wUXn7mKhX167XCeVcdmLqh/3zY46/hFrF7SSyy1Qx48FjUZLXZR8QMm9Tmx1ghx9soy5DRNQIuVvbECq7NCtDwXWyTERkKOr1DJIyogudMXbsvUrVStINYQI1raKVQgOed16XILwfOcv1wLVn4TWJSsaFJQIwaOoNUDmiDuz8emjbXrRxv1+7WmFAXg829aX29OVL9msO8xNpqWH9xcRbEnbWhO49I/kmfFAdlELpsRNgqwT61aZWp8CnRxCGS4j6cAoiR95xC3rbUDacM0oEbRNAq41RloW/KIsPZefcAPaDW79fNiUb9A9esDSre+WHUxoffRWjOrsRUJKwH7Nx/E1++9vn7ZuejkJZx6tETNkh4uPDbp38gCB1gL6q8YDfOyi1ZQCOTsQo6tWlU7fcOoXl+mpVtWkMNkizY4s1UL64hYzapgtTqtTI2FY2GrSezmU/IZVjpONdJDDsU6j1u1YxQKT6ByKA83BHWBy754gWTOxg6oJ4lsCtZhEhpLO1k3Nm0bOJPfQ6PxtUvX31F3Qs89HHzyHevL5fL8r6jR69XHBkGIi/BsK1KzAjDiSU/Y0Q6lTVR6AAAQAElEQVQsviLc39uT8DKa/eXJKSr6wG7EMck8MiDaavY7x8atOla/ssRhQ8U6DseuLLByvBjgPOZAq8K2cpo085IgN6P52paL+hyZlbO7tQUXOagvVuWRKjl5cl7O5+LTV1D0tfy1zBJ7E9OTByROcrSVY5os7Q459+TV1MMmpSBgw/QUB7tylPM5KgqOu3CFwrHqOS9aF6QYIgXUreRYwY1CS3Kn0MR1tNvBnH4k21XVdYnDMdIDYn3QsEGGpiIwrjolQSSn92iS5bVQjPRwYGWj9J33kkZEp3ycN1GIrFZsKP0NFnt9ff7IV05af0eZdlLzbUroU297W6t7W+O2SqZ+iSp90LPxXoOJjGRqgBSrMJNtm7J4Mu6opYPks4aMZ6jrVjp+6ABeqyUnSk+BtTYkMBF93RkG5hdYONjN4EAX/b05uosBxbxHseiTyXl47kMEIVbBTla484TO4tJktz53FhmeDPRVLI8fF6jqt91DOntzUZaiAnr5qQtZ2FUH9WfkIOcnFVL7VTayOgWLkV2BLlzPP6WflfMDbdWG/RrLE806ozqLS4FPSdtoU15INhVhxQKdHgqwJVJ7URzJ96IVQWUFMiZSu4626jzWEg+1W8WyzdWNNAlNEtyAKeOxa3qaafXT0oxZvbiPHk3Q1D5IsXXmt+lZnrHEal4xij9o6vVLTm6cf9tZb3ukxZzkzaETcv369fEnb1hfro4d+pjukWdh4y8puBMSat6iTqzgGViDdMEr9LWY1+2TMS1teXBo+2aak0MUvAjPNsl5MSedsIYLzj+Nc845hTPPOYmzzz6Fc887nbPPOU28UwWnc+YZ6zhu7QqOOnohK1YuZeXKo1i9apXwcRS6FjI1rZDU83hRF5HefvY9tVsf8kNyWi2rF+Q5e00e/TiLcXulbDPw8zbLM3IQied07hfCEa49awlho0wtn2FTtcIWXb5GugpMacJOueMiV8Qv9ODp3d7TFu6AbA73X2WQyZKAnyEOstggSMEPMJIZfZokk8NodXqaOPVMhtGsgqtJuEU7Ri3wwYRcvqZAVzwh2yOBld02MdE4eyEpG2tdLCYk+HK+Vjtr3wH/Y27VmvXrY56RvGeUZ4ofe/fHGn/zqj8ZC6PsOy3mGil+D2srTuEZnTmW+rJ4XsxZpy/H1KfoCgyBbqX7Nj7G9PA+uiRbOK+bnrxPU86raVD16ZLuQiWqpQnxpmjVq0SNaWhWyGdiBvsLDM4rsmB+N/P7i/T1FDRAj7iZIRfK2dM++x/by/TeKYpelkJU5/KzV5LznXPixKY0uBqBHOSymCTJuqdVe8iRMZ5W17GLi5x3/EK9c1cZy3g8UCmzWbfbob5uDgUe+3VXGDM+416GCQVtXEEaVyAnhCcU6AkFcEL8aQVzOpelpGCWhKeEp7Xdl9RWKZdhLOszVPDZJh/dPTGK7v00Fdx1S/OsGfD0BhAx11ajwsw40hjcHNvwWvzo7cf9yR1jL/jYLQ3+jeT9G/yEbYyxf/P636lsD459sBK03mSI32mwD3uGhjq0iZIeovVUUSvm2NXzOeaoPmx1iq7AYsvjHNi4gcNPb2Bs+9Nse/gBNj1wP08/+KDgAbY89ADbH3mYnY8+KniEHQ8/wp4nN3Bo05McetrBExzYtIEDqn9g0+M0D4+S1b2pua/OHv2oMbZ9hGzk66PBNOeftJJjFnoKWCh74iR4qaecbahsBcLWYQcoWYGyeNm4xOWnH02vNgD99MteDfTO8jT36O3g0d5eHlaQ7tOyv087431y+gMa+MMK/CMK3CN6vdqQC3hU4PCGfMAThYwgy5MFgXaFjd0FnhRs0Aq+y7PcOj3JRt1B6tLNBxGXHT9IXzQu+yPZaQWITrBWrK782EdEvDOTid6wbXXfA6f+zo8rRgHh/yd5/z+yGdHXb7gh+vsb1o/72+Iva6ZfrZX893LcLmOtOxnVpzPCSj/G9yOueO4JLJ0X4DentLJaZGqTTOzeokDex4Y7buPRO27nyZ/dzeN338njd93Bk3cL7ryTJ+68jcfuuDXBT4l+4s6f8tjtPxH8KIEn7/wJux9+mN0PbGTHfZuZ2jmhlRwIWgpsN1doi/XjmkxTcC1ykBU47KBNK5CKS8KXohzYkVnQObm8t8WLLjqBTBBS1ire5nvcWpnmluo0P6hV+L7wzYIf1FQWdnwHP9CEvsWB+DcnuCT9aX5YF1RL/Khe5hbJvlcp8d3SJD/SDvZY1GBKk8BS53nrBrlgmdHqdbZb2ZeAfKvFjd0tWz9S9PyrJqvVL697/4/Gb7jh6xH/jvTvCnCnHZ3P4fpXrx/9k1f99z8Iw+YVCvRP1fG0INSElprV5aNBoVDlFdedzrGLs2TCKX1VauocVqC1hXrNCshhralRWuOj+n1Uv9dODtOcOkxYGiGaGiF05YkhGmOHqI8dpD5+OIWxIWpDI9QOT2CnmuT0KTEXt1gxkOON155E0QwpRjUFzSYOkkEJ1qITRmBJU4pTvhWfpA7agaLKMBcsD7nm3GMIvAbuLWw4MGyLWjylvp7QmblB94nHdAHcYCIecUCLDYJHTYo3SPaI9B6OmzwkeFj8B+MGD4Z1HlVQtxBxWBOnoZVvtDCvPHUpr1rnk9UPIUb1DFYute7P2KZl3O2e8S7/TvUHH1z7ge+NXrr+Drc98e9N/1cB7jRqjLEffv2Hd9llvDC28Uu92Nwnltu2Y7RCFHyMN8E1lx/N8847isGuiExcIYjKBOG0ttQy3V6Tvpxu1NmYXp23PcJdQYvuTERBji0GTbpV7s2G9Ai6M8Iq92WhTw7v001z5WA3L7zoON56/Vn0BmNYbXeuf3knMdXIltkg2oTtnJesYCeTVocWKV86nVh3iAmuOC7DW15wst6lu+jqCQh6M5ieDFF3QEvQLHq0ugKagoagLnC40eXjoKlysytLvStDVW8I1YKHg5p+/WhkYzKqf/KKXt5+1fG85qSAQmNUF9FINmj/tzSN4X7Nuuvj3kPXnfo739u1fr34/N+n/1CAO92sv3R9+Cev/dBtU83qNSbmPXLuLqMHWKKwKVTnpDVdvPDS1Vx+1gDPOaWLi0/p5qKTi5x3Qo5zj89ynuCCE/JcoPKFJxS4UPTFJ3Vz8YldPHddCpcKX3ZSF5eJf8XJ3Tz/9D5eeO5CXnXFSp57vE8x3E+s1eG6TgImA2WHc5bAqiRQnuHNBNe25SQ4qSsZNsKrjXBqzwivO6+f15w7wPWnahzrslx7on5XPsHnGsG1JxiuPR6uWwvXzoDlhaKvOy7muuMiXii47thQOOZFx4W8WPyXnQBvOLOLt52d56LiLnKVA5g4dDZYbLybOH5vqxJdc/rv3PzTs57x2sP/Zfp/CnC7L/uXv/FX5d3Vw5/1cs0zsfYjctSInKm3PdkbVZlXLHHyMTkuOLmXC0/p46LT+nnu6f1ccto8Lj19Hpc4SOh+lfu57LQ+Lj+tnyscnCr6lF6uOKWHK07tTYL83BOLnHuMx5L8GCbUlq+AqD85CIELmrAVaKKhJHvEJwHZR5qk4ORCnbqpTAynoO3aaHvttROcs6DEFStbXL3Gcp0m1ItOCHjJiSlcL/yydQEvd6DgO/r6dR4vE7z8RMMNCuYr1xle6fAJHq8S72XHRlw+OM7C1gG96jW0cvXSjNUHcz4+XS2fyc7Dnz73T26Zlt1tY5xB/zH4RQQYbSf2U2/7VKu+qTCdzVf/AJoXyVnf84wtG2utDMX3LL4UA/WYgtEZh/gpzOUFc/R8Q6IX6EYbiPY9kjpqG6Mxp8GxuK1YW4Y4yta6hwDxrUDYBVMwW0c8K4CkHdkrbAWuPIs91fEdqINAfQdtrPuX3vctCT6C3+Yleja1PaGRrlWdFPva8gyx+wpVkU23aMgXNYP8793JHaWzPvVIS2XLLyB5v4A2ZprQJSx+/w1/X/u91/7V1mpcfaPMf7WMv1edVDVGOW+OzUkQEE8gtvRIAiQ6wXKqy0aPGVmbTnjSS7Bqia2nbbflsANUTnGnvY4Nrj1NvLbcSmxFO/02WIf1QCmx06Zy0Uld16FoSZWtgFQOKW7LEl3RCVadDlaHaL5WxXpQ9GtqYfS6Mz/wvS0XvP/rtfXr/2NnLf9Gku//Dcn/C1ueX/+mf5hckd/6g8i0XhpjP6QVskVN6iJmtaIEKkhNtAiNVANN6IQnVicYIpWlb0mdJ92OzDlM7YpvBU7ewSktVZJ29XxmHbHauVOnjRUQV8cJ00nAEW3PyED82TrOFme7swclR6d9Ir0UEpleLdXuNp0qf6bL+IvOWpH//kUfvHlC9S3/Cek/J8BtQ9272u+8/m+Gu+vjf2e95uXGxt/QIEe0/YTGWOsc4ByWOEN1fh4j59gjAt8JGkmSTAw5Z0bPtdcWpTwVZttVwbo6tGWibYcWlszVT9oTneBO+9I7UmbVRlqno6expbx2HaePkhurTqpIp9SIjpZvm4a5fE81+zfn/eF3h8wN/773WTXzH8r/qQHuWPS2t32q9f43/P2BfHPqjSaKni9H/ExHUE0O0Kf7Ix0lXpLTh2QWOc0KhBOnt2nnRCseSGbnTAJHC5wcjpC5NjvBSLB18jao7Z+Tqw1cmisT7eo69iyoIWXH70wmjVF9I9BtzdqagnuvMd41xXLudef80Xf23bD+63rN4D89/VIC3BmFC/S73/J3G8bovlrOfIvBbJUPQzkluYiJ94xAgWSCFCdyUNnO0VPZopQ82nyk40A8ZVfPgdsxXHu4pEA55PguGI427uFgpg5qz6otBylNklxZoDZce65eB6diixyrMdlQbe9Uv78V+5nnn/OBbz500i8psIkdesgOPX/Jef2b1tcXdO+9yW+Vztet+MNy0D63jckRs86UTeKrLEKzwGVXTgPS5iXI6mkTPedkFZStQFnI8Vy9TtvitoOG6tg2pDRKOjnEI4UkgG3aGQDiuzrCViBe2rYKuGSTth0lOKjqf6XfFM7e+0Dmq+4CJd4vPf9KAuxG6c7nt771xlJjuvUXrdi7WL76hpw17WRHBtE5jX/TsTMBVAMuz5Tl3RlaArWNS7MBVLuOb5nTthXdLqs+SbLJU6qSWQFJEDvtaYXiUtKX6ohf9uG7UZOLF2brHzrtvd+euuHr/7nnrOv/34JfWYCdQUbL9t36WXJh7979rXrzTTaOr9J75+0KQt24d0R5tbPy5DjFve1gVTZOlmDaTne4LU8cndKqlGT3mK3TlllmU1IHtWXb0KGFE5njd2iUVE74OH23HTeAe2TWNVEYvvbQMf6eNe++pWFcpxL8qvKvNMCdQbvV/I53fLLc33/ogTDK3KAL2HsV0E2CuuaATfWsHInAYeviRfshpLI8K/0jV5fjSeR8nMAM7apatYVAeDZQKqP2BK6ukCabeNKZoUU4meroXTYJrHS2EcUfCPzw+gNH+/c85/e+O+3G5DR/1fCsCHDHCc4pb3vb347ecuvhFSK0RQAAA4FJREFUT9OMr9Ar/6cF+xS45uxKtkkAkoCpopw7GwDnePGcguoo2MzKVM3VwSUFJ5En+lY6CCxJmpGh+m0eSjOklS4OWqp+QFv05xvGv+zgisz/Ou+93x1yY+BZlJ5VAe745es6s970jk8ebtB8vzz5PAXmTgXNfZuN5FSxSCEJRsfhwhYle4RMDFW1CXKPdEIgnTYvQckjCehM4NU2SupbughsCga9z9ppz+oXtKa9at60/+7L3//1A8+2wNJOz8oAt23DvVa94a2f2Gqnpl+Cja8XaNu2TaPzGRfpjqLDNn0Y8V0QO/KkLFGKrYKEwOKS00sDypHBVRsopXVoy6z7MNNU19usiV/VynPNc37/Gxv/T689/IrTszrAHd+8/ne+VHndb914azRdPV8G/674B7RlJ79WJQGyNgmao9uxURmB+LaNJVAdZgKf1KGtY4VRsgJlIddWAqmevrbaIaz541ypcu5F7/vmDy59x9fL0nzWZ/nrWW9jx0CrQFenjP1kPWqerdvpFxSAUa0yd9GZCZB4oq0ArTyUrEC5jY6Q45gOJBedyNKAqr51YOWgce0cN1Vb8dld3f1/d+76X8zPeK7HXwbI/l9GN7+wPqzbtt/49s8PTRreSSt8rgZwqwJTdSvTrVAFXIFBwU0CNIcWbyaIKY3Sz9dBddyXKFtVu/dEsbmsu6vx5gdr3zx4ln4SFc/ya5Tkn18ja9umavW6QFdZXN5iouarDNEbPWuf1GDcu+hMcJ36TMCT4NojZTOrlYSPS/q1R6pbrY3f6nn2pWZ6aONZb/te9Rf9M57r6pcB8skvo5v/nD7czfWl7/zi2Iif/XatVX+eJf5zrcjt6i35wVyrTYEjWZG4ZGce4lvxETisSFsbqu4eTYi/DQNzaU9x/k0Xv/vrI/+3f+TGsyz9Wge440u3bb/6vf809PjI7j+Lia5RkL6LtWO6JbfQcnR6ohVM2uCCipKV2OoHASa1K/w4DO21257e8SdXvutryXbMf4H0XyLAnTisX39HqBW9tb6w+mpt2Vcrtg8q0GUNsq6gu1+t3M+TkVaqgmobHrasVb7Bs/F13mTh+uf/zj8/9bZPPaJJ0Wnx1x9r7L/+g3jmCLR1N69515ce7urxrvAie5W10XpjzTeld682Y/cfJXxXAf9wHJlro1bm0sved9M9l67/fF3y/3L5/wMAAP//eLlttQAAAAZJREFUAwAivPMqlDdwBwAAAABJRU5ErkJggg==) center / contain no-repeat; font-size: 0; }
+.appbar .menu-btn { width: 38px; height: 38px; min-width: 38px; }
+.appbar-name {
+  margin: 0; text-align: center; font: 700 19px/1 var(--font-display); letter-spacing: 0.02em;
+}
+.menu-btn { justify-self: end; }
+.menu-btn svg { width: 22px; height: 22px; }
+/* variant A: hot band */
+.band-hot .appbar { background: var(--grad-hot); color: var(--ink); box-shadow: 0 6px 18px rgba(255, 122, 26, 0.25); }
+
+.band-hot .appbar .menu-btn { background: rgba(13, 15, 31, 0.14); border-color: rgba(13, 15, 31, 0.25); color: var(--ink); box-shadow: none; }
+/* variant B: dark band, orange name, gradient rule below */
+.band-dark .appbar { background: rgba(13, 15, 31, 0.96); border-bottom: 2px solid transparent; border-image: var(--grad-separator) 1; }
+.band-dark .appbar-name { background: var(--grad-hot); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Screen heading below the app bar */
+.screen-head { display: flex; align-items: center; gap: 8px; padding: 14px var(--gutter) 10px; }
+.screen-head h1 { margin: 0; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
+.screen-head .back { width: 36px; height: 36px; min-width: 36px; }
+
+/* Collection heading: name, then the pencil; a name too long for the row runs left like a ticker */
+.screen-head .marquee { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; overflow-wrap: normal; }
+.marquee > span { display: inline-block; }
+.marquee.is-long { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent); padding-left: 10px; margin-left: -10px; }
+.marquee.is-long > span { animation: ticker var(--ticker-time, 8s) linear infinite; }
+@keyframes ticker {
+  0%, 18% { transform: translateX(0); }        /* read the start */
+  82%, 100% { transform: translateX(calc(-1 * var(--ticker-shift))); } /* the end is visible, then start over */
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee.is-long > span { animation: none; }
+  .marquee.is-long { text-overflow: ellipsis; -webkit-mask-image: none; mask-image: none; }
+  .marquee.is-long > span { display: inline; }
+}
+.edit-btn { flex: none; width: 40px; height: 40px; min-width: 40px; }
+.edit-btn svg { width: 18px; height: 18px; }
+
+/* Menu: panel under the app bar, right-aligned */
+.menu-scrim { position: fixed; inset: 0; z-index: 26; background: rgba(5, 6, 14, 0.5); animation: fade-in 0.2s ease-out; }
+.menu {
+  position: fixed; z-index: 27; top: 64px; right: max(var(--gutter), calc(50% - var(--column) / 2 + var(--gutter)));
+  width: min(260px, calc(100% - 32px)); padding: 8px; margin: 0; list-style: none;
+  background: var(--deck-2); border: 1px solid var(--rim); border-radius: var(--r-md); box-shadow: var(--lift);
+  transform-origin: top right; animation: menu-in 0.18s ease-out;
+}
+@keyframes menu-in { from { opacity: 0; transform: scale(0.94); } }
+.menu a {
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 12px;
+  color: var(--text); font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.menu a svg { color: var(--muted); }
+.menu a[aria-current='page'] { background: var(--raised); }
+.menu a[aria-current='page'] svg { color: var(--orange); }
+.menu a:hover { background: var(--raised); }
+
+/* Action bar: the main button and the screen's own actions */
+.actionbar {
+  position: fixed; bottom: 0; left: 50%; z-index: 20; transform: translateX(-50%);
+  width: 100%; max-width: var(--column);
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.act {
+  display: grid; justify-items: center; gap: 3px; min-height: 52px; padding: 6px 0;
+  border: 0; background: none; color: var(--muted); font: 600 11px var(--font-body); cursor: pointer;
+}
+.act:hover { color: var(--text); }
+.act.is-active svg { color: var(--orange); }
+.act.is-active span::after { content: ' •'; color: var(--orange); }
+.act.at-2 { grid-column: 2; }
+.act.at-4 { grid-column: 4; }
+.main-btn { grid-column: 3; grid-row: 1; justify-self: center; border: 0; cursor: pointer; }
+.main-btn:disabled { background: var(--raised); color: var(--placeholder); cursor: not-allowed; }
+.main-btn:disabled::after { display: none; }
+@media (min-width: 768px) { .actionbar { max-width: 560px; border-radius: var(--r-lg) var(--r-lg) 0 0; } }
+.app.no-actions { padding-bottom: 32px; }
+
+/* fold of "Not yet marked" (same look as "Not interested") */
+.rows[hidden] { display: none; }
+
+/* swipe mock */
+.proto-swipe { display: grid; gap: 16px; justify-items: center; padding-top: 8px; }
+.proto-swipecard { width: 100%; max-width: 360px; aspect-ratio: 3 / 4; display: grid; place-items: center; align-content: center; gap: 8px;
+  border-radius: var(--r-lg); background: var(--deck-2); border: 1px solid var(--rim); box-shadow: var(--lift); text-align: center; padding: 24px; }
+.proto-swipecard .cover-hex { width: 120px; height: 134px; }
+.proto-note { margin: 0 0 12px; font-size: 12px; color: var(--placeholder); }
+@media (prefers-reduced-motion: reduce) { .menu, .menu-scrim { animation: none; } }
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <label for="start">Start on</label>
+  <select id="start">
+    <option value="collections">Collections</option>
+    <option value="collection">A collection (Essen 2026)</option>
+    <option value="long">A collection with a long name</option>
+    <option value="lists">BGG lists</option>
+    <option value="search">Search</option>
+    <option value="config">Config</option>
+    <option value="empty">New person: nothing yet</option>
+  </select>
+  <label for="band">App bar</label>
+  <select id="band">
+    <option value="hot">A · orange band</option>
+    <option value="dark">B · dark band, orange name</option>
+  </select>
+</div>
+<div id="root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const svg = (body, w = 2) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`
+const ICON = {
+  collections: svg('<path d="M12 2 20 6.5v11L12 22l-8-4.5v-11z"/><path d="M12 22V12M20 6.5 12 12 4 6.5"/>'),
+  lists: svg('<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>'),
+  plus: svg('<path d="M12 5v14M5 12h14"/>', 3),
+  plusThin: svg('<path d="M12 5v14M5 12h14"/>'),
+  heart: svg('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>', 2.6),
+  search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+  searchBold: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', 3),
+  config: svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>'),
+  burger: svg('<path d="M4 7h16M4 12h16M4 17h16"/>', 2.4),
+  filter: svg('<path d="M3 5h18l-7 8v5l-4 2v-7z"/>'),
+  pencil: svg('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
+  more: svg('<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>', 2.4),
+}
+const MARK = { must_have: ['Must Have', '⭐'], interested: ['Interested', '👀'], unsure: ['Unsure', '🤔'], poop: ['Poop', '💩'], new: ['Not yet marked', '⬡'], skip: ['Not interested', '🛑'] }
+// F003: in a collection, "Not yet marked" sits directly above "Not interested"
+const GROUP_ORDER = ['must_have', 'interested', 'unsure', 'poop', 'new', 'skip']
+
+const START = () => ({
+  collections: [
+    { id: 'essen', name: 'Essen 2026', games: [
+      ['Kalypso', 'Inside Up Games', '€60 · 1–4 players · Booth 3-R400', 'new'],
+      ['Arcs', 'Leder Games', '€70 · 1–4 players · Booth 6-B114', 'new'],
+      ['Faraway', 'Catch Up Games', '€22 · 2–6 players · Booth 1-H112', 'new'],
+      ['Harmonies', 'Libellud', '€32 · 1–4 players · Booth 2-A101', 'must_have'],
+      ['Sky Team', 'Le Scorpion Masqué', '€25 · 2 players · Booth 4-C210', 'must_have'],
+      ['Ark Nova: Marine Worlds', 'Feuerland', '€35 · 1–4 players · Booth 3-J105', 'interested'],
+      ['Castle Combo', 'Catch Up Games', '€20 · 2–5 players · Booth 1-H112', 'unsure'],
+      ['Endless Winter', 'Fantasia Games', '€80 · 1–4 players · Booth 5-D301', 'poop'],
+      ['Twilight Inscription', 'Fantasy Flight', '€75 · 1–8 players · Booth 3-A200', 'skip'],
+    ].map(([name, publisher, info, mark]) => ({ name, publisher, info, mark })) },
+    { id: 'wish', name: 'Wishlist', games: [] },
+    { id: 'long', name: 'Saturday at SPIEL with the whole family and the neighbours', games: [
+      { name: 'Faraway', publisher: 'Catch Up Games', info: '€22 · 2–6 players · Booth 1-H112', mark: 'interested' },
+      { name: 'Harmonies', publisher: 'Libellud', info: '€32 · 1–4 players · Booth 2-A101', mark: 'new' },
+    ] },
+  ],
+  lists: [{ id: 'p93', title: 'SPIEL Essen 2026 Preview', sub: '1,370 games · loaded' }],
+  route: { name: 'collections' },
+  menu: false, sheet: null, foldNew: true, foldSkip: false, filterOn: false,
+})
+
+let state
+const $ = s => document.querySelector(s)
+const root = $('#root')
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const initials = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('')
+const cover = (name, size = 56) => `<span class="cover" style="width:${size}px;height:${Math.round(size * 1.12)}px" aria-hidden="true"><span class="cover-hex hex"><span class="cover-initials">${esc(initials(name))}</span></span></span>`
+
+function toast(text) {
+  const t = $('#toast')
+  t.innerHTML = '<i class="hex" aria-hidden="true"></i>' + esc(text)
+  t.classList.add('show')
+  clearTimeout(toast.timer)
+  toast.timer = setTimeout(() => t.classList.remove('show'), 2600)
+}
+
+/* ---------- app bar, heading, menu ---------- */
+const PLACES = [['collections', 'Collections', ICON.collections], ['lists', 'BGG lists', ICON.lists], ['search', 'Search', ICON.search], ['config', 'Config', ICON.config]]
+const place = r => (r.name === 'collection' || r.name === 'swipe' ? 'collections' : r.name === 'list' ? 'lists' : r.name)
+
+const appbar = () => `
+  <header class="appbar">
+    <span class="logo hex" aria-hidden="true">B</span>
+    <p class="appbar-name">Board-a-licious</p>
+    <button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="${state.menu}">${ICON.burger}</button>
+  </header>`
+
+const heading = (title, back, edit) => `
+  <div class="screen-head">
+    ${back ? `<button type="button" class="icon-btn back" data-go="${back}" aria-label="Back">‹</button>` : ''}
+    <h1 class="${edit ? 'marquee' : ''}" title="${esc(title)}"><span>${esc(title)}</span></h1>
+    ${edit ? `<button type="button" class="icon-btn edit-btn" id="edit" aria-label="Edit ${esc(title)}" aria-haspopup="dialog">${ICON.pencil}</button>` : ''}
+  </div>`
+
+const menu = () => !state.menu ? '' : `
+  <div class="menu-scrim" id="menu-scrim"></div>
+  <ul class="menu" role="menu" aria-label="Menu">
+    ${PLACES.map(([key, label, icon]) => `<li role="none"><a role="menuitem" data-go="${key}" ${place(state.route) === key ? 'aria-current="page"' : ''}>${icon}<span>${label}</span></a></li>`).join('')}
+  </ul>`
+
+/* ---------- action bar: main button + the screen's own actions ---------- */
+const act = (id, label, icon, extra = '') => `<button type="button" class="act ${extra}" id="${id}">${icon}<span>${label}</span></button>`
+const mainBtn = (icon, label, disabled) => `<button type="button" class="tab-add hex hex-btn main-btn" id="main" aria-label="${label}" ${disabled ? 'disabled aria-disabled="true"' : ''}>${icon}</button>`
+
+function actionbar() {
+  switch (state.route.name) {
+    case 'collections': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.plus, 'Create a collection')}</nav>`
+    case 'lists': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.plus, 'Load a BGG list')}</nav>`
+    case 'search': return `<nav class="actionbar" aria-label="Actions">${mainBtn(ICON.searchBold, 'Search (not available yet)', true)}</nav>`
+    case 'collection': return `<nav class="actionbar" aria-label="Actions">
+        ${act('add-game', 'Add game', ICON.plusThin, 'at-2')}
+        ${mainBtn(ICON.heart, 'BG-Tinder: swipe a BGG list into this collection')}
+        ${act('filter', 'Filter', ICON.filter, 'at-4' + (state.filterOn ? ' is-active' : ''))}
+      </nav>`
+    default: return '' // config, a single list, swipe: no action bar
+  }
+}
+
+/* ---------- screens ---------- */
+function collectionsScreen() {
+  const cs = state.collections
+  if (cs.length === 0) return heading('Collections') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No collections yet</h2><p>Tap <b>+</b> below to create your first one, e.g. for SPIEL 2026.</p></div></main>`
+  return heading('Collections') + `<main class="screen">
+    <p class="lead">Each collection is your own. Games keep booth, price and edition from lists that have them, such as the SPIEL preview.</p>
+    <div class="cards">${cs.map(c => {
+      const n = k => c.games.filter(g => g.mark === k).length
+      const fresh = n('new')
+      return `<a class="card collection-card" data-open="${c.id}">
+        <span class="cluster" aria-hidden="true"><i class="hex"></i><i class="hex"></i><i class="hex"></i></span>
+        <h2 class="card-title"><span class="card-name">${esc(c.name)}</span></h2>
+        <p class="card-sub">${c.games.length === 0 ? 'No games yet' : fresh ? `${fresh} not marked` : 'All marked'}</p>
+        <p class="counts"><span>⭐ ${n('must_have')}</span><span>👀 ${n('interested')}</span><span>🤔 ${n('unsure')}</span><span>💩 ${n('poop')}</span><span>✅ 0</span><span>🛑 ${n('skip')}</span></p>
+      </a>`
+    }).join('')}</div></main>`
+}
+
+const row = g => `<button type="button" class="row${g.fresh ? ' is-just-added' : ''}">${cover(g.name)}
+  <span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${esc(g.publisher)}</span><span class="row-info"><span>${esc(g.info)}</span></span></span>
+  ${g.mark !== 'new' && g.mark !== 'skip' ? `<span class="pill mark-pill" data-mark="${g.mark}" aria-hidden="true">${MARK[g.mark][1]}</span>` : ''}</button>`
+
+function collectionScreen() {
+  const c = state.collections.find(x => x.id === state.route.id)
+  if (c.games.length === 0) return heading(c.name, null, true) + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No games in ${esc(c.name)} yet</h2>
+    <p>Tap the <b>heart</b> below to go through a BGG list and swipe the games you care about into it, or <b>Add game</b> to add a single game by its BoardGameGeek link.</p></div></main>`
+  const shown = state.filterOn ? c.games.filter(g => g.mark === 'must_have') : c.games
+  const groups = GROUP_ORDER.map(k => [k, shown.filter(g => g.mark === k)]).filter(([, gs]) => gs.length)
+  return heading(c.name, null, true) + `<main class="screen">
+    ${state.filterOn ? `<button type="button" class="filter-summary" id="filter-summary">⭐ Must Have · ${shown.length} games</button>` : ''}
+    <hr class="separator" />
+    ${groups.map(([k, gs], i) => {
+      const folds = k === 'new' || k === 'skip'
+      // the marked games and the rest (Not yet marked, Not interested) are two parts, split by the line
+      const split = folds && i > 0 && !(groups[i - 1][0] === 'new' || groups[i - 1][0] === 'skip')
+      const open = k === 'new' ? state.foldNew : state.foldSkip
+      const title = `<i class="hex" aria-hidden="true"></i><span>${MARK[k][0]}</span><b class="group-count">${gs.length}</b>`
+      return `${split ? '<hr class="separator" />' : ''}<section class="group"><h2 class="group-title" data-mark="${k}">${folds ? `<button type="button" class="fold" data-fold="${k}" aria-expanded="${open}">${title}<span class="chev" aria-hidden="true">›</span></button>` : title}</h2>
+        <ul class="rows" ${folds && !open ? 'hidden' : ''}>${gs.map(g => `<li>${row(g)}</li>`).join('')}</ul></section>`
+    }).join('')}
+  </main>`
+}
+
+function listsScreen() {
+  if (state.lists.length === 0) return heading('BGG lists') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>No BGG list loaded yet</h2><p>Tap <b>+</b> below and paste the link of a BoardGameGeek preview or geeklist, for example the SPIEL preview: <span class="example">boardgamegeek.com/geekpreview/93</span></p></div></main>`
+  return heading('BGG lists') + `<main class="screen"><p class="lead">Loaded lists stay on this phone for browsing, also offline. Open one to put its games into your collections.</p>
+    <div class="cards">${state.lists.map(l => `<a class="card list-card" data-list="${l.id}"><span class="cluster" aria-hidden="true"><i class="hex"></i><i class="hex"></i><i class="hex"></i></span><h2 class="card-title"><span class="card-name">${esc(l.title)}</span></h2><p class="card-sub">${esc(l.sub)}</p></a>`).join('')}</div></main>`
+}
+
+function listScreen() {
+  const l = state.lists.find(x => x.id === state.route.id)
+  const games = [['Kalypso', 'Inside Up Games', '€60 · 1–4 players · Booth 3-R400'], ['Cascadia', 'Kosmos', '€35 · 1–4 players · Booth 1-C110'], ['Harmonies', 'Libellud', '€32 · 1–4 players · Booth 2-A101']]
+  return heading(l.title, 'lists') + `<main class="screen"><p class="lead">${esc(l.sub)}</p><hr class="separator" />
+    <ul class="rows">${games.map(([name, publisher, info]) => `<li class="list-item">${row({ name, publisher, info, mark: 'new' })}<button type="button" class="add-mini hex-btn" aria-label="Add ${name}"><span class="hex">+</span></button></li>`).join('')}</ul>
+    <p class="proto-note">A single list has no main button (spec FR-012).</p></main>`
+}
+
+function swipeScreen() {
+  const c = state.collections.find(x => x.id === state.route.id)
+  return heading(`Add to ${c.name}`, 'collection') + `<main class="screen proto-swipe">
+    <div class="proto-swipecard">${cover('Cascadia', 120)}<h2 class="swipe-name">Cascadia</h2><p class="swipe-year">2021 · Kosmos</p></div>
+    <div class="swipe-buttons"><button type="button" class="swipe-btn no hex-btn" id="nope" aria-label="Not interested">✕</button><button type="button" class="swipe-btn yes hex-btn" id="yes" aria-label="Add to collection">✓</button></div>
+    <p class="proto-note">Swipe mode keeps its own buttons; no main button here.</p></main>`
+}
+
+const searchScreen = () => heading('Search') + `<main class="screen"><div class="empty"><div class="hex"></div><h2>Search comes later</h2><p>Finding games across your collections and lists is planned. The magnifying glass below stays off until then.</p></div></main>`
+
+const configScreen = () => heading('Config') + `<main class="screen config">
+  <h2 class="section-title">Introduction</h2><p class="lead">The three cards from the first start, once more.</p><button type="button" class="btn btn-block">Show the introduction</button>
+  <hr class="separator" />
+  <h2 class="section-title">Share and backup</h2><p class="lead">Send a collection to a chat, or save all collections to a file and load them back.</p><button type="button" class="btn btn-primary btn-block">Share and backup</button>
+  <hr class="separator" />
+  <h2 class="section-title">Sound</h2><p class="muted">… (rest of Config unchanged)</p>
+  <p class="proto-note">Config has no action bar: the whole height is content.</p></main>`
+
+/* ---------- sheets ---------- */
+const sheet = (title, inner) => `<div class="scrim" id="scrim"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="sheet-grip" aria-hidden="true"></div><h2 id="sheet-title" class="sheet-title">${esc(title)}</h2>${inner}</div>`
+const SHEETS = {
+  newCollection: () => sheet('New collection', `<form class="form" id="f"><div><label class="label" for="cname">Name</label><div class="field"><input id="cname" placeholder="e.g. SPIEL 2026" autocomplete="off" /></div></div>
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary">Create collection</button></div></form>`),
+  loadList: () => sheet('Load a BGG list', `<form class="form" id="f"><div><label class="label" for="link">Link to a BoardGameGeek preview or geeklist</label><div class="field"><input id="link" placeholder="boardgamegeek.com/geekpreview/93" autocomplete="off" /></div><p class="hint" id="hint">For example the SPIEL preview: boardgamegeek.com/geekpreview/93</p></div>
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary" id="load" disabled>Load list</button></div></form>`),
+  pickList: () => sheet('❤️ BG-Tinder ❤️', `<p class="lead pick-intro">Which list do you want to go through? Games already in ${esc(state.collections.find(c => c.id === state.route.id).name)} are skipped.</p>
+    ${state.lists.length ? `<div class="cards">${state.lists.map(l => `<a class="card list-card" data-swipe="${l.id}"><h2 class="card-title"><span class="card-name">${esc(l.title)}</span></h2><p class="card-sub">${esc(l.sub)}</p></a>`).join('')}</div>`
+      : `<p class="hint">No BGG list loaded yet.</p><div class="sheet-actions"><button type="button" class="btn btn-primary btn-block" id="to-load">Load a BGG list</button></div>`}`),
+  addGame: () => sheet('Add game', `<p class="lead">For games that are not on any list.</p><form class="form" id="f"><div><label class="label" for="glink">BoardGameGeek link</label><div class="field"><input id="glink" placeholder="boardgamegeek.com/boardgame/295947/cascadia" autocomplete="off" /></div></div>
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn-primary">Add to collection</button></div></form>`),
+  filter: () => sheet('Filter and group', `<p class="lead">(The existing filter sheet, unchanged.)</p><div class="sheet-actions sheet-actions-row"><button type="button" class="btn" id="filter-all">Show all</button><button type="button" class="btn btn-primary" id="filter-must">Only Must Have</button></div>`),
+  edit: () => sheet('Edit collection', `<form class="form" id="f"><div><label class="label" for="ename">Name</label><div class="field"><input id="ename" maxlength="60" value="${esc(state.collections.find(c => c.id === state.route.id).name)}" autocomplete="off" /></div></div>
+    <button type="submit" class="btn btn-primary btn-block">Save name</button></form>
+    <div class="sheet-actions"><button type="button" class="btn btn-block btn-danger" id="delete">Delete collection…</button><button type="button" class="btn btn-block" data-close>Cancel</button></div>`),
+}
+
+/* ---------- render and events ---------- */
+const SCREENS = { collections: collectionsScreen, collection: collectionScreen, lists: listsScreen, list: listScreen, swipe: swipeScreen, search: searchScreen, config: configScreen }
+
+function render() {
+  const bar = actionbar()
+  root.innerHTML = `<div class="app band-${$('#band').value}${bar ? '' : ' no-actions'}">${appbar()}${SCREENS[state.route.name]()}${bar}</div>${menu()}${state.sheet ? SHEETS[state.sheet]() : ''}`
+  wire()
+  // a collection name wider than its room runs left until its end shows, then starts over
+  const h = root.querySelector('.marquee')
+  if (h) {
+    const shift = h.firstElementChild.scrollWidth - h.clientWidth + 24
+    h.classList.toggle('is-long', shift > 24)
+    h.style.setProperty('--ticker-shift', shift + 'px')
+    h.style.setProperty('--ticker-time', Math.max(4, shift / 50 / 0.64) + 's') // ~50 px/s while moving
+  }
+  // the menu hangs just below the app bar
+  const m = root.querySelector('.menu')
+  if (m) m.style.top = root.querySelector('.appbar').getBoundingClientRect().bottom + 6 + 'px'
+}
+const go = route => { state.route = route; state.menu = false; state.sheet = null; window.scrollTo(0, 0); render() }
+const openSheet = name => { state.sheet = name; render(); setTimeout(() => root.querySelector('.sheet input')?.focus(), 50) }
+const close = () => { state.sheet = null; render() }
+
+function wire() {
+  const on = (sel, fn) => root.querySelectorAll(sel).forEach(el => (el.onclick = fn))
+  on('#menu-btn', () => { state.menu = !state.menu; render() })
+  on('#menu-scrim', () => { state.menu = false; render() })
+  on('[data-go]', e => {
+    const to = e.currentTarget.dataset.go
+    go(to === 'collection' ? { name: 'collection', id: state.route.id } : { name: to })
+  })
+  on('[data-open]', e => go({ name: 'collection', id: e.currentTarget.dataset.open }))
+  on('[data-list]', e => go({ name: 'list', id: e.currentTarget.dataset.list }))
+  on('[data-fold]', e => { const k = e.currentTarget.dataset.fold; if (k === 'new') state.foldNew = !state.foldNew; else state.foldSkip = !state.foldSkip; render() })
+  on('#scrim', close); on('[data-close]', close)
+  on('#main', () => openSheet({ collections: 'newCollection', lists: 'loadList', collection: 'pickList' }[state.route.name]))
+  on('#add-game', () => openSheet('addGame'))
+  on('#filter', () => openSheet('filter')); on('#filter-summary', () => openSheet('filter'))
+  on('#edit', () => openSheet('edit'))
+  on('#delete', () => { state.collections = state.collections.filter(c => c.id !== state.route.id); go({ name: 'collections' }); toast('Deleted (after the existing confirmation)') })
+  on('#filter-all', () => { state.filterOn = false; close() })
+  on('#filter-must', () => { state.filterOn = true; close() })
+  on('#to-load', () => { go({ name: 'lists' }); openSheet('loadList') })
+  on('[data-swipe]', () => go({ name: 'swipe', id: state.route.id }))
+  on('#yes', () => {
+    const c = state.collections.find(x => x.id === state.route.id)
+    if (!c.games.some(g => g.name === 'Cascadia')) c.games.push({ name: 'Cascadia', publisher: 'Kosmos', info: '€35 · 1–4 players · Booth 1-C110', mark: 'new' })
+    toast(`Added Cascadia to ${c.name}`)
+  })
+  on('#nope', () => toast('Cascadia: Not interested'))
+  const f = root.querySelector('#f')
+  if (!f) return
+  const link = root.querySelector('#link')
+  if (link) link.oninput = () => {
+    const ok = /boardgamegeek\.com\/(geekpreview|geeklist)\/\d+/.test(link.value)
+    const hint = root.querySelector('#hint')
+    hint.className = link.value && !ok ? 'hint error' : 'hint'
+    hint.textContent = !link.value ? 'For example the SPIEL preview: boardgamegeek.com/geekpreview/93' : ok ? (link.value.includes('preview') ? 'Preview: games with booth, price, publisher and edition.' : 'Geeklist: games without booth and price.') : 'Paste a link to a BoardGameGeek preview or geeklist, like boardgamegeek.com/geekpreview/93.'
+    root.querySelector('#load').disabled = !ok
+  }
+  f.onsubmit = e => {
+    e.preventDefault()
+    if (state.sheet === 'newCollection') {
+      const name = root.querySelector('#cname').value.trim() || 'SPIEL 2026'
+      const id = 'c' + Date.now()
+      state.collections.push({ id, name, games: [] })
+      go({ name: 'collection', id }); toast(`Created ${name}`)
+    } else if (state.sheet === 'loadList') {
+      const id = 'l' + Date.now()
+      state.lists.unshift({ id, title: 'SPIEL Essen 2026 Preview', sub: 'Loading 1 of 138 pages' })
+      go({ name: 'list', id }); toast('Loading SPIEL Essen 2026 Preview')
+    } else if (state.sheet === 'edit') {
+      const c = state.collections.find(x => x.id === state.route.id)
+      const name = root.querySelector('#ename').value.trim()
+      if (name) { c.name = name; close(); toast(`Renamed to ${name}`) }
+    } else if (state.sheet === 'addGame') {
+      const c = state.collections.find(x => x.id === state.route.id)
+      c.games.forEach(g => (g.fresh = false))
+      c.games.push({ name: 'Cascadia', publisher: 'Kosmos', info: '€35 · 1–4 players · Booth 1-C110', mark: 'new', fresh: true })
+      state.foldNew = true; close(); toast(`Added Cascadia to ${c.name}`)
+    }
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (state.menu || state.sheet)) { state.menu = false; state.sheet = null; render() } })
+
+function start() {
+  state = START()
+  const s = $('#start').value
+  if (s === 'empty') { state.collections = []; state.lists = [] }
+  state.route = s === 'long' ? { name: 'collection', id: 'long' } : s === 'collection' ? { name: 'collection', id: 'essen' } : { name: s === 'empty' ? 'collections' : s }
+  render()
+}
+$('#start').onchange = start
+$('#band').onchange = render
+start()
+</script>
+</body>
+</html>

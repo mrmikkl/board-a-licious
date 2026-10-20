@@ -4,8 +4,7 @@ import { expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 async function createCollection(page: Page, name: string) {
   await page.goto('/#/collections')
-  await page.getByRole('link', { name: /add a collection, bgg list or game/i }).click()
-  await page.getByRole('button', { name: /^collection/i }).click()
+  await page.goto('/#/collections?new')
   await page.getByLabel('Name').fill(name)
   await page.getByRole('button', { name: 'Create collection' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
@@ -63,8 +62,8 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   await addMustHave(page, name, 'https://boardgamegeek.com/boardgame/342942/ark-nova', 'Ark Nova')
   await expect(sheet.getByText('The description is filled in from BoardGameGeek later.')).toBeVisible()
   await page.keyboard.press('Escape')
-  // filter and grouping hide behind the filter icon; nothing narrowed, so no summary line
-  const icon = page.getByRole('button', { name: /^filter and group/i })
+  // filter and grouping hide behind Filter in the action bar (F003); nothing narrowed, so no summary line
+  const icon = page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: /^filter/i })
   const summary = page.locator('.filter-summary')
   await expect(summary).toHaveCount(0)
   await icon.click()
@@ -80,7 +79,7 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   await expect(panel.getByRole('group', { name: 'Price' }).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click()
   await expect(panel).toBeHidden()
-  await expect(icon).toHaveAccessibleName('Filter and group (active)')
+  await expect(icon).toHaveAccessibleName('Filter (active)')
   await expect(summary).toContainText('⭐ Must Have, not bought')
   await expect(summary).toContainText('1 game')
   await expect(page.getByRole('button', { name: /cascadia/i })).toBeHidden()

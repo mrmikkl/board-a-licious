@@ -137,8 +137,8 @@ test('US5: export a backup, import it back over a changed mark, restore a delete
   await page.goto(`/#/collections/${id}`)
   await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i })).toBeVisible()
 
-  // delete the collection, import: it is back without a question
-  await page.getByRole('button', { name: 'Collection options' }).click()
+  // delete the collection (F003: behind the pencil after its name), import: it is back without a question
+  await page.getByRole('button', { name: `Edit ${name}` }).click()
   await page.getByRole('button', { name: 'Delete collection…' }).click()
   await page.getByRole('button', { name: 'Delete collection' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()

@@ -133,7 +133,7 @@ export function Share() {
         ) : (
           <>
             <p className="lead">No collections to share yet. Create one, or import a backup below.</p>
-            <a className="btn btn-primary btn-block" href={href({ name: 'add', what: 'collection' })}>
+            <a className="btn btn-primary btn-block" href={href({ name: 'collections', create: true })}>
               Create a collection
             </a>
           </>

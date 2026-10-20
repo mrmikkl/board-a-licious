@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { createCollection as newCollection, expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 /** F002: sharing a BoardGameGeek page into the app (contracts/share-target.md). */
 const CASCADIA = 'https://boardgamegeek.com/boardgame/295947/cascadia'
@@ -28,10 +28,7 @@ test('a share lands on #/shared once; Back and reload do not share again (T004)'
 const BLOG = 'https://boardgamegeek.com/blog/1/blogpost/171234/spiel-essen-2026-preview'
 
 async function createCollection(page: Page, name: string): Promise<string> {
-  await page.goto('/#/add/collection')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+  await newCollection(page, name)
   return decodeURIComponent(new URL(page.url()).hash.replace('#/collections/', ''))
 }
 
@@ -143,8 +140,9 @@ test('"Add game by link" opens Add game with an empty link (T013)', async ({ pag
   const sheet = page.getByRole('dialog', { name: 'Not a BoardGameGeek game' })
   await expect(sheet.getByText('https://example.com/not-bgg')).toBeVisible()
   await sheet.getByRole('button', { name: 'Add game by link' }).click()
-  await expect(page).toHaveURL(/#\/add\/game$/)
-  await expect(page.getByLabel(/boardgamegeek link/i)).toHaveValue('')
+  // F003: the collection behind opens with its Add game sheet (contracts/navigation.md)
+  await expect(page).toHaveURL(new RegExp(`#/collections/${id}\\?add=game$`))
+  await expect(page.getByRole('dialog', { name: 'Add game' }).getByLabel(/boardgamegeek link/i)).toHaveValue('')
   // Back from Add game goes to the collection, not to the share
   await page.goBack()
   await expect(page).toHaveURL(new RegExp(`#/collections/${id}$`))

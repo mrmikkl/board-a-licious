@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, unique } from './helpers.ts'
+import { createCollection, expectAccessible, mainButton, unique } from './helpers.ts'
 
 const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
@@ -16,12 +16,10 @@ async function fakePreview(page: Page) {
 test('a collection grouped by booth shows the fair halls, and remembers the choice', async ({ page }) => {
   await fakePreview(page)
   const name = unique('Halls')
-  await page.goto('/#/add/collection')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await createCollection(page, name)
   // swipe three preview games in (they keep their booths)
-  await page.getByRole('button', { name: /^add by list$/i }).click()
-  const picker = page.getByRole('dialog', { name: /^add by list$/i })
+  await mainButton(page).click()
+  const picker = page.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
   await picker.getByRole('button', { name: 'Add new list' }).click()
   await picker.getByLabel(/bgg list link/i).fill('https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview')
   await picker.getByRole('button', { name: 'Load list' }).click()
@@ -33,7 +31,7 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
   await page.goto('/#/collections')
   await page.getByRole('link', { name: new RegExp(name) }).click()
 
-  await page.getByRole('button', { name: /^filter and group/i }).click()
+  await page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: /^filter/i }).click()
   const groupBy = page.getByRole('dialog').getByLabel('Group by')
   await expect(groupBy).toHaveValue('mark')
   await groupBy.selectOption('booth')
@@ -44,7 +42,7 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
   await expectAccessible(page)
 
   await page.reload()
-  await page.getByRole('button', { name: /^filter and group/i }).click()
+  await page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: /^filter/i }).click()
   await expect(page.getByRole('dialog').getByLabel('Group by')).toHaveValue('booth')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('region', { name: /^hall \d+/i }).first()).toBeVisible()

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, unique } from './helpers.ts'
+import { createCollection, expectAccessible, mainButton, unique } from './helpers.ts'
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
@@ -16,14 +16,11 @@ async function fakePreview(page: Page) {
   })
 }
 
-test('Add by list and Add game open as sheets over the collection', async ({ page }) => {
+test('BG-Tinder and Add game open as sheets over the collection', async ({ page }) => {
   await fakePreview(page)
-  await page.goto('/#/add/collection')
   const name = unique('Sheets')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await createCollection(page, name)
   const title = page.getByRole('heading', { level: 1, name })
-  await expect(title).toBeVisible()
 
   // Add game: description, link, Cancel leaves the collection as it was
   await page.getByRole('button', { name: /^add game$/i }).click()
@@ -35,9 +32,9 @@ test('Add by list and Add game open as sheets over the collection', async ({ pag
   await expect(addGame).toHaveCount(0)
   await expect(title).toBeVisible()
 
-  // Add by list ↳ Add new list ↳ Load list goes to swiping that list
-  await page.getByRole('button', { name: /^add by list$/i }).click()
-  const picker = page.getByRole('dialog', { name: /^add by list$/i })
+  // ♥ BG-Tinder ↳ Add new list ↳ Load list goes to swiping that list
+  await mainButton(page).click()
+  const picker = page.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
   await expect(title).toBeVisible()
   await picker.getByRole('button', { name: 'Add new list' }).click()
   const load = picker.getByRole('button', { name: 'Load list' })
@@ -48,7 +45,7 @@ test('Add by list and Add game open as sheets over the collection', async ({ pag
 
   // back on the collection the list is there to select: highlighted when chosen, then Select
   await page.goto(page.url().replace(/\/swipe\/.*$/, ''))
-  await page.getByRole('button', { name: /^add by list$/i }).click()
+  await mainButton(page).click()
   await expect(picker.getByRole('button', { name: 'Select list' })).toHaveAttribute('aria-pressed', 'true')
   const select = picker.getByRole('button', { name: 'Select', exact: true })
   await expect(select).toBeDisabled()

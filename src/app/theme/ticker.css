@@ -1,0 +1,48 @@
+/* Ticker for headings too long for their row (docs/design.md v2.0.0 "Ticker"); F003 tasks T024 */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.ticker > span {
+  display: inline-block;
+}
+/* soft fades at both edges; the left padding keeps the first letter clear of the fade */
+.ticker.is-long {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  padding-left: 10px;
+  margin-left: -10px;
+}
+.ticker.is-long > span {
+  animation: ticker var(--ticker-time, 8s) linear infinite;
+}
+@keyframes ticker {
+  /* read the start */
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  /* the end is visible, then start over */
+  82%,
+  100% {
+    transform: translateX(calc(-1 * var(--ticker-shift)));
+  }
+}
+/* reduced motion: the text stands still and ends in "…" */
+@media (prefers-reduced-motion: reduce) {
+  .ticker {
+    text-overflow: ellipsis;
+  }
+  .ticker.is-long {
+    -webkit-mask-image: none;
+    mask-image: none;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  .ticker.is-long > span {
+    display: inline;
+    animation: none;
+  }
+}

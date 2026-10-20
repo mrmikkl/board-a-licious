@@ -2,6 +2,13 @@ export type ListKind = 'preview' | 'geeklist'
 
 export type ListRef = { kind: ListKind; id: number }
 
+/** The list most people at the fair start with; suggested in the link fields until it is on the device. */
+export const SPIEL_PREVIEW_LINK = 'https://boardgamegeek.com/geekpreview/93/spiel-essen-2026'
+
+export function suggestSpielPreview(lists: ListRef[]): boolean {
+  return !lists.some(l => l.kind === 'preview' && l.id === 93)
+}
+
 const LIST_LINK = /(?:^|[\s/])(?:www\.)?boardgamegeek\.com\/(geekpreview|geeklist)\/(\d+)(?:[/?#\s]|$)/i
 
 /** Kind and id from a pasted BGG list link (`/geekpreview/<id>…`, `/geeklist/<id>…`), else null. */

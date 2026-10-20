@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
+import { createCollection, loadList, mainButton } from './helpers.ts'
+
 const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
 async function fakePreview(page: Page) {
@@ -14,9 +16,7 @@ async function fakePreview(page: Page) {
 test('a BGG list loaded on the phone appears on the laptop', async ({ browser }) => {
   const phone = await browser.newPage()
   await fakePreview(phone)
-  await phone.goto('/#/add/list')
-  await phone.getByLabel(/bgg list link/i).fill('https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview')
-  await phone.getByRole('button', { name: 'Load list' }).click()
+  await loadList(phone, 'https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview')
   await expect(phone.getByRole('button', { name: /^kalypso/i })).toBeVisible()
   // the list reference reaches the server with the next sync
   await expect
@@ -24,7 +24,7 @@ test('a BGG list loaded on the phone appears on the laptop', async ({ browser })
     .toBe(true)
 
   // another device: a fresh browser context has its own IndexedDB
-  const laptopContext = await browser.newContext({ storageState: 'tests/e2e/intro-seen.json' })
+  const laptopContext = await browser.newContext({ storageState: test.info().project.use.storageState })
   const laptop = await laptopContext.newPage()
   await fakePreview(laptop)
   await laptop.goto('/#/lists')
@@ -33,11 +33,9 @@ test('a BGG list loaded on the phone appears on the laptop', async ({ browser })
   await expect(card).toContainText(/loaded on another device/i)
 
   // a new collection can swipe it right away: not "seen every game", it loads when selected
-  await laptop.goto('/#/add/collection')
-  await laptop.getByLabel('Name').fill(`Laptop ${Date.now()}`)
-  await laptop.getByRole('button', { name: 'Create collection' }).click()
-  await laptop.getByRole('button', { name: /^add by list$/i }).click()
-  const picker = laptop.getByRole('dialog', { name: /^add by list$/i })
+  await createCollection(laptop, `Laptop ${Date.now()}`)
+  await mainButton(laptop).click()
+  const picker = laptop.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
   const pick = picker.locator('.pick', { hasText: 'SPIEL Essen 2026 Preview' })
   await expect(pick).toBeEnabled()
   await expect(pick).toContainText('Its games load when you select it.')

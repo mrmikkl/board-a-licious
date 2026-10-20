@@ -1,20 +1,19 @@
 import { expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { expectAccessible, fakeBgg, mainButton, unique } from './helpers.ts'
 
 test('US1: create a collection, add a game by link, mark it, reload', async ({ page }) => {
   await fakeBgg(page)
   await page.goto('/#/collections')
   const name = unique('Essen 2026')
 
-  await page.getByRole('link', { name: /add a collection, bgg list or game/i }).click()
-  await page.getByRole('button', { name: /^collection/i }).click()
+  await page.goto('/#/collections?new')
   await page.getByLabel('Name').fill(name)
   await expect(page.getByRole('switch', { name: /essen collection/i })).toHaveCount(0)
   await page.getByRole('button', { name: 'Create collection' }).click()
 
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-  await expect(page.getByRole('button', { name: /^add by list$/i })).toBeVisible()
+  await expect(mainButton(page)).toHaveAccessibleName('BG-Tinder: swipe a BGG list into this collection')
   await expectAccessible(page)
 
   await page.getByRole('button', { name: /^add game$/i }).click()

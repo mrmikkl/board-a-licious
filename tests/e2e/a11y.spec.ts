@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, type TestInfo, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { createCollection, expectAccessible, fakeBgg, mainButton, openMenu, unique } from './helpers.ts'
 
 const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
@@ -66,21 +66,31 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
   await check(page, testInfo)
 
-  await page.goto('/#/add')
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  await check(page, testInfo)
-  for (const what of ['collection', 'game', 'list']) {
-    await page.goto(`/#/add/${what}`)
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  // F003: the app bar's menu, open
+  await openMenu(page)
+  await check(page, testInfo, false)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('navigation', { name: 'Menu' })).toBeHidden()
+
+  // the sheets opened by the main buttons of Collections and BGG lists
+  for (const [hash, sheet] of [
+    ['#/collections?new', 'New collection'],
+    ['#/lists?load', 'Load a BGG list'],
+  ]) {
+    await page.goto(`/${hash}`)
+    await expect(page.getByRole('dialog', { name: sheet })).toBeVisible()
     await check(page, testInfo)
   }
 
   // a new collection: empty state, add by link, a game in it, the game sheet
-  await page.goto('/#/add/collection')
-  await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+  await page.goto('/#/collections')
+  await createCollection(page, name)
   await check(page, testInfo)
+  // F003: the pencil beside the name opens Edit collection
+  await page.getByRole('button', { name: `Edit ${name}` }).click()
+  await expect(page.getByRole('dialog', { name: 'Edit collection' })).toBeVisible()
+  await check(page, testInfo)
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
   await check(page, testInfo)
@@ -91,8 +101,8 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   await page.keyboard.press('Escape')
 
   // swipe: list picker, then the card stack
-  await page.getByRole('button', { name: /^add by list$/i }).click()
-  const picker = page.getByRole('dialog', { name: /^add by list$/i })
+  await mainButton(page).click()
+  const picker = page.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
   await expect(picker).toBeVisible()
   await check(page, testInfo)
   await picker.getByRole('button', { name: 'Add new list' }).click()
@@ -115,6 +125,10 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
 
   await page.goto('/#/search')
   await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+  await check(page, testInfo)
+
+  await page.goto('/#/config')
+  await expect(page.getByRole('heading', { level: 1, name: 'Config' })).toBeVisible()
   await check(page, testInfo)
 
   await page.goto('/#/share')

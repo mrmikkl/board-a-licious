@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseListLink, mergeListEntries } from '../../src/domain/lists.ts'
+import { SPIEL_PREVIEW_LINK, mergeListEntries, parseListLink, suggestSpielPreview } from '../../src/domain/lists.ts'
 
 describe('BGG list links', () => {
   it.each([
@@ -58,3 +58,15 @@ describe('one row per game (a preview lists one item per edition or publisher)',
     expect(mergeListEntries(plain)).toEqual(plain)
   })
 })
+
+describe('the SPIEL Essen 2026 preview suggestion', () => {
+  it('is a valid preview link', () => {
+    expect(parseListLink(SPIEL_PREVIEW_LINK)).toEqual({ kind: 'preview', id: 93 })
+  })
+  it('is suggested until that preview is on the device', () => {
+    expect(suggestSpielPreview([])).toBe(true)
+    expect(suggestSpielPreview([{ kind: 'geeklist', id: 93 }, { kind: 'preview', id: 9093 }])).toBe(true)
+    expect(suggestSpielPreview([{ kind: 'preview', id: 93 }])).toBe(false)
+  })
+})
+

@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 
 /** Hash routes, so deep links work offline from the precached app shell. */
 export type Route =
-  | { name: 'collections' }
-  | { name: 'collection'; id: string }
+  /** F003: `create` opens the New collection sheet (`#/collections?new`) */
+  | { name: 'collections'; create?: true }
+  /** F003: `open` opens Add game or BG-Tinder (`?add=game|list`) */
+  | { name: 'collection'; id: string; open?: 'game' | 'list' }
   | { name: 'swipe'; id: string; list?: { kind: 'preview' | 'geeklist'; id: number } }
-  | { name: 'lists' }
+  /** F003: `load` opens the Load a BGG list sheet (`#/lists?load`) */
+  | { name: 'lists'; load?: true }
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
-  | { name: 'add'; what?: 'collection' | 'list' | 'game' }
   | { name: 'search' }
   | { name: 'config' }
   | { name: 'share' }
@@ -18,6 +20,7 @@ export function parseRoute(hash: string): Route {
   const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?')
   const parts = path.split('/').filter(Boolean).map(decodeURIComponent)
   const [first, second, third] = parts
+  const params = new URLSearchParams(query)
   switch (first) {
     case 'collections':
       if (second && third === 'swipe') {
@@ -26,13 +29,17 @@ export function parseRoute(hash: string): Route {
           ? { name: 'swipe', id: second, list: { kind, id: Number(listId) } }
           : { name: 'swipe', id: second }
       }
-      return second ? { name: 'collection', id: second } : { name: 'collections' }
+      if (second) {
+        const open = params.get('add')
+        return open === 'game' || open === 'list' ? { name: 'collection', id: second, open } : { name: 'collection', id: second }
+      }
+      return params.has('new') ? { name: 'collections', create: true } : { name: 'collections' }
     case 'lists':
       if ((second === 'preview' || second === 'geeklist') && Number(third) > 0)
         return { name: 'list', kind: second, listId: Number(third) }
-      return { name: 'lists' }
-    case 'add':
-      return second === 'collection' || second === 'list' || second === 'game' ? { name: 'add', what: second } : { name: 'add' }
+      return params.has('load') ? { name: 'lists', load: true } : { name: 'lists' }
+    case 'add': // the add screen of 001/002 is gone; its old addresses open the matching sheet
+      return second === 'collection' ? { name: 'collections', create: true } : second === 'list' ? { name: 'lists', load: true } : { name: 'collections' }
     case 'search':
       return { name: 'search' }
     case 'config':
@@ -40,7 +47,6 @@ export function parseRoute(hash: string): Route {
     case 'share': // old links
       return { name: 'share' }
     case 'shared': {
-      const params = new URLSearchParams(query)
       const value = (key: string) => params.get(key) ?? undefined
       return { name: 'shared', title: value('title'), text: value('text'), url: value('url') }
     }
@@ -52,17 +58,15 @@ export function parseRoute(hash: string): Route {
 export function href(route: Route): string {
   switch (route.name) {
     case 'collections':
-      return '#/collections'
+      return route.create ? '#/collections?new' : '#/collections'
     case 'collection':
-      return `#/collections/${encodeURIComponent(route.id)}`
+      return `#/collections/${encodeURIComponent(route.id)}${route.open ? `?add=${route.open}` : ''}`
     case 'swipe':
       return `#/collections/${encodeURIComponent(route.id)}/swipe${route.list ? `/${route.list.kind}/${route.list.id}` : ''}`
     case 'lists':
-      return '#/lists'
+      return route.load ? '#/lists?load' : '#/lists'
     case 'list':
       return `#/lists/${route.kind}/${route.listId}`
-    case 'add':
-      return route.what ? `#/add/${route.what}` : '#/add'
     case 'search':
       return '#/search'
     case 'config':

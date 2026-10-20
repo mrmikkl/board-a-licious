@@ -15,8 +15,7 @@ test('offline: mark and buy in airplane mode, reload, then sync when back online
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
 
   const name = unique('Offline')
-  await page.getByRole('link', { name: /add a collection, bgg list or game/i }).click()
-  await page.getByRole('button', { name: /^collection/i }).click()
+  await page.goto('/#/collections?new')
   await page.getByLabel('Name').fill(name)
   await page.getByRole('button', { name: 'Create collection' }).click()
   await page.getByRole('button', { name: /^add game$/i }).click()
