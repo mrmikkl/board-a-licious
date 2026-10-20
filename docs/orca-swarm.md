@@ -100,3 +100,13 @@ git worktree list                                             # only the main fo
   tests start their own Vite on another port with a local, uncommitted Playwright config.
 - Tests that need another worker's part: each worker asserts only what it owns; the coordinator runs
   all suites together after merging (and enables any test left pending).
+
+## Lessons from F003
+
+- The local database (`npm run db:local`, PGlite) serves one connection at a time. After a full
+  e2e run it can keep a connection whose client is gone; every later request then hangs (sync tests
+  time out: `offline`, `share-offline` sync, `lists-sync`, `share-hint` just-added). `idleTimeout`
+  does not free it. Fix for now: stop it with `kill -9` (a normal stop waits on the stuck
+  connection) and start `npm run db:local` again; run those sync specs on their own after a fresh
+  start. Dev servers left over from earlier workers also hold connections: stop them when cleaning up.
+
