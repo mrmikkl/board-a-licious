@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 
+import { type Mark, isMark } from '../domain/marks.ts'
+
 /** Hash routes, so deep links work offline from the precached app shell. */
 export type Route =
   /** F003: `create` opens the New collection sheet (`#/collections?new`) */
   | { name: 'collections'; create?: true }
-  /** F003: `open` opens Add game or BG-Tinder (`?add=game|list`) */
-  | { name: 'collection'; id: string; open?: 'game' | 'list' }
+  /** F003: `open` opens Add game or BG-Tinder (`?add=game|list`); F004: the Show-off sheet (`?show-off`) */
+  | { name: 'collection'; id: string; open?: 'game' | 'list' | 'showoff' }
+  /** F004: the Show-off screen of a collection for the chosen groups (research R7) */
+  | { name: 'showoff'; id: string; groups: Mark[] }
   | { name: 'swipe'; id: string; list?: { kind: 'preview' | 'geeklist'; id: number } }
   /** F003: `load` opens the Load a BGG list sheet (`#/lists?load`) */
   | { name: 'lists'; load?: true }
@@ -29,7 +33,13 @@ export function parseRoute(hash: string): Route {
           ? { name: 'swipe', id: second, list: { kind, id: Number(listId) } }
           : { name: 'swipe', id: second }
       }
+      if (second && third === 'show-off') {
+        // unknown marks are dropped; without a valid one the address is the collection itself
+        const groups = (parts[3] ?? '').split(',').filter(isMark)
+        return groups.length > 0 ? { name: 'showoff', id: second, groups } : { name: 'collection', id: second }
+      }
       if (second) {
+        if (params.has('show-off')) return { name: 'collection', id: second, open: 'showoff' }
         const open = params.get('add')
         return open === 'game' || open === 'list' ? { name: 'collection', id: second, open } : { name: 'collection', id: second }
       }
@@ -60,7 +70,9 @@ export function href(route: Route): string {
     case 'collections':
       return route.create ? '#/collections?new' : '#/collections'
     case 'collection':
-      return `#/collections/${encodeURIComponent(route.id)}${route.open ? `?add=${route.open}` : ''}`
+      return `#/collections/${encodeURIComponent(route.id)}${route.open === 'showoff' ? '?show-off' : route.open ? `?add=${route.open}` : ''}`
+    case 'showoff':
+      return `#/collections/${encodeURIComponent(route.id)}/show-off/${route.groups.join(',')}`
     case 'swipe':
       return `#/collections/${encodeURIComponent(route.id)}/swipe${route.list ? `/${route.list.kind}/${route.list.id}` : ''}`
     case 'lists':

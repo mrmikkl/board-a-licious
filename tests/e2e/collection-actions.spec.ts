@@ -45,7 +45,7 @@ test('US3: Add game, ♥ and Filter at the bottom; nothing at the top but the na
   await expect(empty).toContainText(/add game/i)
   await expect(empty.getByRole('button')).toHaveCount(0)
   const controls = actions(page).locator('a, button')
-  await expect(controls).toHaveText(['Add game', '', 'Filter'])
+  await expect(controls).toHaveText(['Add game', '', 'Filter', 'Show-off'])
   await expect(controls.nth(1)).toHaveAccessibleName('BG-Tinder: swipe a BGG list into this collection')
   await expect(controls.nth(1)).toHaveClass(/main-btn/)
   await expect(controls.first()).toHaveAccessibleName('Add game')
@@ -61,7 +61,7 @@ test('US3: Add game, ♥ and Filter at the bottom; nothing at the top but the na
 
   // Add game (plus) opens the Add game sheet
   await addGame(page, CASCADIA, 'Cascadia')
-  await expect(controls).toHaveText(['Add game', '', 'Filter'])
+  await expect(controls).toHaveText(['Add game', '', 'Filter', 'Show-off'])
   await expect(page.locator('.collection-tools')).toHaveCount(0)
   await expect(empty).toHaveCount(0)
 
