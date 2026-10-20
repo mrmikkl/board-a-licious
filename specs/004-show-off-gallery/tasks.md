@@ -98,7 +98,8 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 - [ ] T020 [P] Docs: mention `GET /api/bgg/images` where the API routes are listed (e.g. `specs/001-bgg-game-collection/contracts` index or README if they list routes); update `CLAUDE.md` "Code layout" only if a new folder appears
 - [X] T021 Run `npx tsc -b`, `npm test`, `npm run test:e2e` (fresh local DB, docs/orca-swarm.md), `npm run build`; fix what fails
   *Result (2026-10-21, fresh local database)*: `tsc` clean, 361 unit and worker tests, build, e2e 129/129.
-- [ ] T022 Quickstart validation on a phone (quickstart.md scenarios 1–11) after deploying
+- [X] T022 Quickstart validation on a phone (quickstart.md scenarios 1–11) after deploying
+  *Closed 2026-10-21: checked by the user on the deployed app ("works").*
 
 ---
 
