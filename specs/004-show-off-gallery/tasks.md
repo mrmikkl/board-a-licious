@@ -23,8 +23,8 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Add `IconShowOff` (three hexagons, as in the prototype) to `src/app/components/icons.tsx`; create empty `src/app/theme/viewer.css` and `src/app/theme/showoff.css` and import them in `src/app/main.tsx` after `actionbar.css`
-- [ ] T002 [P] Add an e2e helper `fakeGallery(page)` to `tests/e2e/helpers.ts` that answers `**/api/bgg/images?**` from `tests/fixtures/bgg/images-295947.json` mapped to the API shape of contracts/images-api.md (main image `5100691` first, `large` = `imageurl_lg`, `small` = `imageurl`), and an empty gallery (`images: []`) for other ids
+- [X] T001 [P] Add `IconShowOff` (three hexagons, as in the prototype) to `src/app/components/icons.tsx`; create empty `src/app/theme/viewer.css` and `src/app/theme/showoff.css` and import them in `src/app/main.tsx` after `actionbar.css`
+- [X] T002 [P] Add an e2e helper `fakeGallery(page)` to `tests/e2e/helpers.ts` that answers `**/api/bgg/images?**` from `tests/fixtures/bgg/images-295947.json` mapped to the API shape of contracts/images-api.md (main image `5100691` first, `large` = `imageurl_lg`, `small` = `imageurl`), and an empty gallery (`images: []`) for other ids
 
 ---
 
@@ -36,14 +36,14 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 
 ### Tests first
 
-- [ ] T003 [P] Unit tests in `tests/unit/gallery.test.ts` for `orderGallery(mainImageId, images, fallbackMain?)` (data-model "Game gallery"): the main image moves to the front; when missing, `fallbackMain` goes first; duplicate ids dropped; "at most 50"; captions trimmed to 120 chars and empty captions → null
-- [ ] T004 [P] Worker tests in `tests/worker/bgg-images.test.ts` (with the BGG client fake used by `bgg-games.test.ts`): `GET /api/bgg/images?id=295947` → 200 `{ bggId, total: 600, images }` with `5100691` first and the fixture's other images in order; the upstream URL is the one of contracts/images-api.md (`gallery=game`, `sort=hot`, `showcount=50`); a second call within the TTL makes no upstream request; `id` missing or `0` → 400 `bad_request`; BGG busy → 503 `bgg_rate_limited` with `Retry-After` (as the other BGG routes); unknown game → 404
+- [X] T003 [P] Unit tests in `tests/unit/gallery.test.ts` for `orderGallery(mainImageId, images, fallbackMain?)` (data-model "Game gallery"): the main image moves to the front; when missing, `fallbackMain` goes first; duplicate ids dropped; "at most 50"; captions trimmed to 120 chars and empty captions → null
+- [X] T004 [P] Worker tests in `tests/worker/bgg-images.test.ts` (with the BGG client fake used by `bgg-games.test.ts`): `GET /api/bgg/images?id=295947` → 200 `{ bggId, total: 600, images }` with `5100691` first and the fixture's other images in order; the upstream URL is the one of contracts/images-api.md (`gallery=game`, `sort=hot`, `showcount=50`); a second call within the TTL makes no upstream request; `id` missing or `0` → 400 `bad_request`; BGG busy → 503 `bgg_rate_limited` with `Retry-After` (as the other BGG routes); unknown game → 404
 
 ### Implementation
 
-- [ ] T005 Implement `src/domain/gallery.ts` (`GameImage`, `GameGallery`, `orderGallery`, cap `GALLERY_MAX = 50`); T003 passes
-- [ ] T006 Implement `worker/bgg/geekdo-images.ts` (`getGallery(client, bggId)`: cached geekitem for `imageid` and the fallback main image, the images page with TTL `TTL.game`, mapped and ordered with `orderGallery`), add `getGallery` to `BggSource` in `worker/bgg/source.ts` and `worker/bgg/geekdo.ts` (the XML source, if present, delegates to the Geekdo one: research R1), route `GET /api/bgg/images` in `worker/index.ts`; T004 passes
-- [ ] T007 Add `getGallery(bggId)` to `src/client/api.ts` with a session cache (`Map` by `bggId`, research R3) and the existing `ApiError` handling
+- [X] T005 Implement `src/domain/gallery.ts` (`GameImage`, `GameGallery`, `orderGallery`, cap `GALLERY_MAX = 50`); T003 passes
+- [X] T006 Implement `worker/bgg/geekdo-images.ts` (`getGallery(client, bggId)`: cached geekitem for `imageid` and the fallback main image, the images page with TTL `TTL.game`, mapped and ordered with `orderGallery`), add `getGallery` to `BggSource` in `worker/bgg/source.ts` and `worker/bgg/geekdo.ts` (the XML source, if present, delegates to the Geekdo one: research R1), route `GET /api/bgg/images` in `worker/index.ts`; T004 passes
+- [X] T007 Add `getGallery(bggId)` to `src/client/api.ts` with a session cache (`Map` by `bggId`, research R3) and the existing `ApiError` handling
 
 **Checkpoint**: the app can ask for a game's gallery; repeated asks hit memory, then the server cache.
 
