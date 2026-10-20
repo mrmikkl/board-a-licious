@@ -103,13 +103,13 @@ As features 001/002: `src/domain/`, `src/app/`, `tests/{unit,e2e}/`, plus `vite.
 
 ### Tests for User Story 3
 
-- [ ] T023 [P] [US3] Failing Playwright tests in `tests/e2e/collection-actions.spec.ts` ("US3"): action bar order Add game, main ♥, Filter; Add game (plus icon) opens "Add game"; Filter opens "Filter and group", while narrowed its name ends in "(active)" and the summary line stays above the games; no tool row, no "Collection options", no back button; ✏️ "Edit <name>" opens "Edit collection": Save name renames (toast "Renamed to …"), Delete collection… asks and deletes; an empty collection explains the heart and Add game and shows the same action bar; a 60-character name: heading has class `is-long` and a running animation, ✏️ stays visible at the right; in project `phone-reduced-motion` the name has no animation and ends in "…" (computed `text-overflow: ellipsis`)
+- [X] T023 [P] [US3] Failing Playwright tests in `tests/e2e/collection-actions.spec.ts` ("US3"): action bar order Add game, main ♥, Filter; Add game (plus icon) opens "Add game"; Filter opens "Filter and group", while narrowed its name ends in "(active)" and the summary line stays above the games; no tool row, no "Collection options", no back button; ✏️ "Edit <name>" opens "Edit collection": Save name renames (toast "Renamed to …"), Delete collection… asks and deletes; an empty collection explains the heart and Add game and shows the same action bar; a 60-character name: heading has class `is-long` and a running animation, ✏️ stays visible at the right; in project `phone-reduced-motion` the name has no animation and ends in "…" (computed `text-overflow: ellipsis`)
 
 ### Implementation for User Story 3
 
 - [X] T024 [P] [US3] Create `src/app/components/Ticker.tsx` (research R4): renders the text in an inner span inside the `h1`; `ResizeObserver` sets `is-long`, `--ticker-shift`, `--ticker-time` (shift / 50px per s / 0.64, at least 4 s); styles in `src/app/theme/shell.css` (keyframes hold 18% / move / hold 18%, edge fades with `mask-image`, reduced motion: no animation, `text-overflow: ellipsis`)
-- [ ] T025 [US3] `src/app/screens/Collection.tsx`: heading = `Ticker` with the name + trailing ✏️ button "Edit <name>"; action bar: Add game (`IconPlus`, left of ♥), ♥, Filter (right, orange icon and "(active)" while narrowed); remove the collection tool row, the wide-only header buttons and ⋯; rename `CollectionMenu` to an "Edit collection" sheet (Name, Save name, Delete collection… with the existing confirmation, Cancel); empty-state text for ♥ and Add game; remove `.collection-tools`, `.phone-only`, `.wide-only` from `src/app/theme/components.css` if unused
-- [ ] T026 [US3] Move the e2e specs that use "Collection options" or the collection's tool row to ✏️ and the action bar: `tests/e2e/us5-share.spec.ts`, `ui-tweaks.spec.ts` (and any other spec still clicking the tool row); T023 and these pass
+- [X] T025 [US3] `src/app/screens/Collection.tsx`: heading = `Ticker` with the name + trailing ✏️ button "Edit <name>"; action bar: Add game (`IconPlus`, left of ♥), ♥, Filter (right, orange icon and "(active)" while narrowed); remove the collection tool row, the wide-only header buttons and ⋯; rename `CollectionMenu` to an "Edit collection" sheet (Name, Save name, Delete collection… with the existing confirmation, Cancel); empty-state text for ♥ and Add game; remove `.collection-tools`, `.phone-only`, `.wide-only` from `src/app/theme/components.css` if unused
+- [X] T026 [US3] Move the e2e specs that use "Collection options" or the collection's tool row to ✏️ and the action bar: `tests/e2e/us5-share.spec.ts`, `ui-tweaks.spec.ts` (and any other spec still clicking the tool row); T023 and these pass
 
 **Checkpoint**: the top of a collection is only its name; everything to do with it is at the bottom or behind ✏️.
 
@@ -124,12 +124,12 @@ As features 001/002: `src/domain/`, `src/app/`, `tests/{unit,e2e}/`, plus `vite.
 ### Tests for User Story 4
 
 - [X] T027 [P] [US4] Unit tests in `tests/unit/collection-view.test.ts` (data-model "Collection groups"): `groupByMark` returns the order must_have, interested, unsure, poop, new, skip with `part` 'marked' for the first four and 'rest' for new and skip; empty groups left out; games sorted by name; `MARKS` order unchanged (new first)
-- [ ] T028 [P] [US4] Failing Playwright tests in `tests/e2e/collection-actions.spec.ts` ("US4"): group headings in the new order; one separator between the last marked group and "Not yet marked" (none when only one part has games); "Not yet marked" is a fold button, expanded on open, collapses and expands with its count visible; "Not interested" starts collapsed; the mark picker on a game keeps its order (Not yet marked first)
+- [X] T028 [P] [US4] Failing Playwright tests in `tests/e2e/collection-actions.spec.ts` ("US4"): group headings in the new order; one separator between the last marked group and "Not yet marked" (none when only one part has games); "Not yet marked" is a fold button, expanded on open, collapses and expands with its count visible; "Not interested" starts collapsed; the mark picker on a game keeps its order (Not yet marked first)
 
 ### Implementation for User Story 4
 
 - [X] T029 [US4] Change `groupByMark` in `src/domain/collection.ts` to the collection order with `part`; T027 passes
-- [ ] T030 [US4] `src/app/screens/Collection.tsx` and `src/app/components/GroupHeading.tsx`: the separator before the first 'rest' group after a 'marked' one; Not yet marked folds (open by default) like Not interested (closed by default), state not remembered; T028 passes
+- [X] T030 [US4] `src/app/screens/Collection.tsx` and `src/app/components/GroupHeading.tsx`: the separator before the first 'rest' group after a 'marked' one; Not yet marked folds (open by default) like Not interested (closed by default), state not remembered; T028 passes
 
 **Checkpoint**: all four stories work on their own and together.
 
