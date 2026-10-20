@@ -47,7 +47,7 @@ the details sheet.
 1. **Given** a game's details sheet with a cover, **When** the user taps the cover, **Then** a full-screen viewer opens with the game's main image in a large size and the game's name.
 2. **Given** the viewer is open and BoardGameGeek has more images of the game, **When** the user swipes left (or right), **Then** the next (or previous) image shows and the position updates ("2 / 24").
 3. **Given** the viewer is open, **When** the user taps X, presses Back or Escape, or swipes down, **Then** the viewer closes and the details sheet is shown as before.
-4. **Given** the viewer shows the first image, **When** the user swipes right, **Then** nothing moves past the start (no wrap-around); likewise at the last image.
+4. **Given** the viewer shows the first image, **When** the user swipes right, **Then** the image resists and springs back fully into view (no wrap-around); likewise at the last image.
 5. **Given** a game whose gallery has only its main image (or the gallery cannot be loaded), **When** the viewer opens, **Then** the main image shows without a position and without swiping; a gallery that fails to load says so in one short line without hiding the image.
 6. **Given** a game in a BGG list's game sheet, **When** the user taps its cover, **Then** the same viewer opens.
 7. **Given** a keyboard or a screen reader, **When** the viewer is open, **Then** arrow keys move between images, Escape closes, and every image has the game's name and its position as text alternative.
@@ -123,7 +123,10 @@ gallery open; close: back on the honeycomb.
 
 **Show-off**
 
-- **FR-007**: In a collection with games, the action bar MUST offer a **Show-off** action.
+- **FR-002a**: Moving between images MUST slide the images in place without redrawing the viewer, so
+  nothing of the screen behind it shows during a swipe.
+- **FR-007**: In a collection with games, the action bar MUST offer a **Show-off** action (outer right,
+  after Filter).
 - **FR-008**: Show-off MUST open a sheet to select one or more of the six groups, each with its mark
   and the number of games in it; the confirm action MUST be disabled while none is selected.
 - **FR-009**: The selection MUST be remembered per collection on the device and preselected next
@@ -168,6 +171,9 @@ gallery open; close: back on the honeycomb.
   screen; all works with reduced motion.
 
 ## Assumptions
+
+- The look was agreed in the design review on 2026-10-20 (honeycomb three per row with shifted rows,
+  Show-off at the right edge; see [design.md](design.md)).
 
 - "Gallery" means the images BoardGameGeek shows for the game (its image gallery); the viewer starts
   with the game's main image and then shows the gallery in BoardGameGeek's own order (most relevant
