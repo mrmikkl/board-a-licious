@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
-import { createCollection, expectAccessible, fakeBgg, fakeGallery, loadList, unique } from './helpers.ts'
+import { createCollection, expectAccessible, fakeGallery, loadList, unique } from './helpers.ts'
 
-const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
+const fixture = (dir: string, name: string) => JSON.parse(readFileSync(new URL(`../fixtures/${dir}/${name}`, import.meta.url), 'utf8'))
 
 /** A cover that loads offline too. */
 const COVER = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#8b5cf6"/></svg>')}`
@@ -12,12 +12,16 @@ const PICTURE = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400
 
 /** Cascadia (8 gallery images) and Faraway (a cover, no gallery) from fixtures; no image comes from BGG's CDN. */
 async function fakeImages(page: Page) {
-  await fakeBgg(page)
   await fakeGallery(page)
+  const item = fixture('bgg', 'geekitems-295947.json').item
+  const games = [
+    { bggId: 295947, name: item.name, year: Number(item.yearpublished), thumbnailUrl: item.images.square200, description: item.short_description, kind: 'boardgame' },
+    { bggId: 385761, name: 'Faraway', year: 2023, thumbnailUrl: COVER, description: 'Far away.', kind: 'boardgame' },
+  ]
+  // the details runner asks for games of other test runs too (shared database): answer those it knows
   await page.route('**/api/bgg/games?**', async route => {
     const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',').map(Number) ?? []
-    if (!ids.includes(385761)) return route.fallback()
-    await route.fulfill({ json: { games: [{ bggId: 385761, name: 'Faraway', year: 2023, thumbnailUrl: COVER, description: 'Far away.', kind: 'boardgame' }] } })
+    await route.fulfill({ json: { games: games.filter(g => ids.includes(g.bggId)) } })
   })
   await page.route('https://cf.geekdo-images.com/**', route => route.fulfill({ contentType: 'image/svg+xml', body: PICTURE }))
 }
@@ -40,7 +44,7 @@ test('US1: the cover opens the gallery big; keys and swipes step, Esc, Close and
   await createCollection(page, unique('Viewer'))
   await addGame(page, 295947)
   await page.getByRole('button', { name: /cascadia/i }).first().click()
-  const sheet = page.getByRole('dialog', { name: 'Cascadia' })
+  const sheet = page.getByRole('dialog', { name: 'Cascadia', exact: true })
   await expect(sheet).toBeVisible()
 
   await open(page, 'Cascadia')
@@ -117,7 +121,7 @@ test('US1: a game without gallery shows its cover big with a note; offline, the 
   await expect(dialog.getByRole('button', { name: /image$/ })).toHaveCount(0)
   await expectAccessible(page)
   await dialog.getByRole('button', { name: 'Close' }).click()
-  await page.getByRole('dialog', { name: 'Faraway' }).getByRole('button', { name: 'Close' }).click()
+  await page.getByRole('dialog', { name: 'Faraway', exact: true }).getByRole('button', { name: 'Close' }).click()
 
   await context.setOffline(true)
   await page.getByRole('button', { name: /cascadia/i }).first().click()
@@ -131,11 +135,11 @@ test('US1: a game without gallery shows its cover big with a note; offline, the 
 test("US1: a BGG list's game sheet opens the same viewer (FR-001)", async ({ page }) => {
   await fakeImages(page)
   await page.route('**/api/bgg/lists/preview/9093?**', route =>
-    route.fulfill({ json: apiFixture(`preview-9093-page-${new URL(route.request().url()).searchParams.get('page')}.json`) }),
+    route.fulfill({ json: fixture('api', `preview-9093-page-${new URL(route.request().url()).searchParams.get('page')}.json`) }),
   )
   await loadList(page, 'https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview')
   await page.getByRole('button', { name: 'Add Cascadia to a collection' }).click()
-  await expect(page.getByRole('dialog', { name: 'Cascadia' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Cascadia', exact: true })).toBeVisible()
   await open(page, 'Cascadia')
   const dialog = viewer(page, 'Cascadia')
   await expect(dialog).toContainText('1 / 8')
@@ -144,5 +148,5 @@ test("US1: a BGG list's game sheet opens the same viewer (FR-001)", async ({ pag
   await expect(dialog).toContainText('2 / 8')
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
-  await expect(page.getByRole('dialog', { name: 'Cascadia' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Cascadia', exact: true })).toBeVisible()
 })

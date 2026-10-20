@@ -11,6 +11,7 @@ import { applyMembership } from '../list-actions.ts'
 import { href } from '../router.ts'
 import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
+import { ImageViewer } from './ImageViewer.tsx'
 import { Sheet } from './Sheet.tsx'
 import { useToast } from './Toast.tsx'
 
@@ -33,6 +34,7 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
   const toast = useToast()
   const [ticked, setTicked] = useState<Set<string>>()
   const [busy, setBusy] = useState(false)
+  const [viewer, setViewer] = useState(false)
   const data = useStoreData(
     async store => {
       const collections = (await store.collections()).filter(c => !c.deleted).sort((a, b) => a.name.localeCompare(b.name))
@@ -68,7 +70,9 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
   return (
     <Sheet open title={item.name} onClose={onClose}>
       <div className="detail-head">
-        <HexCover game={ready?.game ?? { ...item, year: null, description: null, kind: 'boardgame' }} name={item.name} size={84} />
+        <button type="button" className="cover-zoom" aria-label={`Show the images of ${item.name} big`} onClick={() => setViewer(true)}>
+          <HexCover game={ready?.game ?? { ...item, year: null, description: null, kind: 'boardgame' }} name={item.name} size={84} />
+        </button>
         <div>
           <p className="detail-sub">{ready?.game?.year ? `${ready.game.year} · ${list.title}` : list.title}</p>
           <a className="link-out" href={gameUrl(item.bggId)} target="_blank" rel="noopener noreferrer">
@@ -110,6 +114,7 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
           Cancel
         </button>
       </div>
+      {viewer && <ImageViewer game={{ bggId: item.bggId, name: item.name }} cover={ready?.game?.thumbnailUrl ?? item.thumbnailUrl ?? null} onClose={() => setViewer(false)} />}
     </Sheet>
   )
 }
