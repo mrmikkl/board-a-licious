@@ -31,7 +31,7 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
   await page.goto('/#/collections')
   await page.getByRole('link', { name: new RegExp(name) }).click()
 
-  await page.getByRole('button', { name: /^filter and group/i }).click()
+  await page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: /^filter/i }).click()
   const groupBy = page.getByRole('dialog').getByLabel('Group by')
   await expect(groupBy).toHaveValue('mark')
   await groupBy.selectOption('booth')
@@ -42,7 +42,7 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
   await expectAccessible(page)
 
   await page.reload()
-  await page.getByRole('button', { name: /^filter and group/i }).click()
+  await page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: /^filter/i }).click()
   await expect(page.getByRole('dialog').getByLabel('Group by')).toHaveValue('booth')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('region', { name: /^hall \d+/i }).first()).toBeVisible()
