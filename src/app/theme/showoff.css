@@ -1,1 +1,132 @@
-/* Show-off sheet and honeycomb (docs/design.md v2.1.0 "Show-off"); F004 tasks T017, T018 */
+/* Show-off (docs/design.md v2.1.0 "Show-off", "Multi-choice list"); F004 tasks T017, T018 */
+
+/* The sheet: six groups as a multi-choice list with a hexagon tick filled hot when chosen */
+.showoff-groups {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.showoff-group {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  color: var(--text);
+  font: 600 15px var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.showoff-group[aria-pressed='true'] {
+  border-color: var(--orange);
+}
+.showoff-tick {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 25px;
+  clip-path: var(--hex);
+  background: var(--rim);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.showoff-group[aria-pressed='true'] .showoff-tick {
+  background: var(--grad-hot);
+}
+.showoff-group[aria-pressed='true'] .showoff-tick::after {
+  content: '✓';
+}
+.showoff-count {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+/* The screen: "<collection> · <marks> · <n> games" under the heading */
+.showoff-line {
+  margin: -6px var(--gutter) 10px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/*
+ * Honeycomb (research R8): three pointy-top hexagons per row, w = (column − 3·gap) / 3.5, height
+ * w · 1.1547; rows overlap by a quarter of the height (−0.2887·w + gap); odd rows shift right by
+ * (w + gap) / 2 so the hexagons interlock. All in CSS: percentages of the row's width.
+ */
+.honeycomb {
+  --hgap: 4px;
+  --hw: calc((100% - 3 * var(--hgap)) / 3.5);
+  padding: 4px 0 24px;
+}
+.honeycomb-row {
+  display: flex;
+  justify-content: flex-start;
+  gap: var(--hgap);
+}
+.honeycomb-row + .honeycomb-row {
+  margin-top: calc(var(--hw) * -0.2887 + var(--hgap));
+}
+.honeycomb-row:nth-child(even) {
+  transform: translateX(calc(var(--hw) / 2 + var(--hgap) / 2));
+}
+.honeycomb-cell {
+  position: relative;
+  flex: none;
+  width: var(--hw);
+  aspect-ratio: 1 / 1.1547;
+  padding: 0;
+  border: 0;
+  background: var(--deck-2);
+  color: var(--ink);
+  cursor: zoom-in;
+  transition: filter 0.2s;
+}
+.honeycomb-cell img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.honeycomb-initials {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--grad-dusk);
+  font: 700 22px var(--font-display);
+}
+.honeycomb-got {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  transform: translateX(-50%);
+}
+/* the clip-path eats an outline, so focus brightens the hexagon instead */
+.honeycomb-cell:focus-visible {
+  outline: none;
+  filter: brightness(1.25) saturate(1.2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .honeycomb-cell:hover {
+    filter: brightness(1.15);
+  }
+}
