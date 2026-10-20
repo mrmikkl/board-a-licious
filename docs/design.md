@@ -185,4 +185,4 @@ Bought is shown as a badge, never as a group.
 ## 12. Onboarding
 
 Three swipeable cards on first start (Collections, Geeklists, Swipe then hunt) with floating
-hexagon illustrations, Skip and Next/"Let's go"; can be shown again from the collections screen.
+hexagon illustrations, Skip and Next/"Let's go"; can be shown again from Config.

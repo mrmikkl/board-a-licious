@@ -58,6 +58,7 @@ npx vitest run tests/unit/marks.test.ts   # one test file
 npm run test:e2e                 # Playwright at 360×740 (+ reduced motion), axe
 npm run build                    # tsc + vite build (app, service worker, Worker)
 npm run deploy                   # build + wrangler deploy
+node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigation-rework/design/icons
 ```
 
 ## Code layout
