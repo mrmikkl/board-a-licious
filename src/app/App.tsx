@@ -6,7 +6,6 @@ import { TapPulse } from './components/TapPulse.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import { useIntroOpen } from './intro.ts'
 import { type Route, href, useRoute } from './router.ts'
-import { Add } from './screens/Add.tsx'
 import { Collection } from './screens/Collection.tsx'
 import { Collections } from './screens/Collections.tsx'
 import { Intro } from './screens/Intro.tsx'
@@ -21,15 +20,13 @@ import { Swipe } from './screens/Swipe.tsx'
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
     case 'collections':
-      // F003 transition: the old add screen serves the New collection sheet until US2 (tasks T017)
-      return route.create ? <Add key="collection" what="collection" /> : <Collections />
+      return <Collections create={route.create} />
     case 'collection':
       return <Collection key={route.id} id={route.id} open={route.open} />
     case 'swipe':
       return <Swipe key={`${route.id}:${route.list?.kind}:${route.list?.id}`} id={route.id} list={route.list} />
     case 'lists':
-      // F003 transition: the old add screen serves the Load a BGG list sheet until US2 (tasks T018)
-      return route.load ? <Add key="list" what="list" /> : <Lists />
+      return <Lists load={route.load} />
     case 'list':
       return <List key={`${route.kind}:${route.listId}`} kind={route.kind} listId={route.listId} />
     case 'search':
