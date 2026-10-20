@@ -109,4 +109,8 @@ git worktree list                                             # only the main fo
   does not free it. Fix for now: stop it with `kill -9` (a normal stop waits on the stuck
   connection) and start `npm run db:local` again; run those sync specs on their own after a fresh
   start. Dev servers left over from earlier workers also hold connections: stop them when cleaning up.
+- With ~2,000 test collections in the local database, `lists-sync` times out at its first
+  `/api/sync` poll during a run (the request waits behind the app's own sync for the one
+  connection), although the same request answers at once afterwards. A smaller local database
+  (fresh `.pglite/`) is the fix; it is not a code failure.
 
