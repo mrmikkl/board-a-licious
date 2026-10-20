@@ -59,6 +59,12 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
   first BGG publisher; lists are `[]` when BGG has none).
 - Served from the `game` table when fresher than 7 days, else from BGG (cached).
 
+### `GET /api/bgg/images?id=<bggId>` (feature 004)
+
+The game's image gallery, main image first, at most 50, cached 7 days:
+`{ "bggId", "total", "images": [{ "id", "large", "small", "caption" }] }`. Details:
+[specs/004-show-off-gallery/contracts/images-api.md](../../004-show-off-gallery/contracts/images-api.md).
+
 ### `GET /api/bgg/search?q=<text>` (Release 1.0)
 
 - `q` 2–100 chars. `200 { "games": [Game…] }` (max 50) once `bggSearch` is true; before that `503
