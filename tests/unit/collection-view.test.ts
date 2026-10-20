@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { type Entry, countMarks, groupByMark, markEntry, newEntry, removeEntry } from '../../src/domain/collection.ts'
+import { type Entry, countMarks, groupByMark, markEntry, newEntry, removeEntry, showOffGames } from '../../src/domain/collection.ts'
 import { MARKS } from '../../src/domain/marks.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
@@ -50,6 +50,34 @@ describe('grouping a collection (FR-005)', () => {
     expect(counts.total).toBe(5)
     expect(counts.bought).toBe(1)
     expect(counts.byMark).toEqual({ new: 1, must_have: 2, interested: 1, unsure: 0, poop: 0, skip: 1 })
+  })
+})
+
+describe('Show-off games (F004 FR-010)', () => {
+  const entries = [
+    entry(1, { mark: 'must_have' }),
+    entry(2),
+    entry(3, { mark: 'skip' }),
+    entry(4, { mark: 'must_have' }),
+    entry(5, { deleted: true, mark: 'must_have' }),
+    entry(6, { mark: 'interested' }),
+    entry(7, { mark: 'poop' }),
+    entry(8, { mark: 'unsure' }),
+  ]
+  const nameOf = (e: Entry) => ({ ...names, 6: 'Dune', 7: 'Everdell', 8: 'Frosthaven' })[e.bggId] ?? ''
+
+  it('keeps only live games of the chosen groups, in the collection group order, by name within a mark', () => {
+    expect(showOffGames(entries, ['interested', 'must_have'], nameOf).map(e => e.bggId)).toEqual([4, 1, 6])
+    expect(showOffGames(entries, ['skip', 'new', 'poop', 'unsure', 'interested', 'must_have'], nameOf).map(e => e.bggId)).toEqual([4, 1, 6, 8, 7, 2, 3])
+  })
+
+  it('is empty with no groups or groups without games', () => {
+    expect(showOffGames(entries, [], nameOf)).toEqual([])
+    expect(showOffGames([entry(2)], ['must_have'], nameOf)).toEqual([])
+  })
+
+  it('leaves deleted entries out', () => {
+    expect(showOffGames(entries, ['must_have'], nameOf).map(e => e.bggId)).not.toContain(5)
   })
 })
 

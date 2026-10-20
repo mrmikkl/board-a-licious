@@ -23,6 +23,24 @@ describe('routes that open sheets (contracts/navigation.md)', () => {
   })
 })
 
+describe('Show-off routes (F004 research R7)', () => {
+  it.each<[string, Route]>([
+    ['#/collections/c1?show-off', { name: 'collection', id: 'c1', open: 'showoff' }],
+    ['#/collections/c1/show-off/must_have,interested', { name: 'showoff', id: 'c1', groups: ['must_have', 'interested'] }],
+    ['#/collections/c1/show-off/new', { name: 'showoff', id: 'c1', groups: ['new'] }],
+  ])('%s', (hash, route) => {
+    expect(parseRoute(hash)).toEqual(route)
+    expect(href(route)).toBe(hash)
+  })
+
+  it('drops unknown marks and goes back to the collection without a valid one', () => {
+    expect(parseRoute('#/collections/c1/show-off/must_have,bogus')).toEqual({ name: 'showoff', id: 'c1', groups: ['must_have'] })
+    expect(parseRoute('#/collections/c1/show-off/bogus')).toEqual({ name: 'collection', id: 'c1' })
+    expect(parseRoute('#/collections/c1/show-off/')).toEqual({ name: 'collection', id: 'c1' })
+    expect(parseRoute('#/collections/c1/show-off')).toEqual({ name: 'collection', id: 'c1' })
+  })
+})
+
 describe('old addresses of the add screen', () => {
   it.each<[string, Route]>([
     ['#/add', { name: 'collections' }],
