@@ -58,3 +58,5 @@ Empty state, Toast, Card.
 - The heart's sheet is titled **"❤️ BG-Tinder ❤️"**; Swipe itself is unchanged (swiping and its ✕ / ✓
   buttons stay).
 - A **separator** splits the marked groups from Not yet marked and Not interested.
+- Added after the build (2026-10-20): the BGG list link fields suggest **"✨ Try the SPIEL Essen
+  2026 preview"** until that preview is on the device; one tap fills in its link.

@@ -555,3 +555,8 @@
   font-weight: 700;
   overflow-wrap: anywhere;
 }
+
+/* F003: the SPIEL preview suggestion above a BGG list link field */
+.list-suggestion {
+  margin-bottom: 10px;
+}

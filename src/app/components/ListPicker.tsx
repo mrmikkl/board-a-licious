@@ -2,8 +2,9 @@ import { type FormEvent, useId, useState } from 'react'
 
 import type { StoredList } from '../../client/types.ts'
 import type { Collection, Entry } from '../../domain/collection.ts'
-import { type ListRef, parseListLink } from '../../domain/lists.ts'
+import { type ListRef, parseListLink, suggestSpielPreview } from '../../domain/lists.ts'
 import { swipeQueue } from '../../domain/swipe.ts'
+import { ListSuggestion } from './ListSuggestion.tsx'
 import { Sheet } from './Sheet.tsx'
 
 const games = (n: number) => `${n} ${n === 1 ? 'game' : 'games'}`
@@ -95,6 +96,7 @@ export function ListPicker({
           )
         ) : (
           <div className="pick-new">
+            {suggestSpielPreview(lists) && !link && <ListSuggestion onPick={setLink} />}
             <label className="label" htmlFor={linkId}>
               BGG list link
             </label>

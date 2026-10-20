@@ -1,11 +1,12 @@
 import { type FormEvent, useId, useState } from 'react'
 
-import { parseListLink } from '../../domain/lists.ts'
+import { type ListRef, parseListLink, suggestSpielPreview } from '../../domain/lists.ts'
 import { navigate } from '../router.ts'
+import { ListSuggestion } from './ListSuggestion.tsx'
 import { Sheet } from './Sheet.tsx'
 
 /** "Load a BGG list" by its link (FR-012): previews bring booth, price and edition, geeklists only games; opens the list. */
-export function LoadListSheet({ onClose }: { onClose: () => void }) {
+export function LoadListSheet({ lists, onClose }: { lists: ListRef[]; onClose: () => void }) {
   const linkId = useId()
   const hintId = useId()
   const [text, setText] = useState('')
@@ -28,6 +29,7 @@ export function LoadListSheet({ onClose }: { onClose: () => void }) {
       <form className="form" onSubmit={submit}>
         <p className="lead">Paste the link of a BoardGameGeek preview (like SPIEL Essen 2026, with booth, price and edition) or a geeklist.</p>
         <div>
+          {suggestSpielPreview(lists) && !text && <ListSuggestion onPick={setText} />}
           <label className="label" htmlFor={linkId}>
             BGG list link
           </label>

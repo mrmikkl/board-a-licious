@@ -61,7 +61,7 @@ export function Lists({ load }: { load?: boolean }) {
         )}
       </main>
       <ActionBar main={<MainButton icon={<IconPlus />} label="Load a BGG list" href={href({ name: 'lists', load: true })} />} />
-      {load && <LoadListSheet onClose={close} />}
+      {load && <LoadListSheet lists={lists ?? []} onClose={close} />}
     </>
   )
 }

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
-import { type Place, fakeBgg, goTo, mainButton, openMenu, unique } from './helpers.ts'
+import { type Place, createCollection, fakeBgg, goTo, mainButton, openMenu, unique } from './helpers.ts'
 
 /** F003 navigation (contracts/navigation.md): the app bar and its menu replace the tab bar. */
 const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
@@ -278,3 +278,27 @@ test.describe('US2', () => {
     expect(await paddingBottom()).toBeLessThan(48)
   })
 })
+
+/** With the SPIEL preview not on the device (the pull answers without lists), one tap fills the link. */
+test('the link fields suggest the SPIEL Essen 2026 preview until it is loaded', async ({ page }) => {
+  await page.route('**/api/sync**', route =>
+    route.request().method() === 'GET' ? route.fulfill({ json: { collections: [], entries: [], lists: [], serverTime: new Date().toISOString() } }) : route.fallback(),
+  )
+  const link = 'https://boardgamegeek.com/geekpreview/93/spiel-essen-2026'
+
+  await page.goto('/#/lists?load')
+  const sheet = page.getByRole('dialog', { name: 'Load a BGG list' })
+  await sheet.getByRole('button', { name: 'Try the SPIEL Essen 2026 preview' }).click()
+  await expect(sheet.getByLabel('BGG list link')).toHaveValue(link)
+  await expect(sheet.getByRole('button', { name: 'Load list' })).toBeEnabled()
+  await sheet.getByRole('button', { name: 'Cancel' }).click()
+
+  await createCollection(page, unique('Suggest'))
+  await mainButton(page).click()
+  const picker = page.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
+  await picker.getByRole('button', { name: 'Add new list' }).click()
+  await picker.getByRole('button', { name: 'Try the SPIEL Essen 2026 preview' }).click()
+  await expect(picker.getByLabel('BGG list link')).toHaveValue(link)
+  await expect(picker.getByRole('button', { name: 'Load list' })).toBeEnabled()
+})
+

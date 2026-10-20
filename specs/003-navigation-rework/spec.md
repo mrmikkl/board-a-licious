@@ -197,6 +197,9 @@ tapping again shows them.
 - **FR-009**: On BGG lists the main button MUST show a plus and open a bottom sheet to load a
   BoardGameGeek preview or geeklist by its link, with the same link checks and hints as today; the
   "Load a BGG list" entry on the screen MUST be removed.
+- **FR-009a**: While the SPIEL Essen 2026 preview is not on the device, every BGG list link field
+  (Load a BGG list, BG-Tinder's "Add new list") MUST offer "Try the SPIEL Essen 2026 preview"
+  above the field; tapping it MUST fill in that preview's link, ready for Load list.
 - **FR-010**: On Search the main button MUST show a magnifying glass and be disabled (announced as
   unavailable to screen readers).
 - **FR-011**: On Config there MUST be no action area and no main button.
