@@ -2722,7 +2722,21 @@ function wire() {
   if (stage) swipe(stage)
 }
 function count() { const g = GAMES.find(x => x.seed === state.viewer); return state.offline || g.nocover ? 1 : Math.min(g.gallery, 50) }
-function step(d) { const n = count(); const i = Math.max(0, Math.min(n - 1, state.viewerIndex + d)); if (i !== state.viewerIndex) { state.viewerIndex = i; render() } }
+// a step slides the track and updates counter, dots, caption and arrows in place: no redraw, no flicker
+function step(d) {
+  const n = count(); const i = Math.max(0, Math.min(n - 1, state.viewerIndex + d))
+  const v = root.querySelector('#viewer'), track = v.querySelector('#track')
+  if (i !== state.viewerIndex) {
+    state.viewerIndex = i
+    v.querySelector('.viewer-count').textContent = `${i + 1} / ${n}`
+    v.querySelectorAll('.viewer-dots i').forEach((dot, k) => dot.classList.toggle('on', k === Math.min(i, 11)))
+    v.querySelector('.viewer-caption').textContent = `${KINDS[i % KINDS.length][0]} · from BoardGameGeek`
+    v.querySelector('#vprev').disabled = i === 0
+    v.querySelector('#vnext').disabled = i === n - 1
+  }
+  track.style.transform = `translateX(${-i * 100}%)`
+  v.style.background = ''
+}
 function closeViewer() { state.viewer = null; render() }
 
 /* swipe sideways = next/previous, swipe down = close (follows the finger) */
@@ -2743,10 +2757,7 @@ function swipe(stage) {
     if (x0 == null) return
     x0 = null; track.classList.remove('dragging')
     if (axis === 'y' && dy > 100) return closeViewer()
-    const before = state.viewerIndex
-    if (axis === 'x' && Math.abs(dx) > 50) step(dx < 0 ? 1 : -1)
-    if (state.viewerIndex !== before) return
-    track.style.transform = `translateX(${-state.viewerIndex * 100}%)`; box.style.background = ''
+    step(axis === 'x' && Math.abs(dx) > 50 ? (dx < 0 ? 1 : -1) : 0)
   }
 }
 document.addEventListener('keydown', e => {
