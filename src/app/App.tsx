@@ -15,6 +15,7 @@ import { Search } from './screens/Search.tsx'
 import { Config } from './screens/Config.tsx'
 import { Share } from './screens/Share.tsx'
 import { Shared } from './screens/Shared.tsx'
+import { ShowOff } from './screens/ShowOff.tsx'
 import { Swipe } from './screens/Swipe.tsx'
 
 function Screen({ route }: { route: Route }) {
@@ -23,6 +24,8 @@ function Screen({ route }: { route: Route }) {
       return <Collections create={route.create} />
     case 'collection':
       return <Collection key={route.id} id={route.id} open={route.open} />
+    case 'showoff':
+      return <ShowOff key={route.id} id={route.id} groups={route.groups} />
     case 'swipe':
       return <Swipe key={`${route.id}:${route.list?.kind}:${route.list?.id}`} id={route.id} list={route.list} />
     case 'lists':

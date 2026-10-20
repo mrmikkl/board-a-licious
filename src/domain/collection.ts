@@ -137,6 +137,17 @@ export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string):
   })).filter(group => group.entries.length > 0)
 }
 
+/**
+ * F004 FR-010: the games Show-off shows: live entries whose mark is in `groups`, in the collection
+ * group order (must_have, interested, unsure, poop, new, skip), by name within a mark.
+ */
+export function showOffGames(entries: Entry[], groups: readonly Mark[], nameOf: (entry: Entry) => string): Entry[] {
+  const chosen = new Set(groups)
+  return groupByMark(entries, nameOf)
+    .filter(group => chosen.has(group.mark.key))
+    .flatMap(group => group.entries)
+}
+
 /** Games per mark and bought, for the collection card (FR-002). */
 export function countMarks(entries: Entry[]) {
   const live = entries.filter(e => !e.deleted)
