@@ -20,6 +20,8 @@ const showOffButton = (page: Page) => actions(page).getByRole('button', { name: 
 const sheet = (page: Page) => page.getByRole('dialog', { name: 'Show-off' })
 const honeycomb = (page: Page) => page.locator('.honeycomb')
 const hexagons = (page: Page) => honeycomb(page).getByRole('button')
+const pressed = (page: Page) => sheet(page).locator('button[aria-pressed]').evaluateAll(els => els.map(el => el.getAttribute('aria-pressed')))
+const names = (page: Page) => hexagons(page).evaluateAll(els => els.map(el => el.getAttribute('aria-label')))
 
 async function addGame(page: Page, link: string, game: string) {
   await actions(page).getByRole('button', { name: /^add game$/i }).click()
@@ -62,7 +64,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   await markAs(page, 'Cascadia', /must have/i)
   await markAs(page, 'Ark Nova', /must have/i)
   await markAs(page, 'Wingspan', /must have/i)
-  await markAs(page, 'Brass Birmingham', /interested/i)
+  await markAs(page, 'Brass Birmingham', /^interested$/i)
   await buy(page, /must have/i, 'Cascadia')
 
   // FR-008, FR-009: six toggles with counts, Must Have pressed the first time, Show off disabled with none pressed
@@ -71,7 +73,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   await expect(dialog).toBeVisible()
   const toggles = dialog.locator('button[aria-pressed]')
   await expect(toggles).toHaveText(['⭐ Must Have 3', '👀 Interested 1', '🤔 Unsure 0', '💩 Poop 0', '⬡ Not yet marked 0', '🛑 Not interested 0'])
-  await expect(toggles).toHaveAttribute('aria-pressed', ['true', 'false', 'false', 'false', 'false', 'false'])
+  await expect.poll(() => pressed(page)).toEqual(['true', 'false', 'false', 'false', 'false', 'false'])
   const showOff = dialog.getByRole('button', { name: 'Show off' })
   await expect(showOff).toBeEnabled()
   await toggles.nth(0).click()
@@ -87,7 +89,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   await expect(dialog).toBeHidden()
   await expect(page.getByRole('heading', { level: 1, name: 'Show-off' })).toBeVisible()
   await expect(page.getByText(`${name} · ⭐ 👀 · 4 games`)).toBeVisible()
-  await expect(hexagons(page)).toHaveAccessibleName(['Ark Nova, Must Have', 'Cascadia, Must Have', 'Wingspan, Must Have', 'Brass Birmingham, Interested'])
+  await expect.poll(() => names(page)).toEqual(['Ark Nova, Must Have', 'Cascadia, Must Have', 'Wingspan, Must Have', 'Brass Birmingham, Interested'])
   const boxes = await Promise.all([0, 1, 2, 3].map(i => hexagons(page).nth(i).boundingBox()))
   const [a, b, c, d] = boxes as { x: number; y: number; width: number; height: number }[]
   expect(b!.y).toBeCloseTo(a!.y, 0)
@@ -116,7 +118,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   // reloading the screen's address shows the same honeycomb
   await page.reload()
   await expect(page.getByRole('heading', { level: 1, name: 'Show-off' })).toBeVisible()
-  await expect(hexagons(page)).toHaveAccessibleName(['Ark Nova, Must Have', 'Cascadia, Must Have', 'Wingspan, Must Have', 'Brass Birmingham, Interested'])
+  await expect.poll(() => names(page)).toEqual(['Ark Nova, Must Have', 'Cascadia, Must Have', 'Wingspan, Must Have', 'Brass Birmingham, Interested'])
 
   // FR-013: Back returns to the collection
   await page.getByRole('link', { name: 'Back' }).click()
@@ -124,7 +126,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
 
   // FR-009: Show-off again preselects Must Have + Interested
   await showOffButton(page).click()
-  await expect(toggles).toHaveAttribute('aria-pressed', ['true', 'true', 'false', 'false', 'false', 'false'])
+  await expect.poll(() => pressed(page)).toEqual(['true', 'true', 'false', 'false', 'false', 'false'])
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(dialog).toBeHidden()
 })
@@ -158,7 +160,7 @@ test('US2: groups without games show the empty state; Show-off works offline aft
   await dialog.getByRole('button', { name: 'Show off' }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByText(`${name} · ⬡ · 1 game`)).toBeVisible()
-  await expect(hexagons(page)).toHaveAccessibleName(['Cascadia, Not yet marked'])
+  await expect.poll(() => names(page)).toEqual(['Cascadia, Not yet marked'])
   await hexagons(page).first().click()
   const viewer = page.getByRole('dialog', { name: 'Images of Cascadia' })
   await expect(viewer).toBeVisible()
