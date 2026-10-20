@@ -1,1 +1,169 @@
-/* Image viewer (docs/design.md v2.1.0 "Image viewer"); F004 tasks T012 */
+/* Image viewer (docs/design.md v2.1.0 "Image viewer"); F004 tasks T012, T013 */
+
+/* the cover in a details sheet is a button with the ⤢ badge: tap it to see the images big */
+.cover-zoom {
+  position: relative;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 12px;
+}
+.cover-zoom::after {
+  content: '⤢';
+  position: absolute;
+  right: -2px;
+  bottom: 2px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--rim);
+  border-radius: 50%;
+  background: var(--deck-2);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: #05060e;
+  color: var(--text);
+  animation: fade-in 0.18s ease-out;
+}
+.viewer:focus {
+  outline: none;
+}
+.viewer-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) var(--gutter) 10px;
+}
+.viewer-name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font: 700 18px var(--font-display);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.viewer-count {
+  color: var(--muted);
+  font: 600 14px var(--font-body);
+  white-space: nowrap;
+}
+.viewer-close,
+.viewer-nav {
+  width: var(--tap);
+  height: var(--tap);
+  border: 1px solid var(--rim);
+  border-radius: 50%;
+  background: var(--deck-2);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.viewer-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  /* one finger swipes, two fingers are the browser's pinch zoom (spec: swiping only when not zoomed) */
+  touch-action: pinch-zoom;
+}
+.viewer-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.viewer-track.is-dragging {
+  transition: none;
+}
+.viewer-slide {
+  display: grid;
+  flex: 0 0 100%;
+  place-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+}
+/* fitted, never cropped: a small cover grows to the width, a tall photo to the height */
+.viewer-slide img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.viewer-slide .cover-initials {
+  font-size: 56px;
+}
+.viewer-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(29, 33, 66, 0.8);
+  font-size: 22px;
+}
+.viewer-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.viewer-nav.prev {
+  left: 8px;
+}
+.viewer-nav.next {
+  right: 8px;
+}
+/* no pointer: swiping is the way, the arrows would only cover the image */
+@media (hover: none) {
+  .viewer-nav {
+    display: none;
+  }
+}
+.viewer-bottom {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  min-height: 44px;
+  padding: 10px var(--gutter) calc(14px + env(safe-area-inset-bottom));
+}
+.viewer-dots {
+  display: flex;
+  gap: 6px;
+}
+.viewer-dots i {
+  width: 8px;
+  height: 9px;
+  background: var(--rim);
+  clip-path: var(--hex);
+}
+.viewer-dots i.on {
+  background: var(--orange);
+}
+.viewer-caption,
+.viewer-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer {
+    animation: none;
+  }
+  .viewer-track {
+    transition: none;
+  }
+}
