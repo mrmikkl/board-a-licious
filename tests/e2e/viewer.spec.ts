@@ -69,7 +69,9 @@ test('US1: the cover opens the gallery big; keys and swipes step, Esc, Close and
 
   // a swipe to the right at the first image springs back: still "1 / 8", the image fully in view
   const first = dialog.getByRole('img', { name: 'Cascadia, image 1 of 8' })
-  const box = (await first.boundingBox())!
+  // swipe from the middle of the viewer: the image itself may still be sliding in after the arrow keys
+  const view = (await dialog.boundingBox())!
+  const box = { x: view.x + view.width / 2 - 1, y: view.y + view.height / 2 - 1, width: 2, height: 2 }
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await page.mouse.down()
   await page.mouse.move(box.x + box.width / 2 + 140, box.y + box.height / 2, { steps: 8 })
