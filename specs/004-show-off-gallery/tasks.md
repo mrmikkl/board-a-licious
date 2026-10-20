@@ -37,7 +37,7 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 ### Tests first
 
 - [ ] T003 [P] Unit tests in `tests/unit/gallery.test.ts` for `orderGallery(mainImageId, images, fallbackMain?)` (data-model "Game gallery"): the main image moves to the front; when missing, `fallbackMain` goes first; duplicate ids dropped; "at most 50"; captions trimmed to 120 chars and empty captions → null
-- [ ] T004 [P] Worker tests in `tests/worker/bgg-images.test.ts` (with the BGG client fake used by `bgg-games.test.ts`): `GET /api/bgg/images?id=295947` → 200 `{ bggId, total: 600, images }` with `5100691` first and the fixture's other images in order; the upstream URL is the one of contracts/images-api.md (`gallery=game`, `sort=hot`, `showcount=50`); a second call within the TTL makes no upstream request; `id` missing or `0` → 400 `bad_request`; BGG busy → 429 with `Retry-After`; unknown game → 404
+- [ ] T004 [P] Worker tests in `tests/worker/bgg-images.test.ts` (with the BGG client fake used by `bgg-games.test.ts`): `GET /api/bgg/images?id=295947` → 200 `{ bggId, total: 600, images }` with `5100691` first and the fixture's other images in order; the upstream URL is the one of contracts/images-api.md (`gallery=game`, `sort=hot`, `showcount=50`); a second call within the TTL makes no upstream request; `id` missing or `0` → 400 `bad_request`; BGG busy → 503 `bgg_rate_limited` with `Retry-After` (as the other BGG routes); unknown game → 404
 
 ### Implementation
 

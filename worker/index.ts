@@ -7,6 +7,7 @@ import { HttpError, errorResponse } from './http.ts'
 import { companiesRoute } from './routes/companies.ts'
 import type { RouteContext } from './routes/context.ts'
 import { gamesRoute } from './routes/games.ts'
+import { imagesRoute } from './routes/images.ts'
 import { listsRoute } from './routes/lists.ts'
 import { getSync, postSync } from './routes/sync.ts'
 
@@ -48,6 +49,8 @@ export function createApp(deps: Deps) {
         switch (route) {
           case 'GET /api/bgg/games':
             return await gamesRoute(ctx)
+          case 'GET /api/bgg/images':
+            return await imagesRoute(ctx)
           case 'GET /api/bgg/companies':
             return await companiesRoute(ctx)
           case 'GET /api/signin':

@@ -21,7 +21,7 @@
 - A game without gallery images: `images` holds only the main image (or is empty if the game has none).
 
 **Errors** (as the other BGG routes): `400 bad_request` (missing or non-positive id),
-`404 not_found` (unknown game), `429 bgg_busy` with `Retry-After`, `502 bgg_unavailable`.
+`404 not_found` (unknown game), `503 bgg_rate_limited` with `Retry-After`, `502 bgg_unavailable`.
 
 Upstream (server only): `https://api.geekdo.com/api/images?ajax=1&gallery=game&nosession=1&objectid=<id>&objecttype=thing&pageid=1&showcount=50&size=thumb&sort=hot`
 plus the cached `api/geekitems` for the main `imageid`; cached 7 days; honest User-Agent; at most one

@@ -1,5 +1,7 @@
 import { BggError, type BggCache, type BggClient, createBggClient } from './cache.ts'
+import type { GameGallery } from '../../src/domain/gallery.ts'
 import { getGames } from './geekdo-games.ts'
+import { getGallery } from './geekdo-images.ts'
 import { getCompanies, getListPage } from './geekdo-lists.ts'
 import type { BggSource, Game, ListKind, ListPage } from './source.ts'
 
@@ -24,6 +26,10 @@ export class GeekdoSource implements BggSource {
 
   getCompanies(ids: number[]): Promise<{ id: number; name: string }[]> {
     return getCompanies(this.client, ids)
+  }
+
+  getGallery(bggId: number): Promise<GameGallery> {
+    return getGallery(this.client, bggId)
   }
 
   async search(): Promise<Game[]> {
