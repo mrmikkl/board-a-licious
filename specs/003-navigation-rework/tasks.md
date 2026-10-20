@@ -143,7 +143,8 @@ As features 001/002: `src/domain/`, `src/app/`, `tests/{unit,e2e}/`, plus `vite.
   *Result (2026-10-20, fresh local database)*: `tsc` clean, 332 unit tests, build, e2e 116/117; the
   one failure is `offline.spec.ts`, which fails 2 of 8 repeats on `main` too (pre-existing flake).
 - [X] T035 [US2] Suggest the SPIEL Essen 2026 preview in the BGG list link fields while it is not on the device (FR-009a): `SPIEL_PREVIEW_LINK` and `suggestSpielPreview` in `src/domain/lists.ts` (unit tests in `tests/unit/lists.test.ts`), `src/app/components/ListSuggestion.tsx` in `LoadListSheet.tsx` and `ListPicker.tsx`, e2e in `tests/e2e/navigation.spec.ts`
-- [ ] T034 Quickstart validation on a phone (quickstart.md scenarios 1–14), including installing the app to see the new home-screen icon
+- [X] T034 Quickstart validation on a phone (quickstart.md scenarios 1–14), including installing the app to see the new home-screen icon
+  *Closed 2026-10-20: checked by the user on the deployed app ("overall looks quite great").*
 
 ---
 
