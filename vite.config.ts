@@ -19,13 +19,18 @@ export default defineConfig({
         theme_color: '#0D0F1F',
         background_color: '#0D0F1F',
         display: 'standalone',
-        icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        // F003: built from the icon set by scripts/make-icons.mjs; maskable for Android's cropped icons
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
         // F002: the installed app appears in Android's share menu; a share opens /share-target?title&text&url
         share_target: { action: '/share-target', method: 'GET', params: { title: 'title', text: 'text', url: 'url' } },
       },
       workbox: {
-        // app shell and self-hosted fonts are precached; /api is never cached by the service worker
-        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // app shell, self-hosted fonts and the app bar's logo are precached; /api is never cached by the service worker
+        globPatterns: ['**/*.{js,css,html,svg,woff2}', 'icons/logo.png', 'icons/favicon.png'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
       },
