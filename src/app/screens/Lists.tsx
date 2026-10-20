@@ -1,7 +1,12 @@
+import { useCallback } from 'react'
+
 import type { StoredList } from '../../client/types.ts'
+import { ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { Header } from '../components/Header.tsx'
+import { IconPlus } from '../components/icons.tsx'
+import { LoadListSheet } from '../components/LoadListSheet.tsx'
 import { useStoreData } from '../context.tsx'
-import { href } from '../router.ts'
+import { href, navigate } from '../router.ts'
 
 const EXAMPLE = 'boardgamegeek.com/geekpreview/93'
 
@@ -12,10 +17,10 @@ function progress(list: StoredList) {
   return `Loading ${list.loadedPages} of ${list.pageCount} pages. Open the list to load the rest.`
 }
 
-/** BGG lists loaded on this device (FR-012), newest first, and the "Load a BGG list" card. */
-export function Lists() {
+/** BGG lists loaded on this device (FR-012), newest first; the main ＋ opens the Load a BGG list sheet (`#/lists?load`). */
+export function Lists({ load }: { load?: boolean }) {
   const lists = useStoreData(async store => (await store.lists()).sort((a, b) => b.openedAt.localeCompare(a.openedAt)))
-  const load = href({ name: 'lists', load: true })
+  const close = useCallback(() => navigate({ name: 'lists' }, { replace: true }), [])
   return (
     <>
       <Header title="BGG lists" />
@@ -25,13 +30,8 @@ export function Lists() {
             <div className="hex" />
             <h2>No BGG list loaded yet</h2>
             <p>
-              Load a BoardGameGeek preview or geeklist by its link, for example the SPIEL preview: <span className="example">{EXAMPLE}</span>
+              Tap + below and paste the link of a BoardGameGeek preview or geeklist, for example the SPIEL preview: <span className="example">{EXAMPLE}</span>
             </p>
-            <div className="actions">
-              <a className="btn btn-primary" href={load}>
-                Load a BGG list
-              </a>
-            </div>
           </div>
         )}
         {lists && lists.length > 0 && (
@@ -56,14 +56,12 @@ export function Lists() {
                   )}
                 </a>
               ))}
-              <a className="card new-card" href={load}>
-                <span className="hex" aria-hidden="true" />
-                Load a BGG list
-              </a>
             </div>
           </>
         )}
       </main>
+      <ActionBar main={<MainButton icon={<IconPlus />} label="Load a BGG list" href={href({ name: 'lists', load: true })} />} />
+      {load && <LoadListSheet onClose={close} />}
     </>
   )
 }
