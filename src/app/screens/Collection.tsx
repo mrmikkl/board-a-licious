@@ -8,13 +8,14 @@ import { Action, ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { AddGameSheet } from '../components/AddGameSheet.tsx'
 import { Counter } from '../components/Counter.tsx'
 import { FilterSheet } from '../components/FilterPanel.tsx'
-import { IconFilter, IconHeart, IconPencil, IconPlus } from '../components/icons.tsx'
+import { IconFilter, IconHeart, IconPencil, IconPlus, IconShowOff } from '../components/icons.tsx'
 import { GameRow } from '../components/GameRow.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { GroupHeading } from '../components/GroupHeading.tsx'
 import { Header } from '../components/Header.tsx'
 import { ListPicker } from '../components/ListPicker.tsx'
 import { Sheet } from '../components/Sheet.tsx'
+import { ShowOffSheet } from '../components/ShowOffSheet.tsx'
 import { Ticker } from '../components/Ticker.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
@@ -28,9 +29,10 @@ const FOLDED_AT_START = new Set(['group-skip'])
  * One collection: games grouped by mark in the collection order, the marked groups above a line,
  * Not yet marked and Not interested folding below it (F003 FR-017, FR-018, FR-018a); filtered by
  * groups and bought (FR-009), with the games bought and the money spent (FR-008). Its actions sit in
- * the action bar (Add game, ♥, Filter) and behind the pencil after its name (F003 FR-015, FR-015a).
+ * the action bar (Add game, ♥, Filter, Show-off) and behind the pencil after its name (F003 FR-015,
+ * FR-015a; F004 FR-007).
  */
-export function Collection({ id, open }: { id: string; open?: 'game' | 'list' }) {
+export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 'showoff' }) {
   const services = useServices()
   const [openGame, setOpenGame] = useState<number>()
   // the filter picked on this screen, shown at once while it is saved to the device
@@ -42,6 +44,8 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' })
   // F003: `?add=game|list` in the address opens Add game or BG-Tinder over the collection; closing drops the query (contracts/navigation.md)
   const closeAdding = useCallback(() => navigate({ name: 'collection', id }, { replace: true }), [id])
   const addGame = () => navigate({ name: 'collection', id, open: 'game' })
+  // F004: `?show-off` opens the Show-off sheet the same way
+  const showOff = () => navigate({ name: 'collection', id, open: 'showoff' })
   const closeView = useCallback(() => setViewOpen(false), [])
   const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: 'mark' | 'booth' }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
@@ -183,11 +187,12 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' })
           </>
         )}
       </main>
-      {/* Add game · ♥ · Filter (F003 FR-015); Filter says "(active)" and turns orange while narrowed (FR-016) */}
+      {/* Add game · ♥ · Filter · Show-off (F003 FR-015, F004 FR-007); Filter says "(active)" and turns orange while narrowed (FR-016) */}
       <ActionBar
         main={<MainButton icon={<IconHeart />} label="BG-Tinder: swipe a BGG list into this collection" href={href({ name: 'collection', id, open: 'list' })} />}
         left={<Action icon={<IconPlus />} label="Add game" onClick={addGame} />}
         right={<Action icon={<IconFilter />} label="Filter" active={narrowed} onClick={() => setViewOpen(true)} />}
+        outer={<Action icon={<IconShowOff />} label="Show-off" onClick={showOff} />}
       />
       {current && <GameSheet entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
       <FilterSheet
@@ -203,6 +208,7 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' })
         <ListPicker collection={collection} entries={entries} lists={lists} onPick={list => navigate({ name: 'swipe', id, list }, { replace: true })} onClose={closeAdding} />
       )}
       {open === 'game' && <AddGameSheet collection={collection} inside={new Set(entries.map(e => e.bggId))} onClose={closeAdding} />}
+      {open === 'showoff' && <ShowOffSheet collectionId={id} counts={countMarks(entries).byMark} onClose={closeAdding} />}
       {editing && <EditCollectionSheet collection={collection} gameCount={entries.length} onClose={closeEdit} />}
     </>
   )

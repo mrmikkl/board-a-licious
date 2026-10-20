@@ -36,13 +36,17 @@ export function Action({ icon, label, active, ...target }: Target & { icon: Reac
   )
 }
 
-/** Dock at the bottom: a 5-column row with the main button in the middle, actions beside it (research R1). */
-export function ActionBar({ main, left, right }: { main: ReactNode; left?: ReactNode; right?: ReactNode }) {
+/**
+ * Dock at the bottom: a 5-column row with the main button in the middle, actions beside it (research
+ * R1); a fourth action (`outer`) takes the outer right column (F004: a collection's Show-off).
+ */
+export function ActionBar({ main, left, right, outer }: { main: ReactNode; left?: ReactNode; right?: ReactNode; outer?: ReactNode }) {
   return (
     <nav className="actionbar" aria-label="Actions">
       {left && <div className="actionbar-left">{left}</div>}
       {main}
       {right && <div className="actionbar-right">{right}</div>}
+      {outer && <div className="actionbar-outer">{outer}</div>}
     </nav>
   )
 }
