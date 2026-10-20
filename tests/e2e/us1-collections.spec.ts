@@ -7,8 +7,7 @@ test('US1: create a collection, add a game by link, mark it, reload', async ({ p
   await page.goto('/#/collections')
   const name = unique('Essen 2026')
 
-  await page.getByRole('link', { name: /add a collection, bgg list or game/i }).click()
-  await page.getByRole('button', { name: /^collection/i }).click()
+  await page.goto('/#/collections?new')
   await page.getByLabel('Name').fill(name)
   await expect(page.getByRole('switch', { name: /essen collection/i })).toHaveCount(0)
   await page.getByRole('button', { name: 'Create collection' }).click()

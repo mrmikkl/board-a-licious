@@ -4,8 +4,7 @@ import { expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 async function createCollection(page: Page, name: string) {
   await page.goto('/#/collections')
-  await page.getByRole('link', { name: /add a collection, bgg list or game/i }).click()
-  await page.getByRole('button', { name: /^collection/i }).click()
+  await page.goto('/#/collections?new')
   await page.getByLabel('Name').fill(name)
   await page.getByRole('button', { name: 'Create collection' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
