@@ -1899,7 +1899,7 @@ body:has(.actionbar) .toast {
 .quick .chip { gap: 6px; cursor: pointer; }
 .quick .chip[aria-pressed='true'] { background: var(--grad-hot); color: var(--ink); border-color: transparent; }
 .quick-count { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; }
-.search { margin-bottom: 14px; }
+.search { margin-top: 10px; }
 .search svg { color: var(--muted); flex: none; }
 .no-match { text-align: center; color: var(--muted); padding: 24px 0; }
 
@@ -2111,9 +2111,9 @@ function collection() {
       <button type="button" class="chip" data-act="buy-filter" id="qbuy">🛒 Buy</button>
       <span class="quick-count" id="qcount"></span>
     </div>
-    <hr class="separator" />
     <label class="visually-hidden" for="q">Search Essen 2026</label>
     <div class="field search">${ICON.search}<input id="q" type="search" placeholder="Search this collection" autocomplete="off" value="${esc(S.query)}"></div>
+    <hr class="separator" />
     <div id="games"></div>
   </main>
   <nav class="actionbar" aria-label="Actions">

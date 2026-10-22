@@ -262,7 +262,7 @@ shows the booth with "3" and "3-A100"; choose "3-A100": the game now shows Booth
 - "Not yet marked" becomes "No category yet"; internal names may stay as they are.
 - Removing "bought" from a row needs no confirmation; the message is enough (it can be bought again in two taps). The price paid is dropped with it.
 - The Category sheet lists all seven categories, so Not interested and No category yet can be set from the row too.
-- The search sits above the games, below the quick filter section's closing line; it searches names only.
+- The search sits in the quick filter section, right below the toggles and above its closing line; it searches names only.
 - The Booth / Cat toggle shows the grouping it switches to or the current one — decided in the design step.
 - Hall-only booths are a plain number or "Hall <number>"; other text without a booth number stays "No booth yet".
 - Resync covers the four list fields (booth, price, publisher, edition) for games in any of the user's collections; BGG game details (players, designers, ratings) refresh as today and never conflict.
