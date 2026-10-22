@@ -1,0 +1,2342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>F005 Essen feedback – prototype</title>
+<!-- Prototype for feature 005 (Spec Kit extended, Ext 2). Styles: the app's theme CSS (src/app/theme, 2026-10-22), inlined; fonts from Google Fonts here, self-hosted in the app. Covers are generated stand-ins. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ---- src/app/theme/tokens.css ---- */
+/* Design tokens: docs/design.md §3–§6, one-to-one */
+:root {
+  --ink: #0d0f1f;
+  --deck: #151831;
+  --deck-2: #1d2142;
+  --rim: #2c3160;
+  --border: #3a4078;
+  --border-2: #4a5196;
+  --raised: #232852;
+  --text: #eceeff;
+  --muted: #9aa0c8;
+  --placeholder: #6e74a0;
+  --orange: #ff7a1a;
+  --orange-2: #ffb020;
+  --indigo: #4c5bff;
+  --teal: #14c8c8;
+  --violet: #8b5cf6;
+  --danger: #ff4d5e;
+  --got: #0fb98f;
+
+  --grad-hot: linear-gradient(135deg, #ff7a1a 0%, #ffb020 100%);
+  --grad-cool: linear-gradient(135deg, #4c5bff 0%, #14c8c8 100%);
+  --grad-violet: linear-gradient(135deg, #6d4ae0 0%, #a78bfa 100%);
+  --grad-mud: linear-gradient(135deg, #7a6046 0%, #b0916e 100%);
+  --grad-red: linear-gradient(135deg, #c2183a 0%, #ff4d5e 100%);
+  --grad-got: linear-gradient(135deg, #0fb98f 0%, #7cf0c5 100%);
+  --grad-dusk: linear-gradient(135deg, #8b5cf6 0%, #4c5bff 55%, #14c8c8 100%);
+  --grad-white: linear-gradient(135deg, #ffffff 0%, #c9cdf0 100%);
+  --grad-separator: linear-gradient(90deg, #ff7a1a 0%, #8b5cf6 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --lift: 0 8px 22px rgba(3, 4, 12, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glow: 0 0 0 1px var(--orange), 0 0 18px rgba(255, 122, 26, 0.45);
+
+  --font-display: 'Chakra Petch', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --tap: 44px;
+  --gutter: 16px;
+  --column: 440px;
+  --gap: 8px;
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- src/app/theme/base.css ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--ink);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+a {
+  color: var(--orange-2);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Layout: the phone column (docs/design.md §6) */
+.app {
+  position: relative;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.screen {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--gutter);
+}
+.lead {
+  color: var(--muted);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.hex {
+  clip-path: var(--hex);
+}
+.separator {
+  height: 2px;
+  border: 0;
+  margin: 16px 0;
+  background: var(--grad-separator);
+  border-radius: 2px;
+}
+
+/* Surfaces */
+.card {
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift);
+  padding: 16px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  padding: 0 14px;
+  min-height: 50px;
+}
+.field:focus-within {
+  border-color: var(--orange);
+}
+.field input,
+.field select {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  padding: 12px 0;
+}
+.field input::placeholder {
+  color: var(--placeholder);
+}
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+/* Buttons (docs/design.md §7): text on gradients follows the contrast rule of §3 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  font-weight: 700;
+  box-shadow: var(--lift);
+  text-decoration: none;
+  color: var(--text);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--grad-hot);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-bought {
+  background: var(--grad-got);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-danger {
+  /* --danger itself reaches only 4.4:1 on the raised surface; text needs 4.5:1 (docs/design.md §3) */
+  color: #ff6b78;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Badges and pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Empty state */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 8px;
+}
+.empty .hex {
+  width: 72px;
+  height: 82px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.empty h2 {
+  font-size: 18px;
+}
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+.empty .actions {
+  display: grid;
+  gap: var(--gap);
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---- src/app/theme/shell.css ---- */
+/* App shell: app bar, menu, screen heading, sheet, toast (docs/design.md §6, §7) */
+
+/* App bar: its own sticky band on every screen; above the menu's scrim, so ☰ closes it again */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 28;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 2px var(--gutter);
+  background: var(--grad-hot);
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(255, 122, 26, 0.25);
+}
+.appbar-logo {
+  width: 34px;
+  height: auto;
+}
+.appbar-name {
+  grid-column: 2;
+  text-align: center;
+  font: 700 19px/1 var(--font-display);
+  letter-spacing: 0.02em;
+}
+/* a 38px translucent circle inside a 44px touch area */
+.menu-btn {
+  grid-column: 3;
+  justify-self: end;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(13, 15, 31, 0.14);
+  border: 1px solid rgba(13, 15, 31, 0.25);
+  transition: background 0.2s;
+}
+.menu-btn svg {
+  position: relative;
+}
+.menu-btn[aria-expanded='true']::before {
+  background: rgba(13, 15, 31, 0.28);
+}
+.menu-btn:focus-visible {
+  outline-color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu-btn:hover::before {
+    background: rgba(13, 15, 31, 0.24);
+  }
+}
+
+/* Menu: a solid panel just below the app bar at the right; between the action bar and sheets */
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  background: rgba(5, 6, 14, 0.5);
+  animation: fade-in 0.18s ease-out;
+}
+.menu {
+  position: fixed;
+  z-index: 27;
+  right: max(var(--gutter), calc(50% - var(--column) / 2 + var(--gutter)));
+  width: min(260px, calc(100% - 2 * var(--gutter)));
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  transform-origin: top right;
+  animation: menu-in 0.18s ease-out;
+}
+.menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.menu a svg {
+  color: var(--muted);
+}
+.menu a[aria-current='page'] {
+  background: var(--raised);
+}
+.menu a[aria-current='page'] svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu a:hover {
+    background: var(--raised);
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menu-scrim {
+    animation: none;
+  }
+}
+
+/* Screen heading: back (only where it belongs), title, an element right after it */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--gutter) 10px;
+}
+.top-title {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.top h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  /* at most two lines, then "…" */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.top-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .top h1 {
+    font-size: 26px;
+  }
+}
+.back {
+  font-size: 26px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* the light passing over the main button every 5 s */
+@keyframes shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 6, 14, 0.6);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 31;
+  width: 100%;
+  max-width: var(--column);
+  max-height: 88dvh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1e3e 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-grip {
+  /* a 5px bar with a 44px tall touch area around it */
+  width: 88px;
+  height: 25px;
+  margin: -10px auto 2px;
+  background: linear-gradient(var(--rim), var(--rim)) center / 44px 5px no-repeat;
+  border-radius: 3px;
+}
+.sheet-title {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+@keyframes sheet-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+/* above the action bar, near the bottom where there is none (research R7) */
+body:has(.actionbar) .toast {
+  bottom: calc(100px + env(safe-area-inset-bottom));
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast i {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: var(--orange);
+}
+
+/* Expired sign-in: above the screen, solid like every interactive surface */
+.signin-banner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  margin: 12px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--deck-2);
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+}
+.signin-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* Tablets and laptops use more of the screen (docs/design.md §6): a wider column, cards and game
+   rows in a grid; sheets and the swipe card keep a readable width. */
+@media (min-width: 768px) {
+  :root {
+    --column: 1040px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .rows {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .sheet {
+    max-width: 560px;
+  }
+  .hexboard {
+    max-width: none;
+  }
+  .swipe-screen,
+  .intro {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .form,
+  .share {
+    max-width: 640px;
+  }
+}
+
+/* Dragging a sheet down to close it follows the finger; it springs back if let go early */
+.sheet.is-dragging {
+  transition: none;
+  animation: none;
+}
+.sheet.is-settling {
+  transition: transform 0.2s ease-out;
+}
+.sheet-grip {
+  touch-action: none;
+}
+/* a heading that reacts to taps (Config: five taps show the developer section): no text selection,
+   no double-tap zoom swallowing taps, and the whole title width as target */
+.top h1.tappable {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  justify-self: stretch;
+}
+
+/* the page keeps room at the bottom only while an action bar is shown (research R7) */
+.app:not(:has(.actionbar)) {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+/* Collection heading (docs/design.md v2.0.0 "Collection screen", "Ticker"): the name runs as a
+   ticker before the pencil instead of wrapping to two lines; the pencil keeps its place after it */
+.top h1.ticker {
+  flex: 0 1 auto;
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow-wrap: normal;
+}
+.edit-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- src/app/theme/actionbar.css ---- */
+/* Action bar and main button (docs/design.md v2.0.0 "Action bar", "Main button"); F003 tasks T016 */
+
+/* Dock position, padding and safe area of the old tab bar (research R7) */
+.actionbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--column);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.actionbar-left,
+.actionbar-right,
+.actionbar-outer {
+  display: contents;
+}
+.actionbar-left > .act {
+  grid-column: 2;
+  grid-row: 1;
+}
+.actionbar-right > .act {
+  grid-column: 4;
+  grid-row: 1;
+}
+/* F004: the fourth action at the outer right (docs/design.md "Action bar") */
+.actionbar-outer > .act {
+  grid-column: 5;
+  grid-row: 1;
+}
+
+.act {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 600 11px var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+}
+.act svg {
+  transition:
+    transform 0.25s var(--spring),
+    color 0.2s;
+}
+.act:active svg {
+  transform: scale(0.85);
+}
+.act.is-active svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .act:hover {
+    color: var(--text);
+  }
+  .act:hover svg {
+    color: var(--orange-2);
+  }
+}
+
+.main-btn {
+  position: relative;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  background: var(--grad-hot);
+  color: var(--ink);
+  cursor: pointer;
+}
+.main-btn svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+/* a light shimmer passes over it every 5 s */
+.main-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: main-shimmer 5s ease-in-out infinite;
+}
+@keyframes main-shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+/* not available yet: raised grey, no shimmer, no hover or press */
+.main-btn.hex-btn:disabled {
+  background: var(--raised);
+  color: var(--placeholder);
+  cursor: not-allowed;
+  scale: none;
+  filter: none;
+}
+.main-btn:disabled::after {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-btn::after {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .actionbar {
+    max-width: 560px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+}
+
+/* ---- src/app/theme/components.css ---- */
+/* Feature components: docs/design.md §7 (collection card, game row, group heading, hexagon picker, forms) */
+
+/* Mark gradients (docs/design.md §4), used by pickers, pills and group dots */
+[data-mark='new'],
+[data-tone='new'] {
+  --tone: var(--grad-white);
+  --tone-text: var(--ink);
+}
+[data-mark='must_have'],
+[data-tone='must_have'],
+[data-tone='hot'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='interested'],
+[data-tone='interested'] {
+  --tone: var(--grad-cool);
+  --tone-text: var(--ink);
+}
+[data-mark='unsure'],
+[data-tone='unsure'] {
+  --tone: var(--grad-violet);
+  --tone-text: #fff;
+}
+[data-mark='poop'],
+[data-tone='poop'] {
+  --tone: var(--grad-mud);
+  --tone-text: #fff;
+}
+[data-mark='skip'],
+[data-tone='skip'] {
+  --tone: var(--grad-red);
+  --tone-text: #fff;
+}
+[data-mark='bought'] {
+  --tone: var(--grad-got);
+  --tone-text: var(--ink);
+}
+/* hall groups (group by booth): halls in the hot gradient, "No booth yet" muted */
+[data-mark='hall'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='none'] {
+  --tone: linear-gradient(135deg, #6e74a0, #9aa0c8);
+  --tone-text: var(--ink);
+}
+
+.section-title {
+  font-size: 18px;
+  margin: 20px 0 10px;
+}
+.section-title small {
+  font: 600 13px var(--font-body);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hint.error {
+  color: #ff8a95;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field.is-disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.field svg {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Dropdown: field look with an orange hexagon as arrow */
+.field.select {
+  position: relative;
+}
+.field.select select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.field.select select option {
+  background: var(--deck);
+}
+.field.select::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  pointer-events: none;
+}
+
+/* Switch ("Essen collection") */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.toggle-text {
+  flex: 1;
+  font-weight: 600;
+}
+.toggle-text small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 6px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  clip-path: var(--hex);
+  background: var(--muted);
+  transition: transform 0.25s var(--spring);
+}
+.switch:checked {
+  background: var(--grad-hot);
+  border-color: transparent;
+}
+.switch:checked::after {
+  background: var(--ink);
+  transform: translateX(20px);
+}
+
+/* Hexagon picker: honeycomb, every second hexagon offset down */
+/* one straight, centred row of equal hexagons, whatever their labels and the phone's text scaling */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 84px));
+  justify-content: center;
+  align-items: start;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+.picker-btn {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+.picker-hex {
+  display: block;
+  aspect-ratio: 0.88;
+  padding: 2px;
+  background: var(--border-2);
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.picker-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.picker-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.picker-btn[aria-pressed='true'] .picker-hex {
+  background: var(--orange);
+}
+.picker-btn[aria-pressed='true'] .picker-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.picker-btn:is([data-tone='unsure'], [data-tone='poop'])[aria-pressed='true'] .picker-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Collection cards with the hexagon cluster in the top-right corner */
+.cards {
+  display: grid;
+  gap: var(--gap);
+}
+/* off-screen cards skip layout, paint and their cluster animation (long lists stay fast) */
+.cards > .card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  padding-right: 64px;
+}
+.card-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+/* the six counts always in one row; the text shrinks on narrow phones instead of wrapping */
+.counts {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 10px 0 0;
+  font: 700 clamp(12px, 3.7vw, 15px) var(--font-display);
+  white-space: nowrap;
+}
+.cluster {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 58px;
+  height: 52px;
+  animation: sway 6s ease-in-out infinite;
+}
+.cluster i {
+  position: absolute;
+  width: 22px;
+  height: 25px;
+  background: var(--grad-dusk);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+.cluster i:nth-child(1) {
+  top: 0;
+  right: 0;
+}
+.cluster i:nth-child(2) {
+  top: 0;
+  right: 24px;
+  opacity: 0.7;
+}
+.cluster i:nth-child(3) {
+  top: 20px;
+  right: 12px;
+  opacity: 0.85;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.soon-card {
+  margin-bottom: 16px;
+}
+.soon-card .card-title {
+  padding-right: 0;
+}
+/* F002 Share hint at the top of Config */
+.hint-card .card-title {
+  padding-right: 0;
+}
+
+.row-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.row-actions .btn {
+  padding-inline: 10px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.group-title i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  background: var(--tone);
+}
+.group-count {
+  color: var(--muted);
+  font-weight: 700;
+}
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.chev {
+  margin-left: auto;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.fold[aria-expanded='true'] .chev {
+  transform: rotate(90deg);
+}
+
+.rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows[hidden] {
+  display: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+.row-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-sub {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* F002 "Just added": the hover highlight, kept until the user scrolls or taps (not an animation) */
+.row.is-just-added {
+  border-color: var(--orange);
+  box-shadow: var(--lift), var(--glow);
+}
+.row.skip .row-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.row.skip .cover {
+  opacity: 0.5;
+}
+.row .pill,
+.detail-head .pill {
+  flex: none;
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.mark-pill {
+  padding: 4px 8px;
+}
+
+/* Hexagon covers */
+.cover {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.cover-hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--grad-dusk);
+}
+.cover-hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-initials {
+  font: 700 17px var(--font-display);
+  color: var(--ink);
+}
+.cover-got {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Game details sheet */
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.detail-sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+.sheet-actions {
+  display: grid;
+  gap: var(--gap);
+  margin-top: 12px;
+}
+
+/* "Group by" under the filter in a collection */
+.group-by {
+  margin-top: 12px;
+}
+
+/* Config → Developer: plain links, each a full-width 44px target */
+.dev-links {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dev-links a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Cancel and the main action side by side, the main action on the right */
+.sheet-actions-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Game info (docs/design.md §7 "Game info"): year beside the name, publisher, then three infos */
+.row-year {
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row-info > span:first-child {
+  flex: none;
+}
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.row-info .info-pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.info-pill {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.info-list > div {
+  display: contents;
+}
+.info-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.info-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* F003: the SPIEL preview suggestion above a BGG list link field */
+.list-suggestion {
+  margin-bottom: 10px;
+}
+
+/* ---- src/app/theme/fair.css ---- */
+/* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
+
+/* Filter: one full-width button, a panel below it */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--raised);
+  box-shadow: var(--glow);
+}
+.seg-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg {
+  /* one column per option, all in one row */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.seg button {
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0 4px;
+  overflow-wrap: anywhere;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  border-top: 1px solid var(--rim);
+  cursor: pointer;
+}
+.filter-row:first-child {
+  border-top: 0;
+}
+.filter-row input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+}
+.filter-row span {
+  flex: 1;
+}
+.filter-row small {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+.chip:active,
+.seg button:active {
+  scale: 0.96;
+}
+
+/* "✅ 1 game bought, €52 spent" under the filter */
+.bought-line {
+  margin: 10px 2px 0;
+  font-weight: 700;
+  color: #7cf0c5;
+}
+
+/* Game details: description, facts, price question */
+.detail-head .pill {
+  margin-top: 4px;
+}
+.desc {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+.muted {
+  color: var(--muted);
+}
+.facts-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.facts-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.facts-by {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.link-btn {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-2);
+  font-weight: 700;
+  text-align: left;
+}
+.facts-add {
+  margin-bottom: 8px;
+}
+.facts-form {
+  margin-bottom: 12px;
+}
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: var(--gap);
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.currency {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* "Groups" with Select all / Select none on the same line */
+.seg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.seg-actions {
+  display: flex;
+  gap: 4px;
+}
+.seg-actions .link-btn {
+  min-height: var(--tap);
+  padding: 0 8px;
+}
+
+/* filter icon in the collection header; a dot while a filter or the hall grouping is active */
+.filter-icon {
+  position: relative;
+}
+.filter-icon.is-active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 11px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+}
+/* what is shown while narrowed; a tap opens "Filter and group" */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* ---- src/app/theme/lists.css ---- */
+/* BGG lists: list cards, list rows with +, progress, list game sheet (docs/design.md §7) */
+
+.example {
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Loading progress: pages loaded so far */
+.progress {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: var(--r-pill);
+  background: var(--rim);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-hot);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .progress span {
+    transition: width 0.4s ease-out;
+  }
+}
+.list-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.list-status p {
+  margin: 0;
+}
+.list-status.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #ff8a95;
+}
+
+/* List rows: the row opens the game, the hexagon + next to it does the same */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-item .row {
+  flex: 1;
+  min-width: 0;
+}
+.in-mark {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.add-mini {
+  flex: none;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.add-mini .hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 26px var(--font-display);
+}
+
+/* List game sheet */
+.description {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Multi-choice list: a hexagon tick per collection; the ticks always show the current truth */
+.picks {
+  display: grid;
+  gap: var(--gap);
+}
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  cursor: pointer;
+}
+.pick:has(.pick-input:focus-visible) {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.pick-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.tick {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  background: var(--border-2);
+}
+.tick::before {
+  content: '';
+  width: 24px;
+  height: 28px;
+  clip-path: var(--hex);
+  background: var(--raised);
+}
+.pick-input:checked + .tick {
+  background: var(--orange);
+}
+.pick-input:checked + .tick::before {
+  background: var(--grad-hot);
+}
+.pick-input:checked + .tick::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 800;
+}
+.pick-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.pick-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.pick-text small {
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+
+/* ---- src/app/theme/interaction.css ---- */
+/* Interaction states: docs/design.md §8. Nothing moves on hover; press squishes; focus is orange. */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn,
+.icon-btn,
+.card,
+.row,
+.tile {
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    scale 0.25s var(--spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not([aria-disabled='true']):hover,
+  .row:hover,
+  .tile:hover,
+  .field:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .btn:not(:disabled):not(.btn-primary):not(.btn-bought):hover,
+  .icon-btn:hover {
+    background: var(--grad-hot);
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--grad-red);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover,
+  .btn-bought:not(:disabled):hover {
+    box-shadow: var(--lift), 0 0 22px rgba(255, 176, 32, 0.55);
+  }
+  .hex-btn:hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Press: a short squish that springs back (touch and pointer) */
+.card:active,
+.row:active,
+.tile:active {
+  scale: 0.98;
+  transition-duration: 0.08s;
+}
+.btn:not(:disabled):active,
+.icon-btn:active {
+  scale: 0.96;
+  transition-duration: 0.08s;
+}
+.hex-btn {
+  transition:
+    scale 0.25s var(--spring),
+    filter 0.2s;
+}
+.hex-btn:active {
+  scale: 0.9;
+  transition-duration: 0.08s;
+}
+
+/* Tap pulse: an orange hexagon expanding from the tap point */
+.tap-pulse {
+  position: fixed;
+  z-index: 60;
+  width: 56px;
+  height: 64px;
+  margin: -32px 0 0 -28px;
+  clip-path: var(--hex);
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.55), rgba(255, 122, 26, 0) 70%);
+  pointer-events: none;
+  animation: tap-pulse 0.5s ease-out forwards;
+}
+@keyframes tap-pulse {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion (docs/design.md §9): every animation and press squish off */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .card:active,
+  .row:active,
+  .tile:active,
+  .btn:active,
+  .icon-btn:active,
+  .hex-btn:active,
+  .hex-btn:hover {
+    scale: none;
+  }
+  .tap-pulse {
+    display: none;
+  }
+}
+
+/* ---- src/app/theme/ticker.css ---- */
+/* Ticker for headings too long for their row (docs/design.md v2.0.0 "Ticker"); F003 tasks T024 */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.ticker > span {
+  display: inline-block;
+}
+/* soft fades at both edges; the left padding keeps the first letter clear of the fade */
+.ticker.is-long {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  padding-left: 10px;
+  margin-left: -10px;
+}
+.ticker.is-long > span {
+  animation: ticker var(--ticker-time, 8s) linear infinite;
+}
+@keyframes ticker {
+  /* read the start */
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  /* the end is visible, then start over */
+  82%,
+  100% {
+    transform: translateX(calc(-1 * var(--ticker-shift)));
+  }
+}
+/* reduced motion: the text stands still and ends in "…" */
+@media (prefers-reduced-motion: reduce) {
+  .ticker {
+    text-overflow: ellipsis;
+  }
+  .ticker.is-long {
+    -webkit-mask-image: none;
+    mask-image: none;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  .ticker.is-long > span {
+    display: inline;
+    animation: none;
+  }
+}
+
+/* ---- F005 prototype additions ---- */
+[data-mark='later'], [data-tone='later'] { --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%); --tone-text: var(--ink); }
+.proto-later-teal [data-mark='later'], .proto-later-teal [data-tone='later'] { --tone: linear-gradient(135deg, #0ea5e9 0%, #a5f3fc 100%); }
+
+.proto-bar { position: relative; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 12px; background: #05060e; border-bottom: 1px solid var(--rim); font-size: 12px; color: var(--muted); }
+.proto-bar select { background: var(--deck-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; font: inherit; }
+.proto-note { margin: 8px 0; font-size: 12px; color: var(--placeholder); }
+
+/* Game row: category as the border colour, actions on the right */
+.crow { position: relative; display: flex; align-items: stretch; min-height: 68px; border-radius: var(--r-md); box-shadow: var(--lift);
+  border: 2px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone, linear-gradient(var(--border), var(--border))) border-box; }
+.crow[data-mark='new'] { --tone: linear-gradient(var(--border), var(--border)); }
+.crow[data-mark='skip'] { opacity: 0.75; }
+.crow[data-mark='skip'] .row-name { text-decoration: line-through; color: var(--muted); }
+.crow[data-mark='skip'] .cover { opacity: 0.5; }
+/* B: a coloured edge at the left instead of the whole border */
+.proto-edge .crow { border: 1px solid var(--border); background: var(--deck); padding-left: 6px; }
+.proto-edge .crow::before { content: ''; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 7px; border-radius: var(--r-md) 0 0 var(--r-md); background: var(--tone); }
+.proto-edge .crow[data-mark='new']::before { background: var(--border); }
+.crow-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px 4px 8px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: var(--r-md) 0 0 var(--r-md); }
+.crow-acts { flex: none; display: flex; align-items: center; gap: 2px; padding-right: 6px; }
+.ract { width: 46px; min-height: 52px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--muted); font: 600 10px var(--font-body); cursor: pointer; }
+.ract .rhex { width: 32px; height: 36px; display: grid; place-items: center; clip-path: var(--hex); background: var(--raised); color: var(--text); transition: background 0.2s, color 0.2s, scale 0.25s var(--spring); }
+.ract:active .rhex { scale: 0.85; }
+.ract.buy[aria-pressed='true'] { color: #7cf0c5; }
+.ract.buy[aria-pressed='true'] .rhex { background: var(--grad-got); color: var(--ink); }
+.ract.cat .rhex { background: var(--raised); }
+.proto-catemoji .ract.cat .rhex { background: var(--tone); color: var(--tone-text); font-size: 16px; }
+@media (hover: hover) and (pointer: fine) { .ract:hover .rhex { background: var(--grad-hot); color: var(--ink); } }
+.row-price { color: #7cf0c5; font-weight: 700; }
+
+/* Quick filters between the two lines */
+.quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qtoggle { display: inline-grid; grid-auto-flow: column; padding: 3px; min-height: var(--tap); border: 1px solid var(--border); border-radius: var(--r-pill); background: var(--deck); cursor: pointer; font: 700 14px var(--font-body); }
+.qtoggle span { display: grid; place-items: center; padding: 0 14px; border-radius: var(--r-pill); color: var(--muted); transition: background 0.2s, color 0.2s; }
+.qtoggle span.on { background: var(--grad-hot); color: var(--ink); }
+.quick .chip { gap: 6px; cursor: pointer; }
+.quick .chip[aria-pressed='true'] { background: var(--grad-hot); color: var(--ink); border-color: transparent; }
+.quick-count { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; }
+.search { margin-bottom: 14px; }
+.search svg { color: var(--muted); flex: none; }
+.no-match { text-align: center; color: var(--muted); padding: 24px 0; }
+
+/* filter action highlighted while not default: orange icon and label, hexagon dot */
+.act.is-active { color: var(--text); }
+.act.is-active svg { color: var(--orange); }
+.act { position: relative; }
+.act.is-active::after { content: ''; position: absolute; top: 4px; left: calc(50% + 8px); width: 10px; height: 11px; clip-path: var(--hex); background: var(--grad-hot); }
+
+/* hall-only booths */
+.hall-only { color: var(--orange-2); font-weight: 700; }
+
+/* Category sheet (list) */
+.cat-list { display: grid; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+.cat-list button { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--deck-2); color: var(--text); font: 600 16px var(--font-body); text-align: left; cursor: pointer; }
+.cat-list .chex { width: 22px; height: 25px; flex: none; clip-path: var(--hex); background: var(--tone); }
+.cat-list button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.cat-list button[aria-pressed='true']::after { content: 'current'; margin-left: auto; font-size: 12px; color: var(--muted); }
+.cat-list .sep { height: 1px; background: var(--rim); margin: 4px 0; }
+
+/* Zigzag category picker */
+.zz { position: relative; margin: 6px auto 4px; }
+.zz .picker-btn { position: absolute; padding: 0; }
+.zz.flat .picker-hex, .zz.flat .picker-face { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.zz .picker-hex { aspect-ratio: auto; width: 100%; height: 100%; }
+.zz .picker-face { font-size: 11px; }
+.zz .picker-face b { font-size: 20px; line-height: 1; font-weight: 400; }
+.not-int { display: flex; justify-content: center; margin: 0 0 6px; }
+
+/* Ratings in the info box */
+.rating { display: inline-flex; align-items: center; gap: 6px; }
+.rating i { font-style: normal; display: inline-grid; place-items: center; width: 26px; height: 29px; clip-path: var(--hex); background: var(--grad-cool); color: var(--ink); font: 700 11px var(--font-display); }
+.rating i.geek { background: var(--grad-dusk); color: #fff; }
+.rating small { color: var(--muted); font-weight: 600; }
+
+/* BGG list with resync */
+.lrow { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.lrow .in { margin-left: auto; font-size: 12px; color: var(--muted); }
+.resync-btn svg { display: block; }
+.resync-btn.spin svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .resync-btn.spin svg { animation: none; } }
+
+/* Conflicts sheet */
+.conflict { padding: 12px 0; border-top: 1px solid var(--rim); }
+.conflict:first-of-type { border-top: 0; }
+.conflict h3 { margin: 0 0 2px; font-size: 16px; }
+.conflict p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice button { min-height: 56px; padding: 6px 10px; display: grid; align-content: center; gap: 2px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck-2); color: var(--text); font: 700 15px var(--font-body); text-align: left; cursor: pointer; }
+.choice button small { font-size: 11px; font-weight: 700; color: var(--muted); }
+.choice button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.choice button[aria-pressed='true'] small { color: var(--orange-2); }
+.all-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 8px; }
+.sheet-lead-row { display: flex; justify-content: space-between; align-items: baseline; }
+
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <label for="start">Start</label>
+  <select id="start">
+    <option value="collection">Collection (Essen 2026)</option>
+    <option value="booth">Collection grouped by booth</option>
+    <option value="game">A game's details</option>
+    <option value="list">BGG list (Resync)</option>
+  </select>
+  <label for="o-border">Row</label>
+  <select id="o-border"><option value="">A · coloured border</option><option value="proto-edge">B · coloured left edge</option></select>
+  <label for="o-caticon">Cat. action</label>
+  <select id="o-caticon"><option value="">A · neutral icon</option><option value="proto-catemoji">B · current emoji</option></select>
+  <label for="o-catsheet">Cat. sheet</label>
+  <select id="o-catsheet"><option value="list">A · list</option><option value="hex">B · hexagons</option></select>
+  <label for="o-picker">Picker</label>
+  <select id="o-picker"><option value="flat">A · flat zigzag</option><option value="pointy">B · honeycomb 3 + 2</option></select>
+  <label for="o-later">For later</label>
+  <select id="o-later"><option value="">pink</option><option value="proto-later-teal">sky</option></select>
+  <label for="o-resync">Resync</label>
+  <select id="o-resync"><option value="icon">A · icon in the heading</option><option value="button">B · button above the list</option></select>
+</div>
+<div id="root"></div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const svgI = (body, w = 2, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`
+const ICON = {
+  plus: svgI('<path d="M12 5v14M5 12h14"/>'),
+  heart: svgI('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>', 2.6),
+  filter: svgI('<path d="M3 5h18l-7 8v5l-4 2v-7z"/>'),
+  pencil: svgI('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
+  honey: svgI('<path d="M7 3.5 10.5 5.5v4L7 11.5 3.5 9.5v-4z"/><path d="M17 3.5 20.5 5.5v4L17 11.5 13.5 9.5v-4z"/><path d="M12 12.5 15.5 14.5v4L12 20.5 8.5 18.5v-4z"/>', 1.8),
+  bag: svgI('<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>', 2, 18),
+  bagOk: svgI('<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="m9 14 2 2 4-4"/>', 2.2, 18),
+  cat: svgI('<path d="M9 3.5 13 5.8v4.6L9 12.7 5 10.4V5.8z"/><path d="M15 11.3 19 13.6v4.6l-4 2.3-4-2.3v-4.6z"/>', 1.9, 18),
+  search: svgI('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>', 2, 18),
+  resync: svgI('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/>', 2.2),
+}
+
+const CATS = [
+  { k: 'must_have', l: 'Must Have', e: '⭐' }, { k: 'interested', l: 'Interested', e: '👀' }, { k: 'unsure', l: 'Unsure', e: '🤔' },
+  { k: 'later', l: 'For later', e: '⏳' }, { k: 'poop', l: 'Poop', e: '💩' }, { k: 'new', l: 'No category yet', e: '⬡' }, { k: 'skip', l: 'Not interested', e: '🛑' },
+]
+const CAT = Object.fromEntries(CATS.map(c => [c.k, c]))
+const PICK = CATS.slice(0, 5)
+const BUY = ['must_have', 'interested', 'unsure']
+const ALL = CATS.map(c => c.k)
+
+// name, publisher, category, booth, listed price (cents), paid (cents, null = bought without price, undefined = not bought), rating, geek rating, players
+const GAMES = [
+  ['Harmonies', 'Libellud', 'must_have', '2-B105', 4000, 3800, 7.9, 7.6, '1–4'],
+  ['Sky Team', 'Le Scorpion Masqué', 'must_have', '3', 2500, undefined, 8.0, 7.5, '2'],
+  ['Kalypso', 'Inside Up Games', 'must_have', '7-C111 / 3', 3000, undefined, 7.2, 6.1, '1–4'],
+  ['Arcs', 'Leder Games', 'must_have', '6-D110', 5500, 5500, 8.1, 7.7, '2–4'],
+  ['Ark Nova: Marine Worlds', 'Feuerland', 'interested', '1-A100', 3500, undefined, 8.7, 7.4, '1–4'],
+  ['Faraway', 'Catch Up Games', 'interested', 'Hall 2', 2000, undefined, 7.6, 7.1, '2–6'],
+  ['Castle Combo', 'Catch Up Games', 'interested', '2-C104', 1800, undefined, 7.5, 6.9, '2–5'],
+  ['Cascadia', 'Kosmos', 'interested', '', 3900, undefined, 7.9, 7.7, '1–4'],
+  ['Endless Winter', 'Fantasia Games', 'unsure', '3-H109', 6500, undefined, 8.0, 6.8, '1–4'],
+  ['Lacuna', 'CMYK', 'unsure', '5-E101', 2200, undefined, 6.9, null, '2'],
+  ['Bamboo', 'Devir', 'later', '3-A112', 3000, undefined, 7.4, 6.6, '2–4'],
+  ['Galactic Cruise', 'Kinson Key', 'poop', '', 9000, undefined, 8.4, 6.2, '1–4'],
+  ['Mycelia', 'Ravensburger', 'new', '1-F111', 3500, undefined, 7.0, 6.3, '1–4'],
+  ['Twilight Inscription', 'Fantasy Flight', 'skip', '4-B120', 7000, undefined, 7.5, 6.9, '1–8'],
+].map(([name, publisher, cat, booth, price, paid, rating, geek, players], id) => ({ id, name, publisher, cat, booth, price, bought: paid !== undefined, paid: paid ?? null, rating, geek, players, source: 'list' }))
+// typed in by hand (for the resync conflicts)
+GAMES[1].source = 'manual'; GAMES[2].source = 'manual'; GAMES[5].source = 'manual'
+
+const $ = s => document.querySelector(s)
+const root = $('#root'), layer = $('#layer')
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const euro = c => '€' + (c % 100 ? (c / 100).toFixed(2).replace('.', ',') : c / 100)
+const initials = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('')
+const fold = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+function toast(text) { const t = $('#toast'); t.innerHTML = '<i class="hex"></i>' + esc(text); t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600) }
+
+const PAL = [['#1b6f6a', '#f2c14e'], ['#3b2c85', '#ff7a1a'], ['#8a1c3c', '#ffd166'], ['#24527a', '#7cf0c5'], ['#5b3a1a', '#e8c39e'], ['#14532d', '#a3e635'], ['#4c1d95', '#f0abfc']]
+function art(g) {
+  const [bg, fg] = PAL[g.id % PAL.length]
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 134"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${bg}"/><stop offset="1" stop-color="#05060e"/></linearGradient></defs><rect width="120" height="134" fill="url(#g)"/><circle cx="${30 + g.id * 7 % 60}" cy="45" r="26" fill="${fg}" opacity=".5"/><polygon points="80,70 104,84 104,110 80,124 56,110 56,84" fill="${fg}" opacity=".7"/><text x="60" y="122" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="15" fill="#fff">${esc(initials(g.name))}</text></svg>`
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+}
+const cover = (g, size) => `<span class="cover" style="width:${size}px;height:${Math.round(size * 1.12)}px" aria-hidden="true"><span class="cover-hex hex"><img src="${art(g)}" alt=""></span>${g.bought ? '<span class="cover-got">✓</span>' : ''}</span>`
+
+/* ---------- state ---------- */
+let S
+const DEFAULT = () => ({ cats: new Set(ALL), bought: 'all', price: 'all' })
+const isDefault = () => !S.buy && S.groupBy === 'cat' && S.filter.bought === 'all' && S.filter.price === 'all' && S.filter.cats.size === ALL.length
+const band = c => (c <= 3000 ? 'cheap' : c <= 6000 ? 'mid' : 'expensive')
+const passes = g => S.filter.cats.has(g.cat) && (S.filter.bought === 'all' || g.bought === (S.filter.bought === 'yes')) && (S.filter.price === 'all' || band(g.price) === S.filter.price)
+const shownGames = () => GAMES.filter(g => passes(g) && (!S.query || fold(g.name).includes(fold(S.query))))
+
+/* booths: "7-C111 / 3" → [{hall:'7', booth:'7-C111'}, {hall:'3', hallOnly:true}] */
+function boothsOf(text) {
+  const out = []
+  for (const raw of (text || '').split(/[/,;]/).map(s => s.trim().toUpperCase()).filter(Boolean)) {
+    let m
+    if ((m = raw.match(/^([^-\s]+)-\S+/))) out.push({ hall: m[1], booth: raw })
+    else if ((m = raw.match(/^(?:HALL\s*)?(\d+)$/))) out.push({ hall: m[1], hallOnly: true })
+  }
+  return out
+}
+function groups(games) {
+  const byName = (a, b) => a.name.localeCompare(b.name)
+  if (S.groupBy === 'cat') {
+    return CATS.map(c => ({ key: c.k, tone: c.k, label: c.l, games: games.filter(g => g.cat === c.k).sort(byName), rest: c.k === 'new' || c.k === 'skip' })).filter(x => x.games.length)
+  }
+  const halls = new Map(), none = []
+  for (const g of games) {
+    const bs = boothsOf(g.booth)
+    if (!bs.length) { none.push(g); continue }
+    for (const b of bs) {
+      const list = halls.get(b.hall) || []
+      // a game with a full booth and the bare hall number in the same hall appears once
+      if (!list.some(x => x.g === g)) list.push({ g, b })
+      halls.set(b.hall, list)
+    }
+  }
+  const out = [...halls.keys()].sort((a, b) => a - b).map(h => ({
+    key: 'h' + h, tone: 'hall', label: 'Hall ' + h,
+    games: halls.get(h).sort((x, y) => (x.b.hallOnly - y.b.hallOnly) || (x.b.booth || '').localeCompare(y.b.booth || '', 'en', { numeric: true }) || x.g.name.localeCompare(y.g.name)).map(x => ({ ...x.g, _b: x.b })),
+  }))
+  if (none.length) out.push({ key: 'none', tone: 'none', label: 'No booth yet', games: none.sort(byName) })
+  return out
+}
+
+/* ---------- collection ---------- */
+const appbar = () => `<header class="appbar"><img class="appbar-logo" src="data:image/png;base64,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" alt=""><span class="appbar-name">Board-a-licious</span><button type="button" class="menu-btn" aria-label="Menu">${svgI('<path d="M4 7h16M4 12h16M4 17h16"/>', 2.4)}</button></header>`
+
+function row(g) {
+  const info = S.groupBy === 'booth'
+    ? (g._b?.hallOnly ? `<span class="hall-only">Hall ${g._b.hall}, booth unknown</span>` : esc(g._b?.booth || 'No booth yet'))
+    : esc([g.booth && 'Booth ' + g.booth, euro(g.price)].filter(Boolean).join(' · '))
+  return `<li><div class="crow" data-mark="${g.cat}">
+    <button type="button" class="crow-open" data-act="open" data-id="${g.id}">${cover(g, 52)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${esc(g.publisher)}</span><span class="row-info"><span>${info}</span></span><span class="visually-hidden">, ${CAT[g.cat].l}${g.bought ? ', bought' : ''}</span></span></button>
+    <div class="crow-acts">
+      <button type="button" class="ract buy" data-act="buy" data-id="${g.id}" aria-pressed="${g.bought}" aria-label="${g.bought ? 'Not bought' : 'Buy'} ${esc(g.name)}"><span class="rhex">${g.bought ? ICON.bagOk : ICON.bag}</span>${g.bought ? (g.paid != null ? euro(g.paid) : 'Bought') : 'Buy'}</button>
+      <button type="button" class="ract cat" data-act="cat" data-id="${g.id}" aria-label="Category of ${esc(g.name)}"><span class="rhex">${document.body.classList.contains('proto-catemoji') ? CAT[g.cat].e : ICON.cat}</span>Category</button>
+    </div></div></li>`
+}
+
+function gamesHTML() {
+  const games = shownGames()
+  if (!games.length) return S.query ? `<p class="no-match">No game called “${esc(S.query)}” here.<br><button type="button" class="link-btn" data-act="clear-search">Clear the search</button></p>`
+    : `<div class="empty"><div class="hex"></div><h2>No game matches the filter</h2><div class="actions"><button type="button" class="btn btn-primary" data-act="clear">Clear filters</button></div></div>`
+  let lined = false
+  return groups(games).map(gr => {
+    const line = gr.rest && !lined && S.groupBy === 'cat' ? (lined = true, '<hr class="separator" />') : ''
+    return `${line}<section class="group"><h2 class="group-title" data-mark="${gr.tone}"><i class="hex"></i><span>${S.groupBy === 'cat' ? CAT[gr.key].e + ' ' : ''}${gr.label}</span><b class="group-count">${gr.games.length}</b></h2><ul class="rows">${gr.games.map(row).join('')}</ul></section>`
+  }).join('')
+}
+
+function collection() {
+  const bought = GAMES.filter(g => g.bought), spent = bought.reduce((s, g) => s + (g.paid || 0), 0)
+  return `<div class="top"><div class="top-title"><h1>Essen 2026</h1></div><div class="top-actions"><button class="icon-btn" aria-label="Edit Essen 2026">${ICON.pencil}</button></div></div>
+  <main class="screen">
+    <p class="bought-line">✅ ${bought.length} games bought, ${euro(spent)} spent</p>
+    <hr class="separator" />
+    <div class="quick" role="group" aria-label="Quick filters">
+      <button type="button" class="qtoggle" data-act="toggle-group" id="qtoggle" aria-label="Group by booths or categories"></button>
+      <button type="button" class="chip" data-act="buy-filter" id="qbuy">🛒 Buy</button>
+      <span class="quick-count" id="qcount"></span>
+    </div>
+    <hr class="separator" />
+    <label class="visually-hidden" for="q">Search Essen 2026</label>
+    <div class="field search">${ICON.search}<input id="q" type="search" placeholder="Search this collection" autocomplete="off" value="${esc(S.query)}"></div>
+    <div id="games"></div>
+  </main>
+  <nav class="actionbar" aria-label="Actions">
+    <div class="actionbar-left"><button type="button" class="act">${ICON.plus}<span>Add game</span></button></div>
+    <button type="button" class="main-btn hex hex-btn" aria-label="BG-Tinder">${ICON.heart}</button>
+    <div class="actionbar-right"><button type="button" class="act" id="filter-act" data-act="filter">${ICON.filter}<span>Filter</span></button></div>
+    <div class="actionbar-outer"><button type="button" class="act">${ICON.honey}<span>Show-off</span></button></div>
+  </nav>`
+}
+// only the games, the toggles and the filter action change: no redraw of the search field
+function refresh() {
+  if (S.screen !== 'collection') return
+  $('#games').innerHTML = gamesHTML()
+  $('#qtoggle').innerHTML = `<span class="${S.groupBy === 'cat' ? 'on' : ''}">Cat</span><span class="${S.groupBy === 'booth' ? 'on' : ''}">Booth</span>`
+  $('#qtoggle').setAttribute('aria-label', `Grouped by ${S.groupBy === 'cat' ? 'categories' : 'booths'}; tap to group by ${S.groupBy === 'cat' ? 'booths' : 'categories'}`)
+  $('#qbuy').setAttribute('aria-pressed', S.buy)
+  const n = shownGames().length
+  $('#qcount').textContent = `${n} ${n === 1 ? 'game' : 'games'}`
+  const act = $('#filter-act')
+  act.classList.toggle('is-active', !isDefault())
+  act.setAttribute('aria-label', isDefault() ? 'Filter' : 'Filter (active)')
+}
+
+/* ---------- sheets ---------- */
+function openSheet(name, html, label) {
+  S.sheet = name
+  layer.innerHTML = `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1"><div class="sheet-grip"></div><div id="sheet-body">${html}</div></div>`
+  layer.querySelector('.sheet').focus()
+}
+const setSheet = html => { const b = $('#sheet-body'); if (b) b.innerHTML = html }
+function closeSheet() { S.sheet = null; layer.innerHTML = '' }
+
+function zigzag(selected, act, id) {
+  const pointy = $('#o-picker').value === 'pointy'
+  const avail = Math.min(440, window.innerWidth) - 32
+  const gap = 4
+  let w, h, pos
+  if (pointy) {
+    w = Math.min(88, Math.floor((avail - 2 * gap) / 3)); h = Math.round(w * 1.14)
+    pos = i => (i % 2 === 0 ? [(i / 2) * (w + gap), 0] : [(w + gap) / 2 + ((i - 1) / 2) * (w + gap), h * 0.75 + gap])
+  } else {
+    w = Math.min(84, Math.floor((avail - 4 * gap) / 4)); h = Math.round(w * 0.88)
+    pos = i => [i * (w * 0.75 + gap), i % 2 ? h / 2 + gap / 2 : 0]
+  }
+  const W = pointy ? 3 * w + 2 * gap : w + 4 * (w * 0.75 + gap), H = pointy ? h * 1.75 + gap : h * 1.5 + gap / 2
+  return `<div class="zz ${pointy ? 'pointy' : 'flat'}" role="group" aria-label="Category" style="width:${W}px;height:${H}px">${PICK.map((c, i) => {
+    const [x, y] = pos(i)
+    return `<button type="button" class="picker-btn" data-tone="${c.k}" data-act="${act}" data-id="${id}" data-cat="${c.k}" aria-pressed="${selected === c.k}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><span class="picker-hex hex"><span class="picker-face hex"><b>${c.e}</b><span>${c.l}</span></span></span></button>`
+  }).join('')}</div>`
+}
+
+function gameBody(g) {
+  const rate = (v, cls) => (v == null ? null : `<span class="rating"><i class="${cls}">${v.toFixed(1)}</i></span>`)
+  const infos = [['Price', euro(g.price)], ['Players', g.players], ['Rating', rate(g.rating, '')], ['Geek rating', rate(g.geek, 'geek')], ['Booth', g.booth ? 'Booth ' + esc(g.booth) : null], ['Publisher', esc(g.publisher)]].filter(([, v]) => v)
+  return `<h2 class="sheet-title">${esc(g.name)}</h2>
+  <div class="detail-head">${cover(g, 84)}<div><p class="detail-sub">${esc(g.publisher)} · 2025</p>${g.bought ? `<span class="pill" data-mark="bought">✅ ${g.paid != null ? 'Bought for ' + euro(g.paid) : 'Bought'}</span>` : ''}<br><a class="link-out">Open on BoardGameGeek</a></div></div>
+  ${zigzag(g.cat, 'pick', g.id)}
+  <div class="not-int">${g.cat === 'skip' ? `<button type="button" class="link-btn" data-act="pick" data-id="${g.id}" data-cat="new">↩ Interested again (No category yet)</button>` : `<button type="button" class="link-btn" data-act="pick" data-id="${g.id}" data-cat="skip">🛑 Not interested</button>`}</div>
+  <div class="facts-box"><dl class="info-list">${infos.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+  <div class="facts-foot"><span class="facts-by">${g.source === 'manual' ? 'Typed in by you' : 'From SPIEL Essen 2026 Preview'}</span><button type="button" class="link-btn">Edit</button></div></div>
+  <p class="desc muted">A short description from BoardGameGeek… (rest of the details unchanged)</p>
+  <div class="sheet-actions">${g.bought ? `<button type="button" class="btn btn-block" data-act="unbuy" data-id="${g.id}">Not bought after all</button>` : `<button type="button" class="btn btn-block btn-bought" data-act="buy" data-id="${g.id}">✅ Bought it</button>`}<button type="button" class="btn btn-block btn-danger">Remove from Essen 2026</button></div>`
+}
+
+function buyBody(g) {
+  return `<h2 class="sheet-title">Bought ${esc(g.name)}?</h2>
+  <p class="lead">What did you pay? Leave it empty to just tick it off.</p>
+  <form class="form" data-id="${g.id}" id="buy-form">
+    <div class="price-row"><div class="field"><input id="paid" inputmode="decimal" placeholder="${(g.price / 100).toString()}" aria-label="Price paid"></div><div class="field select"><select aria-label="Currency"><option>EUR</option><option>USD</option><option>GBP</option></select></div></div>
+    <div class="form-actions"><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn btn-bought">Got it</button></div>
+  </form>`
+}
+
+function catBody(g) {
+  if ($('#o-catsheet').value === 'hex') {
+    return `<h2 class="sheet-title">Category of ${esc(g.name)}</h2>${zigzag(g.cat, 'set-cat', g.id)}
+    <div class="row-actions" style="margin-top:8px"><button type="button" class="btn" data-act="set-cat" data-id="${g.id}" data-cat="new" aria-pressed="${g.cat === 'new'}">⬡ No category</button><button type="button" class="btn" data-act="set-cat" data-id="${g.id}" data-cat="skip" aria-pressed="${g.cat === 'skip'}">🛑 Not interested</button></div>`
+  }
+  const item = c => `<li><button type="button" data-act="set-cat" data-id="${g.id}" data-cat="${c.k}" data-mark="${c.k}" aria-pressed="${g.cat === c.k}"><span class="chex"></span>${c.e} ${c.l}</button></li>`
+  return `<h2 class="sheet-title">Category of ${esc(g.name)}</h2><ul class="cat-list">${PICK.map(item).join('')}<li class="sep" role="presentation"></li>${CATS.slice(5).map(item).join('')}</ul>`
+}
+
+function filterBody() {
+  const f = S.filter
+  const seg = (label, key, opts) => `<p class="seg-title">${label}</p><div class="seg" role="group" aria-label="${label}">${opts.map(([v, t]) => `<button type="button" data-act="seg" data-key="${key}" data-v="${v}" aria-pressed="${(key === 'groupBy' ? S.groupBy : f[key]) === v}">${t}</button>`).join('')}</div>`
+  const counts = Object.fromEntries(ALL.map(k => [k, GAMES.filter(g => g.cat === k).length]))
+  return `<h2 class="sheet-title">Filter and group</h2>
+  ${seg('Bought', 'bought', [['all', 'All'], ['no', 'Not bought'], ['yes', 'Bought']])}
+  ${seg('Price', 'price', [['all', 'All'], ['cheap', '≤ €30'], ['mid', '€30–60'], ['expensive', '> €60']])}
+  <div class="seg-head"><p class="seg-title">Categories</p><div class="seg-actions"><button type="button" class="link-btn" data-act="cats-all">Select all</button><button type="button" class="link-btn" data-act="cats-none">Select none</button></div></div>
+  <div role="group" aria-label="Categories">${CATS.map(c => `<label class="filter-row"><input type="checkbox" data-act="cat-check" data-cat="${c.k}" ${f.cats.has(c.k) ? 'checked' : ''}><span>${c.e} ${c.l}</span><small>${counts[c.k]}</small></label>`).join('')}</div>
+  ${seg('Group by', 'groupBy', [['cat', 'Categories'], ['booth', 'Booths']])}
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="clear" ${isDefault() ? 'disabled' : ''}>Clear filters</button><button type="button" class="btn btn-primary" data-act="close">Done</button></div>`
+}
+
+/* ---------- BGG list with resync ---------- */
+const LIST = [['Sky Team', 'in Essen 2026'], ['Kalypso', 'in Essen 2026'], ['Faraway', 'in Essen 2026'], ['Harmonies', 'in Essen 2026'], ['Bamboo', 'in Essen 2026'], ['Ostia', ''], ['Woodcraft', ''], ['Seti: Aliens', '']]
+function listScreen() {
+  const icon = $('#o-resync').value === 'icon'
+  return `<div class="top"><a class="icon-btn back" data-act="to-collection" aria-label="Back">‹</a><div class="top-title"><h1>SPIEL Essen 2026 Preview</h1></div>${icon ? `<div class="top-actions"><button type="button" class="icon-btn resync-btn" data-act="resync" aria-label="Resync with BGG">${ICON.resync}</button></div>` : ''}</div>
+  <main class="screen">
+    <div class="list-status"><p id="lstatus">1,204 games, all loaded · synced yesterday 18:02</p><div class="progress"><span id="lbar" style="width:100%"></span></div></div>
+    ${icon ? '' : `<button type="button" class="btn btn-block resync-btn" data-act="resync" style="margin-bottom:12px">${ICON.resync}<span>Resync with BGG</span></button>`}
+    <div class="field">${ICON.search}<input type="search" placeholder="Filter by name" aria-label="Filter this list"></div>
+    <hr class="separator" />
+    <ul class="rows">${LIST.map(([n, inC], i) => { const g = GAMES.find(x => x.name === n) || { id: 20 + i, name: n }; return `<li class="lrow">${cover({ ...g, bought: false }, 44)}<span class="row-meta"><span class="row-name">${esc(n)}</span><span class="row-sub">${g.booth ? 'Booth ' + esc(g.booth) : ''}</span></span><span class="in">${inC}</span></li>` }).join('')}</ul>
+    <p class="proto-note">Resync reads the list again. Sky Team, Kalypso and Faraway have values you typed in; BGG now says something else.</p>
+  </main>`
+}
+
+const CONFLICTS = () => [
+  { id: 1, field: 'booth', label: 'Booth', own: GAMES[1].booth, bgg: '3-A100' },
+  { id: 2, field: 'price', label: 'Price', own: GAMES[2].price, bgg: 3500 },
+  { id: 5, field: 'booth', label: 'Booth', own: GAMES[5].booth, bgg: '2-C210' },
+].filter(c => GAMES[c.id][c.field] !== c.bgg)
+const show = (c, v) => (c.field === 'price' ? euro(v) : v)
+function conflictsBody() {
+  const cs = S.conflicts
+  return `<div class="sheet-lead-row"><h2 class="sheet-title">${cs.length} ${cs.length === 1 ? 'conflict' : 'conflicts'}</h2></div>
+  <p class="lead">You typed these in yourself, and BGG now says something else. Choose what to keep.</p>
+  <div class="all-row"><button type="button" class="btn" data-act="all" data-v="bgg">Use BGG for all</button><button type="button" class="btn" data-act="all" data-v="own">Use own for all</button></div>
+  ${cs.map((c, i) => `<div class="conflict"><h3>${esc(GAMES[c.id].name)}</h3><p>${c.label} · in Essen 2026</p><div class="choice" role="group" aria-label="${c.label} of ${esc(GAMES[c.id].name)}">
+    <button type="button" data-act="choose" data-i="${i}" data-v="own" aria-pressed="${c.pick === 'own'}"><small>Own</small>${esc(show(c, c.own))}</button>
+    <button type="button" data-act="choose" data-i="${i}" data-v="bgg" aria-pressed="${c.pick === 'bgg'}"><small>BGG</small>${esc(show(c, c.bgg))}</button></div></div>`).join('')}
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="close">Later</button><button type="button" class="btn btn-primary" data-act="apply">Apply</button></div>`
+}
+function applyConflicts(all) {
+  let n = 0
+  for (const c of S.conflicts) { const pick = all || c.pick; if (pick === 'bgg') { GAMES[c.id][c.field] = c.bgg; GAMES[c.id].source = 'list'; n++ } }
+  closeSheet()
+  toast(n ? `${n} ${n === 1 ? 'value' : 'values'} taken from BGG` : 'Your own values kept')
+}
+function resync() {
+  const btn = root.querySelector('.resync-btn'); if (!btn || btn.disabled) return
+  btn.disabled = true; btn.classList.add('spin')
+  const bar = $('#lbar'), st = $('#lstatus'); let p = 0
+  const tick = setInterval(() => {
+    p = Math.min(1204, p + 160); bar.style.width = (p / 1204) * 100 + '%'; st.textContent = `Resyncing with BGG… ${p.toLocaleString('en')} / 1,204`
+    if (p >= 1204) {
+      clearInterval(tick); btn.disabled = false; btn.classList.remove('spin'); st.textContent = '1,204 games, all loaded · synced just now'
+      S.conflicts = CONFLICTS().map(c => ({ ...c, pick: 'own' }))
+      toast(`Resync done: 4 games updated${S.conflicts.length ? `, ${S.conflicts.length} conflicts` : ''}`)
+      if (S.conflicts.length) openSheet('conflicts', conflictsBody(), 'Conflicts')
+    }
+  }, 220)
+  bar.style.width = '0%'
+}
+
+/* ---------- render and events ---------- */
+function render() {
+  document.body.className = [$('#o-border').value, $('#o-caticon').value, $('#o-later').value].filter(Boolean).join(' ')
+  root.innerHTML = `<div class="app">${appbar()}${S.screen === 'list' ? listScreen() : collection()}</div>`
+  refresh()
+}
+const game = el => GAMES[+el.dataset.id]
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return
+  const a = t.dataset.act
+  if (a === 'close') return closeSheet()
+  if (a === 'open') return openSheet('game', gameBody(game(t)), game(t).name)
+  if (a === 'buy') {
+    const g = game(t)
+    if (g.bought && S.sheet !== 'game') { g.bought = false; g.paid = null; refresh(); return toast(`${g.name}: not bought any more`) }
+    return openSheet('buy', buyBody(g), 'Bought ' + g.name)
+  }
+  if (a === 'unbuy') { const g = game(t); g.bought = false; g.paid = null; setSheet(gameBody(g)); refresh(); return toast(`${g.name}: not bought any more`) }
+  if (a === 'cat') return openSheet('cat', catBody(game(t)), 'Category of ' + game(t).name)
+  if (a === 'set-cat') { const g = game(t); g.cat = t.dataset.cat; closeSheet(); refresh(); return toast(`${g.name} → ${CAT[g.cat].e} ${CAT[g.cat].l}`) }
+  // in the details the picker changes in place; the sheet stays open
+  if (a === 'pick') { const g = game(t); g.cat = t.dataset.cat; setSheet(gameBody(g)); refresh(); return }
+  if (a === 'toggle-group') { S.groupBy = S.groupBy === 'cat' ? 'booth' : 'cat'; return refresh() }
+  if (a === 'buy-filter') {
+    if (S.buy) { S.filter = S.saved; S.buy = false } else { S.saved = S.filter; S.filter = { cats: new Set(BUY), bought: 'no', price: 'all' }; S.buy = true }
+    return refresh()
+  }
+  if (a === 'filter') return openSheet('filter', filterBody(), 'Filter and group')
+  if (a === 'seg') { if (t.dataset.key === 'groupBy') S.groupBy = t.dataset.v; else { S.filter = { ...S.filter, [t.dataset.key]: t.dataset.v }; S.buy = false } setSheet(filterBody()); return refresh() }
+  if (a === 'cats-all' || a === 'cats-none') { S.filter = { ...S.filter, cats: new Set(a === 'cats-all' ? ALL : []) }; S.buy = false; setSheet(filterBody()); return refresh() }
+  if (a === 'cat-check') { const cats = new Set(S.filter.cats); cats.has(t.dataset.cat) ? cats.delete(t.dataset.cat) : cats.add(t.dataset.cat); S.filter = { ...S.filter, cats }; S.buy = false; setSheet(filterBody()); return refresh() }
+  if (a === 'clear') { S.filter = DEFAULT(); S.groupBy = 'cat'; S.buy = false; if (S.sheet === 'filter') setSheet(filterBody()); refresh(); return toast('Filters cleared') }
+  if (a === 'clear-search') { S.query = ''; $('#q').value = ''; return refresh() }
+  if (a === 'resync') return resync()
+  if (a === 'choose') { S.conflicts[+t.dataset.i].pick = t.dataset.v; t.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === t)); return }
+  if (a === 'all') return applyConflicts(t.dataset.v)
+  if (a === 'apply') return applyConflicts(null)
+  if (a === 'to-collection') { S.screen = 'collection'; return render() }
+})
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'buy-form') return
+  e.preventDefault()
+  const g = GAMES[+e.target.dataset.id], v = $('#paid').value.replace(',', '.').trim()
+  g.bought = true; g.paid = v && !isNaN(+v) ? Math.round(+v * 100) : null
+  closeSheet(); refresh()
+  toast(g.paid != null ? `${g.name}: got it for ${euro(g.paid)}!` : `${g.name}: got it!`)
+})
+document.addEventListener('input', e => { if (e.target.id === 'q') { S.query = e.target.value; $('#games').innerHTML = gamesHTML(); const n = shownGames().length; $('#qcount').textContent = `${n} ${n === 1 ? 'game' : 'games'}` } })
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) closeSheet() })
+
+function start() {
+  const s = $('#start').value
+  S = { screen: s === 'list' ? 'list' : 'collection', sheet: null, filter: DEFAULT(), groupBy: s === 'booth' ? 'booth' : 'cat', buy: false, saved: null, query: '', conflicts: [] }
+  closeSheet(); render()
+  if (s === 'game') openSheet('game', gameBody(GAMES[0]), GAMES[0].name)
+}
+$('#start').onchange = start
+for (const id of ['#o-border', '#o-caticon', '#o-later', '#o-resync']) $(id).onchange = render
+$('#o-picker').onchange = () => { if (S.sheet === 'game') setSheet(gameBody(GAMES[+$('.zz [data-id]').dataset.id])) }
+$('#o-catsheet').onchange = () => {}
+start()
+</script>
+
+</body>
+</html>
