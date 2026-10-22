@@ -19,6 +19,8 @@ export type MetaValues = {
   lastShareCollection: string
   /** F004: the groups last shown off per collection (data-model "Show-off choice"); missing → Must Have. */
   showOff: Record<string, Mark[]>
+  /** US5: the BGG value a hand-typed field was kept against, per `collectionId:bggId:field`. */
+  declinedFacts: Record<string, string>
 }
 
 interface Schema extends DBSchema {
