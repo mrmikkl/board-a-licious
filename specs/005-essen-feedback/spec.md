@@ -296,6 +296,6 @@ Have, bought for €38, with its booth.
 - The Booth / Cat toggle shows the grouping it switches to or the current one — decided in the design step.
 - Hall-only booths are a plain number or "Hall <number>"; other text without a booth number stays "No booth yet".
 - Resync covers the four list fields (booth, price, publisher, edition) for games in any of the user's collections; BGG game details (players, designers, ratings) refresh as today and never conflict.
-- Rating and geek rating come with the game details already fetched from BoardGameGeek; no extra BGG requests per game.
+- Rating and geek rating are fetched with a game's BoardGameGeek details and cached with them (one more BGG request per game when its details are fetched; see research R1).
 - The PWA updates itself on the friends' phones as today, so the new category is understood everywhere after the update.
 - Today's date is the first day of SPIEL Essen 2026; the stories are ordered so US1 and US2 can ship first.
