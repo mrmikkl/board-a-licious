@@ -30,22 +30,22 @@ async function addGame(page: Page, link: string, game: string) {
   await expect(add.getByLabel(/^name$/i)).toHaveValue(game)
   await add.getByRole('button', { name: 'Add to collection' }).click()
   await expect(add).toBeHidden()
-  await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
+  await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') })).toBeVisible()
 }
 
 /** Opens the game from "Not yet marked" and picks a mark; picking closes the sheet. */
 async function markAs(page: Page, game: string, mark: RegExp) {
-  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
+  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: mark }).click()
   await expect(page.getByRole('dialog')).toBeHidden()
 }
 
 async function buy(page: Page, group: RegExp, game: string) {
-  await page.getByRole('region', { name: group }).getByRole('button', { name: new RegExp(game, 'i') }).click()
-  const details = page.getByRole('dialog')
-  await details.getByRole('button', { name: /bought it/i }).click()
-  await details.getByRole('button', { name: /don't track the price/i }).click()
-  await expect(details).toBeHidden()
+  await page.getByRole('region', { name: group }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
+  await page.getByRole('dialog').getByRole('button', { name: /bought it/i }).click()
+  // F005: an empty price ticks it off without one
+  await page.getByRole('dialog', { name: /^Bought / }).getByRole('button', { name: 'Got it' }).click()
+  await expect(page.getByRole('dialog', { name: /^Bought / })).toBeHidden()
 }
 
 test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon, remembered choice', async ({ page }) => {

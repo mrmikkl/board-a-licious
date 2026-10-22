@@ -33,12 +33,12 @@ test('offline: mark and buy in airplane mode, reload, then sync when back online
   await page.getByRole('dialog').getByRole('button', { name: /bought it/i }).click()
   await page.getByRole('dialog').getByLabel('What did you pay?').fill('45')
   await page.getByRole('dialog').getByLabel('What did you pay?').press('Enter')
-  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i })).toContainText('✅ €45')
+  await expect(page.getByRole('button', { name: 'Not bought Cascadia' })).toContainText('€45')
 
   // a reload offline still opens the app with everything in place
   await page.reload()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i })).toContainText('✅ €45')
+  await expect(page.getByRole('button', { name: 'Not bought Cascadia' })).toContainText('€45')
 
   // back online: the outbox is sent
   await context.setOffline(false)

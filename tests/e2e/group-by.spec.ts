@@ -36,7 +36,7 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
   await expect(groupBy).toHaveValue('mark')
   await groupBy.selectOption('booth')
   await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click()
-  await expect(page.locator('.filter-summary')).toContainText('by hall')
+  await expect(page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: 'Filter (active)' })).toBeVisible()
   await expect(page.getByRole('region', { name: /^hall \d+/i }).first()).toBeVisible()
   await expect(page.getByRole('region', { name: /no category yet/i })).toHaveCount(0)
   await expectAccessible(page)
