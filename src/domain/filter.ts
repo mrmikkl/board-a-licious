@@ -7,9 +7,9 @@ import { MARKS, type Mark, isMark } from './marks.ts'
  */
 export type Bought = 'all' | 'no' | 'yes'
 export type Price = 'all' | 'cheap' | 'mid' | 'expensive'
-export type Filter = { groups: Set<Mark>; bought: Bought; price: Price }
+export type Filter = { groups: Set<Mark>; bought: Bought; price: Price; buy?: { before: Filter } }
 /** A filter as kept in `meta.activeFilter`, per collection. */
-export type StoredFilter = { groups: Mark[]; bought: Bought; price?: Price }
+export type StoredFilter = { groups: Mark[]; bought: Bought; price?: Price; buy?: { before: StoredFilter } }
 
 /** Price bands in cents of the listed price: cheap up to 30, mid over 30 up to 60, expensive over 60. */
 export const CHEAP_MAX = 3000
@@ -31,6 +31,20 @@ export const PRESETS = {
   all: { groups: new Set<Mark>(ALL_MARKS), bought: 'all', price: 'all' } as Filter,
   hunt: { groups: new Set<Mark>(['must_have']), bought: 'no', price: 'all' } as Filter,
 }
+
+/** The Buy quick filter (F005 R5): the games still to buy, the filter before kept to come back to. */
+export function buyOn(filter: Filter): Filter {
+  const before = filter.buy ? filter.buy.before : filter
+  return { groups: new Set<Mark>(['must_have', 'interested', 'unsure']), bought: 'no', price: 'all', buy: { before } }
+}
+
+export const buyOff = (filter: Filter): Filter => filter.buy?.before ?? filter
+
+/** A change in the Filter and group sheet turns the Buy quick filter off (F005 R5): the same filter, without it. */
+export const dropBuy = (filter: Filter): Filter => ({ groups: filter.groups, bought: filter.bought, price: filter.price })
+
+/** The Filter action is highlighted unless this is the default view: All categories, all, grouped by categories. */
+export const isDefaultView = (filter: Filter, groupBy: 'mark' | 'booth') => groupBy === 'mark' && !filter.buy && presetOf(filter) === 'all'
 
 const passesBought = (entry: Entry, bought: Bought) => bought === 'all' || entry.bought === (bought === 'yes')
 
@@ -64,7 +78,7 @@ export function filterLabel(filter: Filter): string {
   if (preset === 'all') return 'All games'
   if (preset === 'hunt') return '⭐ Must Have, not bought'
   if (filter.groups.size === 0) return 'Nothing selected'
-  const groups = filter.groups.size === ALL_MARKS.length ? 'All groups' : MARKS.filter(m => filter.groups.has(m.key)).map(m => m.emoji).join(' ')
+  const groups = filter.groups.size === ALL_MARKS.length ? 'All categories' : MARKS.filter(m => filter.groups.has(m.key)).map(m => m.emoji).join(' ')
   return groups + BOUGHT_SUFFIX[filter.bought] + PRICE_SUFFIX[filter.price]
 }
 
@@ -72,12 +86,14 @@ export const toStored = (filter: Filter): StoredFilter => ({
   groups: ALL_MARKS.filter(m => filter.groups.has(m)),
   bought: filter.bought,
   price: filter.price,
+  ...(filter.buy ? { buy: { before: toStored(filter.buy.before) } } : {}),
 })
 
 /** Reads a stored filter back; unknown groups are dropped, anything unreadable means All. */
 export function fromStored(value: unknown): Filter {
   if (!value || typeof value !== 'object') return PRESETS.all
-  const { groups, bought, price } = value as Partial<StoredFilter>
+  const { groups, bought, price, buy } = value as Partial<StoredFilter>
   if (!Array.isArray(groups)) return PRESETS.all
-  return { groups: new Set(groups.filter(isMark)), bought: isBought(bought) ? bought : 'all', price: isPrice(price) ? price : 'all' }
+  const filter: Filter = { groups: new Set(groups.filter(isMark)), bought: isBought(bought) ? bought : 'all', price: isPrice(price) ? price : 'all' }
+  return buy && typeof buy === 'object' ? { ...filter, buy: { before: fromStored(buy.before) } } : filter
 }
