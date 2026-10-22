@@ -1870,7 +1870,7 @@ body:has(.actionbar) .toast {
 
 /* Game row: category as the border colour, actions on the right */
 .crow { position: relative; display: flex; align-items: stretch; min-height: 68px; border-radius: var(--r-md); box-shadow: var(--lift);
-  border: 2px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone, linear-gradient(var(--border), var(--border))) border-box; }
+  border: 1px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone, linear-gradient(var(--border), var(--border))) border-box; }
 .crow[data-mark='new'] { --tone: linear-gradient(var(--border), var(--border)); }
 .crow[data-mark='skip'] { opacity: 0.75; }
 .crow[data-mark='skip'] .row-name { text-decoration: line-through; color: var(--muted); }
@@ -1967,18 +1967,6 @@ body:has(.actionbar) .toast {
     <option value="game">A game's details</option>
     <option value="list">BGG list (Resync)</option>
   </select>
-  <label for="o-border">Row</label>
-  <select id="o-border"><option value="">A · coloured border</option><option value="proto-edge">B · coloured left edge</option></select>
-  <label for="o-caticon">Cat. action</label>
-  <select id="o-caticon"><option value="">A · neutral icon</option><option value="proto-catemoji">B · current emoji</option></select>
-  <label for="o-catsheet">Cat. sheet</label>
-  <select id="o-catsheet"><option value="list">A · list</option><option value="hex">B · hexagons</option></select>
-  <label for="o-picker">Picker</label>
-  <select id="o-picker"><option value="flat">A · flat zigzag</option><option value="pointy">B · honeycomb 3 + 2</option></select>
-  <label for="o-later">For later</label>
-  <select id="o-later"><option value="">pink</option><option value="proto-later-teal">sky</option></select>
-  <label for="o-resync">Resync</label>
-  <select id="o-resync"><option value="icon">A · icon in the heading</option><option value="button">B · button above the list</option></select>
 </div>
 <div id="root"></div>
 <div id="layer"></div>
@@ -2097,7 +2085,7 @@ function row(g) {
     <button type="button" class="crow-open" data-act="open" data-id="${g.id}">${cover(g, 52)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${esc(g.publisher)}</span><span class="row-info"><span>${info}</span></span><span class="visually-hidden">, ${CAT[g.cat].l}${g.bought ? ', bought' : ''}</span></span></button>
     <div class="crow-acts">
       <button type="button" class="ract buy" data-act="buy" data-id="${g.id}" aria-pressed="${g.bought}" aria-label="${g.bought ? 'Not bought' : 'Buy'} ${esc(g.name)}"><span class="rhex">${g.bought ? ICON.bagOk : ICON.bag}</span>${g.bought ? (g.paid != null ? euro(g.paid) : 'Bought') : 'Buy'}</button>
-      <button type="button" class="ract cat" data-act="cat" data-id="${g.id}" aria-label="Category of ${esc(g.name)}"><span class="rhex">${document.body.classList.contains('proto-catemoji') ? CAT[g.cat].e : ICON.cat}</span>Category</button>
+      <button type="button" class="ract cat" data-act="cat" data-id="${g.id}" aria-label="Category of ${esc(g.name)}"><span class="rhex">${false ? CAT[g.cat].e : ICON.cat}</span>Category</button>
     </div></div></li>`
 }
 
@@ -2159,7 +2147,7 @@ const setSheet = html => { const b = $('#sheet-body'); if (b) b.innerHTML = html
 function closeSheet() { S.sheet = null; layer.innerHTML = '' }
 
 function zigzag(selected, act, id) {
-  const pointy = $('#o-picker').value === 'pointy'
+  const pointy = true
   const avail = Math.min(440, window.innerWidth) - 32
   const gap = 4
   let w, h, pos
@@ -2200,7 +2188,7 @@ function buyBody(g) {
 }
 
 function catBody(g) {
-  if ($('#o-catsheet').value === 'hex') {
+  if (false) {
     return `<h2 class="sheet-title">Category of ${esc(g.name)}</h2>${zigzag(g.cat, 'set-cat', g.id)}
     <div class="row-actions" style="margin-top:8px"><button type="button" class="btn" data-act="set-cat" data-id="${g.id}" data-cat="new" aria-pressed="${g.cat === 'new'}">⬡ No category</button><button type="button" class="btn" data-act="set-cat" data-id="${g.id}" data-cat="skip" aria-pressed="${g.cat === 'skip'}">🛑 Not interested</button></div>`
   }
@@ -2224,7 +2212,7 @@ function filterBody() {
 /* ---------- BGG list with resync ---------- */
 const LIST = [['Sky Team', 'in Essen 2026'], ['Kalypso', 'in Essen 2026'], ['Faraway', 'in Essen 2026'], ['Harmonies', 'in Essen 2026'], ['Bamboo', 'in Essen 2026'], ['Ostia', ''], ['Woodcraft', ''], ['Seti: Aliens', '']]
 function listScreen() {
-  const icon = $('#o-resync').value === 'icon'
+  const icon = true
   return `<div class="top"><a class="icon-btn back" data-act="to-collection" aria-label="Back">‹</a><div class="top-title"><h1>SPIEL Essen 2026 Preview</h1></div>${icon ? `<div class="top-actions"><button type="button" class="icon-btn resync-btn" data-act="resync" aria-label="Resync with BGG">${ICON.resync}</button></div>` : ''}</div>
   <main class="screen">
     <div class="list-status"><p id="lstatus">1,204 games, all loaded · synced yesterday 18:02</p><div class="progress"><span id="lbar" style="width:100%"></span></div></div>
@@ -2276,7 +2264,6 @@ function resync() {
 
 /* ---------- render and events ---------- */
 function render() {
-  document.body.className = [$('#o-border').value, $('#o-caticon').value, $('#o-later').value].filter(Boolean).join(' ')
   root.innerHTML = `<div class="app">${appbar()}${S.screen === 'list' ? listScreen() : collection()}</div>`
   refresh()
 }
@@ -2332,9 +2319,6 @@ function start() {
   if (s === 'game') openSheet('game', gameBody(GAMES[0]), GAMES[0].name)
 }
 $('#start').onchange = start
-for (const id of ['#o-border', '#o-caticon', '#o-later', '#o-resync']) $(id).onchange = render
-$('#o-picker').onchange = () => { if (S.sheet === 'game') setSheet(gameBody(GAMES[+$('.zz [data-id]').dataset.id])) }
-$('#o-catsheet').onchange = () => {}
 start()
 </script>
 
