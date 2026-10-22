@@ -4,7 +4,7 @@ import type { Game } from "../../client/types.ts";
 import { gameUrl } from "../../domain/bgg-link.ts";
 import type { Collection, Entry, Facts } from "../../domain/collection.ts";
 import { gameInfos, publisherOf } from "../../domain/game-info.ts";
-import { MARKS, type Mark, markInfo } from "../../domain/marks.ts";
+import { type Mark, markInfo } from "../../domain/marks.ts";
 import {
   CURRENCIES,
   currencySymbol,
@@ -14,27 +14,15 @@ import {
 } from "../../domain/money.ts";
 import { removeGame, saveFacts, setMark, unbuyGame } from "../actions.ts";
 import { centreOf } from "../celebrate.ts";
-import { useServices } from "../context.tsx";
+import { useServices, useStoreData } from "../context.tsx";
 import { BuySheet } from "./BuySheet.tsx";
+import { CategoryPicker } from "./CategoryPicker.tsx";
+import { CopyMoveSheet } from "./CopyMoveSheet.tsx";
 import { InfoList } from "./GameInfo.tsx";
 import { HexCover } from "./HexCover.tsx";
-import { HexPicker } from "./HexPicker.tsx";
 import { ImageViewer } from "./ImageViewer.tsx";
 import { Sheet } from "./Sheet.tsx";
 import { useToast } from "./Toast.tsx";
-
-const PICKER = MARKS.filter((m) => m.key !== "new" && m.key !== "skip").map(
-  (m) => ({
-    key: m.key,
-    label: m.label,
-    tone: m.key,
-    icon: (
-      <em className="picker-emoji" aria-hidden="true">
-        {m.emoji}
-      </em>
-    ),
-  }),
-);
 
 const PRICE_ERROR = "Type a price from 0 to 9,999, like 12,50.";
 
@@ -55,16 +43,27 @@ export function GameSheet({
 }) {
   const services = useServices();
   const toast = useToast();
-  const [step, setStep] = useState<"details" | "paid" | "facts">("details");
+  const [step, setStep] = useState<
+    "details" | "paid" | "facts" | "copy" | "move"
+  >("details");
   const [viewer, setViewer] = useState(false);
   const name = game?.name ?? `Game ${entry.bggId}`;
   const pending = entry.detailsPending && !game?.thumbnailUrl;
-  // the tapped picker button, where the Must Have burst starts
-  const tapped = useRef<Element | null>(null);
-  // choosing a mark is the answer: the sheet closes and the game moves to its group
-  const mark = (key: Mark) => {
-    void setMark(services, entry, key, centreOf(tapped.current));
-    onClose();
+  // the other collections and the game's entries in them, for Copy and Move
+  const others = useStoreData(
+    async (store) => ({
+      collections: (await store.collections())
+        .filter((c) => !c.deleted)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      entries: (await store.allEntries()).filter(
+        (e) => e.bggId === entry.bggId && !e.deleted,
+      ),
+    }),
+    [entry.bggId],
+  );
+  // a tap changes the category in place (the sheet stays open); the Must Have burst starts at the button
+  const mark = (key: Mark, from?: Element) => {
+    void setMark(services, entry, key, centreOf(from));
     toast(`${name}: ${markInfo(key).emoji} ${markInfo(key).label}`);
   };
   const remove = async () => {
@@ -90,6 +89,19 @@ export function GameSheet({
         name={name}
         onClose={onClose}
         onCancel={() => setStep("details")}
+      />
+    );
+  // F005 R11: copying goes back to the details; moving takes the game out of this collection, so they close
+  if (step === "copy" || step === "move")
+    return (
+      <CopyMoveSheet
+        mode={step}
+        entry={entry}
+        name={name}
+        collections={others?.collections ?? []}
+        entries={others?.entries ?? []}
+        onCancel={() => setStep("details")}
+        onDone={() => (step === "move" ? onClose() : setStep("details"))}
       />
     );
   return (
@@ -135,6 +147,14 @@ export function GameSheet({
           )}
         </div>
       </div>
+      <CategoryPicker value={entry.mark} onPick={mark} />
+      <button
+        type="button"
+        className="link-btn cat-skip"
+        onClick={() => mark(entry.mark === "skip" ? "interested" : "skip")}
+      >
+        {entry.mark === "skip" ? "↩ Interested again" : "🛑 Not interested"}
+      </button>
       <p className="desc">
         {game?.description || (
           <span className="muted">
@@ -151,19 +171,6 @@ export function GameSheet({
       ) : (
         <FactsBox entry={entry} game={game} onEdit={() => setStep("facts")} />
       )}
-      <div
-        style={{ display: "contents" }}
-        onClickCapture={(e) =>
-          (tapped.current = (e.target as Element).closest("button"))
-        }
-      >
-        <HexPicker
-          label="Mark as"
-          options={PICKER}
-          value={entry.mark}
-          onPick={mark}
-        />
-      </div>
       <div className="sheet-actions">
         {entry.bought ? (
           <button
@@ -182,29 +189,28 @@ export function GameSheet({
             ✅ Bought it
           </button>
         )}
-        {entry.mark === "skip" ? (
+        <div className="sheet-actions-row">
           <button
             type="button"
-            className="btn btn-block"
-            onClick={() => mark("new")}
+            className="btn"
+            onClick={() => setStep("copy")}
           >
-            Mark as not yet decided
+            Copy to collection
           </button>
-        ) : (
           <button
             type="button"
-            className="btn btn-block"
-            onClick={() => mark("skip")}
+            className="btn"
+            onClick={() => setStep("move")}
           >
-            🛑 Not interested
+            Move to collection
           </button>
-        )}
+        </div>
         <button
           type="button"
           className="btn btn-block btn-danger"
           onClick={() => void remove()}
         >
-          Remove from collection
+          Remove from {collection.name}
         </button>
         <button type="button" className="btn btn-block" onClick={onClose}>
           Close
