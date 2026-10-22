@@ -166,6 +166,28 @@ shows the booth with "3" and "3-A100"; choose "3-A100": the game now shows Booth
 
 ---
 
+### User Story 6 - Copy or move a game to another collection (Priority: P2)
+
+A game's details offer, beside **Remove from <collection>**, **Copy to collection** and **Move to
+collection**. Each opens a sheet to choose the other collection; copying puts the game in it as
+well, moving takes it out of this one.
+
+**Why this priority**: at the fair games shift between lists ("Essen 2026" → "Christmas 2026");
+today that means adding the game again by hand and losing its category, booth and price.
+
+**Independent Test**: in Essen 2026, open Harmonies (Must Have, bought for €38), Move to
+collection → Christmas 2026 → Move: Harmonies is gone from Essen 2026 and in Christmas 2026 as Must
+Have, bought for €38, with its booth.
+
+**Acceptance Scenarios**:
+
+1. **Given** a game's details and at least one other collection, **When** the user looks at the actions, **Then** there are Copy to collection and Move to collection next to each other, above Remove from <collection>.
+2. **Given** the user taps either, **When** the sheet opens, **Then** it is titled "Copy <game>" or "Move <game>", has a dropdown of the other collections (those already holding the game are listed as "(already in it)" and cannot be chosen), one line saying what goes along, and Cancel / Copy or Move.
+3. **Given** Copy, **When** the user confirms, **Then** the game is added to the chosen collection with its category and facts (booth, price, publisher, edition), not bought there; it stays as it is here; a toast says "Copied <game> to <collection>" and the details stay open.
+4. **Given** Move, **When** the user confirms, **Then** the game, with category, facts, bought and price paid, is in the chosen collection and no longer in this one; the details close and a toast says "Moved <game> to <collection>".
+5. **Given** every other collection already holds the game, or there is no other collection, **When** the sheet would open, **Then** the actions are still shown and the sheet says so, with the confirm action disabled.
+6. **Given** no network, **When** the user copies or moves, **Then** it works and is synced later.
+
 ### Edge Cases
 
 - A game is bought from a row while the details sheet of another game is open: not possible, rows sit behind the sheet; only one sheet at a time.
@@ -231,6 +253,12 @@ shows the booth with "3" and "3-A100"; choose "3-A100": the game now shows Booth
 - **FR-024**: After the resync, when there are conflicts, a sheet MUST list them with game name, field, own value and BGG value, a choice per conflict, and Use BGG for all and Use own for all; applying writes the chosen values (a BGG value counts as coming from the list from then on).
 - **FR-025**: A conflict settled with the own value MUST NOT be offered again until BGG's value for that field changes; a sheet closed without applying keeps own values and offers the conflicts again next time.
 - **FR-026**: The resync MUST report its result in one short message (games updated, conflicts found) and, when offline or BGG is busy, say so without changing anything.
+
+**Copy and move**
+
+- **FR-026a**: A game's details MUST offer Copy to collection and Move to collection besides Remove from <collection>; each opens a sheet with a dropdown of the person's other collections, those already holding the game shown as "(already in it)" and not selectable, and Cancel / Copy or Move (disabled while nothing can be chosen).
+- **FR-026b**: Copy MUST add the game to the chosen collection with its category and facts (booth, price, publisher, edition and their source), not bought, and leave this collection unchanged.
+- **FR-026c**: Move MUST put the game into the chosen collection with category, facts, bought and price paid, and remove it from this collection, as one change that syncs like any other and works offline.
 
 **Cross-cutting**
 

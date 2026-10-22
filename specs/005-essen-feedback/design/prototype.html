@@ -2038,7 +2038,7 @@ const DEFAULT = () => ({ cats: new Set(ALL), bought: 'all', price: 'all' })
 const isDefault = () => !S.buy && S.groupBy === 'cat' && S.filter.bought === 'all' && S.filter.price === 'all' && S.filter.cats.size === ALL.length
 const band = c => (c <= 3000 ? 'cheap' : c <= 6000 ? 'mid' : 'expensive')
 const passes = g => S.filter.cats.has(g.cat) && (S.filter.bought === 'all' || g.bought === (S.filter.bought === 'yes')) && (S.filter.price === 'all' || band(g.price) === S.filter.price)
-const shownGames = () => GAMES.filter(g => passes(g) && (!S.query || fold(g.name).includes(fold(S.query))))
+const shownGames = () => GAMES.filter(g => !g.gone && passes(g) && (!S.query || fold(g.name).includes(fold(S.query))))
 
 /* booths: "7-C111 / 3" → [{hall:'7', booth:'7-C111'}, {hall:'3', hallOnly:true}] */
 function boothsOf(text) {
@@ -2101,7 +2101,7 @@ function gamesHTML() {
 }
 
 function collection() {
-  const bought = GAMES.filter(g => g.bought), spent = bought.reduce((s, g) => s + (g.paid || 0), 0)
+  const bought = GAMES.filter(g => !g.gone && g.bought), spent = bought.reduce((s, g) => s + (g.paid || 0), 0)
   return `<div class="top"><div class="top-title"><h1>Essen 2026</h1></div><div class="top-actions"><button class="icon-btn" aria-label="Edit Essen 2026">${ICON.pencil}</button></div></div>
   <main class="screen">
     <p class="bought-line">✅ ${bought.length} games bought, ${euro(spent)} spent</p>
@@ -2175,7 +2175,7 @@ function gameBody(g) {
   <div class="facts-box"><dl class="info-list">${infos.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
   <div class="facts-foot"><span class="facts-by">${g.source === 'manual' ? 'Typed in by you' : 'From SPIEL Essen 2026 Preview'}</span><button type="button" class="link-btn">Edit</button></div></div>
   <p class="desc muted">A short description from BoardGameGeek… (rest of the details unchanged)</p>
-  <div class="sheet-actions">${g.bought ? `<button type="button" class="btn btn-block" data-act="unbuy" data-id="${g.id}">Not bought after all</button>` : `<button type="button" class="btn btn-block btn-bought" data-act="buy" data-id="${g.id}">✅ Bought it</button>`}<button type="button" class="btn btn-block btn-danger">Remove from Essen 2026</button></div>`
+  <div class="sheet-actions">${g.bought ? `<button type="button" class="btn btn-block" data-act="unbuy" data-id="${g.id}">Not bought after all</button>` : `<button type="button" class="btn btn-block btn-bought" data-act="buy" data-id="${g.id}">✅ Bought it</button>`}<div class="row-actions"><button type="button" class="btn" data-act="copymove" data-mode="copy" data-id="${g.id}">Copy to collection</button><button type="button" class="btn" data-act="copymove" data-mode="move" data-id="${g.id}">Move to collection</button></div><button type="button" class="btn btn-block btn-danger">Remove from Essen 2026</button></div>`
 }
 
 function buyBody(g) {
@@ -2199,7 +2199,7 @@ function catBody(g) {
 function filterBody() {
   const f = S.filter
   const seg = (label, key, opts) => `<p class="seg-title">${label}</p><div class="seg" role="group" aria-label="${label}">${opts.map(([v, t]) => `<button type="button" data-act="seg" data-key="${key}" data-v="${v}" aria-pressed="${(key === 'groupBy' ? S.groupBy : f[key]) === v}">${t}</button>`).join('')}</div>`
-  const counts = Object.fromEntries(ALL.map(k => [k, GAMES.filter(g => g.cat === k).length]))
+  const counts = Object.fromEntries(ALL.map(k => [k, GAMES.filter(g => !g.gone && g.cat === k).length]))
   return `<h2 class="sheet-title">Filter and group</h2>
   ${seg('Bought', 'bought', [['all', 'All'], ['no', 'Not bought'], ['yes', 'Bought']])}
   ${seg('Price', 'price', [['all', 'All'], ['cheap', '≤ €30'], ['mid', '€30–60'], ['expensive', '> €60']])}
@@ -2207,6 +2207,23 @@ function filterBody() {
   <div role="group" aria-label="Categories">${CATS.map(c => `<label class="filter-row"><input type="checkbox" data-act="cat-check" data-cat="${c.k}" ${f.cats.has(c.k) ? 'checked' : ''}><span>${c.e} ${c.l}</span><small>${counts[c.k]}</small></label>`).join('')}</div>
   ${seg('Group by', 'groupBy', [['cat', 'Categories'], ['booth', 'Booths']])}
   <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="clear" ${isDefault() ? 'disabled' : ''}>Clear filters</button><button type="button" class="btn btn-primary" data-act="close">Done</button></div>`
+}
+
+/* ---------- copy / move to another collection ---------- */
+const OTHERS = [{ id: 'wish', name: 'Wishlist', has: [0] }, { id: 'xmas', name: 'Christmas 2026', has: [] }, { id: 'spiel25', name: 'SPIEL 2025', has: [3, 7] }]
+function copyMoveBody(g, mode, chosen) {
+  const free = OTHERS.filter(c => !c.has.includes(g.id))
+  const pick = chosen ?? free[0]?.id
+  const target = OTHERS.find(c => c.id === pick)
+  const verb = mode === 'copy' ? 'Copy' : 'Move'
+  const what = mode === 'copy'
+    ? `A copy with its category (${CAT[g.cat].e} ${CAT[g.cat].l}), booth and price. Bought stays here.`
+    : `Moves with its category (${CAT[g.cat].e} ${CAT[g.cat].l}), booth, price${g.bought ? ' and the price you paid' : ''}. It leaves Essen 2026.`
+  return `<h2 class="sheet-title">${verb} ${esc(g.name)}</h2>
+  <label class="label" for="cm-target">To collection</label>
+  <div class="field select"><select id="cm-target" data-id="${g.id}" data-mode="${mode}">${OTHERS.map(c => `<option value="${c.id}" ${c.has.includes(g.id) ? 'disabled' : ''} ${c.id === pick ? 'selected' : ''}>${esc(c.name)}${c.has.includes(g.id) ? ' (already in it)' : ''}</option>`).join('')}</select></div>
+  <p class="hint">${what}</p>
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="back-to-game" data-id="${g.id}">Cancel</button><button type="button" class="btn btn-primary" data-act="do-copymove" data-id="${g.id}" data-mode="${mode}" data-target="${target?.id ?? ''}" ${target ? '' : 'disabled'}>${verb}</button></div>`
 }
 
 /* ---------- BGG list with resync ---------- */
@@ -2273,6 +2290,14 @@ document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]'); if (!t) return
   const a = t.dataset.act
   if (a === 'close') return closeSheet()
+  if (a === 'copymove') return openSheet('copymove', copyMoveBody(game(t), t.dataset.mode), (t.dataset.mode === 'copy' ? 'Copy ' : 'Move ') + game(t).name)
+  if (a === 'back-to-game') return openSheet('game', gameBody(game(t)), game(t).name)
+  if (a === 'do-copymove') {
+    const g = game(t), c = OTHERS.find(x => x.id === t.dataset.target)
+    c.has.push(g.id)
+    if (t.dataset.mode === 'move') { g.gone = true; closeSheet(); refresh(); return toast(`Moved ${g.name} to ${c.name}`) }
+    openSheet('game', gameBody(g), g.name); return toast(`Copied ${g.name} to ${c.name}`)
+  }
   if (a === 'open') return openSheet('game', gameBody(game(t)), game(t).name)
   if (a === 'buy') {
     const g = game(t)
@@ -2311,6 +2336,7 @@ document.addEventListener('submit', e => {
   closeSheet(); refresh()
   toast(g.paid != null ? `${g.name}: got it for ${euro(g.paid)}!` : `${g.name}: got it!`)
 })
+document.addEventListener('change', e => { if (e.target.id === 'cm-target') setSheet(copyMoveBody(GAMES[+e.target.dataset.id], e.target.dataset.mode, e.target.value)) })
 document.addEventListener('input', e => { if (e.target.id === 'q') { S.query = e.target.value; $('#games').innerHTML = gamesHTML(); const n = shownGames().length; $('#qcount').textContent = `${n} ${n === 1 ? 'game' : 'games'}` } })
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) closeSheet() })
 

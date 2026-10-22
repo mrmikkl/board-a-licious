@@ -27,7 +27,8 @@ during the review are removed; the prototype shows the agreed choices only.
 | **Buy sheet** | "Bought <game>?", price + currency, Cancel / **Got it** | the collection, toast "<game>: got it for €24!" |
 | **Category sheet** | "Category of <game>", Must Have … Poop, line, No category yet, Not interested; current marked | the collection, toast "<game> → ⭐ Must Have"; the row moves to its group |
 | **Filter and group** (sheet) | Bought, Price, Categories (with counts, Select all / none), Group by (Categories / Booths); Clear filters / **Done** | the collection |
-| **Game details** (sheet) | name; cover, publisher · year, bought pill, Open on BoardGameGeek; **category picker** (honeycomb 3 + 2); "🛑 Not interested"; info box with Price, Players, **Rating**, **Geek rating**, Booth, …; Bought it / Not bought after all; Remove | picker changes in place; Bought it: Buy sheet |
+| **Game details** (sheet) | name; cover, publisher · year, bought pill, Open on BoardGameGeek; **category picker** (honeycomb 3 + 2); "🛑 Not interested"; info box with Price, Players, **Rating**, **Geek rating**, Booth, …; Bought it / Not bought after all; **Copy to collection** · **Move to collection**; Remove from <collection> | picker changes in place; Bought it: Buy sheet |
+| ↳ Copy / Move to collection | sheet "Copy <game>" / "Move <game>": To collection dropdown ("(already in it)" disabled), what goes along, Cancel / **Copy** or **Move** | Copy: back to the details, toast; Move: the collection, toast |
 | **BGG list** | ‹ back, list title, **Resync** icon; status line and progress; filter field; rows | Resync: progress in the status line, toast, then the conflicts sheet if any |
 | **Conflicts** (sheet) | "3 conflicts", one-line explanation; **Use BGG for all** / **Use own for all**; per conflict game, "<field> · in <collection>", Own / BGG tiles; Later / **Apply** | the list, toast "2 values taken from BGG" |
 
@@ -50,5 +51,6 @@ line), Game info (ratings), Sheet, Toast, Separator, Screen heading, Action bar.
 - **For later** is ⏳ with a **pink** gradient (`#D946EF` → `#F9A8D4`, dark text).
 - **Resync** is an **icon button in the list's heading** (alternative: a button above the list).
 - **Every group folds** (not only No category yet and Not interested), added after the review.
+- **Copy to collection** and **Move to collection** in the details (added after the review); copying leaves bought behind, moving takes everything along.
 - The Buy action shows the price paid as its label once bought; the row's info line no longer
   repeats it.
