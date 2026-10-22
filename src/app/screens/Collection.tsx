@@ -1,19 +1,23 @@
 import { type FormEvent, Fragment, useCallback, useId, useState } from 'react'
 
 import { groupByHall } from '../../domain/booths.ts'
-import { type Collection as CollectionRow, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
-import { type Filter, applyFilter, filterLabel, fromStored, groupCounts, presetOf } from '../../domain/filter.ts'
-import { deleteCollection, renameCollection, saveFilter, saveGroupBy } from '../actions.ts'
+import { type Collection as CollectionRow, type Entry, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
+import { type Filter, PRESETS, applyFilter, buyOff, buyOn, dropBuy, fromStored, groupCounts, isDefaultView, presetOf } from '../../domain/filter.ts'
+import { matchesName } from '../../domain/search.ts'
+import { deleteCollection, renameCollection, saveFilter, saveGroupBy, unbuyGame } from '../actions.ts'
 import { Action, ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { AddGameSheet } from '../components/AddGameSheet.tsx'
+import { BuySheet } from '../components/BuySheet.tsx'
+import { CategorySheet } from '../components/CategorySheet.tsx'
 import { Counter } from '../components/Counter.tsx'
-import { FilterSheet } from '../components/FilterPanel.tsx'
+import { type GroupBy, FilterSheet } from '../components/FilterPanel.tsx'
 import { IconFilter, IconHeart, IconPencil, IconPlus, IconShowOff } from '../components/icons.tsx'
 import { GameRow } from '../components/GameRow.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { GroupHeading } from '../components/GroupHeading.tsx'
 import { Header } from '../components/Header.tsx'
 import { ListPicker } from '../components/ListPicker.tsx'
+import { QuickFilters } from '../components/QuickFilters.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { ShowOffSheet } from '../components/ShowOffSheet.tsx'
 import { Ticker } from '../components/Ticker.tsx'
@@ -22,21 +26,27 @@ import { useServices, useStoreData } from '../context.tsx'
 import { useJustAdded } from '../just-added.ts'
 import { href, navigate } from '../router.ts'
 
-/** Groups folded when a collection opens: Not interested; Not yet marked starts open (F003 FR-018). */
-const FOLDED_AT_START = new Set(['group-skip'])
+/** Groups folded when a collection opens: For later, Poop and Not interested (F005 R8, docs/design.md "Group heading"). */
+const FOLDED_AT_START = new Set(['group-later', 'group-poop', 'group-skip'])
 
 /**
- * One collection: games grouped by mark in the collection order, the marked groups above a line,
- * Not yet marked and Not interested folding below it (F003 FR-017, FR-018, FR-018a); filtered by
- * groups and bought (FR-009), with the games bought and the money spent (FR-008). Its actions sit in
- * the action bar (Add game, ♥, Filter, Show-off) and behind the pencil after its name (F003 FR-015,
- * FR-015a; F004 FR-007).
+ * One collection: games grouped by category in the collection order, the categorised games above a line,
+ * No category yet and Not interested below it; or grouped by fair hall (F005 R6). Every group folds. The
+ * quick filters and search narrow the games (F005 R5, R7); the Filter and group sheet holds the rest.
+ * Each row has its own Buy and Category actions with their sheets (F005 R3, R4). The actions sit in the
+ * action bar (Add game, ♥, Filter, Show-off) and behind the pencil after its name (F003 FR-015, FR-015a;
+ * F004 FR-007).
  */
 export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 'showoff' }) {
   const services = useServices()
+  const toast = useToast()
   const [openGame, setOpenGame] = useState<number>()
+  // the row's Buy or Category sheet, open for one game
+  const [rowSheet, setRowSheet] = useState<{ kind: 'buy' | 'category'; bggId: number }>()
   // the filter picked on this screen, shown at once while it is saved to the device
   const [chosen, setChosen] = useState<{ id: string; filter: Filter }>()
+  // the search text of this screen; not stored, like the folded groups
+  const [search, setSearch] = useState<{ id: string; query: string }>()
   // which groups are folded on this screen; not remembered between visits (docs/design.md "Group heading")
   const [folded, setFolded] = useState<{ id: string; groups: Set<string> }>()
   const [editing, setEditing] = useState(false)
@@ -47,8 +57,9 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
   // F004: `?show-off` opens the Show-off sheet the same way
   const showOff = () => navigate({ name: 'collection', id, open: 'showoff' })
   const closeView = useCallback(() => setViewOpen(false), [])
-  const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: 'mark' | 'booth' }>()
+  const [groupChoice, setGroupChoice] = useState<{ id: string; groupBy: GroupBy }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
+  const closeRowSheet = useCallback(() => setRowSheet(undefined), [])
   const closeEdit = useCallback(() => setEditing(false), [])
   const justAdded = useJustAdded(id)
   const data = useStoreData(
@@ -91,15 +102,19 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
     setChosen({ id, filter: next })
     void saveFilter(services, id, next)
   }
-  const shown = applyFilter(entries, filter)
+  const filtered = applyFilter(entries, filter)
+  const query = search?.id === id ? search.query : ''
   const nameOf = (e: { bggId: number }) => games.get(e.bggId)?.name ?? ''
+  const displayName = (bggId: number) => games.get(bggId)?.name ?? `Game ${bggId}`
+  const shown = filtered.filter(e => matchesName(nameOf(e), query))
   const groupBy = groupChoice?.id === id ? groupChoice.groupBy : (storedGroupBy ?? 'mark')
-  const changeGroupBy = (next: 'mark' | 'booth') => {
+  const changeGroupBy = (next: GroupBy) => {
     setGroupChoice({ id, groupBy: next })
     void saveGroupBy(services, id, next)
   }
-  const narrowed = presetOf(filter) !== 'all' || groupBy === 'booth'
-  // by mark (FR-005, collection order with two parts) or by fair hall, taken from the booth (hall view)
+  // the Filter action shows "(active)" and turns orange away from the default view (docs/design.md "Filter and group")
+  const isDefault = isDefaultView(filter, groupBy)
+  // by category (FR-005, collection order with two parts) or by fair hall, taken from the booth (hall view)
   const groups =
     groupBy === 'booth'
       ? groupByHall(shown, nameOf).map(g => ({ id: `group-hall-${g.key}`, heading: { key: g.key === 'none' ? 'none' : 'hall', label: g.label }, part: 'marked' as const, entries: g.entries }))
@@ -115,6 +130,26 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
   const bought = boughtLine(entries)
   const boughtCount = countMarks(entries).bought
   const current = entries.find(e => e.bggId === openGame)
+  const rowEntry = rowSheet && entries.find(e => e.bggId === rowSheet.bggId)
+  // Buy on a bought game un-buys it at once; on a game not bought it asks for the price (docs/design.md "Buy sheet")
+  const buyRow = async (entry: Entry) => {
+    if (!entry.bought) {
+      setRowSheet({ kind: 'buy', bggId: entry.bggId })
+      return
+    }
+    await unbuyGame(services, entry)
+    toast(`${displayName(entry.bggId)}: not bought any more`)
+  }
+  const toggleBuy = () => changeFilter(filter.buy ? buyOff(filter) : buyOn(filter))
+  // any change in the Filter and group sheet turns the Buy quick filter off; clearing resets everything
+  const sheetGroupBy = (next: GroupBy) => {
+    changeGroupBy(next)
+    if (filter.buy) changeFilter(dropBuy(filter))
+  }
+  const clearFilters = () => {
+    changeFilter(PRESETS.all)
+    changeGroupBy('mark')
+  }
 
   return (
     <>
@@ -140,14 +175,6 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
           </div>
         ) : (
           <>
-            {/* only while something is filtered or grouped by hall: what is shown, tap to change */}
-            {narrowed && (
-              <button type="button" className="filter-summary" onClick={() => setViewOpen(true)}>
-                <span className="visually-hidden">Filter: </span>
-                {filterLabel(filter)}
-                {groupBy === 'booth' && ' · by hall'} · {shown.length} {shown.length === 1 ? 'game' : 'games'}
-              </button>
-            )}
             {bought && (
               <p className="bought-line">
                 ✅ <Counter value={boughtCount} />
@@ -155,28 +182,46 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
               </p>
             )}
             <hr className="separator" />
-            {shown.length === 0 && <FilterEmpty filter={filter} name={collection.name} hasMustHave={entries.some(e => e.mark === 'must_have')} />}
+            <QuickFilters
+              collection={collection.name}
+              groupBy={groupBy}
+              buy={Boolean(filter.buy)}
+              count={shown.length}
+              query={query}
+              onGroupBy={changeGroupBy}
+              onBuy={toggleBuy}
+              onQuery={q => setSearch({ id, query: q })}
+            />
+            <hr className="separator" />
+            {filtered.length === 0 && <FilterEmpty filter={filter} name={collection.name} hasMustHave={entries.some(e => e.mark === 'must_have')} />}
+            {filtered.length > 0 && shown.length === 0 && (
+              <div className="search-empty">
+                <p>No game called “{query}” here.</p>
+                <button type="button" className="btn" onClick={() => setSearch({ id, query: '' })}>
+                  Clear the search
+                </button>
+              </div>
+            )}
             {groups.map((group, i) => {
-              const headingId = group.id
-              // Not yet marked and Not interested fold; a line splits them from the marked games (FR-018a)
-              const folds = group.part === 'rest'
               const open = !foldedGroups.has(group.id)
-              const split = folds && i > 0 && groups[i - 1]?.part === 'marked'
+              // the categories that are not yet a choice (No category yet, Not interested) sit below a line (FR-018a)
+              const split = group.part === 'rest' && i > 0 && groups[i - 1]?.part === 'marked'
               return (
                 <Fragment key={group.id}>
                   {split && <hr className="separator" />}
-                  <section className="group" aria-labelledby={headingId}>
-                    <GroupHeading
-                      id={headingId}
-                      mark={group.heading}
-                      count={group.entries.length}
-                      open={folds ? open : undefined}
-                      onToggle={folds ? () => toggleFold(group.id) : undefined}
-                    />
-                    <ul className="rows" hidden={folds && !open}>
+                  <section className="group" aria-labelledby={group.id}>
+                    <GroupHeading id={group.id} group={group.heading} count={group.entries.length} open={open} onToggle={() => toggleFold(group.id)} />
+                    <ul className="rows" hidden={!open}>
                       {group.entries.map(entry => (
                         <li key={entry.bggId}>
-                          <GameRow entry={entry} game={games.get(entry.bggId)} onOpen={() => setOpenGame(entry.bggId)} justAdded={entry.bggId === justAdded} />
+                          <GameRow
+                            entry={entry}
+                            game={games.get(entry.bggId)}
+                            onOpen={() => setOpenGame(entry.bggId)}
+                            onBuy={() => void buyRow(entry)}
+                            onCategory={() => setRowSheet({ kind: 'category', bggId: entry.bggId })}
+                            justAdded={entry.bggId === justAdded}
+                          />
                         </li>
                       ))}
                     </ul>
@@ -187,21 +232,24 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
           </>
         )}
       </main>
-      {/* Add game · ♥ · Filter · Show-off (F003 FR-015, F004 FR-007); Filter says "(active)" and turns orange while narrowed (FR-016) */}
+      {/* Add game · ♥ · Filter · Show-off (F003 FR-015, F004 FR-007); Filter says "(active)" and turns orange away from the default view (FR-016) */}
       <ActionBar
         main={<MainButton icon={<IconHeart />} label="BG-Tinder: swipe a BGG list into this collection" href={href({ name: 'collection', id, open: 'list' })} />}
         left={<Action icon={<IconPlus />} label="Add game" onClick={addGame} />}
-        right={<Action icon={<IconFilter />} label="Filter" active={narrowed} onClick={() => setViewOpen(true)} />}
+        right={<Action icon={<IconFilter />} label="Filter" active={!isDefault} onClick={() => setViewOpen(true)} />}
         outer={<Action icon={<IconShowOff />} label="Show-off" onClick={showOff} />}
       />
       {current && <GameSheet entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
+      {rowEntry && rowSheet?.kind === 'buy' && <BuySheet entry={rowEntry} name={displayName(rowEntry.bggId)} onClose={closeRowSheet} />}
+      {rowEntry && rowSheet?.kind === 'category' && <CategorySheet entry={rowEntry} name={displayName(rowEntry.bggId)} onClose={closeRowSheet} />}
       <FilterSheet
         open={viewOpen}
         filter={filter}
         counts={groupCounts(entries, filter.bought, filter.price)}
         groupBy={groupBy}
         onChange={changeFilter}
-        onGroupBy={changeGroupBy}
+        onGroupBy={sheetGroupBy}
+        onClear={clearFilters}
         onClose={closeView}
       />
       {open === 'list' && (
