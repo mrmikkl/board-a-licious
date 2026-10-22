@@ -44,7 +44,8 @@ async function buy(page: Page, group: RegExp, game: string) {
   await page.getByRole('region', { name: group }).getByRole('button', { name: new RegExp(game, 'i') }).click()
   const details = page.getByRole('dialog')
   await details.getByRole('button', { name: /bought it/i }).click()
-  await details.getByRole('button', { name: /don't track the price/i }).click()
+  await details.getByLabel('What did you pay?').fill('')
+  await details.getByRole('button', { name: 'Got it' }).click()
   await expect(details).toBeHidden()
 }
 
