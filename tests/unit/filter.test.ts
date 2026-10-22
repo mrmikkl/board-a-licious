@@ -73,8 +73,8 @@ describe('filter (FR-009)', () => {
   })
 
   it('counts games per group within the bought selection', () => {
-    expect(groupCounts(entries, 'all')).toEqual({ new: 1, must_have: 2, interested: 1, unsure: 0, poop: 0, skip: 1 })
-    expect(groupCounts(entries, 'yes')).toEqual({ new: 0, must_have: 1, interested: 1, unsure: 0, poop: 0, skip: 0 })
+    expect(groupCounts(entries, 'all')).toEqual({ new: 1, must_have: 2, interested: 1, unsure: 0, later: 0, poop: 0, skip: 1 })
+    expect(groupCounts(entries, 'yes')).toEqual({ new: 0, must_have: 1, interested: 1, unsure: 0, later: 0, poop: 0, skip: 0 })
   })
 
   it('knows which preset is selected', () => {
@@ -87,7 +87,7 @@ describe('filter (FR-009)', () => {
     expect(filterLabel(PRESETS.all)).toBe('All games')
     expect(filterLabel(PRESETS.hunt)).toBe('⭐ Must Have, not bought')
     expect(filterLabel(filter([], 'all'))).toBe('Nothing selected')
-    expect(filterLabel(filter(['new', 'must_have', 'interested', 'unsure', 'poop', 'skip'], 'yes'))).toBe('All groups, bought')
+    expect(filterLabel(filter(['new', 'must_have', 'interested', 'unsure', 'later', 'poop', 'skip'], 'yes'))).toBe('All groups, bought')
     expect(filterLabel(filter(['must_have', 'interested'], 'all'))).toBe('⭐ 👀')
     expect(filterLabel(filter(['new', 'poop'], 'no'))).toBe('⬡ 💩, not bought')
   })

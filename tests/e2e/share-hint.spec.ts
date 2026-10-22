@@ -50,7 +50,7 @@ test('the game just added from a share keeps the hover highlight until the user 
   await sheet.getByRole('button', { name: 'Add to collection' }).click()
 
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-  const row = page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: /cascadia/i })
+  const row = page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: /cascadia/i })
   // shown with reduced motion too: it is a highlight, not an animation
   await expect(row).toHaveClass(/is-just-added/)
   await expect(row).toHaveCSS('border-color', 'rgb(255, 122, 26)')

@@ -18,12 +18,13 @@ describe('grouping a collection (FR-005)', () => {
   ]
 
   it('groups in collection order: marked games first, then Not yet marked and Not interested (R5)', () => {
-    const all = (['skip', 'new', 'poop', 'unsure', 'interested', 'must_have'] as const).map((mark, i) => entry(10 + i, { mark }))
+    const all = (['skip', 'new', 'poop', 'later', 'unsure', 'interested', 'must_have'] as const).map((mark, i) => entry(10 + i, { mark }))
     const groups = groupByMark(all, e => String(e.bggId))
     expect(groups.map(g => [g.mark.key, g.part])).toEqual([
       ['must_have', 'marked'],
       ['interested', 'marked'],
       ['unsure', 'marked'],
+      ['later', 'marked'],
       ['poop', 'marked'],
       ['new', 'rest'],
       ['skip', 'rest'],
@@ -42,14 +43,14 @@ describe('grouping a collection (FR-005)', () => {
   })
 
   it('keeps MARKS in its own order, Not yet marked first, for pickers, filters and share text', () => {
-    expect(MARKS.map(m => m.key)).toEqual(['new', 'must_have', 'interested', 'unsure', 'poop', 'skip'])
+    expect(MARKS.map(m => m.key)).toEqual(['new', 'must_have', 'interested', 'unsure', 'later', 'poop', 'skip'])
   })
 
   it('counts games per mark and bought (FR-002)', () => {
     const counts = countMarks([...entries, entry(6, { mark: 'interested', bought: true })])
     expect(counts.total).toBe(5)
     expect(counts.bought).toBe(1)
-    expect(counts.byMark).toEqual({ new: 1, must_have: 2, interested: 1, unsure: 0, poop: 0, skip: 1 })
+    expect(counts.byMark).toEqual({ new: 1, must_have: 2, interested: 1, unsure: 0, later: 0, poop: 0, skip: 1 })
   })
 })
 
@@ -89,5 +90,11 @@ describe('changing an entry (FR-006)', () => {
 
   it('removes an entry as a tombstone', () => {
     expect(removeEntry(entry(1), T2)).toMatchObject({ deleted: true, updatedAt: T2 })
+  })
+})
+
+describe('F005: For later', () => {
+  it('is counted per collection', () => {
+    expect(countMarks([entry(1, { mark: 'later' }), entry(2, { mark: 'later' })]).byMark.later).toBe(2)
   })
 })

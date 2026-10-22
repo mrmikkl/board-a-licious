@@ -21,7 +21,7 @@ test('US1: create a collection, add a game by link, mark it, reload', async ({ p
   await expect(page.getByLabel(/^name$/i)).toHaveValue('Cascadia')
   await page.getByRole('button', { name: 'Add to collection' }).click()
 
-  const unmarked = page.getByRole('region', { name: /not yet marked/i })
+  const unmarked = page.getByRole('region', { name: /no category yet/i })
   await expect(unmarked.getByRole('button', { name: /cascadia/i })).toBeVisible()
 
   await unmarked.getByRole('button', { name: /cascadia/i }).click()

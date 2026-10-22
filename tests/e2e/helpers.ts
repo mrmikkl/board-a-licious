@@ -5,13 +5,17 @@ import { type Page, expect } from '@playwright/test'
 
 const fixture = (name: string) => readFileSync(new URL(`../fixtures/bgg/${name}`, import.meta.url), 'utf8')
 
+/** F005: BGG's average and Bayes average of Cascadia, from the recorded `api/dynamicinfo` answer. */
+const stats = JSON.parse(fixture('dynamicinfo-295947.json')).item.stats as { average: string; baverage: string }
+export const RATINGS_295947 = { rating: Number(stats.average), geekRating: Number(stats.baverage) }
+
 /** No end-to-end test calls the live BGG site: BGG-backed API routes answer from fixtures. */
 export async function fakeBgg(page: Page) {
   await page.route('**/api/bgg/games?**', async route => {
     const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',').map(Number) ?? []
     const item = JSON.parse(fixture('geekitems-295947.json')).item
     const games = ids.includes(295947)
-      ? [{ bggId: 295947, name: item.name, year: Number(item.yearpublished), thumbnailUrl: item.images.square200, description: item.short_description, kind: 'boardgame' }]
+      ? [{ bggId: 295947, name: item.name, year: Number(item.yearpublished), thumbnailUrl: item.images.square200, description: item.short_description, kind: 'boardgame', ...RATINGS_295947 }]
       : []
     await route.fulfill({ json: { games } })
   })
@@ -76,4 +80,60 @@ export async function fakeGallery(page: Page) {
     const id = Number(new URL(route.request().url()).searchParams.get('id'))
     await route.fulfill({ json: id === 295947 ? { bggId: id, total: recorded.pagination.total, images: ordered } : { bggId: id, total: 0, images: [] } })
   })
+}
+
+/** A game of a seeded collection (F005): its category, booth, listed price and bought state. */
+export type SeedGame = {
+  bggId: number
+  name: string
+  mark?: string
+  booth?: string | null
+  priceCents?: number | null
+  publisher?: string | null
+  factsSource?: 'preview' | 'manual' | null
+  bought?: boolean
+  paidCents?: number | null
+  rating?: number | null
+  geekRating?: number | null
+}
+
+/**
+ * F005: a collection with games in given categories, pushed straight to `/api/sync` (faster than
+ * adding each game by hand); `/api/bgg/games` answers their names. Ends in the collection.
+ */
+export async function seedCollection(page: Page, name: string, games: SeedGame[]) {
+  const now = new Date().toISOString()
+  const id = crypto.randomUUID()
+  const entries = games.map(g => ({
+    collectionId: id,
+    bggId: g.bggId,
+    mark: g.mark ?? 'new',
+    bought: g.bought ?? false,
+    paidCents: g.bought ? (g.paidCents ?? null) : null,
+    paidCurrency: g.bought && g.paidCents != null ? 'EUR' : null,
+    facts: g.booth != null || g.priceCents != null || g.publisher != null
+      ? { booth: g.booth ?? null, priceCents: g.priceCents ?? null, currency: g.priceCents != null ? 'EUR' : null, publisher: g.publisher ?? null, edition: null }
+      : null,
+    factsSource: g.factsSource ?? (g.booth != null || g.priceCents != null ? 'preview' : null),
+    detailsPending: false,
+    updatedAt: now,
+    deleted: false,
+  }))
+  const seeded = new Map(games.map(g => [g.bggId, g]))
+  await page.route('**/api/bgg/games?**', async route => {
+    const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',').map(Number) ?? []
+    if (!ids.some(i => seeded.has(i))) return route.fallback()
+    const games = ids.flatMap(i => {
+      const g = seeded.get(i)
+      return g ? [{ bggId: i, name: g.name, year: 2025, thumbnailUrl: null, description: `About ${g.name}.`, kind: 'boardgame', rating: g.rating ?? null, geekRating: g.geekRating ?? null }] : []
+    })
+    await route.fulfill({ json: { games } })
+  })
+  if (page.url() === 'about:blank') await page.goto('/#/collections')
+  const response = await page.request.post('/api/sync', { data: { collections: [{ id, name, updatedAt: now, deleted: false }], entries } })
+  expect(response.ok()).toBe(true)
+  await page.goto(`/#/collections/${id}`)
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+  return id
 }

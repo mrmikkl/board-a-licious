@@ -24,8 +24,8 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Add `IconBag`, `IconBagCheck` (bag with ✓), `IconCategory` (two hexagons) and `IconResync` (two circling arrows) to `src/app/components/icons.tsx`, drawn as in `specs/005-essen-feedback/design/prototype.html` (`ICON.bag`, `ICON.bagOk`, `ICON.cat`, `ICON.resync`)
-- [ ] T002 [P] Extend `fakeBgg(page)` in `tests/e2e/helpers.ts` so faked `/api/bgg/games` answers carry `rating` and `geekRating` (`7.88` / `7.73` for 295947 from `tests/fixtures/bgg/dynamicinfo-295947.json`, `null` for games without), and add a helper `seedCollection(page, name, games)` that creates a collection with entries in given categories, booths (e.g. `"3"`, `"Hall 2"`, `"7-C111 / 3"`), listed prices and bought states, for the stories' e2e tests
+- [X] T001 [P] Add `IconBag`, `IconBagCheck` (bag with ✓), `IconCategory` (two hexagons) and `IconResync` (two circling arrows) to `src/app/components/icons.tsx`, drawn as in `specs/005-essen-feedback/design/prototype.html` (`ICON.bag`, `ICON.bagOk`, `ICON.cat`, `ICON.resync`)
+- [X] T002 [P] Extend `fakeBgg(page)` in `tests/e2e/helpers.ts` so faked `/api/bgg/games` answers carry `rating` and `geekRating` (`7.88` / `7.73` for 295947 from `tests/fixtures/bgg/dynamicinfo-295947.json`, `null` for games without), and add a helper `seedCollection(page, name, games)` that creates a collection with entries in given categories, booths (e.g. `"3"`, `"Hall 2"`, `"7-C111 / 3"`), listed prices and bought states, for the stories' e2e tests
 
 ---
 
@@ -35,10 +35,10 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 **⚠️ CRITICAL**: no user story work before this phase is complete.
 
-- [ ] T003 [P] Unit tests in `tests/unit/marks.test.ts`: `MARKS` order is `new, must_have, interested, unsure, later, poop, skip`; `later` has label "For later" and emoji ⏳; `new` is labelled "No category yet"; `isMark('later')` is true; `markOrder('later')` sits between unsure and poop. In `tests/unit/collection-view.test.ts`: `groupByMark` puts For later after Unsure in the categorised part; `countMarks` counts `later`. In `tests/unit/backup.test.ts`: a backup with a `later` entry restores; an older one without it restores unchanged
-- [ ] T004 [P] Worker test in `tests/worker/sync.test.ts`: pushing an entry with `mark: "later"` is accepted and returned by `GET /api/sync`
-- [ ] T005 Add `{ key: 'later', label: 'For later', emoji: '⏳' }` after `unsure` and relabel `new` to "No category yet" in `src/domain/marks.ts`; adjust anything that lists marks by hand (`src/domain/share.ts`, `src/domain/collection.ts` part split) so T003–T004 pass
-- [ ] T006 [P] Add the For later tone `[data-mark='later'], [data-tone='later'] { --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%); --tone-text: var(--ink); }` to `src/app/theme/components.css` (design rules §3 "pink")
+- [X] T003 [P] Unit tests in `tests/unit/marks.test.ts`: `MARKS` order is `new, must_have, interested, unsure, later, poop, skip`; `later` has label "For later" and emoji ⏳; `new` is labelled "No category yet"; `isMark('later')` is true; `markOrder('later')` sits between unsure and poop. In `tests/unit/collection-view.test.ts`: `groupByMark` puts For later after Unsure in the categorised part; `countMarks` counts `later`. In `tests/unit/backup.test.ts`: a backup with a `later` entry restores; an older one without it restores unchanged
+- [X] T004 [P] Worker test in `tests/worker/sync.test.ts`: pushing an entry with `mark: "later"` is accepted and returned by `GET /api/sync`
+- [X] T005 Add `{ key: 'later', label: 'For later', emoji: '⏳' }` after `unsure` and relabel `new` to "No category yet" in `src/domain/marks.ts`; adjust anything that lists marks by hand (`src/domain/share.ts`, `src/domain/collection.ts` part split) so T003–T004 pass
+- [X] T006 [P] Add the For later tone `[data-mark='later'], [data-tone='later'] { --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%); --tone-text: var(--ink); }` to `src/app/theme/components.css` (design rules §3 "pink")
 
 **Checkpoint**: For later exists everywhere categories are listed (filter, counts, Show-off sheet, share); `npm test` green.
 
@@ -56,7 +56,7 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Move `PaidForm` out of `src/app/components/GameSheet.tsx` into `src/app/components/BuySheet.tsx` (a `Sheet` titled "Bought <game>?" with the lead "What did you pay? Leave it empty to just tick it off.", price + currency, Cancel / **Got it**), saving via the existing `buyGame` action (celebration, sound, toast); `GameSheet` uses it for "✅ Bought it"
+- [X] T008 [US1] Move `PaidForm` out of `src/app/components/GameSheet.tsx` into `src/app/components/BuySheet.tsx` (a `Sheet` titled "Bought <game>?" with the lead "What did you pay? Leave it empty to just tick it off.", price + currency, Cancel / **Got it**), saving via the existing `buyGame` action (celebration, sound, toast); `GameSheet` uses it for "✅ Bought it"
 - [ ] T009 [P] [US1] Create `src/app/components/CategorySheet.tsx`: `Sheet` "Category of <game>", a list of 52px buttons (gradient hexagon, emoji, label) Must Have … Poop, a thin line, No category yet and Not interested; current one `aria-pressed` with "current"; a tap calls `setMark`, closes, toasts "<game> → <emoji> <label>" (design rules "Category sheet")
 - [ ] T010 [US1] Rebuild `src/app/components/GameRow.tsx` (research R3): `div.row[data-mark]` with a `button.row-open` (cover, name, publisher, info line; accessible name "<game>, <category>[, bought]") and `div.row-acts` with `button.row-act.buy` (`aria-pressed`, `IconBag`/`IconBagCheck`, label "Buy" / price paid / "Bought") and `button.row-act.cat` (`IconCategory`, "Category"); remove the mark pill and the "✅ €paid" pill; props `onBuy`, `onCategory`
 - [ ] T011 [P] [US1] Styles in `src/app/theme/components.css`: `.row` with `border: 1px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone) border-box` (No category yet: `--border`; Not interested keeps its dimmed, struck-through look); `.row-open`, `.row-acts`, `.row-act` (≥ 46×52px, 32px hexagon, 10px label, bought state with `--grad-got`), as in the prototype's `.crow*`/`.ract*`
@@ -76,14 +76,14 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 - [ ] T013 [P] [US2] Unit tests in `tests/unit/filter.test.ts` (research R5, data-model "Device meta"): `buyOn(filter)` → groups `{must_have, interested, unsure}`, bought `no`, price `all`, `buy.before` = the old filter; `buyOff` restores it; `toStored`/`fromStored` keep `buy`; `isDefaultView(filter, groupBy)` true only for all categories (incl. `later`), bought `all`, price `all`, no `buy`, `mark`; `PRESETS.all` is the Clear filters target
 - [ ] T014 [P] [US2] Unit tests in `tests/unit/booths.test.ts` (research R6): `"3"` and `"Hall 3"` → Hall 3 as hall-only; `"7-C111 / 3"` → Hall 7 and Hall 3; `"3-A100 / 3"` → once in Hall 3; within a hall full booths first (by booth, numeric), then hall-only by name; `"Hall foyer"` → "No booth yet"; `groupByHall` keeps Not interested entries it is given
-- [ ] T015 [P] [US2] Unit tests in `tests/unit/search.test.ts` for `matchesName(name, query)`: case- and accent-insensitive ("Café" matches "cafe", "CAS" matches "Cascadia"), empty query matches all, whitespace trimmed
+- [X] T015 [P] [US2] Unit tests in `tests/unit/search.test.ts` for `matchesName(name, query)`: case- and accent-insensitive ("Café" matches "cafe", "CAS" matches "Cascadia"), empty query matches all, whitespace trimmed
 - [ ] T016 [P] [US2] E2E tests in `tests/e2e/quick-filters.spec.ts` (contracts/ui.md): quick filters group between the two separators, no `.filter-summary`; toggle switches grouping and its name; Buy chip `aria-pressed`, count text, Filter action "Filter (active)"; changing a segment in the sheet turns Buy off; Clear filters disabled at default, resets everything; Not interested shown under booths only when selected; search narrows, "No game called “zzz” here." + Clear the search; every group heading is a fold button, For later, Poop, Not interested start folded (expanded = false), others open; folding not remembered after reload; replace the summary assertions in `tests/e2e/us4-fair.spec.ts` and `tests/e2e/collection-actions.spec.ts`, update `tests/e2e/group-by.spec.ts` to the new labels
 
 ### Implementation for User Story 2
 
 - [ ] T017 [US2] Implement in `src/domain/filter.ts`: `StoredFilter.buy?: { before: StoredFilter }`, `buyOn`, `buyOff`, `isDefaultView`; `filterLabel` texts say "categories"; T013 passes
 - [ ] T018 [P] [US2] Implement hall-only booths and the filter-driven grouping in `src/domain/booths.ts`; T014 passes
-- [ ] T019 [P] [US2] Create `src/domain/search.ts` with `matchesName`; use it in `src/app/screens/List.tsx` too (replaces the lower-case `includes`); T015 passes
+- [X] T019 [P] [US2] Create `src/domain/search.ts` with `matchesName`; use it in `src/app/screens/List.tsx` too (replaces the lower-case `includes`); T015 passes
 - [ ] T020 [US2] Make `src/app/components/GroupHeading.tsx` always a fold button with chevron and `aria-expanded`; in `src/app/screens/Collection.tsx` keep the folded set per visit, initially `later`, `poop`, `skip` (halls and "No booth yet" open)
 - [ ] T021 [US2] Create `src/app/components/QuickFilters.tsx`: group "Quick filters" with the Cat | Booth toggle (one pill, current filled hot, accessible name per contracts/ui.md), the 🛒 Buy chip (`aria-pressed`), the muted count, and below them the search field ("Search this collection"); styles `.quick`, `.qtoggle`, `.search` in `src/app/theme/fair.css`
 - [ ] T022 [US2] Update `src/app/components/FilterPanel.tsx`: "Categories" with counts and Select all / none, Price labels "≤ €30 / €30–60 / > €60", Group by "Categories" / "Booths", bottom row **Clear filters** (disabled at default) / **Done**; any change drops `buy`

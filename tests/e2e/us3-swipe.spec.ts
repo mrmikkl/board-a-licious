@@ -88,7 +88,7 @@ test('US3: swipe a BGG preview into a collection', async ({ page }) => {
 
   // right-swiped games are unmarked with their facts, left-swiped ones not interested
   await page.getByRole('link', { name: `Open ${name}` }).click()
-  const unmarked = page.getByRole('region', { name: /not yet marked/i })
+  const unmarked = page.getByRole('region', { name: /no category yet/i })
   await expect(unmarked.getByRole('button', { name: /kalypso/i })).toContainText('3-R400')
   await expect(unmarked.getByRole('button', { name: /harmonies/i })).toBeVisible()
   const skipped = page.getByRole('region', { name: /not interested/i })

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useState } from 'react'
 import { ApiError } from '../../client/api.ts'
 import { LIST_ERROR } from '../../client/lists.ts'
 import type { ListKind, StoredList, StoredListEntry } from '../../client/types.ts'
+import { matchesName } from '../../domain/search.ts'
 import { InfoLine } from '../components/GameInfo.tsx'
 import { Header } from '../components/Header.tsx'
 import { HexCover } from '../components/HexCover.tsx'
@@ -89,8 +90,7 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
     )
   }
 
-  const query = filter.trim().toLowerCase()
-  const shown = query ? list.entries.filter(e => e.name.toLowerCase().includes(query)) : list.entries
+  const shown = list.entries.filter(e => matchesName(e.name, filter))
   const current = list.entries.find(e => e.bggId === openGame)
   return (
     <>
@@ -109,7 +109,7 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
         </div>
         <hr className="separator" />
         {shown.length === 0 ? (
-          <p className="lead">{query ? 'No game on this list matches.' : 'This list has no games yet.'}</p>
+          <p className="lead">{filter.trim() ? 'No game on this list matches.' : 'This list has no games yet.'}</p>
         ) : (
           <ul className="rows">
             {shown.map(entry => (

@@ -285,3 +285,12 @@ describe('invalid backup files', () => {
     expect(reject(JSON.stringify({ ...v1, entries: undefined }))).toBe('The backup has no list of games.')
   })
 })
+
+describe('F005: For later in backups', () => {
+  it('restores a backup with a For later entry', () => {
+    const later = entry('c1', 99, { mark: 'later' })
+    const backup = parsed(JSON.parse(JSON.stringify(exportBackup({ collections: [essen], entries: [later], games, now: T2 }))))
+    const plan = planImport({ current: empty, backup, resolution: 'keep', now: NOW, newId: ids() })
+    expect(plan.entries).toEqual([{ ...later, updatedAt: NOW }])
+  })
+})

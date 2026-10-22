@@ -15,7 +15,7 @@ async function addMustHave(page: Page, collection: string, link: string, game: s
   await page.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(page.getByLabel(/^name$/i)).toHaveValue(game)
   await page.getByRole('button', { name: 'Add to collection' }).click()
-  await page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
+  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
   // choosing a mark closes the sheet; open the game again from its new group
   await expect(page.getByRole('dialog')).toBeHidden()
@@ -47,7 +47,7 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   await sheet.getByRole('button', { name: /bought it/i }).click()
   const paid = sheet.getByLabel('What did you pay?')
   await expect(paid).toHaveValue('52')
-  await expect(sheet.getByRole('button', { name: /don't track the price/i })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Bought Cascadia?' }).getByRole('button', { name: 'Got it' })).toBeVisible()
   await expectAccessible(page)
   await paid.press('Enter')
   await expect(sheet).toBeHidden()
@@ -91,7 +91,9 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   // buying the last Must Have without a price: nothing left to hunt
   await page.getByRole('button', { name: /ark nova/i }).click()
   await sheet.getByRole('button', { name: /bought it/i }).click()
-  await sheet.getByRole('button', { name: /don't track the price/i }).click()
+  // F005: an empty price ticks it off without one
+  await sheet.getByLabel('What did you pay?').fill('')
+  await sheet.getByRole('button', { name: 'Got it' }).click()
   await expect(page.getByRole('heading', { name: /nothing left to hunt/i })).toBeVisible()
   await expect(page.getByText('✅ 2 games bought, €52 spent')).toBeVisible()
   // the toast fades in; check contrast once it is fully shown

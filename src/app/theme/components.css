@@ -22,6 +22,12 @@
   --tone: var(--grad-violet);
   --tone-text: #fff;
 }
+/* F005: For later, pink */
+[data-mark='later'],
+[data-tone='later'] {
+  --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%);
+  --tone-text: var(--ink);
+}
 [data-mark='poop'],
 [data-tone='poop'] {
   --tone: var(--grad-mud);

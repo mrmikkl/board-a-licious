@@ -18,7 +18,7 @@ async function choose(page: Page, name: string) {
 }
 
 const optionText = (page: Page, name: string) => collectionSelect(page).locator('option').filter({ hasText: name })
-const notYetMarked = (page: Page) => page.getByRole('region', { name: /not yet marked/i })
+const notYetMarked = (page: Page) => page.getByRole('region', { name: /no category yet/i })
 
 test('share a game: preselected last used collection, add, toast, and the next share preselects it (T009, T011)', async ({ page }) => {
   await fakeBgg(page)

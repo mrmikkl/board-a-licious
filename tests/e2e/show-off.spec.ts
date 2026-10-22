@@ -30,12 +30,12 @@ async function addGame(page: Page, link: string, game: string) {
   await expect(add.getByLabel(/^name$/i)).toHaveValue(game)
   await add.getByRole('button', { name: 'Add to collection' }).click()
   await expect(add).toBeHidden()
-  await expect(page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
+  await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
 }
 
 /** Opens the game from "Not yet marked" and picks a mark; picking closes the sheet. */
 async function markAs(page: Page, game: string, mark: RegExp) {
-  await page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
+  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: mark }).click()
   await expect(page.getByRole('dialog')).toBeHidden()
 }
@@ -67,13 +67,13 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   await markAs(page, 'Brass Birmingham', /^interested$/i)
   await buy(page, /must have/i, 'Cascadia')
 
-  // FR-008, FR-009: six toggles with counts, Must Have pressed the first time, Show off disabled with none pressed
+  // FR-008, FR-009: seven toggles with counts, Must Have pressed the first time, Show off disabled with none pressed
   await showOffButton(page).click()
   const dialog = sheet(page)
   await expect(dialog).toBeVisible()
   const toggles = dialog.locator('button[aria-pressed]')
-  await expect(toggles).toHaveText(['⭐ Must Have 3', '👀 Interested 1', '🤔 Unsure 0', '💩 Poop 0', '⬡ Not yet marked 0', '🛑 Not interested 0'])
-  await expect.poll(() => pressed(page)).toEqual(['true', 'false', 'false', 'false', 'false', 'false'])
+  await expect(toggles).toHaveText(['⭐ Must Have 3', '👀 Interested 1', '🤔 Unsure 0', '⏳ For later 0', '💩 Poop 0', '⬡ No category yet 0', '🛑 Not interested 0'])
+  await expect.poll(() => pressed(page)).toEqual(['true', 'false', 'false', 'false', 'false', 'false', 'false'])
   const showOff = dialog.getByRole('button', { name: 'Show off' })
   await expect(showOff).toBeEnabled()
   await toggles.nth(0).click()
@@ -126,7 +126,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
 
   // FR-009: Show-off again preselects Must Have + Interested
   await showOffButton(page).click()
-  await expect.poll(() => pressed(page)).toEqual(['true', 'true', 'false', 'false', 'false', 'false'])
+  await expect.poll(() => pressed(page)).toEqual(['true', 'true', 'false', 'false', 'false', 'false', 'false'])
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(dialog).toBeHidden()
 })
@@ -156,11 +156,11 @@ test('US2: groups without games show the empty state; Show-off works offline aft
   // FR-014: offline, the honeycomb shows the covers on the phone
   await context.setOffline(true)
   await dialog.getByRole('button', { name: /poop/i }).click()
-  await dialog.getByRole('button', { name: /not yet marked/i }).click()
+  await dialog.getByRole('button', { name: /no category yet/i }).click()
   await dialog.getByRole('button', { name: 'Show off' }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByText(`${name} · ⬡ · 1 game`)).toBeVisible()
-  await expect.poll(() => names(page)).toEqual(['Cascadia, Not yet marked'])
+  await expect.poll(() => names(page)).toEqual(['Cascadia, No category yet'])
   await hexagons(page).first().click()
   const viewer = page.getByRole('dialog', { name: 'Images of Cascadia' })
   await expect(viewer).toBeVisible()

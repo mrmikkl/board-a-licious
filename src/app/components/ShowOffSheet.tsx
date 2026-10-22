@@ -6,7 +6,7 @@ import { navigate } from '../router.ts'
 import { Sheet } from './Sheet.tsx'
 
 /** The six groups in the collection's order (docs/design.md "Show-off"). */
-const GROUPS: Mark[] = ['must_have', 'interested', 'unsure', 'poop', 'new', 'skip']
+const GROUPS: Mark[] = ['must_have', 'interested', 'unsure', 'later', 'poop', 'new', 'skip']
 
 /** The groups last shown off in this collection; the first time Must Have (data-model "Show-off choice"). */
 function rememberedGroups(stored: unknown): Mark[] {

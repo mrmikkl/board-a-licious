@@ -23,7 +23,7 @@ async function addGame(page: Page, link: string, game: string) {
   await expect(sheet.getByLabel(/^name$/i)).toHaveValue(game)
   await sheet.getByRole('button', { name: 'Add to collection' }).click()
   await expect(sheet).toBeHidden()
-  await expect(page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
+  await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
 }
 
 /** Opens the game from its group and picks a mark; picking closes the sheet. */
@@ -174,27 +174,27 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   const separators = page.locator('main hr.separator')
 
   // only Not yet marked: no line between the parts (only the one under the heading)
-  await slow(headings).toHaveText([/not yet marked3/i])
+  await slow(headings).toHaveText([/no category yet3/i])
   await expect(separators).toHaveCount(1)
 
   // Not interested starts collapsed, below Not yet marked; now both parts are "rest": still one line
-  await markAs(page, /not yet marked/i, 'Wingspan', /not interested/i)
-  await slow(headings).toHaveText([/not yet marked2/i, /not interested1/i])
+  await markAs(page, /no category yet/i, 'Wingspan', /not interested/i)
+  await slow(headings).toHaveText([/no category yet2/i, /not interested1/i])
   await expect(separators).toHaveCount(1)
   const skipFold = page.getByRole('region', { name: /not interested/i }).getByRole('button', { name: /not interested/i })
   await expect(skipFold).toHaveAttribute('aria-expanded', 'false')
   await expect(page.getByRole('button', { name: /wingspan/i })).toBeHidden()
 
   // marked games above the line, Not yet marked and Not interested below it
-  await markAs(page, /not yet marked/i, 'Ark Nova', /must have/i)
-  await slow(headings).toHaveText([/must have1/i, /not yet marked1/i, /not interested1/i])
+  await markAs(page, /no category yet/i, 'Ark Nova', /must have/i)
+  await slow(headings).toHaveText([/must have1/i, /no category yet1/i, /not interested1/i])
   await expect(separators).toHaveCount(2)
   const lineBox = (await separators.nth(1).boundingBox())!
   const mustHaveBox = (await headings.nth(0).boundingBox())!
   const newBox = (await headings.nth(1).boundingBox())!
   expect(lineBox.y).toBeGreaterThan(mustHaveBox.y)
   expect(lineBox.y).toBeLessThan(newBox.y)
-  await markAs(page, /not yet marked/i, 'Cascadia', /unsure/i)
+  await markAs(page, /no category yet/i, 'Cascadia', /unsure/i)
   await slow(headings).toHaveText([/must have1/i, /unsure1/i, /not interested1/i])
   await expect(separators).toHaveCount(2)
   await markAs(page, /unsure/i, 'Cascadia', /^(👀 )?interested/i)
@@ -209,11 +209,11 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   await skipFold.click()
   await expect(skipFold).toHaveAttribute('aria-expanded', 'true')
   await markAs(page, /not interested/i, 'Wingspan', /mark as not yet decided/i)
-  await slow(headings).toHaveText([/must have1/i, /poop1/i, /not yet marked1/i])
+  await slow(headings).toHaveText([/must have1/i, /poop1/i, /no category yet1/i])
   await expect(separators).toHaveCount(2)
 
   // Not yet marked is a fold button, open on arrival; folding keeps the count visible
-  const newFold = page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: /not yet marked/i })
+  const newFold = page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: /no category yet/i })
   await expect(newFold).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('button', { name: /wingspan/i })).toBeVisible()
   await newFold.click()
@@ -230,16 +230,16 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   await newFold.click()
   await expect(newFold).toHaveAttribute('aria-expanded', 'false')
   await page.reload()
-  await expect(page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: /not yet marked/i })).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: /no category yet/i })).toHaveAttribute('aria-expanded', 'true')
 
   // the order of marks elsewhere is unchanged: the filter's groups and the game's picker
   await filterButton(page).click()
   const filter = page.getByRole('dialog', { name: 'Filter and group' })
-  await expect(filter.getByRole('checkbox')).toHaveCount(6)
-  await expect(filter.getByRole('checkbox').first()).toHaveAccessibleName(/not yet marked/i)
+  await expect(filter.getByRole('checkbox')).toHaveCount(7)
+  await expect(filter.getByRole('checkbox').first()).toHaveAccessibleName(/no category yet/i)
   await expect(filter.getByRole('checkbox').last()).toHaveAccessibleName(/not interested/i)
   await page.keyboard.press('Escape')
   await expect(filter).toBeHidden()
-  await page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: /wingspan/i }).click()
-  await expect(page.getByRole('dialog').getByRole('group', { name: 'Mark as' }).getByRole('button')).toHaveText([/must have/i, /interested/i, /unsure/i, /poop/i])
+  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: /wingspan/i }).click()
+  await expect(page.getByRole('dialog').getByRole('group', { name: 'Mark as' }).getByRole('button')).toHaveText([/must have/i, /interested/i, /unsure/i, /for later/i, /poop/i])
 })

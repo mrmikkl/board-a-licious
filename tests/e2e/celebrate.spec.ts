@@ -70,7 +70,7 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   await openGame(page, 'Ark Nova')
   await sheet.getByRole('button', { name: /bought it/i }).click()
   await sheet.getByLabel('What did you pay?').fill('45')
-  await sheet.getByRole('button', { name: /save, got it/i }).click()
+  await sheet.getByRole('button', { name: 'Got it' }).click()
   await expect(sheet).toBeHidden()
   if (reduced) {
     expect(await overlay.count()).toBe(0)

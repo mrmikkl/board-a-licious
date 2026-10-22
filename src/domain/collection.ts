@@ -125,7 +125,7 @@ export function boughtLine(entries: Entry[]): string | null {
 export type CollectionGroup = { mark: MarkInfo; part: 'marked' | 'rest'; entries: Entry[] }
 
 /** The collection view's order (R5): marked games first, then Not yet marked and Not interested. */
-const GROUP_ORDER: Mark[] = ['must_have', 'interested', 'unsure', 'poop', 'new', 'skip']
+const GROUP_ORDER: Mark[] = ['must_have', 'interested', 'unsure', 'later', 'poop', 'new', 'skip']
 
 /** Live entries grouped by mark in collection order (FR-005), empty groups left out, games sorted by name. */
 export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string): CollectionGroup[] {
@@ -139,7 +139,7 @@ export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string):
 
 /**
  * F004 FR-010: the games Show-off shows: live entries whose mark is in `groups`, in the collection
- * group order (must_have, interested, unsure, poop, new, skip), by name within a mark.
+ * group order (must_have, interested, unsure, later, poop, new, skip), by name within a mark.
  */
 export function showOffGames(entries: Entry[], groups: readonly Mark[], nameOf: (entry: Entry) => string): Entry[] {
   const chosen = new Set(groups)
