@@ -91,7 +91,7 @@ grouped by category.
 6. **Given** a game with booth "3" (or "Hall 3"), **When** the collection is grouped by booth, **Then** the game is in Hall 3, after the games with a full booth number in that hall; a game with "7-C111 / 3" is in Hall 7 and Hall 3.
 7. **Given** Not interested is among the selected categories, **When** the collection is grouped by booth, **Then** Not interested games are shown in their hall (or "No booth yet") like any other; when Not interested is not selected they are not shown.
 8. **Given** a collection, **When** the user types into the search above the games, **Then** only games whose name contains the text (ignoring case and accents) are shown, within the current filter and grouping; clearing the search shows them all again; when nothing matches the screen says so.
-9. **Given** a collection, **When** the user taps any group's heading (a category, a hall or "No booth yet"), **Then** the group collapses to its heading with its count, and tapping again expands it; at first every group is expanded except Not interested.
+9. **Given** a collection, **When** the user taps any group's heading (a category, a hall or "No booth yet"), **Then** the group collapses to its heading with its count, and tapping again expands it; at first every group is expanded except For later, Poop and Not interested, which start collapsed.
 10. **Given** the filter sheet, **When** the user looks at grouping, **Then** it is called "Group by" with "Categories" and "Booths" (formerly Marks / Halls).
 
 ---
@@ -215,7 +215,7 @@ shows the booth with "3" and "3-A100"; choose "3-A100": the game now shows Booth
 - **FR-015**: The quick filter section MUST have a Buy toggle that, when on, shows only games in Must Have, Interested or Unsure that are not bought; turning it off restores the filter before; any change in the filter sheet turns it off.
 - **FR-016**: The filter action in the action bar MUST be highlighted whenever filter or grouping differ from the default (all categories, Bought All, Price All, by categories), including when Buy is on.
 - **FR-017**: The filter sheet MUST offer Clear filters, which sets the default: Bought All, Price All, all categories selected, Group by Categories.
-- **FR-018a**: Every group heading in a collection (each category, each hall, "No booth yet") MUST collapse and expand its games on tap, keeping its count visible; all groups start expanded except Not interested, as today not remembered between visits.
+- **FR-018a**: Every group heading in a collection (each category, each hall, "No booth yet") MUST collapse and expand its games on tap, keeping its count visible; all groups start expanded except For later, Poop and Not interested, which start collapsed; folding is not remembered between visits.
 - **FR-018**: A collection MUST have a search field above its games that narrows the shown games by name (case- and accent-insensitive, on top of filter and grouping); the search is not remembered when leaving the collection; with no match the screen says so and offers to clear the search.
 
 **Booths**

@@ -2316,7 +2316,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) c
 
 function start() {
   const s = $('#start').value
-  S = { screen: s === 'list' ? 'list' : 'collection', sheet: null, filter: DEFAULT(), groupBy: s === 'booth' ? 'booth' : 'cat', buy: false, saved: null, query: '', conflicts: [], folded: new Set(['skip']) }
+  S = { screen: s === 'list' ? 'list' : 'collection', sheet: null, filter: DEFAULT(), groupBy: s === 'booth' ? 'booth' : 'cat', buy: false, saved: null, query: '', conflicts: [], folded: new Set(['later', 'poop', 'skip']) }
   closeSheet(); render()
   if (s === 'game') openSheet('game', gameBody(GAMES[0]), GAMES[0].name)
 }

@@ -20,7 +20,7 @@ during the review are removed; the prototype shows the agreed choices only.
 |---|---|---|
 | **Collection** | heading + pencil; bought line; separator; quick filters (**Cat \| Booth**, **🛒 Buy**, "14 games"); separator; search field; groups of game rows; action bar Add game · ♥ · Filter · Show-off | — |
 | ↳ game row | whole 1px border in the category's gradient; cover, name, publisher, infos (booth view: booth or "Hall 3, booth unknown"); at the right **Buy** and **Category** | row: Game details; Buy: Buy sheet (or not bought at once); Category: Category sheet |
-| ↳ group heading | every group (category, hall, No booth yet) folds and unfolds with a tap; Not interested starts folded | — |
+| ↳ group heading | every group (category, hall, No booth yet) folds and unfolds with a tap; For later, Poop and Not interested start folded | — |
 | ↳ Cat \| Booth | groups by categories or by halls (the same as "Group by") | — |
 | ↳ 🛒 Buy | only not-bought Must Have, Interested, Unsure; Filter action highlighted | off: the filter before |
 | ↳ search | narrows by name as you type; no match: "No game called “…” here." + Clear the search | — |
