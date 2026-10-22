@@ -76,11 +76,11 @@ export function ShowOff({ id, groups }: { id: string; groups: Mark[] }) {
         {shown.length === 0 ? (
           <div className="empty">
             <div className="hex" />
-            <h2>No game in these groups</h2>
-            <p>Choose other groups to show off.</p>
+            <h2>No game in these categories</h2>
+            <p>Choose other categories to show off.</p>
             <div className="actions">
               <button type="button" className="btn btn-primary" onClick={() => navigate({ name: 'collection', id, open: 'showoff' })}>
-                Choose groups
+                Choose categories
               </button>
             </div>
           </div>

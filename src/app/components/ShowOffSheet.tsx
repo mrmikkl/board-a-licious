@@ -57,7 +57,7 @@ function Choice({
   }
   return (
     <Sheet open title="Show-off" onClose={onClose}>
-      <p className="lead">Which groups do you want to show? Their covers fill the screen as a honeycomb.</p>
+      <p className="lead">Which categories do you want to show? Their covers fill the screen as a honeycomb.</p>
       <ul className="showoff-groups">
         {GROUPS.map(key => {
           const mark = markInfo(key)

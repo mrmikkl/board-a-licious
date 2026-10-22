@@ -33,10 +33,11 @@ async function addGame(page: Page, link: string, game: string) {
   await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
 }
 
-/** Opens the game from "Not yet marked" and picks a mark; picking closes the sheet. */
+/** Opens the game from "No category yet" and picks a category; a tap changes it in place, Escape closes the details. */
 async function markAs(page: Page, game: string, mark: RegExp) {
   await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: mark }).click()
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
 }
 
@@ -44,7 +45,7 @@ async function buy(page: Page, group: RegExp, game: string) {
   await page.getByRole('region', { name: group }).getByRole('button', { name: new RegExp(game, 'i') }).click()
   const details = page.getByRole('dialog')
   await details.getByRole('button', { name: /bought it/i }).click()
-  await details.getByRole('button', { name: /don't track the price/i }).click()
+  await details.getByRole('button', { name: 'Got it' }).click()
   await expect(details).toBeHidden()
 }
 
@@ -138,7 +139,7 @@ test('US2: groups without games show the empty state; Show-off works offline aft
   await createCollection(page, name)
   await addGame(page, GAMES.cascadia, 'Cascadia')
 
-  // FR-013: no game in the chosen groups → empty state, Choose groups opens the sheet
+  // FR-013: no game in the chosen categories → empty state, Choose categories opens the sheet
   await showOffButton(page).click()
   const dialog = sheet(page)
   await dialog.getByRole('button', { name: /must have/i }).click()
@@ -146,10 +147,10 @@ test('US2: groups without games show the empty state; Show-off works offline aft
   await dialog.getByRole('button', { name: 'Show off' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Show-off' })).toBeVisible()
   await expect(page.getByText(`${name} · 💩 · 0 games`)).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'No game in these groups' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'No game in these categories' })).toBeVisible()
   await expect(hexagons(page)).toHaveCount(0)
   await expectAccessible(page)
-  await page.getByRole('button', { name: 'Choose groups' }).click()
+  await page.getByRole('button', { name: 'Choose categories' }).click()
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('button', { name: /poop/i })).toHaveAttribute('aria-pressed', 'true')
 
