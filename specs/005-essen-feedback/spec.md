@@ -133,7 +133,8 @@ A game's details show BoardGameGeek's average rating and its geek rating.
 
 1. **Given** a game whose BoardGameGeek details are known, **When** its details open, **Then** the info box shows Rating (BGG's average) and Geek rating (BGG's ranked rating), each with one decimal, after Players.
 2. **Given** a game BoardGameGeek has no rating for yet (no or too few votes), **When** its details open, **Then** the missing value is left out rather than shown as 0.
-3. **Given** games added before this feature, **When** their details open, **Then** the ratings show once the game's BGG details are fetched again (as for other details), without the user doing anything.
+3. **Given** BG-Tinder (swiping a BGG list), **When** a game's card shows, **Then** it shows the same game details as the details sheet in a collection: cover, name, publisher and year, the same info box (price, players, rating, geek rating, booth, edition, designer, mechanisms) and the full description, scrolling up and down when long.
+4. **Given** games added before this feature, **When** their details open, **Then** the ratings show once the game's BGG details are fetched again (as for other details), without the user doing anything.
 
 ---
 
@@ -228,6 +229,7 @@ Have, bought for €38, with its booth.
 
 - **FR-010**: The details MUST show the category picker above the info box.
 - **FR-011**: The picker MUST lay out Must Have, Interested, Unsure, For later and Poop as hexagons in one zigzag row (1st start of the row, 2nd lower right of the 1st, 3rd upper right of the 2nd, 4th lower right of the 3rd, 5th upper right of the 4th), fitting a 360 px wide screen; Not interested stays a separate action.
+- **FR-012a**: The BG-Tinder card MUST show the same game details as a game's details sheet (publisher and year, the same info box with every info including the ratings, the full description), without the category picker and collection actions; a long card scrolls vertically.
 - **FR-012**: The info box MUST show Rating (BGG average) and Geek rating (BGG's ranked/Bayesian rating) with one decimal, after Players, each left out when BGG has no value.
 
 **Collection screen**

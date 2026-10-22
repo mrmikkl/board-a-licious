@@ -29,6 +29,7 @@ during the review are removed; the prototype shows the agreed choices only.
 | **Filter and group** (sheet) | Bought, Price, Categories (with counts, Select all / none), Group by (Categories / Booths); Clear filters / **Done** | the collection |
 | **Game details** (sheet) | name; cover, publisher · year, bought pill, Open on BoardGameGeek; **category picker** (honeycomb 3 + 2); "🛑 Not interested"; info box with Price, Players, **Rating**, **Geek rating**, Booth, …; Bought it / Not bought after all; **Copy to collection** · **Move to collection**; Remove from <collection> | picker changes in place; Bought it: Buy sheet |
 | ↳ Copy / Move to collection | sheet "Copy <game>" / "Move <game>": To collection dropdown ("(already in it)" disabled), what goes along, Cancel / **Copy** or **Move** | Copy: back to the details, toast; Move: the collection, toast |
+| **BG-Tinder card** | cover, name, publisher · year, the details' info box (with ratings), full description; scrolls up and down | ✕ / ✓ as before |
 | **BGG list** | ‹ back, list title, **Resync** icon; status line and progress; filter field; rows | Resync: progress in the status line, toast, then the conflicts sheet if any |
 | **Conflicts** (sheet) | "3 conflicts", one-line explanation; **Use BGG for all** / **Use own for all**; per conflict game, "<field> · in <collection>", Own / BGG tiles; Later / **Apply** | the list, toast "2 values taken from BGG" |
 
@@ -52,5 +53,6 @@ line), Game info (ratings), Sheet, Toast, Separator, Screen heading, Action bar.
 - **Resync** is an **icon button in the list's heading** (alternative: a button above the list).
 - **Every group folds** (not only No category yet and Not interested), added after the review.
 - **Copy to collection** and **Move to collection** in the details (added after the review); copying leaves bought behind, moving takes everything along.
+- **BG-Tinder shows the same game details** as the details sheet (info box with ratings, full description), added after the review.
 - The Buy action shows the price paid as its label once bought; the row's info line no longer
   repeats it.
