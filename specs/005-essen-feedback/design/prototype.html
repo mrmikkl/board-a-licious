@@ -2096,7 +2096,7 @@ function gamesHTML() {
   let lined = false
   return groups(games).map(gr => {
     const line = gr.rest && !lined && S.groupBy === 'cat' ? (lined = true, '<hr class="separator" />') : ''
-    return `${line}<section class="group"><h2 class="group-title" data-mark="${gr.tone}"><i class="hex"></i><span>${S.groupBy === 'cat' ? CAT[gr.key].e + ' ' : ''}${gr.label}</span><b class="group-count">${gr.games.length}</b></h2><ul class="rows">${gr.games.map(row).join('')}</ul></section>`
+    return `${line}<section class="group"><h2 class="group-title" data-mark="${gr.tone}"><button type="button" class="fold" data-act="fold" data-key="${gr.key}" aria-expanded="${!S.folded.has(gr.key)}"><i class="hex"></i><span>${S.groupBy === 'cat' ? CAT[gr.key].e + ' ' : ''}${gr.label}</span><b class="group-count">${gr.games.length}</b><span class="chev" aria-hidden="true">›</span></button></h2><ul class="rows"${S.folded.has(gr.key) ? ' hidden' : ''}>${gr.games.map(row).join('')}</ul></section>`
   }).join('')
 }
 
@@ -2284,6 +2284,8 @@ document.addEventListener('click', e => {
   if (a === 'set-cat') { const g = game(t); g.cat = t.dataset.cat; closeSheet(); refresh(); return toast(`${g.name} → ${CAT[g.cat].e} ${CAT[g.cat].l}`) }
   // in the details the picker changes in place; the sheet stays open
   if (a === 'pick') { const g = game(t); g.cat = t.dataset.cat; setSheet(gameBody(g)); refresh(); return }
+  // every group folds; only its rows hide, nothing else is redrawn
+  if (a === 'fold') { const k = t.dataset.key, open = S.folded.has(k); open ? S.folded.delete(k) : S.folded.add(k); t.setAttribute('aria-expanded', open); t.closest('.group').querySelector('.rows').hidden = !open; return }
   if (a === 'toggle-group') { S.groupBy = S.groupBy === 'cat' ? 'booth' : 'cat'; return refresh() }
   if (a === 'buy-filter') {
     if (S.buy) { S.filter = S.saved; S.buy = false } else { S.saved = S.filter; S.filter = { cats: new Set(BUY), bought: 'no', price: 'all' }; S.buy = true }
@@ -2314,7 +2316,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) c
 
 function start() {
   const s = $('#start').value
-  S = { screen: s === 'list' ? 'list' : 'collection', sheet: null, filter: DEFAULT(), groupBy: s === 'booth' ? 'booth' : 'cat', buy: false, saved: null, query: '', conflicts: [] }
+  S = { screen: s === 'list' ? 'list' : 'collection', sheet: null, filter: DEFAULT(), groupBy: s === 'booth' ? 'booth' : 'cat', buy: false, saved: null, query: '', conflicts: [], folded: new Set(['skip']) }
   closeSheet(); render()
   if (s === 'game') openSheet('game', gameBody(GAMES[0]), GAMES[0].name)
 }
