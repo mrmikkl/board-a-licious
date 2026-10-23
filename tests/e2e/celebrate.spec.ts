@@ -15,7 +15,7 @@ async function addByLink(page: Page, collection: string, link: string, game: str
   await page.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(page.getByLabel(/^name$/i)).toHaveValue(game)
   await page.getByRole('button', { name: 'Add to collection' }).click()
-  await expect(page.getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
+  await expect(page.getByRole('button', { name: new RegExp(`^${game},`, 'i') })).toBeVisible()
 }
 
 const openGame = (page: Page, game: string) => page.getByRole('button', { name: new RegExp(`^${game}`, 'i') }).click()
@@ -37,7 +37,7 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   await sheet.getByRole('button', { name: /must have/i }).click()
   await page.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
-  await expect(mustHaveCount).toHaveAccessibleName('Must Have 1')
+  await expect(mustHaveCount).toHaveAccessibleName(/Must Have 1/)
   if (reduced) {
     expect(await overlay.count()).toBe(0)
   } else {
@@ -56,7 +56,7 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   await sheet.getByRole('button', { name: /must have/i }).click()
   await page.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
-  await expect(mustHaveCount).toHaveAccessibleName('Must Have 2')
+  await expect(mustHaveCount).toHaveAccessibleName(/Must Have 2/)
   const rolling = await mustHaveCount.locator('.counter-roll').count()
   const flashing = await mustHaveCount.locator('.counter.flash').count()
   if (reduced) {

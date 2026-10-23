@@ -1,1 +1,215 @@
-/* F005 worker A: game row with category border and Buy / Category actions, quick filters (docs/design.md v2.2.0 "Game row", "Quick filters") */
+/* F005 worker A: game row with category border and Buy / Category actions, quick filters, category sheet (docs/design.md v2.2.0 "Game row", "Quick filters", "Category sheet") */
+
+/* the whole 1px border is the category's gradient: the padding box is the surface, the border box the tone */
+.row {
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone) border-box;
+}
+/* No category yet keeps the default border colour */
+.row[data-mark='new'] {
+  --tone: var(--border);
+}
+.row.skip .row-open {
+  opacity: 0.7;
+}
+.row-open {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  min-height: 68px;
+  padding: 8px 4px 8px 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.row-acts {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-right: 6px;
+}
+/* a ≥ 46 × 52 px target around a 32 px hexagon with its label below */
+.row-act {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 46px;
+  min-height: 52px;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: 600 10px/1.1 var(--font-body);
+}
+.row-act-hex {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  clip-path: var(--hex);
+  background: var(--raised);
+  color: var(--text);
+}
+.row-act.buy[aria-pressed='true'] .row-act-hex {
+  background: var(--grad-got);
+  color: var(--ink);
+}
+.row-act-label {
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.row-act.buy[aria-pressed='true'] .row-act-label {
+  color: var(--got);
+}
+.row-act:hover .row-act-hex {
+  filter: brightness(1.15);
+}
+.row-act:focus-visible,
+.row-open:focus-visible,
+.qtoggle:focus-visible,
+.qchip:focus-visible,
+.cat-option:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/* the quick filters: the Cat | Booth toggle, the Buy chip and the count, then the search field */
+.quick {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0;
+}
+.quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.qtoggle {
+  display: inline-flex;
+  min-height: var(--tap);
+  padding: 0;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-pill);
+  background: var(--raised);
+  color: var(--muted);
+  overflow: hidden;
+  font: 600 14px var(--font-body);
+}
+.qtoggle span {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+}
+.qtoggle .on {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.qchip {
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-pill);
+  background: var(--raised);
+  color: var(--text);
+  font: 600 14px var(--font-body);
+}
+.qchip[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.quick-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+.quick-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.quick-search input[type='search'] {
+  flex: 1;
+  min-width: 0;
+}
+
+/* no game matches the search: plain text on the background, then the way out */
+.search-empty {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+.search-empty p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* the Category sheet: the categories as 52 px rows */
+.cat-list {
+  display: grid;
+  gap: 8px;
+}
+.cat-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: 600 15px var(--font-body);
+  text-align: left;
+}
+.cat-option:hover {
+  border-color: var(--orange);
+}
+.cat-option[aria-pressed='true'] {
+  border-color: var(--orange);
+  box-shadow: var(--glow);
+}
+.cat-option small {
+  color: var(--orange-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+.cat-hex {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  clip-path: var(--hex);
+  background: var(--tone);
+  color: var(--tone-text);
+  font-size: 16px;
+}
+.cat-name {
+  flex: 1;
+}
+.cat-rule {
+  width: 100%;
+  height: 1px;
+  margin: 4px 0;
+  border: 0;
+  background: var(--border);
+}

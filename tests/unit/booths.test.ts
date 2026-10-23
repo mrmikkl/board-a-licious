@@ -19,6 +19,11 @@ describe('halls from booth numbers', () => {
     ['  2-e610 ', ['2']],
     ['R400', []],
     ['', []],
+    ['3', ['3']],
+    ['Hall 3', ['3']],
+    ['hall 12', ['12']],
+    ['7-C111 / 3', ['3', '7']],
+    ['Hall foyer', []],
   ])('%s → %j', (booth, halls) => {
     expect(hallsOf(booth)).toEqual(halls)
   })
@@ -52,8 +57,51 @@ describe('grouping a collection by hall', () => {
     expect(groups.map(g => g.label)).toEqual(['Hall 2', 'Hall 12', 'Galeria'])
   })
 
-  it('leaves out games marked Not interested (the hall view is a route to walk)', () => {
+  it('groups exactly the games it is given, Not interested ones included (the screen filters)', () => {
     const groups = groupByHall([entry(1, '3-R400'), { ...entry(2, '3-A100'), mark: 'skip' }, { ...entry(3, null), mark: 'skip' }], nameOf)
+    expect(groups.map(g => [g.label, g.entries.map(e => e.bggId)])).toEqual([
+      ['Hall 3', [2, 1]],
+      ['No booth yet', [3]],
+    ])
+  })
+})
+
+describe('booths given as a hall only (F005 R6)', () => {
+  const nameOf = (e: Entry) => `Game ${e.bggId}`
+
+  it('"3" and "Hall 3" are a hall without a booth', () => {
+    const groups = groupByHall([entry(1, '3'), entry(2, 'Hall 3')], nameOf)
+    expect(groups.map(g => [g.label, g.entries.map(e => e.bggId)])).toEqual([['Hall 3', [1, 2]]])
+  })
+
+  it('"7-C111 / 3" is in Hall 7 and Hall 3', () => {
+    const groups = groupByHall([entry(1, '7-C111 / 3')], nameOf)
+    expect(groups.map(g => g.label)).toEqual(['Hall 3', 'Hall 7'])
+  })
+
+  it('"3-A100 / 3" is listed once, in Hall 3, with its booth', () => {
+    const groups = groupByHall([entry(1, '3-A100 / 3')], nameOf)
+    expect(groups.map(g => [g.label, g.entries.map(e => e.bggId)])).toEqual([['Hall 3', [1]]])
+  })
+
+  it('inside a hall, games with a booth come first by booth, then the hall-only ones by name', () => {
+    const names = new Map([
+      [1, 'Zoo'],
+      [2, 'Apple'],
+      [3, 'Mid'],
+      [4, 'Brass'],
+    ])
+    const groups = groupByHall([entry(1, '3'), entry(2, '3'), entry(3, '3-R400'), entry(4, '3-A100')], e => names.get(e.bggId) ?? '')
+    expect(groups[0]!.entries.map(e => e.bggId)).toEqual([4, 3, 2, 1])
+  })
+
+  it('"Hall foyer" is no booth: No booth yet', () => {
+    const groups = groupByHall([entry(1, 'Hall foyer')], nameOf)
+    expect(groups.map(g => g.label)).toEqual(['No booth yet'])
+  })
+
+  it('keeps Not interested games it is given (the screen passes the filtered games)', () => {
+    const groups = groupByHall([{ ...entry(1, '3-R400'), mark: 'skip' }], nameOf)
     expect(groups.map(g => [g.label, g.entries.map(e => e.bggId)])).toEqual([['Hall 3', [1]]])
   })
 })

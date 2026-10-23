@@ -5,9 +5,12 @@ import {
   type Filter,
   PRESETS,
   applyFilter,
+  buyOff,
+  buyOn,
   filterLabel,
   fromStored,
   groupCounts,
+  isDefaultView,
   presetOf,
   priceBand,
   toStored,
@@ -87,7 +90,7 @@ describe('filter (FR-009)', () => {
     expect(filterLabel(PRESETS.all)).toBe('All games')
     expect(filterLabel(PRESETS.hunt)).toBe('⭐ Must Have, not bought')
     expect(filterLabel(filter([], 'all'))).toBe('Nothing selected')
-    expect(filterLabel(filter(['new', 'must_have', 'interested', 'unsure', 'later', 'poop', 'skip'], 'yes'))).toBe('All groups, bought')
+    expect(filterLabel(filter(['new', 'must_have', 'interested', 'unsure', 'later', 'poop', 'skip'], 'yes'))).toBe('All categories, bought')
     expect(filterLabel(filter(['must_have', 'interested'], 'all'))).toBe('⭐ 👀')
     expect(filterLabel(filter(['new', 'poop'], 'no'))).toBe('⬡ 💩, not bought')
   })
@@ -125,5 +128,63 @@ describe('prices (FR-007)', () => {
     expect(priceInput(5200)).toBe('52')
     expect(priceInput(1250)).toBe('12.50')
     expect(priceInput(null)).toBe('')
+  })
+})
+
+describe('Buy quick filter (F005 R5)', () => {
+  it('on: the categories still to buy, not bought, any price; the filter before is kept', () => {
+    const before = filter(['new', 'poop'], 'yes', 'cheap')
+    const on = buyOn(before)
+    expect(on.groups).toEqual(new Set<Mark>(['must_have', 'interested', 'unsure']))
+    expect(on.bought).toBe('no')
+    expect(on.price).toBe('all')
+    expect(on.buy).toEqual({ before })
+  })
+
+  it('shows Must Have, Interested and Unsure games not bought', () => {
+    const list = [entry(1, 'must_have'), entry(2, 'interested', true), entry(3, 'unsure'), entry(4, 'later'), entry(5, 'new')]
+    expect(ids(applyFilter(list, buyOn(PRESETS.all)))).toEqual([1, 3])
+  })
+
+  it('off: the filter before comes back', () => {
+    const before = filter(['later'], 'all', 'mid')
+    expect(buyOff(buyOn(before))).toEqual(before)
+    expect(buyOff(PRESETS.all)).toEqual(PRESETS.all)
+  })
+
+  it('is stored with the filter before and read back', () => {
+    const on = buyOn(filter(['must_have'], 'all'))
+    const stored = toStored(on)
+    expect(JSON.parse(JSON.stringify(stored))).toEqual({
+      groups: ['must_have', 'interested', 'unsure'],
+      bought: 'no',
+      price: 'all',
+      buy: { before: { groups: ['must_have'], bought: 'all', price: 'all' } },
+    })
+    expect(fromStored(stored)).toEqual(on)
+    expect(buyOff(fromStored(stored))).toEqual(filter(['must_have'], 'all'))
+  })
+
+  it('a stored filter without it has no Buy filter', () => {
+    expect(fromStored({ groups: ['must_have'], bought: 'no' }).buy).toBeUndefined()
+  })
+})
+
+describe('the default view (F005 R5)', () => {
+  it('is All categories, all bought, all prices, grouped by categories, no Buy filter', () => {
+    expect(isDefaultView(PRESETS.all, 'mark')).toBe(true)
+    expect(isDefaultView(fromStored(undefined), 'mark')).toBe(true)
+  })
+
+  it('is not the default when a category is left out, For later included', () => {
+    expect(isDefaultView(filter(['must_have', 'interested', 'unsure', 'poop', 'new', 'skip'], 'all'), 'mark')).toBe(false)
+    expect(isDefaultView(filter(['must_have', 'interested', 'unsure', 'later', 'new', 'skip'], 'all'), 'mark')).toBe(false)
+  })
+
+  it('is not the default for a bought, price or Buy filter, or grouping by booths', () => {
+    expect(isDefaultView(filter([...PRESETS.all.groups], 'no'), 'mark')).toBe(false)
+    expect(isDefaultView(filter([...PRESETS.all.groups], 'all', 'cheap'), 'mark')).toBe(false)
+    expect(isDefaultView(buyOn(PRESETS.all), 'mark')).toBe(false)
+    expect(isDefaultView(PRESETS.all, 'booth')).toBe(false)
   })
 })
