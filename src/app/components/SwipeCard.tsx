@@ -1,10 +1,11 @@
-import { type CSSProperties, type PointerEvent, useRef } from 'react'
+import { type CSSProperties, type PointerEvent, useRef, useState } from 'react'
 
 import type { Game, StoredListEntry } from '../../client/types.ts'
 import { publisherOf } from '../../domain/game-info.ts'
 import type { SwipeDirection } from '../../domain/swipe.ts'
 import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
+import { ImageViewer } from './ImageViewer.tsx'
 
 /** How far the card must travel before letting go decides. */
 const THRESHOLD = 90
@@ -36,6 +37,7 @@ export function SwipeCard({
   const add = useRef<HTMLSpanElement>(null)
   const nope = useRef<HTMLSpanElement>(null)
   const drag = useRef<{ x0: number; dx: number; id: number } | null>(null)
+  const [viewer, setViewer] = useState(false)
 
   const show = (dx: number) => {
     const el = card.current
@@ -52,6 +54,10 @@ export function SwipeCard({
     ? {
         onPointerDown(event: PointerEvent<HTMLDivElement>) {
           if (event.button !== 0) return
+          // F005: a tap on the cover opens the images; the swipe starts anywhere else on the card. The
+          // viewer is a portal, so its gestures bubble here through React: they never move the card.
+          if (!event.currentTarget.contains(event.target as Node)) return
+          if ((event.target as Element).closest('.cover-zoom')) return
           drag.current = { x0: event.clientX, dx: 0, id: event.pointerId }
           event.currentTarget.setPointerCapture(event.pointerId)
           event.currentTarget.classList.add('dragging')
@@ -101,13 +107,20 @@ export function SwipeCard({
       <span ref={nope} className="swipe-stamp nope" aria-hidden="true">
         NOPE
       </span>
-      <HexCover game={cover} name={game.name} size={104} />
+      {place === 'top' ? (
+        <button type="button" className="cover-zoom" aria-label={`Show the images of ${game.name} big`} onClick={() => setViewer(true)}>
+          <HexCover game={cover} name={game.name} size={104} />
+        </button>
+      ) : (
+        <HexCover game={cover} name={game.name} size={104} />
+      )}
       <h2 className="swipe-name">{details?.name ?? game.name}</h2>
       <p className="swipe-year">{[publisher, details?.year].filter(Boolean).join(' · ') || '\u00a0'}</p>
       <div className="facts-box">
-        <InfoList facts={game.facts} details={info} />
+        <InfoList facts={game.facts} details={info} publisher={publisher} />
       </div>
       {details?.description && <p className="swipe-desc">{details.description}</p>}
+      {viewer && <ImageViewer game={{ bggId: game.bggId, name: game.name }} cover={cover.thumbnailUrl ?? null} pending={false} onClose={() => setViewer(false)} />}
     </div>
   )
 }
