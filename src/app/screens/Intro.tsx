@@ -9,7 +9,7 @@ const THRESHOLD = 60
 const CARDS = [
   {
     title: 'Collections',
-    text: 'Keep a collection for SPIEL Essen and more for anything else. Mark every game: Must Have, Interested, Unsure or Poop.',
+    text: 'Keep a collection for SPIEL Essen and more for anything else. Give every game a category: Must Have, Interested, Unsure, For later or Poop.',
     art: ['⭐', '👀', '🤔', '💩'],
   },
   {

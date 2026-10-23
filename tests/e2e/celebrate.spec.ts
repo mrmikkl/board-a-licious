@@ -35,6 +35,7 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   await openGame(page, 'Cascadia')
   const button = await sheet.getByRole('button', { name: /must have/i }).boundingBox()
   await sheet.getByRole('button', { name: /must have/i }).click()
+  await page.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
   await expect(mustHaveCount).toHaveAccessibleName('Must Have 1')
   if (reduced) {
@@ -53,6 +54,8 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   // a second Must Have: the count rolls from 1 to 2, the final value is in the name right away
   await openGame(page, 'Ark Nova')
   await sheet.getByRole('button', { name: /must have/i }).click()
+  await page.keyboard.press('Escape')
+  await expect(sheet).toBeHidden()
   await expect(mustHaveCount).toHaveAccessibleName('Must Have 2')
   const rolling = await mustHaveCount.locator('.counter-roll').count()
   const flashing = await mustHaveCount.locator('.counter.flash').count()

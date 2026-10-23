@@ -14,6 +14,7 @@ import {
 } from '../domain/collection.ts'
 import { setManualFacts } from '../domain/facts.ts'
 import { type Filter, toStored } from '../domain/filter.ts'
+import { copyEntry, moveEntry } from '../domain/membership.ts'
 import type { Mark } from '../domain/marks.ts'
 import { type Point, celebrate } from './celebrate.ts'
 import type { AppServices } from './context.tsx'
@@ -81,6 +82,20 @@ export async function buyGame(services: AppServices, entry: Entry, paid: Paid | 
 
 export async function unbuyGame(services: AppServices, entry: Entry) {
   await services.store.saveEntry(unmarkBought(entry, now()))
+  void services.sync.schedule()
+}
+
+/** F005 R11: the game also goes into `targetId`, with its category and facts, but not as bought. */
+export async function copyGameTo(services: AppServices, entry: Entry, targetId: string) {
+  const target = (await services.store.entries(targetId)).find(e => e.bggId === entry.bggId)
+  await services.store.saveEntry(copyEntry(entry, targetId, now(), target))
+  void services.sync.schedule()
+}
+
+/** F005 R11: the game moves to `targetId` with everything it has; the source is removed. */
+export async function moveGameTo(services: AppServices, entry: Entry, targetId: string) {
+  const target = (await services.store.entries(targetId)).find(e => e.bggId === entry.bggId)
+  await services.store.saveEntries(moveEntry(entry, targetId, now(), target))
   void services.sync.schedule()
 }
 

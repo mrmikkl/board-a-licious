@@ -17,7 +17,8 @@ async function addMustHave(page: Page, collection: string, link: string, game: s
   await page.getByRole('button', { name: 'Add to collection' }).click()
   await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
-  // choosing a mark closes the sheet; open the game again from its new group
+  // a tap changes the category in place; Escape closes the details, then open the game from its new group
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
   await page.getByRole('region', { name: /must have/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
 }
