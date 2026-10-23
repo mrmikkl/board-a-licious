@@ -1,4 +1,4 @@
-import type { Entry } from './collection.ts'
+import { type Entry, groupOrder } from './collection.ts'
 
 /** One place a booth text names: a booth ("7-C111") or only its hall, when the text gives just a number ("3", "Hall 3"). */
 type Place = { hall: string; booth: string | null }
@@ -49,7 +49,10 @@ export function groupByHall(entries: Entry[], nameOf: (entry: Entry) => string):
       byHall.set(hall, [...(byHall.get(hall) ?? []), { entry, booth }])
     }
   }
+  // F005: inside a hall by category (Must Have first), then by booth (hall-only last), then by name
   const byBooth = (a: { entry: Entry; booth: string | null }, b: { entry: Entry; booth: string | null }) => {
+    const category = groupOrder(a.entry.mark) - groupOrder(b.entry.mark)
+    if (category !== 0) return category
     if (a.booth && b.booth) return a.booth.localeCompare(b.booth, 'en', { numeric: true }) || nameOf(a.entry).localeCompare(nameOf(b.entry))
     if (a.booth || b.booth) return a.booth ? -1 : 1
     return nameOf(a.entry).localeCompare(nameOf(b.entry))

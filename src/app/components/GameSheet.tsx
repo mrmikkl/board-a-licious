@@ -189,12 +189,12 @@ export function GameSheet({
             ✅ Bought it
           </button>
         )}
-        <div className="sheet-actions-row">
+        <div className="row-actions">
           <button type="button" className="btn" onClick={() => setStep("copy")}>
-            Copy to collection
+            Copy
           </button>
           <button type="button" className="btn" onClick={() => setStep("move")}>
-            Move to collection
+            Move
           </button>
         </div>
         <button

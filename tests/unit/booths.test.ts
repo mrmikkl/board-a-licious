@@ -60,7 +60,7 @@ describe('grouping a collection by hall', () => {
   it('groups exactly the games it is given, Not interested ones included (the screen filters)', () => {
     const groups = groupByHall([entry(1, '3-R400'), { ...entry(2, '3-A100'), mark: 'skip' }, { ...entry(3, null), mark: 'skip' }], nameOf)
     expect(groups.map(g => [g.label, g.entries.map(e => e.bggId)])).toEqual([
-      ['Hall 3', [2, 1]],
+      ['Hall 3', [1, 2]], // F005: by category first, Not interested last
       ['No booth yet', [3]],
     ])
   })
@@ -103,5 +103,19 @@ describe('booths given as a hall only (F005 R6)', () => {
   it('keeps Not interested games it is given (the screen passes the filtered games)', () => {
     const groups = groupByHall([{ ...entry(1, '3-R400'), mark: 'skip' }], nameOf)
     expect(groups.map(g => [g.label, g.entries.map(e => e.bggId)])).toEqual([['Hall 3', [1]]])
+  })
+})
+
+describe('F005: inside a hall by category', () => {
+  it('lists Must Have first and Not interested last, then by booth', () => {
+    const names: Record<number, string> = { 1: 'Azul', 2: 'Brass', 3: 'Cascadia', 4: 'Dune' }
+    const games = [
+      { ...entry(1, '3-A100'), mark: 'skip' as const },
+      { ...entry(2, '3-Z900'), mark: 'must_have' as const },
+      { ...entry(3, '3-B200'), mark: 'interested' as const },
+      { ...entry(4, '3-A050'), mark: 'must_have' as const },
+    ]
+    const [hall] = groupByHall(games, e => names[e.bggId] ?? '')
+    expect(hall?.entries.map(e => names[e.bggId])).toEqual(['Dune', 'Brass', 'Cascadia', 'Azul'])
   })
 })

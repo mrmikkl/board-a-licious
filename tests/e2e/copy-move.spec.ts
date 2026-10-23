@@ -17,13 +17,13 @@ test('copy to another collection, then move it on: category and price come along
 
   await page.getByRole('button', { name: /^cascadia/i }).first().click()
   const details = page.getByRole('dialog')
-  await expect(details.getByRole('button', { name: 'Copy to collection' })).toBeVisible()
-  await expect(details.getByRole('button', { name: 'Move to collection' })).toBeVisible()
+  await expect(details.getByRole('button', { name: 'Copy', exact: true })).toBeVisible()
+  await expect(details.getByRole('button', { name: 'Move', exact: true })).toBeVisible()
   await expect(details.getByRole('button', { name: `Remove from ${home}` })).toBeVisible()
   await expectAccessible(page)
 
   // copy: the details stay open, the game is in both collections, the purchase stays here
-  await details.getByRole('button', { name: 'Copy to collection' }).click()
+  await details.getByRole('button', { name: 'Copy', exact: true }).click()
   const copy = page.getByRole('dialog', { name: 'Copy Cascadia' })
   const choice = copy.getByLabel('To collection')
   await expect(choice.getByRole('option', { name: `${home} (already in it)` })).toBeDisabled()
@@ -34,7 +34,7 @@ test('copy to another collection, then move it on: category and price come along
   await expect(details.getByRole('button', { name: /not bought/i })).toBeVisible()
 
   // move: the details close; the game is gone here and in the target with its category and purchase
-  await details.getByRole('button', { name: 'Move to collection' }).click()
+  await details.getByRole('button', { name: 'Move', exact: true }).click()
   const move = page.getByRole('dialog', { name: 'Move Cascadia' })
   await expect(move.getByLabel('To collection').getByRole('option', { name: `${essen} (already in it)` })).toBeDisabled()
   await move.getByLabel('To collection').selectOption({ label: third })

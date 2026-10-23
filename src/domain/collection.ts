@@ -127,6 +127,9 @@ export type CollectionGroup = { mark: MarkInfo; part: 'marked' | 'rest'; entries
 /** The collection view's order (R5): marked games first, then Not yet marked and Not interested. */
 const GROUP_ORDER: Mark[] = ['must_have', 'interested', 'unsure', 'later', 'poop', 'new', 'skip']
 
+/** A category's place in the collection order (Must Have first, Not interested last), for sorting. */
+export const groupOrder = (mark: Mark) => GROUP_ORDER.indexOf(mark)
+
 /** Live entries grouped by mark in collection order (FR-005), empty groups left out, games sorted by name. */
 export function groupByMark(entries: Entry[], nameOf: (entry: Entry) => string): CollectionGroup[] {
   const live = entries.filter(e => !e.deleted)

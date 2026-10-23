@@ -182,7 +182,7 @@ test('F005: rows with actions, quick filters and the new sheets: axe clean, sens
   await page.getByRole('button', { name: /^cascadia,/i }).click()
   await expect(page.getByRole('dialog', { name: 'Cascadia' }).getByRole('group', { name: 'Category' })).toBeVisible()
   await check(page, testInfo)
-  await page.getByRole('button', { name: 'Move to collection' }).click()
+  await page.getByRole('button', { name: 'Move', exact: true }).click()
   await expect(page.getByRole('dialog', { name: 'Move Cascadia' })).toBeVisible()
   await check(page, testInfo)
   await page.keyboard.press('Escape')
