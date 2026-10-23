@@ -35,6 +35,10 @@ export function GameRow({
   const paid = entry.paidCents != null ? formatMoney(entry.paidCents, entry.paidCurrency) : 'Bought'
   return (
     <div className={`row${entry.mark === 'skip' ? ' skip' : ''}${justAdded ? ' is-just-added' : ''}`} data-mark={entry.mark}>
+      {/* the category as a tag in the top-left corner; screen readers get it from the open button's name */}
+      <span className="row-cat" aria-hidden="true">
+        {category}
+      </span>
       <button type="button" className="row-open" onClick={onOpen} aria-label={`${name}, ${category}${entry.bought ? ', bought' : ''}`}>
         <HexCover game={game} name={name} pending={entry.detailsPending && !game?.thumbnailUrl} bought={entry.bought} />
         <span className="row-meta">
