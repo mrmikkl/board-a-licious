@@ -207,10 +207,10 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   // all marked games gone from the rest: one part only, no second line
   await skipFold.click()
   await expect(skipFold).toHaveAttribute('aria-expanded', 'true')
-  // "Interested again" from the details puts the game into Interested: no rest part left, one line
+  // "Interested again" from the details puts the game into Interested: no rest part left, so no line
   await markAs(page, /not interested/i, 'Wingspan', /interested again/i)
   await slow(headings).toHaveText([/must have1/i, /interested1/i, /poop1/i])
-  await expect(separators).toHaveCount(1)
+  await expect(separators).toHaveCount(0)
 
   // F005: every group is a fold button; Interested opens expanded, folding keeps the count visible
   const fold = page.getByRole('region', { name: /interested/i }).getByRole('button', { name: /^👀 interested/i })

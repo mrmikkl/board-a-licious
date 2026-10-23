@@ -65,7 +65,7 @@ async function expectBoothInCollection(page: Page, { collection, bgg }: { collec
   const listUrl = page.url()
   await goTo(page, 'Collections')
   await page.getByRole('link', { name: new RegExp(collection) }).click()
-  await expect(page.getByRole('button', { name: new RegExp(bgg.gameName) })).toContainText(`Booth ${booth}`)
+  await expect(page.getByRole('button', { name: new RegExp(`^${bgg.gameName},`) })).toContainText(`Booth ${booth}`)
   await page.goto(listUrl)
   await expect(page.getByRole('heading', { level: 1, name: 'SPIEL Essen 2026' })).toBeVisible()
 }

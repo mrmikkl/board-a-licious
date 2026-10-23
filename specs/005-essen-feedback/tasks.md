@@ -52,15 +52,15 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ### Tests for User Story 1
 
-- [ ] T007 [P] [US1] E2E tests in `tests/e2e/row-actions.spec.ts` (contracts/ui.md "Collection screen", "Sheets"): row has buttons "Buy <game>" and "Category of <game>" and no mark pill; Buy → dialog "Bought <game>" → 25 → "Got it" → toast "<game>: got it for €25!", Buy button `aria-pressed=true` with text "€25", bought line updates; Buy on a bought game → toast "<game>: not bought any more", no dialog; Category → dialog "Category of <game>" with seven buttons, current pressed → "⭐ Must Have" → toast, row now in the Must Have group; the row's open button name includes category and bought; axe clean with both sheets open; offline project: buy and category change work and survive a reload
+- [X] T007 [P] [US1] E2E tests in `tests/e2e/row-actions.spec.ts` (contracts/ui.md "Collection screen", "Sheets"): row has buttons "Buy <game>" and "Category of <game>" and no mark pill; Buy → dialog "Bought <game>" → 25 → "Got it" → toast "<game>: got it for €25!", Buy button `aria-pressed=true` with text "€25", bought line updates; Buy on a bought game → toast "<game>: not bought any more", no dialog; Category → dialog "Category of <game>" with seven buttons, current pressed → "⭐ Must Have" → toast, row now in the Must Have group; the row's open button name includes category and bought; axe clean with both sheets open; offline project: buy and category change work and survive a reload
 
 ### Implementation for User Story 1
 
 - [X] T008 [US1] Move `PaidForm` out of `src/app/components/GameSheet.tsx` into `src/app/components/BuySheet.tsx` (a `Sheet` titled "Bought <game>?" with the lead "What did you pay? Leave it empty to just tick it off.", price + currency, Cancel / **Got it**), saving via the existing `buyGame` action (celebration, sound, toast); `GameSheet` uses it for "✅ Bought it"
-- [ ] T009 [P] [US1] Create `src/app/components/CategorySheet.tsx`: `Sheet` "Category of <game>", a list of 52px buttons (gradient hexagon, emoji, label) Must Have … Poop, a thin line, No category yet and Not interested; current one `aria-pressed` with "current"; a tap calls `setMark`, closes, toasts "<game> → <emoji> <label>" (design rules "Category sheet")
-- [ ] T010 [US1] Rebuild `src/app/components/GameRow.tsx` (research R3): `div.row[data-mark]` with a `button.row-open` (cover, name, publisher, info line; accessible name "<game>, <category>[, bought]") and `div.row-acts` with `button.row-act.buy` (`aria-pressed`, `IconBag`/`IconBagCheck`, label "Buy" / price paid / "Bought") and `button.row-act.cat` (`IconCategory`, "Category"); remove the mark pill and the "✅ €paid" pill; props `onBuy`, `onCategory`
-- [ ] T011 [P] [US1] Styles in `src/app/theme/components.css`: `.row` with `border: 1px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone) border-box` (No category yet: `--border`; Not interested keeps its dimmed, struck-through look); `.row-open`, `.row-acts`, `.row-act` (≥ 46×52px, 32px hexagon, 10px label, bought state with `--grad-got`), as in the prototype's `.crow*`/`.ract*`
-- [ ] T012 [US1] Wire the row actions in `src/app/screens/Collection.tsx`: local state `{ sheet: 'buy' | 'category', entry }`; Buy on a not-bought game opens `BuySheet`, on a bought one calls `unbuyGame` and toasts "<game>: not bought any more"; Category opens `CategorySheet`; T007 passes; adjust existing e2e tests that clicked rows or read mark pills (`tests/e2e/us4-fair.spec.ts`, `collection-actions.spec.ts`, `show-off.spec.ts`)
+- [X] T009 [P] [US1] Create `src/app/components/CategorySheet.tsx`: `Sheet` "Category of <game>", a list of 52px buttons (gradient hexagon, emoji, label) Must Have … Poop, a thin line, No category yet and Not interested; current one `aria-pressed` with "current"; a tap calls `setMark`, closes, toasts "<game> → <emoji> <label>" (design rules "Category sheet")
+- [X] T010 [US1] Rebuild `src/app/components/GameRow.tsx` (research R3): `div.row[data-mark]` with a `button.row-open` (cover, name, publisher, info line; accessible name "<game>, <category>[, bought]") and `div.row-acts` with `button.row-act.buy` (`aria-pressed`, `IconBag`/`IconBagCheck`, label "Buy" / price paid / "Bought") and `button.row-act.cat` (`IconCategory`, "Category"); remove the mark pill and the "✅ €paid" pill; props `onBuy`, `onCategory`
+- [X] T011 [P] [US1] Styles in `src/app/theme/components.css`: `.row` with `border: 1px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone) border-box` (No category yet: `--border`; Not interested keeps its dimmed, struck-through look); `.row-open`, `.row-acts`, `.row-act` (≥ 46×52px, 32px hexagon, 10px label, bought state with `--grad-got`), as in the prototype's `.crow*`/`.ract*`
+- [X] T012 [US1] Wire the row actions in `src/app/screens/Collection.tsx`: local state `{ sheet: 'buy' | 'category', entry }`; Buy on a not-bought game opens `BuySheet`, on a bought one calls `unbuyGame` and toasts "<game>: not bought any more"; Category opens `CategorySheet`; T007 passes; adjust existing e2e tests that clicked rows or read mark pills (`tests/e2e/us4-fair.spec.ts`, `collection-actions.spec.ts`, `show-off.spec.ts`)
 
 **Checkpoint**: US1 works and can be deployed alone.
 
@@ -74,20 +74,20 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ### Tests for User Story 2
 
-- [ ] T013 [P] [US2] Unit tests in `tests/unit/filter.test.ts` (research R5, data-model "Device meta"): `buyOn(filter)` → groups `{must_have, interested, unsure}`, bought `no`, price `all`, `buy.before` = the old filter; `buyOff` restores it; `toStored`/`fromStored` keep `buy`; `isDefaultView(filter, groupBy)` true only for all categories (incl. `later`), bought `all`, price `all`, no `buy`, `mark`; `PRESETS.all` is the Clear filters target
-- [ ] T014 [P] [US2] Unit tests in `tests/unit/booths.test.ts` (research R6): `"3"` and `"Hall 3"` → Hall 3 as hall-only; `"7-C111 / 3"` → Hall 7 and Hall 3; `"3-A100 / 3"` → once in Hall 3; within a hall full booths first (by booth, numeric), then hall-only by name; `"Hall foyer"` → "No booth yet"; `groupByHall` keeps Not interested entries it is given
+- [X] T013 [P] [US2] Unit tests in `tests/unit/filter.test.ts` (research R5, data-model "Device meta"): `buyOn(filter)` → groups `{must_have, interested, unsure}`, bought `no`, price `all`, `buy.before` = the old filter; `buyOff` restores it; `toStored`/`fromStored` keep `buy`; `isDefaultView(filter, groupBy)` true only for all categories (incl. `later`), bought `all`, price `all`, no `buy`, `mark`; `PRESETS.all` is the Clear filters target
+- [X] T014 [P] [US2] Unit tests in `tests/unit/booths.test.ts` (research R6): `"3"` and `"Hall 3"` → Hall 3 as hall-only; `"7-C111 / 3"` → Hall 7 and Hall 3; `"3-A100 / 3"` → once in Hall 3; within a hall full booths first (by booth, numeric), then hall-only by name; `"Hall foyer"` → "No booth yet"; `groupByHall` keeps Not interested entries it is given
 - [X] T015 [P] [US2] Unit tests in `tests/unit/search.test.ts` for `matchesName(name, query)`: case- and accent-insensitive ("Café" matches "cafe", "CAS" matches "Cascadia"), empty query matches all, whitespace trimmed
-- [ ] T016 [P] [US2] E2E tests in `tests/e2e/quick-filters.spec.ts` (contracts/ui.md): quick filters group between the two separators, no `.filter-summary`; toggle switches grouping and its name; Buy chip `aria-pressed`, count text, Filter action "Filter (active)"; changing a segment in the sheet turns Buy off; Clear filters disabled at default, resets everything; Not interested shown under booths only when selected; search narrows, "No game called “zzz” here." + Clear the search; every group heading is a fold button, For later, Poop, Not interested start folded (expanded = false), others open; folding not remembered after reload; replace the summary assertions in `tests/e2e/us4-fair.spec.ts` and `tests/e2e/collection-actions.spec.ts`, update `tests/e2e/group-by.spec.ts` to the new labels
+- [X] T016 [P] [US2] E2E tests in `tests/e2e/quick-filters.spec.ts` (contracts/ui.md): quick filters group between the two separators, no `.filter-summary`; toggle switches grouping and its name; Buy chip `aria-pressed`, count text, Filter action "Filter (active)"; changing a segment in the sheet turns Buy off; Clear filters disabled at default, resets everything; Not interested shown under booths only when selected; search narrows, "No game called “zzz” here." + Clear the search; every group heading is a fold button, For later, Poop, Not interested start folded (expanded = false), others open; folding not remembered after reload; replace the summary assertions in `tests/e2e/us4-fair.spec.ts` and `tests/e2e/collection-actions.spec.ts`, update `tests/e2e/group-by.spec.ts` to the new labels
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Implement in `src/domain/filter.ts`: `StoredFilter.buy?: { before: StoredFilter }`, `buyOn`, `buyOff`, `isDefaultView`; `filterLabel` texts say "categories"; T013 passes
-- [ ] T018 [P] [US2] Implement hall-only booths and the filter-driven grouping in `src/domain/booths.ts`; T014 passes
+- [X] T017 [US2] Implement in `src/domain/filter.ts`: `StoredFilter.buy?: { before: StoredFilter }`, `buyOn`, `buyOff`, `isDefaultView`; `filterLabel` texts say "categories"; T013 passes
+- [X] T018 [P] [US2] Implement hall-only booths and the filter-driven grouping in `src/domain/booths.ts`; T014 passes
 - [X] T019 [P] [US2] Create `src/domain/search.ts` with `matchesName`; use it in `src/app/screens/List.tsx` too (replaces the lower-case `includes`); T015 passes
-- [ ] T020 [US2] Make `src/app/components/GroupHeading.tsx` always a fold button with chevron and `aria-expanded`; in `src/app/screens/Collection.tsx` keep the folded set per visit, initially `later`, `poop`, `skip` (halls and "No booth yet" open)
-- [ ] T021 [US2] Create `src/app/components/QuickFilters.tsx`: group "Quick filters" with the Cat | Booth toggle (one pill, current filled hot, accessible name per contracts/ui.md), the 🛒 Buy chip (`aria-pressed`), the muted count, and below them the search field ("Search this collection"); styles `.quick`, `.qtoggle`, `.search` in `src/app/theme/fair.css`
-- [ ] T022 [US2] Update `src/app/components/FilterPanel.tsx`: "Categories" with counts and Select all / none, Price labels "≤ €30 / €30–60 / > €60", Group by "Categories" / "Booths", bottom row **Clear filters** (disabled at default) / **Done**; any change drops `buy`
-- [ ] T023 [US2] Update `src/app/screens/Collection.tsx`: remove the `filter-summary` button; layout bought line → separator → `QuickFilters` → separator → groups; search state (not stored) filters with `matchesName`; booth grouping gets the filtered entries; Filter action `is-active` + name "Filter (active)" from `isDefaultView`; empty search result line; remove `.filter-summary` from `src/app/theme/fair.css`; T016 passes
+- [X] T020 [US2] Make `src/app/components/GroupHeading.tsx` always a fold button with chevron and `aria-expanded`; in `src/app/screens/Collection.tsx` keep the folded set per visit, initially `later`, `poop`, `skip` (halls and "No booth yet" open)
+- [X] T021 [US2] Create `src/app/components/QuickFilters.tsx`: group "Quick filters" with the Cat | Booth toggle (one pill, current filled hot, accessible name per contracts/ui.md), the 🛒 Buy chip (`aria-pressed`), the muted count, and below them the search field ("Search this collection"); styles `.quick`, `.qtoggle`, `.search` in `src/app/theme/fair.css`
+- [X] T022 [US2] Update `src/app/components/FilterPanel.tsx`: "Categories" with counts and Select all / none, Price labels "≤ €30 / €30–60 / > €60", Group by "Categories" / "Booths", bottom row **Clear filters** (disabled at default) / **Done**; any change drops `buy`
+- [X] T023 [US2] Update `src/app/screens/Collection.tsx`: remove the `filter-summary` button; layout bought line → separator → `QuickFilters` → separator → groups; search state (not stored) filters with `matchesName`; booth grouping gets the filtered entries; Filter action `is-active` + name "Filter (active)" from `isDefaultView`; empty search result line; remove `.filter-summary` from `src/app/theme/fair.css`; T016 passes
 
 **Checkpoint**: US1 + US2 = the fair release; deploy.
 
@@ -101,13 +101,13 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ### Tests for User Story 3
 
-- [ ] T024 [P] [US3] E2E tests in `tests/e2e/categories.spec.ts`: details show group "Category" with five buttons above the info box (DOM order), top row Must Have/Unsure/Poop and bottom row Interested/For later by bounding boxes, each ≥ 44px; For later pressed after a tap and the row's group heading is "⏳ For later"; "🛑 Not interested" link; no visible text "mark"/"Not yet marked" on collection, filter sheet, Show-off sheet and share screen; axe clean
+- [X] T024 [P] [US3] E2E tests in `tests/e2e/categories.spec.ts`: details show group "Category" with five buttons above the info box (DOM order), top row Must Have/Unsure/Poop and bottom row Interested/For later by bounding boxes, each ≥ 44px; For later pressed after a tap and the row's group heading is "⏳ For later"; "🛑 Not interested" link; no visible text "mark"/"Not yet marked" on collection, filter sheet, Show-off sheet and share screen; axe clean
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Create `src/app/components/CategoryPicker.tsx` (research R9): five pointy-top hexagons in a 6-half-column × 2-row grid (row 2 pulled up a quarter hexagon), ≤ 88px, 4px gaps, `.picker-btn` look, group name "Category"; styles in `src/app/theme/components.css`
-- [ ] T026 [US3] In `src/app/components/GameSheet.tsx` put `CategoryPicker` and the Not interested link directly under the head, above the facts box (replaces the `HexPicker` of marks)
-- [ ] T027 [P] [US3] Replace user-visible "mark"/"group" wording with "Category" in `src/app/screens/Share.tsx`, `src/app/components/ShowOffSheet.tsx`, `src/app/screens/ShowOff.tsx`, `src/app/components/FilterPanel.tsx`, `src/app/screens/Swipe.tsx`, `src/app/screens/Intro.tsx` and toasts in `src/app/actions.ts`; T024 passes
+- [X] T025 [US3] Create `src/app/components/CategoryPicker.tsx` (research R9): five pointy-top hexagons in a 6-half-column × 2-row grid (row 2 pulled up a quarter hexagon), ≤ 88px, 4px gaps, `.picker-btn` look, group name "Category"; styles in `src/app/theme/components.css`
+- [X] T026 [US3] In `src/app/components/GameSheet.tsx` put `CategoryPicker` and the Not interested link directly under the head, above the facts box (replaces the `HexPicker` of marks)
+- [X] T027 [P] [US3] Replace user-visible "mark"/"group" wording with "Category" in `src/app/screens/Share.tsx`, `src/app/components/ShowOffSheet.tsx`, `src/app/screens/ShowOff.tsx`, `src/app/components/FilterPanel.tsx`, `src/app/screens/Swipe.tsx`, `src/app/screens/Intro.tsx` and toasts in `src/app/actions.ts`; T024 passes
 
 **Checkpoint**: US3 done; categories read the same everywhere.
 
@@ -121,17 +121,17 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ### Tests for User Story 4
 
-- [ ] T028 [P] [US4] Worker test in `tests/worker/bgg-games.test.ts`: `GET /api/bgg/games?ids=295947` reads `api/dynamicinfo?objectid=295947&objecttype=thing` (fixture) and returns `rating: 7.88`, `geekRating: 7.73`; `baverage "0"` or a missing `stats` → `null`; the second call within the TTL makes no upstream request; stored in and read from `game` (repository round trip)
-- [ ] T029 [P] [US4] Unit tests in `tests/unit/game-info.test.ts`: `gameInfos` order price, players, rating, geek rating, booth, …; ratings with one decimal ("7.9"); `null` left out; `rowInfos` never returns rating keys
-- [ ] T030 [P] [US4] E2E tests in `tests/e2e/game-info.spec.ts`: details info box has "Rating" 7.9 and "Geek rating" 7.7; a game without ratings shows neither; BG-Tinder card (group "Game: <game>") contains the publisher · year line, the same info box with ratings, and the full description (no 3-line clamp); rows show no ratings
+- [X] T028 [P] [US4] Worker test in `tests/worker/bgg-games.test.ts`: `GET /api/bgg/games?ids=295947` reads `api/dynamicinfo?objectid=295947&objecttype=thing` (fixture) and returns `rating: 7.88`, `geekRating: 7.73`; `baverage "0"` or a missing `stats` → `null`; the second call within the TTL makes no upstream request; stored in and read from `game` (repository round trip)
+- [X] T029 [P] [US4] Unit tests in `tests/unit/game-info.test.ts`: `gameInfos` order price, players, rating, geek rating, booth, …; ratings with one decimal ("7.9"); `null` left out; `rowInfos` never returns rating keys
+- [X] T030 [P] [US4] E2E tests in `tests/e2e/game-info.spec.ts`: details info box has "Rating" 7.9 and "Geek rating" 7.7; a game without ratings shows neither; BG-Tinder card (group "Game: <game>") contains the publisher · year line, the same info box with ratings, and the full description (no 3-line clamp); rows show no ratings
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Add `migrations/0005_ratings.sql`: `ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)`, `... geek_rating numeric(4,2)`; `UPDATE game SET fetched_at = '2000-01-01T00:00:00Z' WHERE rating IS NULL AND geek_rating IS NULL` (data-model "Game")
-- [ ] T032 [US4] Read ratings in `worker/bgg/geekdo-games.ts` (research R1: `dynamicinfo`, `stats.average` / `stats.baverage`, values ≤ 0 → null, cached with `TTL.game`), add `rating`, `geekRating` to `Game` in `worker/bgg/source.ts` and to `GameDetails` in `src/domain/game-info.ts`, store and read them in `worker/db/repository.ts`; T028 passes
-- [ ] T033 [US4] Add the rating infos to `gameInfos` and skip them in `rowInfos` (`src/domain/game-info.ts`); render rating values as small hexagons (cool / dusk) in `src/app/components/GameInfo.tsx` with `.rating` styles in `src/app/theme/components.css`; T029 passes
-- [ ] T034 [US4] Update `src/app/components/SwipeCard.tsx` and `src/app/theme/swipe.css`: "publisher · year" line, `InfoList` inside a `facts-box`, then the full description (remove the clamp); T030 passes
-- [ ] T035 [P] [US4] Add `rating` and `geekRating` to `GET /api/bgg/games` in `specs/001-bgg-game-collection/contracts/api.md`
+- [X] T031 [US4] Add `migrations/0005_ratings.sql`: `ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)`, `... geek_rating numeric(4,2)`; `UPDATE game SET fetched_at = '2000-01-01T00:00:00Z' WHERE rating IS NULL AND geek_rating IS NULL` (data-model "Game")
+- [X] T032 [US4] Read ratings in `worker/bgg/geekdo-games.ts` (research R1: `dynamicinfo`, `stats.average` / `stats.baverage`, values ≤ 0 → null, cached with `TTL.game`), add `rating`, `geekRating` to `Game` in `worker/bgg/source.ts` and to `GameDetails` in `src/domain/game-info.ts`, store and read them in `worker/db/repository.ts`; T028 passes
+- [X] T033 [US4] Add the rating infos to `gameInfos` and skip them in `rowInfos` (`src/domain/game-info.ts`); render rating values as small hexagons (cool / dusk) in `src/app/components/GameInfo.tsx` with `.rating` styles in `src/app/theme/components.css`; T029 passes
+- [X] T034 [US4] Update `src/app/components/SwipeCard.tsx` and `src/app/theme/swipe.css`: "publisher · year" line, `InfoList` inside a `facts-box`, then the full description (remove the clamp); T030 passes
+- [X] T035 [P] [US4] Add `rating` and `geekRating` to `GET /api/bgg/games` in `specs/001-bgg-game-collection/contracts/api.md`
 
 **Checkpoint**: ratings visible after the migration; BG-Tinder matches the details.
 
@@ -145,14 +145,14 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ### Tests for User Story 6
 
-- [ ] T036 [P] [US6] Unit tests in `tests/unit/membership.test.ts` (data-model "Entry"): `copyEntry` keeps mark, facts, factsSource, not bought, `updatedAt = now`; `moveEntry` returns the full new entry and a tombstone of the source; both throw/return an error for a target with a live entry of the game; a target with a removed (tombstone) entry is allowed and revives it
-- [ ] T037 [P] [US6] E2E tests in `tests/e2e/copy-move.spec.ts`: buttons "Copy to collection" and "Move to collection" above "Remove from <collection>"; dialog "Copy <game>" with combobox "To collection", "(already in it)" option disabled; Copy → toast, details stay open, game in both; Move → toast, details closed, game only in the target with category, bought and price; only one collection → confirm disabled with the note; offline: works and syncs after reconnect
+- [X] T036 [P] [US6] Unit tests in `tests/unit/membership.test.ts` (data-model "Entry"): `copyEntry` keeps mark, facts, factsSource, not bought, `updatedAt = now`; `moveEntry` returns the full new entry and a tombstone of the source; both throw/return an error for a target with a live entry of the game; a target with a removed (tombstone) entry is allowed and revives it
+- [X] T037 [P] [US6] E2E tests in `tests/e2e/copy-move.spec.ts`: buttons "Copy to collection" and "Move to collection" above "Remove from <collection>"; dialog "Copy <game>" with combobox "To collection", "(already in it)" option disabled; Copy → toast, details stay open, game in both; Move → toast, details closed, game only in the target with category, bought and price; only one collection → confirm disabled with the note; offline: works and syncs after reconnect
 
 ### Implementation for User Story 6
 
-- [ ] T038 [US6] Implement `copyEntry`, `moveEntry` in `src/domain/membership.ts`; T036 passes
-- [ ] T039 [US6] Add `copyGameTo`, `moveGameTo` actions in `src/app/actions.ts` (store write through the outbox, toasts "Copied <game> to <collection>" / "Moved <game> to <collection>")
-- [ ] T040 [US6] Create `src/app/components/CopyMoveSheet.tsx` (design rules "Copy and move": dropdown with "(already in it)", what goes along, Cancel / Copy or Move) and add the two buttons above Remove in `src/app/components/GameSheet.tsx`; Copy returns to the details, Move closes them; T037 passes
+- [X] T038 [US6] Implement `copyEntry`, `moveEntry` in `src/domain/membership.ts`; T036 passes
+- [X] T039 [US6] Add `copyGameTo`, `moveGameTo` actions in `src/app/actions.ts` (store write through the outbox, toasts "Copied <game> to <collection>" / "Moved <game> to <collection>")
+- [X] T040 [US6] Create `src/app/components/CopyMoveSheet.tsx` (design rules "Copy and move": dropdown with "(already in it)", what goes along, Cancel / Copy or Move) and add the two buttons above Remove in `src/app/components/GameSheet.tsx`; Copy returns to the details, Move closes them; T037 passes
 
 **Checkpoint**: games move between collections without losing category or price.
 

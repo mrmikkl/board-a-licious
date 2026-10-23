@@ -132,8 +132,12 @@ export async function seedCollection(page: Page, name: string, games: SeedGame[]
   if (page.url() === 'about:blank') await page.goto('/#/collections')
   const response = await page.request.post('/api/sync', { data: { collections: [{ id, name, updatedAt: now, deleted: false }], entries } })
   expect(response.ok()).toBe(true)
+  // the app pulls the new collection with its sync on start; a reload only once requests are done,
+  // as an aborted request can leave the local database's one connection stuck
   await page.goto(`/#/collections/${id}`)
+  await page.waitForLoadState('networkidle')
   await page.reload()
+  await page.waitForLoadState('networkidle')
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   return id
 }
