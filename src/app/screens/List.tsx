@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 
 import { ApiError } from '../../client/api.ts'
-import { LIST_ERROR } from '../../client/lists.ts'
+import { LIST_ERROR, RESYNC_BUSY } from '../../client/lists.ts'
 import type { ListKind, StoredList, StoredListEntry } from '../../client/types.ts'
+import type { Conflict } from '../../domain/facts.ts'
 import { matchesName } from '../../domain/search.ts'
+import { ConflictsSheet } from '../components/ConflictsSheet.tsx'
 import { InfoLine } from '../components/GameInfo.tsx'
 import { Header } from '../components/Header.tsx'
 import { HexCover } from '../components/HexCover.tsx'
+import { IconResync } from '../components/icons.tsx'
 import { MembershipSheet } from '../components/MembershipSheet.tsx'
+import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
 import { href } from '../router.ts'
 
-/** Pages loaded so far, or the paused state with Retry (FR-012). */
-export function ListProgress({ list, onRetry }: { list: StoredList; onRetry: () => void }) {
+/** Pages loaded so far, or the paused state with Retry (FR-012); during a resync, its progress (US5). */
+export function ListProgress({ list, onRetry, resyncing = false }: { list: StoredList; onRetry: () => void; resyncing?: boolean }) {
   if (list.error) {
     return (
       <p className="list-status error" role="status">
@@ -23,12 +27,10 @@ export function ListProgress({ list, onRetry }: { list: StoredList; onRetry: () 
       </p>
     )
   }
-  if (list.loadedPages >= list.pageCount) return null
+  if (!resyncing && list.loadedPages >= list.pageCount) return null
   return (
     <div className="list-status" role="status">
-      <p>
-        Loading {list.loadedPages} of {list.pageCount} pages
-      </p>
+      <p>{resyncing ? `Resyncing with BGG… ${list.loadedPages} / ${list.pageCount}` : `Loading ${list.loadedPages} of ${list.pageCount} pages`}</p>
       <div className="progress" aria-hidden="true">
         <span style={{ width: `${Math.round((100 * list.loadedPages) / list.pageCount)}%` }} />
       </div>
@@ -48,6 +50,10 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   const [filter, setFilter] = useState('')
   const [openGame, setOpenGame] = useState<number>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
+  const online = useOnline()
+  const toast = useToast()
+  const [resyncing, setResyncing] = useState(false)
+  const [conflicts, setConflicts] = useState<Conflict[]>([])
 
   useEffect(() => {
     let active = true
@@ -72,7 +78,8 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
     async store => {
       const list = await store.list(kind, listId)
       const inCollection = new Set((await store.allEntries()).filter(e => !e.deleted).map(e => e.bggId))
-      return { key: `${kind}:${listId}`, list, inCollection }
+      const collections = new Map((await store.collections()).map(c => [c.id, c.name]))
+      return { key: `${kind}:${listId}`, list, inCollection, collections }
     },
     [kind, listId],
   )
@@ -92,11 +99,42 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
 
   const shown = list.entries.filter(e => matchesName(e.name, filter))
   const current = list.entries.find(e => e.bggId === openGame)
+  // US5: read the list again from BGG, then reconcile the games' facts; a busy BGG changes nothing
+  const runResync = async () => {
+    setResyncing(true)
+    try {
+      const result = await services.lists.resync(kind, listId)
+      const games = `${result.updated} ${result.updated === 1 ? 'game' : 'games'} updated`
+      const found = result.conflicts.length > 0 ? `, ${result.conflicts.length} ${result.conflicts.length === 1 ? 'conflict' : 'conflicts'}` : ''
+      toast(`Resync done: ${games}${found}`)
+      if (result.conflicts.length > 0) setConflicts(result.conflicts)
+    } catch {
+      toast(RESYNC_BUSY)
+    } finally {
+      setResyncing(false)
+    }
+  }
+  const names = new Map(list.entries.map(e => [e.bggId, e.name]))
   return (
     <>
-      <Header title={list.title} back={back} />
+      <Header
+        title={list.title}
+        back={back}
+        trailing={
+          <button
+            type="button"
+            className={`icon-btn resync-btn${resyncing ? ' is-spinning' : ''}`}
+            aria-label="Resync with BGG"
+            title="Resync with BGG"
+            disabled={!online || resyncing}
+            onClick={() => void runResync()}
+          >
+            <IconResync />
+          </button>
+        }
+      />
       <main className="screen">
-        <ListProgress list={list} onRetry={() => void services.lists.retry(kind, listId)} />
+        <ListProgress list={list} resyncing={resyncing} onRetry={() => void services.lists.retry(kind, listId)} />
         <label className="visually-hidden" htmlFor={filterId}>
           Filter this list
         </label>
@@ -121,8 +159,25 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
         )}
       </main>
       {current && <MembershipSheet list={list} item={current} onClose={closeGame} />}
+      {conflicts.length > 0 && <ConflictsSheet conflicts={conflicts} names={names} collections={data!.collections} onClose={() => setConflicts([])} />}
     </>
   )
+}
+
+/** Whether the device is online; the Resync button waits for it (US5). */
+function useOnline() {
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
+  useEffect(() => {
+    const up = () => setOnline(true)
+    const down = () => setOnline(false)
+    window.addEventListener('online', up)
+    window.addEventListener('offline', down)
+    return () => {
+      window.removeEventListener('online', up)
+      window.removeEventListener('offline', down)
+    }
+  }, [])
+  return online
 }
 
 /** A list game like a collection row: name, publisher ("…" while its name is looked up), three infos. */
