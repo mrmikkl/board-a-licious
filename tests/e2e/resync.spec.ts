@@ -13,10 +13,7 @@ const PREVIEW = 'https://boardgamegeek.com/geekpreview/93/spiel-essen-2026'
  * (changed by the test) and a price the collection does not have. A game id of its own keeps other
  * test runs (which share the dev database) out of the counts.
  */
-type Bgg = { booth: string; failing: boolean; gate?: Promise<void> }
-
-const gameId = 1_000_000 + Math.floor(Math.random() * 900_000)
-const gameName = unique('Resync game')
+type Bgg = { booth: string; failing: boolean; gate?: Promise<void>; gameId: number; gameName: string }
 
 async function fakeSpiel(page: Page, bgg: Bgg) {
   await page.route('**/api/bgg/lists/preview/93?**', async route => {
@@ -29,8 +26,8 @@ async function fakeSpiel(page: Page, bgg: Bgg) {
     if (n === 1) {
       body.entries.push({
         position: 11,
-        bggId: gameId,
-        name: gameName,
+        bggId: bgg.gameId,
+        name: bgg.gameName,
         thumbnailUrl: null,
         facts: { booth: bgg.booth, priceCents: 1200, currency: 'EUR', publisherId: null, publisher: 'Feuerland' },
       })
@@ -50,10 +47,11 @@ async function fakeSpiel(page: Page, bgg: Bgg) {
  */
 async function setUp(page: Page, booth = '3-A100') {
   await fakeBgg(page)
-  const bgg: Bgg = { booth, failing: false }
+  // a game of its own per test: resync reconciles every collection of the (shared) test user
+  const bgg: Bgg = { booth, failing: false, gameId: 1_000_000 + Math.floor(Math.random() * 900_000), gameName: unique('Resync game') }
   await fakeSpiel(page, bgg)
   const collection = unique('Essen resync')
-  await seedCollection(page, collection, [{ bggId: gameId, name: gameName, mark: 'must_have', booth: '3-R400', factsSource: 'manual' }])
+  await seedCollection(page, collection, [{ bggId: bgg.gameId, name: bgg.gameName, mark: 'must_have', booth: '3-R400', factsSource: 'manual' }])
   await loadList(page, PREVIEW)
   await expect(page.getByRole('heading', { level: 1, name: 'SPIEL Essen 2026' })).toBeVisible()
   await expect(page.getByText(/loading \d+ of 3 pages/i)).toHaveCount(0)
@@ -63,18 +61,18 @@ async function setUp(page: Page, booth = '3-A100') {
 const resync = (page: Page) => page.getByRole('button', { name: 'Resync with BGG' }).click()
 
 /** The game's booth as its collection row shows it, then back to the list it was checked from. */
-async function expectBoothInCollection(page: Page, collection: string, booth: string) {
+async function expectBoothInCollection(page: Page, { collection, bgg }: { collection: string; bgg: Bgg }, booth: string) {
   const listUrl = page.url()
   await goTo(page, 'Collections')
   await page.getByRole('link', { name: new RegExp(collection) }).click()
-  await expect(page.getByRole('button', { name: new RegExp(gameName) })).toContainText(`Booth ${booth}`)
+  await expect(page.getByRole('button', { name: new RegExp(bgg.gameName) })).toContainText(`Booth ${booth}`)
   await page.goto(listUrl)
   await expect(page.getByRole('heading', { level: 1, name: 'SPIEL Essen 2026' })).toBeVisible()
 }
 
 test('US5: a resync fills the empty price and asks about a booth typed in by hand; Use BGG for all moves the game', async ({ page }) => {
   test.setTimeout(60_000)
-  const { collection } = await setUp(page)
+  const game = await setUp(page)
 
   await resync(page)
   await expect(page.getByText('Resync done: 1 game updated, 1 conflict')).toBeVisible()
@@ -87,19 +85,19 @@ test('US5: a resync fills the empty price and asks about a booth typed in by han
   await conflicts.getByRole('button', { name: 'Use BGG for all' }).click()
   await expect(conflicts).toBeHidden()
   await expect(page.getByText('1 value taken from BGG')).toBeVisible()
-  await expectBoothInCollection(page, collection, '3-A100')
+  await expectBoothInCollection(page, game, '3-A100')
 })
 
 test('US5: Later keeps the own booth, and the next resync asks again', async ({ page }) => {
   test.setTimeout(60_000)
-  const { collection } = await setUp(page)
+  const game = await setUp(page)
 
   await resync(page)
   const conflicts = page.getByRole('dialog', { name: 'Conflicts' })
   await expect(conflicts).toBeVisible()
   await conflicts.getByRole('button', { name: 'Later' }).click()
   await expect(conflicts).toBeHidden()
-  await expectBoothInCollection(page, collection, '3-R400')
+  await expectBoothInCollection(page, game, '3-R400')
 
   await resync(page)
   await expect(page.getByRole('dialog', { name: 'Conflicts' })).toBeVisible()
@@ -107,13 +105,14 @@ test('US5: Later keeps the own booth, and the next resync asks again', async ({ 
 
 test('US5: Use own for all settles the conflicts until BGG changes its booth', async ({ page }) => {
   test.setTimeout(60_000)
-  const { bgg, collection } = await setUp(page)
+  const game = await setUp(page)
+  const { bgg } = game
 
   await resync(page)
   const conflicts = page.getByRole('dialog', { name: 'Conflicts' })
   await conflicts.getByRole('button', { name: 'Use own for all' }).click()
   await expect(conflicts).toBeHidden()
-  await expectBoothInCollection(page, collection, '3-R400')
+  await expectBoothInCollection(page, game, '3-R400')
 
   // BGG's value is the same: no conflict, nothing to update
   await resync(page)
@@ -147,11 +146,12 @@ test('US5: while it runs the resync shows its progress and cannot be started aga
 
 test('US5: BoardGameGeek busy: a message, and nothing changes', async ({ page }) => {
   test.setTimeout(60_000)
-  const { bgg, collection } = await setUp(page)
+  const game = await setUp(page)
+  const { bgg } = game
   bgg.failing = true
 
   await resync(page)
   await expect(page.getByText('BoardGameGeek is busy. Try the resync again in a minute.')).toBeVisible()
   await expect(page.getByRole('dialog', { name: 'Conflicts' })).toBeHidden()
-  await expectBoothInCollection(page, collection, '3-R400')
+  await expectBoothInCollection(page, game, '3-R400')
 })
