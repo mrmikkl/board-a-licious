@@ -596,3 +596,14 @@
 .info-list .info-pills {
   max-width: 100%;
 }
+/* long mechanism names wrap inside their pill instead of pushing past the box (F005) */
+.info-list .info-pill {
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.facts-box {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

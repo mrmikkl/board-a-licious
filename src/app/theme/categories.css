@@ -2,7 +2,7 @@
 
 /* honeycomb (research R9): six half-columns, three hexagons on top (1st, 3rd, 5th) and two below
    (2nd, 4th) shifted by half a hexagon and pulled up by a quarter of one; ≤ 88px each, 4px gaps */
-.cat-picker {
+.catpick {
   /* pointy-top hexagons: height = width × 2/√3; rows interlock by a quarter of the height */
   --w: min(84px, calc((100vw - 2 * var(--gutter) - 8px) / 3));
   --h: calc(var(--w) * 1.1547);
@@ -12,7 +12,7 @@
   height: calc(var(--h) * 1.75 + var(--g));
   margin: 12px auto 16px;
 }
-.cat-btn {
+.catpick-btn {
   position: absolute;
   top: 0;
   width: var(--w);
@@ -22,32 +22,32 @@
   background: none;
   filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
 }
-.cat-btn:nth-child(1) {
+.catpick-btn:nth-child(1) {
   left: 0;
 }
-.cat-btn:nth-child(3) {
+.catpick-btn:nth-child(3) {
   left: calc(var(--w) + var(--g));
 }
-.cat-btn:nth-child(5) {
+.catpick-btn:nth-child(5) {
   left: calc(2 * (var(--w) + var(--g)));
 }
-.cat-btn:nth-child(2),
-.cat-btn:nth-child(4) {
+.catpick-btn:nth-child(2),
+.catpick-btn:nth-child(4) {
   top: calc(var(--h) * 0.75 + var(--g));
 }
-.cat-btn:nth-child(2) {
+.catpick-btn:nth-child(2) {
   left: calc((var(--w) + var(--g)) / 2);
 }
-.cat-btn:nth-child(4) {
+.catpick-btn:nth-child(4) {
   left: calc(1.5 * (var(--w) + var(--g)));
 }
-.cat-hex {
+.catpick-hex {
   display: block;
   height: 100%;
   padding: 2px;
   background: var(--border-2);
 }
-.cat-face {
+.catpick-face {
   height: 100%;
   display: grid;
   place-content: center;
@@ -64,24 +64,24 @@
   line-height: 1.15;
   text-align: center;
 }
-.cat-emoji {
+.catpick-emoji {
   font-style: normal;
   font-size: 22px;
 }
-.cat-btn[aria-pressed="true"] .cat-hex {
+.catpick-btn[aria-pressed="true"] .catpick-hex {
   background: var(--orange);
 }
-.cat-btn[aria-pressed="true"] .cat-face {
+.catpick-btn[aria-pressed="true"] .catpick-face {
   background: var(--tone);
   color: var(--tone-text);
 }
-.cat-btn:is([data-tone="unsure"], [data-tone="poop"])[aria-pressed="true"]
-  .cat-face {
+.catpick-btn:is([data-tone="unsure"], [data-tone="poop"])[aria-pressed="true"]
+  .catpick-face {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
-.cat-btn:focus-visible {
+.catpick-btn:focus-visible {
   outline: none;
 }
-.cat-btn:focus-visible .cat-face {
+.catpick-btn:focus-visible .catpick-face {
   box-shadow: inset 0 0 0 3px var(--orange);
 }

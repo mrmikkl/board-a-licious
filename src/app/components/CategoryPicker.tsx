@@ -15,19 +15,19 @@ export function CategoryPicker({
   onPick: (key: Mark, from: Element) => void;
 }) {
   return (
-    <div className="cat-picker" role="group" aria-label="Category">
+    <div className="catpick" role="group" aria-label="Category">
       {CHOICES.map((choice) => (
         <button
           key={choice.key}
           type="button"
-          className="cat-btn"
+          className="catpick-btn"
           data-tone={choice.key}
           aria-pressed={value === choice.key}
           onClick={(event) => onPick(choice.key, event.currentTarget)}
         >
-          <span className="cat-hex hex">
-            <span className="cat-face hex">
-              <em className="cat-emoji" aria-hidden="true">
+          <span className="catpick-hex hex">
+            <span className="catpick-face hex">
+              <em className="catpick-emoji" aria-hidden="true">
                 {choice.emoji}
               </em>
               <span>{choice.label}</span>
