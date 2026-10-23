@@ -9,15 +9,19 @@ export type GameDetails = {
   mechanisms: string[]
   /** The game's first publisher on BGG; a list's publisher (the one at the booth) wins over it. */
   publisher: string | null
+  /** BGG's average rating and Bayes average ("geek rating"), null when BGG has none (R1). */
+  rating?: number | null
+  geekRating?: number | null
 }
 
-export type InfoKey = 'price' | 'players' | 'booth' | 'edition' | 'designer' | 'mechanisms'
+export type InfoKey = 'price' | 'players' | 'rating' | 'geekRating' | 'booth' | 'edition' | 'designer' | 'mechanisms'
 export type Info = { key: InfoKey; label: string; text: string; items?: string[] }
 
 /** A game row shows this many infos; the details show all. */
 export const ROW_INFOS = 3
 
 const clean = (value: string | null | undefined) => (typeof value === 'string' ? value.trim() || null : null)
+const stars = (value: unknown) => (typeof value === 'number' && value > 0 ? value.toFixed(1) : null)
 const list = (value: unknown): string[] => (Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string' && v.trim() !== '') : [])
 
 function players(min: number | null | undefined, max: number | null | undefined): string | null {
@@ -30,9 +34,9 @@ function players(min: number | null | undefined, max: number | null | undefined)
 }
 
 /**
- * FR-010: the infos of a game in this order, each left out when unknown: price, players, booth,
- * edition, designer, mechanisms. Price, booth and edition come from a list (or were typed in),
- * the rest from the game's BGG details.
+ * FR-010: the infos of a game in this order, each left out when unknown: price, players, rating,
+ * geek rating, booth, edition, designer, mechanisms. Price, booth and edition come from a list (or
+ * were typed in), the rest from the game's BGG details.
  */
 export function gameInfos(facts: Facts | null | undefined, details: Partial<GameDetails> | null | undefined): Info[] {
   const infos: Info[] = []
@@ -41,6 +45,8 @@ export function gameInfos(facts: Facts | null | undefined, details: Partial<Game
   }
   add('price', 'Price', facts?.priceCents != null ? formatMoney(facts.priceCents, facts.currency) : null)
   add('players', 'Players', players(details?.minPlayers, details?.maxPlayers))
+  add('rating', 'Rating', stars(details?.rating))
+  add('geekRating', 'Geek rating', stars(details?.geekRating))
   const booth = clean(facts?.booth)
   add('booth', 'Booth', booth && `Booth ${booth}`)
   add('edition', 'Edition', clean(facts?.edition))
@@ -51,8 +57,11 @@ export function gameInfos(facts: Facts | null | undefined, details: Partial<Game
   return infos
 }
 
-/** The first three infos, for a game row. */
-export const rowInfos = (facts: Facts | null | undefined, details: Partial<GameDetails> | null | undefined) => gameInfos(facts, details).slice(0, ROW_INFOS)
+/** The first three infos, for a game row; ratings stay out of rows. */
+export const rowInfos = (facts: Facts | null | undefined, details: Partial<GameDetails> | null | undefined) =>
+  gameInfos(facts, details)
+    .filter(i => i.key !== 'rating' && i.key !== 'geekRating')
+    .slice(0, ROW_INFOS)
 
 /** The publisher shown under the name: the list's (at the booth), else the game's first on BGG. */
 export const publisherOf = (facts: Facts | null | undefined, details: Partial<GameDetails> | null | undefined) =>
