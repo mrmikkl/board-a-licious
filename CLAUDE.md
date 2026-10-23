@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 Board-a-licious is a mobile-first web app for a small group of friends going to SPIEL Essen. Each
-person keeps collections (Essen or standard) of BoardGameGeek games, fills them from geeklists by
-swiping, marks games (Must Have, Interested, Unsure, Poop, Not interested), ticks them off as bought
-with the price paid, and shares lists as text. Vision: `docs/vision.md`. No application code exists
-yet; the clickable prototype is `specs/001-bgg-game-collection/design/prototype.html`.
+person keeps collections of BoardGameGeek games, fills them from BGG lists by swiping, sorts games
+into categories (Must Have, Interested, Unsure, For later, Poop, Not interested; in code and the
+database still called "marks"), ticks them off as bought with the price paid, and shares lists as
+text. Vision: `docs/vision.md`. Each feature's clickable prototype is in `specs/<NNN>/design/`.
 
 Planned stack (`specs/001-bgg-game-collection/plan.md`): TypeScript, React + Vite SPA and `/api` in
 one Cloudflare Worker; Neon PostgreSQL via Hyperdrive; IndexedDB + outbox for offline; Cloudflare
@@ -63,12 +63,15 @@ node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigati
 
 ## Code layout
 
-- `src/domain/`: pure TypeScript rules shared by app and Worker (marks, collections and merge, …).
+- `src/domain/`: pure TypeScript rules shared by app and Worker (marks, collections and merge,
+  filter, booths, facts and resync, name search, …).
 - `src/client/`: browser adapters: `store.ts` (IndexedDB, one database per signed-in email, outbox),
   `api.ts` (fetch wrapper, `ApiError`), `sync.ts` (push outbox, pull since last sync).
 - `src/app/`: React UI; `theme/*.css` holds the design tokens of `docs/design.md`; hash router in
   `router.ts`; `context.tsx` boots the store and sync for the signed-in person.
 - `worker/`: `index.ts` (`createApp(deps)` router, testable with injected auth/db/clock), `auth.ts`
   (Access JWT), `db/` (repository, SQL last-write-wins), `bgg/` (cached, throttled BGG client).
+- E2E tests seed collections through `POST /api/sync` with `seedCollection` (`tests/e2e/helpers.ts`);
+  all tests share one dev user, so data read across collections needs ids of its own per test.
 - Worker tests run in Node with PGlite and fakes, not in workerd. Pass arrays to SQL as PostgreSQL
   array literals (`pgArray`): the production `postgres` driver does not serialise JS arrays.

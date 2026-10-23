@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, type TestInfo, expect, test } from '@playwright/test'
 
-import { createCollection, expectAccessible, fakeBgg, fakeGallery, mainButton, openMenu, unique } from './helpers.ts'
+import { createCollection, expectAccessible, fakeBgg, fakeGallery, mainButton, openMenu, seedCollection, unique } from './helpers.ts'
 
 const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8'))
 
@@ -151,4 +151,39 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   await page.goto('/#/share')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await check(page, testInfo)
+})
+
+test('F005: rows with actions, quick filters and the new sheets: axe clean, sensible focus, still with reduced motion', async ({ page }, testInfo) => {
+  test.setTimeout(90_000)
+  await fakeBgg(page)
+  await seedCollection(page, unique('A11y F005'), [
+    { bggId: 295947, name: 'Cascadia', mark: 'must_have', booth: '3-A101', priceCents: 3800, rating: 7.88, geekRating: 7.73 },
+    { bggId: 1201, name: 'Quill Harbour', mark: 'later', booth: '3' },
+    { bggId: 1202, name: 'Ember Road', mark: 'interested', bought: true, paidCents: 2500 },
+  ])
+
+  // the collection: quick filters, search, rows with the category tag, Buy and Category
+  await check(page, testInfo)
+  await page.getByRole('button', { name: /^🛒 buy/i }).click()
+  await check(page, testInfo, false)
+  await page.getByRole('button', { name: /^🛒 buy/i }).click()
+
+  // the row's sheets
+  await page.getByRole('button', { name: 'Category of Cascadia' }).click()
+  await expect(page.getByRole('dialog', { name: 'Category of Cascadia' })).toBeVisible()
+  await check(page, testInfo)
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Buy Cascadia' }).click()
+  await expect(page.getByRole('dialog', { name: 'Bought Cascadia?' })).toBeVisible()
+  await check(page, testInfo)
+  await page.keyboard.press('Escape')
+
+  // the details: honeycomb, ratings, copy and move
+  await page.getByRole('button', { name: /^cascadia,/i }).click()
+  await expect(page.getByRole('dialog', { name: 'Cascadia' }).getByRole('group', { name: 'Category' })).toBeVisible()
+  await check(page, testInfo)
+  await page.getByRole('button', { name: 'Move to collection' }).click()
+  await expect(page.getByRole('dialog', { name: 'Move Cascadia' })).toBeVisible()
+  await check(page, testInfo)
+  await page.keyboard.press('Escape')
 })
