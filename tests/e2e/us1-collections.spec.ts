@@ -22,14 +22,14 @@ test('US1: create a collection, add a game by link, mark it, reload', async ({ p
   await page.getByRole('button', { name: 'Add to collection' }).click()
 
   const unmarked = page.getByRole('region', { name: /no category yet/i })
-  await expect(unmarked.getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(unmarked.getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 
-  await unmarked.getByRole('button', { name: /cascadia/i }).click()
+  await unmarked.getByRole('button', { name: /^cascadia,/i }).click()
   await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
   await expectAccessible(page)
 
   await page.reload()
-  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 })

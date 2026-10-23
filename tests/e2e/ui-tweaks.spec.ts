@@ -28,7 +28,7 @@ test('game details close when pulled down, stay on a short pull', async ({ page 
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
   await page.getByRole('button', { name: 'Add to collection' }).click()
-  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: /cascadia/i }).click()
+  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: /^cascadia,/i }).click()
   const sheet = page.getByRole('dialog')
   await expect(sheet).toBeVisible()
   await pull(page, '.sheet-grip', 30)

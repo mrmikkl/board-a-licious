@@ -122,10 +122,10 @@ test('US5: export a backup, import it back over a changed mark, restore a delete
 
   // change a mark, then import: asked once, the backup wins
   await page.goto(`/#/collections/${id}`)
-  await page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i }).click()
+  await page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i }).click()
   await page.getByRole('dialog').getByRole('button', { name: /^(👀 )?interested/i }).click()
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('region', { name: /^interested/i }).getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(page.getByRole('region', { name: /^👀 interested/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 
   await page.goto('/#/share')
   await importFile(page, ownBackup)
@@ -135,7 +135,7 @@ test('US5: export a backup, import it back over a changed mark, restore a delete
   await ask.getByRole('button', { name: 'Use backup' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.goto(`/#/collections/${id}`)
-  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 
   // delete the collection (F003: behind the pencil after its name), import: it is back without a question
   await page.getByRole('button', { name: `Edit ${name}` }).click()
@@ -149,8 +149,8 @@ test('US5: export a backup, import it back over a changed mark, restore a delete
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.goto(`/#/collections/${id}`)
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /cascadia/i })).toBeVisible()
-  await expect(page.getByRole('region', { name: /unsure/i }).getByRole('button', { name: /fjord fishers/i })).toBeVisible()
+  await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
+  await expect(page.getByRole('region', { name: /unsure/i }).getByRole('button', { name: /^fjord fishers,/i })).toBeVisible()
 })
 
 test('US5: an invalid backup changes nothing and names the first problem', async ({ page }) => {

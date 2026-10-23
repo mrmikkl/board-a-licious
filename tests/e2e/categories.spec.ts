@@ -51,6 +51,9 @@ test('details: category picker as a honeycomb above the info box, a tap changes 
   await expect(buttons.nth(3)).toHaveAttribute('aria-pressed', 'true')
   await expect(dialog).toBeVisible()
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('region', { name: /for later/i }).getByRole('button', { name: /cascadia/i })).toBeVisible()
+  // For later starts folded (FR-018a): its heading counts the game, unfolding shows it
+  const laterGroup = page.getByRole('region', { name: /for later/i })
+  await laterGroup.getByRole('button', { name: /^⏳ for later/i }).click()
+  await expect(laterGroup.getByRole('button', { name: /^cascadia,/i })).toBeVisible()
   await expect(page.getByText(/\bmarks?\b/i)).toHaveCount(0)
 })

@@ -39,7 +39,7 @@ test('share a game: preselected last used collection, add, toast, and the next s
   await expect(page.getByRole('heading', { level: 1, name: first })).toBeVisible()
   await expect(page).toHaveURL(/#\/collections\//)
   await expect(page.getByRole('status').filter({ hasText: `Added Cascadia to ${first}` })).toBeVisible()
-  await expect(notYetMarked(page).getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(notYetMarked(page).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 
   // the next share preselects it, marked "(last used)", with the hint
   await share(page)
@@ -101,7 +101,7 @@ test('Cancel adds nothing (T009, T011)', async ({ page }) => {
   await page.goto('/#/collections')
   await page.getByRole('link', { name: new RegExp(name) }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-  await expect(page.getByRole('button', { name: /cascadia/i })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^cascadia,/i })).toHaveCount(0)
 })
 
 test('no collection yet: "Create and add" creates one with the game in it (T009, T012)', async ({ page }) => {
@@ -126,5 +126,5 @@ test('no collection yet: "Create and add" creates one with the game in it (T009,
   await sheet(page).getByRole('button', { name: 'Create and add' }).click()
   await expect(page.getByRole('heading', { level: 1, name: created })).toBeVisible()
   await expect(page.getByRole('status').filter({ hasText: `Added Cascadia to ${created}` })).toBeVisible()
-  await expect(notYetMarked(page).getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(notYetMarked(page).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 })
