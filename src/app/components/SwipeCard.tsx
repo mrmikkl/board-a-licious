@@ -10,7 +10,8 @@ import { HexCover } from './HexCover.tsx'
 const THRESHOLD = 90
 
 /**
- * The swipe card (docs/design.md §7, §9): cover, name, year, description (3 lines), facts. The top
+ * The swipe card (docs/design.md §7, §9): cover, name, "publisher · year", the game info box, then the
+ * full description (the card scrolls, no clamp). The top
  * card follows the finger with tilt and growing ADD/NOPE stamps, springs back when let go early and
  * decides past the threshold. `leaving` flings it out; with reduced motion nothing tilts or flies.
  */
@@ -79,6 +80,7 @@ export function SwipeCard({
 
   // the list's players, designers and mechanisms, overridden by the game's details once known
   const info = { ...game.info, ...details }
+  const publisher = publisherOf(game.facts, info)
   const cover: Game = details ?? { bggId: game.bggId, name: game.name, year: null, thumbnailUrl: game.thumbnailUrl, description: null, kind: 'boardgame' }
   const style = leaving ? ({ '--dir': leaving.direction === 'right' ? 1 : -1, '--from-x': `${leaving.fromX}px` } as CSSProperties) : undefined
   const classes = ['swipe-card', place, enter && !reducedMotion ? 'enter' : '', leaving ? `leaving-${leaving.direction}` : ''].filter(Boolean).join(' ')
@@ -101,9 +103,11 @@ export function SwipeCard({
       </span>
       <HexCover game={cover} name={game.name} size={104} />
       <h2 className="swipe-name">{details?.name ?? game.name}</h2>
-      <p className="swipe-year">{details?.year ?? ' '}</p>
+      <p className="swipe-year">{[publisher, details?.year].filter(Boolean).join(' · ') || '\u00a0'}</p>
+      <div className="facts-box">
+        <InfoList facts={game.facts} details={info} />
+      </div>
       {details?.description && <p className="swipe-desc">{details.description}</p>}
-      <InfoList facts={game.facts} details={info} publisher={publisherOf(game.facts, info)} />
     </div>
   )
 }

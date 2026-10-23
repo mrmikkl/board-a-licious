@@ -523,6 +523,28 @@
 .row-info > span:first-child {
   flex: none;
 }
+/* BGG ratings in the game info: a small hexagon, cool for the rating, dusk for the geek rating */
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rating i {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 29px;
+  clip-path: var(--hex);
+  background: var(--grad-cool);
+  color: var(--ink);
+  font: 700 11px var(--font-display);
+  font-style: normal;
+}
+.rating i.geek {
+  background: var(--grad-dusk);
+  color: #fff;
+}
+
 .info-pills {
   display: flex;
   flex-wrap: wrap;
