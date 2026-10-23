@@ -40,6 +40,28 @@ describe('game info (FR-010)', () => {
     expect(rowInfos({ edition: 'German edition' }, details).map(i => i.key)).toEqual(['players', 'edition', 'designer'])
   })
 
+  it('lists rating and geek rating after players, one decimal each, left out when unknown (FR-010)', () => {
+    expect(gameInfos(facts, { ...details, rating: 7.88, geekRating: 7.73 }).map(i => [i.key, i.text])).toEqual([
+      ['price', '€60'],
+      ['players', '1–4 players'],
+      ['rating', '7.9'],
+      ['geekRating', '7.7'],
+      ['booth', 'Booth 3-R400'],
+      ['edition', 'English edition'],
+      ['designer', 'Randy Flynn, Ann Other'],
+      ['mechanisms', 'Chaining, Hexagon Grid'],
+    ])
+    expect(gameInfos(null, { rating: null, geekRating: 0 })).toEqual([])
+    expect(gameInfos(null, { rating: 7 }).map(i => [i.label, i.text])).toEqual([['Rating', '7.0']])
+  })
+
+  it('rows never show ratings, not even when they would fill a slot', () => {
+    expect(rowInfos(null, { minPlayers: 1, maxPlayers: 4, rating: 7.88, geekRating: 7.73, designers: ['Randy Flynn'] }).map(i => i.key)).toEqual([
+      'players',
+      'designer',
+    ])
+  })
+
   it('takes the publisher from the list, else the first BGG publisher', () => {
     expect(publisherOf(facts, details)).toBe('Inside Up Games')
     expect(publisherOf({ booth: 'X' }, details)).toBe('Flatout Games')
