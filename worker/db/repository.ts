@@ -207,9 +207,27 @@ function names(value: string[] | string | null): string[] {
   return Array.isArray(list) ? list.filter((v): v is string => typeof v === 'string') : []
 }
 
+/**
+ * F005: the two rating columns of migration 0005, added by the Worker itself (idempotent, once per
+ * isolate) so a deploy works before `npm run db:migrate:neon` has run; the migration also marks old
+ * games stale so they get their ratings.
+ */
+let ratingColumns: Promise<void> | undefined
+function ensureRatingColumns(db: Db): Promise<void> {
+  ratingColumns ??= (async () => {
+    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)')
+    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
+  })().catch(error => {
+    ratingColumns = undefined
+    throw error
+  })
+  return ratingColumns
+}
+
 /** Cached games fetched after `freshAfter` (older ones are refreshed from BGG). */
 export async function getCachedGames(db: Db, ids: number[], freshAfter: string): Promise<Game[]> {
   if (ids.length === 0) return []
+  await ensureRatingColumns(db)
   const rows = await db.query<GameRow>(
     `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
@@ -233,6 +251,7 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
 }
 
 export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
+  await ensureRatingColumns(db)
   for (const g of games) {
     await db.query(
       `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers,
