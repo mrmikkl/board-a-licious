@@ -1,8 +1,10 @@
 import { type FormEvent, useState } from 'react'
 
 import type { Collection } from '../../domain/collection.ts'
+import type { Mark } from '../../domain/marks.ts'
 import { addGameByLink } from '../actions.ts'
 import { useServices } from '../context.tsx'
+import { CategoryPicker } from './CategoryPicker.tsx'
 import { type LinkState, GameLinkFields, emptyLink } from './GameLinkFields.tsx'
 import { Sheet } from './Sheet.tsx'
 import { useToast } from './Toast.tsx'
@@ -13,6 +15,8 @@ export function AddGameSheet({ collection, inside, onClose }: { collection: Coll
   const toast = useToast()
   const [link, setLink] = useState<LinkState>(emptyLink)
   const [busy, setBusy] = useState(false)
+  // F005: optional; tapping the chosen one again means No category yet
+  const [mark, setMark] = useState<Mark>('new')
   const parsed = link.parsed?.ok ? link.parsed : null
   const already = Boolean(parsed && inside.has(parsed.bggId))
   const ready = Boolean(parsed && link.name.trim() && !already && !busy)
@@ -22,7 +26,7 @@ export function AddGameSheet({ collection, inside, onClose }: { collection: Coll
     if (!ready || !parsed) return
     setBusy(true)
     try {
-      await addGameByLink(services, collection.id, parsed.bggId, link.name)
+      await addGameByLink(services, collection.id, parsed.bggId, link.name, mark)
       toast(`Added ${link.name.trim()} to ${collection.name}`)
       onClose()
     } finally {
@@ -36,6 +40,8 @@ export function AddGameSheet({ collection, inside, onClose }: { collection: Coll
         <p className="lead">For a game that is not on any of your lists: paste its link from boardgamegeek.com.</p>
         <GameLinkFields state={link} onChange={setLink} />
         {already && <p className="hint error">This game is already in {collection.name}.</p>}
+        <p className="label">Category (optional)</p>
+        <CategoryPicker value={mark} onPick={key => setMark(m => (m === key ? 'new' : key))} />
         <div className="sheet-actions sheet-actions-row">
           <button type="button" className="btn" onClick={onClose}>
             Cancel

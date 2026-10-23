@@ -46,13 +46,13 @@ export async function deleteCollection(services: AppServices, collection: Collec
  * Adds a game by its link (FR-016). Until BGG details arrive the typed name stands in for the game on
  * this device; the entry is marked `detailsPending` and completed in the background (FR-017).
  */
-export async function addGameByLink(services: AppServices, collectionId: string, bggId: number, name: string) {
+export async function addGameByLink(services: AppServices, collectionId: string, bggId: number, name: string, mark: Mark = 'new') {
   const { store } = services
   if (!(await store.game(bggId))) {
     await store.putGames([{ bggId, name: name.trim(), year: null, thumbnailUrl: null, description: null, kind: 'boardgame' }])
   }
-  // a removed game (tombstone) comes back fresh, as "Not yet marked"
-  await store.saveEntry({ ...newEntry(collectionId, bggId, now()), detailsPending: true })
+  // a removed game (tombstone) comes back fresh, in the category chosen in the sheet (F005; default No category yet)
+  await store.saveEntry({ ...newEntry(collectionId, bggId, now()), mark, detailsPending: true })
   void services.sync.schedule()
   void services.completeDetails()
 }
