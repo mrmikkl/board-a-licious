@@ -1,9 +1,10 @@
-/** Marks say how much someone likes a game (FR-004). Order is the same everywhere (docs/design.md §4). */
+/** Marks say how much someone likes a game (FR-004); the app calls them categories (F005). Order is the same everywhere (docs/design.md §4). */
 export const MARKS = [
-  { key: 'new', label: 'Not yet marked', emoji: '⬡' },
+  { key: 'new', label: 'No category yet', emoji: '⬡' },
   { key: 'must_have', label: 'Must Have', emoji: '⭐' },
   { key: 'interested', label: 'Interested', emoji: '👀' },
   { key: 'unsure', label: 'Unsure', emoji: '🤔' },
+  { key: 'later', label: 'For later', emoji: '⏳' },
   { key: 'poop', label: 'Poop', emoji: '💩' },
   { key: 'skip', label: 'Not interested', emoji: '🛑' },
 ] as const

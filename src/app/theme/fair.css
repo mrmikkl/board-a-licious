@@ -182,19 +182,3 @@
   clip-path: var(--hex);
   background: var(--grad-hot);
 }
-/* what is shown while narrowed; a tap opens "Filter and group" */
-.filter-summary {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: var(--tap);
-  margin-top: 10px;
-  padding: 6px 14px;
-  border: 1px solid var(--orange);
-  border-radius: var(--r-pill);
-  background: var(--deck);
-  color: var(--text);
-  font-weight: 600;
-  font-size: 14px;
-  text-align: left;
-}

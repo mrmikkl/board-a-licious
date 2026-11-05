@@ -167,3 +167,74 @@
     box-shadow: var(--lift), var(--glow);
   }
 }
+
+/* Resync (US5): the heading's icon spins while BGG is read again; no spin with reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .resync-btn.is-spinning svg {
+    animation: resync-spin 0.9s linear infinite;
+  }
+}
+@keyframes resync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.resync-btn:disabled {
+  opacity: 0.45;
+}
+
+/* Conflicts sheet (docs/design.md §7 "Resync and conflicts") */
+.conflicts-count {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.all-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  margin: 12px 0;
+}
+.conflict {
+  margin: 0 0 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.conflict-game {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.conflict-where {
+  margin: 2px 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.conflict-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.choice {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.choice[aria-pressed='true'] {
+  border-color: var(--orange);
+  box-shadow: var(--glow);
+}
+.choice:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}

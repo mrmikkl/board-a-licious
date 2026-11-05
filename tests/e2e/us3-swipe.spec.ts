@@ -56,6 +56,12 @@ test('US3: swipe a BGG preview into a collection', async ({ page }) => {
   await expect(card).toContainText('3-R400')
   await expect(card).toContainText('€60')
   await expect(card).toContainText('Inside Up Games')
+  // F005: the cover opens the image viewer; closing it leaves the card where it was
+  await card.getByRole('button', { name: 'Show the images of Kalypso big' }).click()
+  await expect(page.getByRole('dialog', { name: 'Images of Kalypso' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Images of Kalypso' })).toBeHidden()
+  await expect(card.getByRole('heading', { name: 'Kalypso' })).toBeVisible()
   await expect(page.getByText(/3 games left/)).toBeVisible()
   await expect(page.locator('[aria-live]').filter({ hasText: /Kalypso, 2026/ })).toHaveCount(1)
   await expectAccessible(page)
@@ -88,12 +94,12 @@ test('US3: swipe a BGG preview into a collection', async ({ page }) => {
 
   // right-swiped games are unmarked with their facts, left-swiped ones not interested
   await page.getByRole('link', { name: `Open ${name}` }).click()
-  const unmarked = page.getByRole('region', { name: /not yet marked/i })
-  await expect(unmarked.getByRole('button', { name: /kalypso/i })).toContainText('3-R400')
-  await expect(unmarked.getByRole('button', { name: /harmonies/i })).toBeVisible()
+  const unmarked = page.getByRole('region', { name: /no category yet/i })
+  await expect(unmarked.getByRole('button', { name: /^kalypso,/i })).toContainText('3-R400')
+  await expect(unmarked.getByRole('button', { name: /^harmonies,/i })).toBeVisible()
   const skipped = page.getByRole('region', { name: /not interested/i })
   await skipped.getByRole('button', { name: /not interested/i }).click()
-  for (const game of ['Cascadia', 'Arcs', 'Faraway']) await expect(skipped.getByRole('button', { name: game })).toBeVisible()
+  for (const game of ['Cascadia', 'Arcs', 'Faraway']) await expect(skipped.getByRole('button', { name: new RegExp(`^${game},`) })).toBeVisible()
 
   // decided games are never offered again
   await mainButton(page).click()

@@ -1,6 +1,7 @@
 import { mergeListEntries } from '../domain/lists.ts'
-import { refreshPreviewFacts } from '../domain/facts.ts'
-import type { Api, ListPage } from './api.ts'
+import { type Conflict, type ListFacts, applyConflictChoices, reconcileFacts, refreshPreviewFacts } from '../domain/facts.ts'
+import type { Entry } from '../domain/collection.ts'
+import { type Api, ApiError, type ListPage } from './api.ts'
 import type { Store } from './store.ts'
 import type { ListKind, StoredList, StoredListEntry } from './types.ts'
 
@@ -8,6 +9,7 @@ const MIN_GAP_MS = 1000
 const RELOAD_AFTER_MS = 3600_000
 const COMPANIES_PER_REQUEST = 10
 export const LIST_ERROR = 'BoardGameGeek is not reachable.'
+export const RESYNC_BUSY = 'BoardGameGeek is busy. Try the resync again in a minute.'
 
 const PAUSED = Symbol('paused')
 
@@ -166,6 +168,10 @@ export function createListLoader(deps: {
     }
   }
 
+  /** Per entry, a comparable copy of its facts, to count the games a resync changed. */
+  const snapshot = (entries: Entry[]) =>
+    new Map(entries.filter(e => !e.deleted).map(e => [`${e.collectionId}:${e.bggId}`, JSON.stringify([e.facts, e.factsSource])]))
+
   function start(kind: ListKind, id: number) {
     const key = keyOf(kind, id)
     if (running.has(key)) {
@@ -230,6 +236,43 @@ export function createListLoader(deps: {
       }
     },
     close,
+    /**
+     * Resync (US5): reads the list again from page 1, then reconciles the facts of its games in every
+     * collection (research R10). Rejects with RESYNC_BUSY when a page fails, before anything is reconciled.
+     */
+    async resync(kind: ListKind, id: number): Promise<{ updated: number; conflicts: Conflict[] }> {
+      const key = keyOf(kind, id)
+      if (!(await store.list(kind, id))) return { updated: 0, conflicts: [] }
+      const before = snapshot(await store.allEntries())
+      await update(kind, id, old => ({ ...old!, loadedPages: 0, loadedAt: undefined, error: undefined }))
+      start(kind, id)
+      for (let run = running.get(key); run; run = running.get(key)) await run
+      const list = await store.list(kind, id)
+      if (!list || list.error || list.loadedAt === undefined) throw new ApiError('bgg_unavailable', RESYNC_BUSY, true)
+
+      const fresh = new Map<number, ListFacts>(list.entries.map(e => [e.bggId, e.facts ?? {}]))
+      const declined = (await store.meta('declinedFacts')) ?? {}
+      const at = iso()
+      const conflicts: Conflict[] = []
+      // one transaction; each entry is reconciled as it is at write time, so a mark made meanwhile survives
+      await store.updateEntries(entry => {
+        const found = reconcileFacts([entry], fresh, declined, at)
+        conflicts.push(...found.conflicts)
+        return found.updates[0] ?? null
+      })
+      const after = snapshot(await store.allEntries())
+      const games = new Set<number>()
+      for (const [entryKey, value] of after) if (before.get(entryKey) !== value) games.add(Number(entryKey.slice(entryKey.lastIndexOf(':') + 1)))
+      return { updated: games.size, conflicts }
+    },
+    /** The conflicts sheet's choices: BGG values are written, own values are remembered as declined (US5). */
+    async settleConflicts(conflicts: Conflict[], choices: Record<string, 'bgg' | 'own'>) {
+      const at = iso()
+      await store.updateEntries(entry => applyConflictChoices([entry], conflicts, choices, at).updates[0] ?? null)
+      // the declined values do not depend on the entries
+      const { declined } = applyConflictChoices([], conflicts, choices, at)
+      if (Object.keys(declined).length > 0) await store.setMeta('declinedFacts', { ...(await store.meta('declinedFacts')), ...declined })
+    },
     /** "Retry" after a failed page. */
     retry(kind: ListKind, id: number): Promise<void> {
       const run = (async () => {

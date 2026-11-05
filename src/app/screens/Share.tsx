@@ -106,7 +106,7 @@ export function Share() {
               </select>
             </div>
             <fieldset className="share-groups">
-              <legend className="label">Groups to include</legend>
+              <legend className="label">Categories to include</legend>
               {groups.map(g => (
                 <label key={g.mark} className="check">
                   <input type="checkbox" checked={marks.has(g.mark)} onChange={e => toggle(g.mark, e.target.checked)} />

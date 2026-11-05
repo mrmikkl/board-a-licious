@@ -22,6 +22,12 @@
   --tone: var(--grad-violet);
   --tone-text: #fff;
 }
+/* F005: For later, pink */
+[data-mark='later'],
+[data-tone='later'] {
+  --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%);
+  --tone-text: var(--ink);
+}
 [data-mark='poop'],
 [data-tone='poop'] {
   --tone: var(--grad-mud);
@@ -517,6 +523,28 @@
 .row-info > span:first-child {
   flex: none;
 }
+/* BGG ratings in the game info: a small hexagon, cool for the rating, dusk for the geek rating */
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rating i {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 29px;
+  clip-path: var(--hex);
+  background: var(--grad-cool);
+  color: var(--ink);
+  font: 700 11px var(--font-display);
+  font-style: normal;
+}
+.rating i.geek {
+  background: var(--grad-dusk);
+  color: #fff;
+}
+
 .info-pills {
   display: flex;
   flex-wrap: wrap;
@@ -539,7 +567,8 @@
 }
 .info-list {
   display: grid;
-  grid-template-columns: auto 1fr;
+  /* the values may shrink and wrap, never push the box wider than the phone (F005) */
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 6px 14px;
   margin: 0 0 12px;
 }
@@ -559,4 +588,22 @@
 /* F003: the SPIEL preview suggestion above a BGG list link field */
 .list-suggestion {
   margin-bottom: 10px;
+}
+
+.info-list dd {
+  min-width: 0;
+}
+.info-list .info-pills {
+  max-width: 100%;
+}
+/* long mechanism names wrap inside their pill instead of pushing past the box (F005) */
+.info-list .info-pill {
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.facts-box {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

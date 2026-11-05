@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { type Collection, type Entry, newEntry } from '../../src/domain/collection.ts'
-import { memberships, membershipChanges } from '../../src/domain/membership.ts'
+import { copyEntry, memberships, membershipChanges, moveEntry } from '../../src/domain/membership.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
@@ -70,5 +70,54 @@ describe('membership (FR-014)', () => {
       now: T2,
     })
     expect(result).toEqual({ adds: [], removals: [] })
+  })
+})
+
+describe('copy and move to another collection (F005 R11)', () => {
+  const source: Entry = {
+    ...newEntry('essen', GAME, T1),
+    mark: 'must_have',
+    bought: true,
+    paidCents: 3800,
+    paidCurrency: 'EUR',
+    facts: { booth: '3-R400', priceCents: 3800, currency: 'EUR', publisher: 'Inside Up Games', edition: null },
+    factsSource: 'manual',
+    detailsPending: true,
+  }
+
+  it('copy keeps mark, facts and their source, but not the purchase', () => {
+    expect(copyEntry(source, 'home', T2)).toEqual({
+      ...source,
+      collectionId: 'home',
+      bought: false,
+      paidCents: null,
+      paidCurrency: null,
+      updatedAt: T2,
+    })
+  })
+
+  it('copy leaves the source entry as it is', () => {
+    const before = structuredClone(source)
+    copyEntry(source, 'home', T2)
+    expect(source).toEqual(before)
+  })
+
+  it('move takes everything along and returns a tombstone for the source', () => {
+    expect(moveEntry(source, 'home', T2)).toEqual([
+      { ...source, collectionId: 'home', updatedAt: T2 },
+      { ...source, deleted: true, updatedAt: T2 },
+    ])
+  })
+
+  it('copy and move refuse a target that already holds the game', () => {
+    const live = newEntry('home', GAME, T1)
+    expect(() => copyEntry(source, 'home', T2, live)).toThrow('already in')
+    expect(() => moveEntry(source, 'home', T2, live)).toThrow('already in')
+  })
+
+  it('a removed entry in the target does not count: it is revived', () => {
+    const tombstone = { ...newEntry('home', GAME, T1), deleted: true }
+    expect(copyEntry(source, 'home', T2, tombstone).deleted).toBe(false)
+    expect(moveEntry(source, 'home', T2, tombstone)[0].deleted).toBe(false)
   })
 })

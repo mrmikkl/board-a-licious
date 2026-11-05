@@ -30,22 +30,25 @@ async function addGame(page: Page, link: string, game: string) {
   await expect(add.getByLabel(/^name$/i)).toHaveValue(game)
   await add.getByRole('button', { name: 'Add to collection' }).click()
   await expect(add).toBeHidden()
-  await expect(page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
+  await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') })).toBeVisible()
 }
 
-/** Opens the game from "Not yet marked" and picks a mark; picking closes the sheet. */
+/** Opens the game from "No category yet" and picks a category; a tap changes it in place, Escape closes the details. */
 async function markAs(page: Page, game: string, mark: RegExp) {
-  await page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
+  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: mark }).click()
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
 }
 
 async function buy(page: Page, group: RegExp, game: string) {
-  await page.getByRole('region', { name: group }).getByRole('button', { name: new RegExp(game, 'i') }).click()
-  const details = page.getByRole('dialog')
-  await details.getByRole('button', { name: /bought it/i }).click()
-  await details.getByRole('button', { name: /don't track the price/i }).click()
-  await expect(details).toBeHidden()
+  await page.getByRole('region', { name: group }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
+  await page.getByRole('dialog').getByRole('button', { name: /bought it/i }).click()
+  // F005: an empty price ticks it off without one
+  const buy = page.getByRole('dialog', { name: /^Bought / })
+  await buy.getByLabel('What did you pay?').fill('')
+  await buy.getByRole('button', { name: 'Got it' }).click()
+  await expect(buy).toBeHidden()
 }
 
 test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon, remembered choice', async ({ page }) => {
@@ -67,13 +70,13 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   await markAs(page, 'Brass Birmingham', /^interested$/i)
   await buy(page, /must have/i, 'Cascadia')
 
-  // FR-008, FR-009: six toggles with counts, Must Have pressed the first time, Show off disabled with none pressed
+  // FR-008, FR-009: seven toggles with counts, Must Have pressed the first time, Show off disabled with none pressed
   await showOffButton(page).click()
   const dialog = sheet(page)
   await expect(dialog).toBeVisible()
   const toggles = dialog.locator('button[aria-pressed]')
-  await expect(toggles).toHaveText(['⭐ Must Have 3', '👀 Interested 1', '🤔 Unsure 0', '💩 Poop 0', '⬡ Not yet marked 0', '🛑 Not interested 0'])
-  await expect.poll(() => pressed(page)).toEqual(['true', 'false', 'false', 'false', 'false', 'false'])
+  await expect(toggles).toHaveText(['⭐ Must Have 3', '👀 Interested 1', '🤔 Unsure 0', '⏳ For later 0', '💩 Poop 0', '⬡ No category yet 0', '🛑 Not interested 0'])
+  await expect.poll(() => pressed(page)).toEqual(['true', 'false', 'false', 'false', 'false', 'false', 'false'])
   const showOff = dialog.getByRole('button', { name: 'Show off' })
   await expect(showOff).toBeEnabled()
   await toggles.nth(0).click()
@@ -126,7 +129,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
 
   // FR-009: Show-off again preselects Must Have + Interested
   await showOffButton(page).click()
-  await expect.poll(() => pressed(page)).toEqual(['true', 'true', 'false', 'false', 'false', 'false'])
+  await expect.poll(() => pressed(page)).toEqual(['true', 'true', 'false', 'false', 'false', 'false', 'false'])
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(dialog).toBeHidden()
 })
@@ -138,7 +141,7 @@ test('US2: groups without games show the empty state; Show-off works offline aft
   await createCollection(page, name)
   await addGame(page, GAMES.cascadia, 'Cascadia')
 
-  // FR-013: no game in the chosen groups → empty state, Choose groups opens the sheet
+  // FR-013: no game in the chosen categories → empty state, Choose categories opens the sheet
   await showOffButton(page).click()
   const dialog = sheet(page)
   await dialog.getByRole('button', { name: /must have/i }).click()
@@ -146,21 +149,21 @@ test('US2: groups without games show the empty state; Show-off works offline aft
   await dialog.getByRole('button', { name: 'Show off' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Show-off' })).toBeVisible()
   await expect(page.getByText(`${name} · 💩 · 0 games`)).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'No game in these groups' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'No game in these categories' })).toBeVisible()
   await expect(hexagons(page)).toHaveCount(0)
   await expectAccessible(page)
-  await page.getByRole('button', { name: 'Choose groups' }).click()
+  await page.getByRole('button', { name: 'Choose categories' }).click()
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('button', { name: /poop/i })).toHaveAttribute('aria-pressed', 'true')
 
   // FR-014: offline, the honeycomb shows the covers on the phone
   await context.setOffline(true)
   await dialog.getByRole('button', { name: /poop/i }).click()
-  await dialog.getByRole('button', { name: /not yet marked/i }).click()
+  await dialog.getByRole('button', { name: /no category yet/i }).click()
   await dialog.getByRole('button', { name: 'Show off' }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByText(`${name} · ⬡ · 1 game`)).toBeVisible()
-  await expect.poll(() => names(page)).toEqual(['Cascadia, Not yet marked'])
+  await expect.poll(() => names(page)).toEqual(['Cascadia, No category yet'])
   await hexagons(page).first().click()
   const viewer = page.getByRole('dialog', { name: 'Images of Cascadia' })
   await expect(viewer).toBeVisible()

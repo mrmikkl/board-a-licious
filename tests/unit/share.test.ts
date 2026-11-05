@@ -54,7 +54,7 @@ describe('share text', () => {
     const result = shareText(essen, entries, ['poop', 'new', 'must_have'], games)
     if (!result.ok) throw new Error(result.reason)
     const headings = result.text.split('\n').filter(line => /\(\d+\)$/.test(line))
-    expect(headings).toEqual(['⬡ Not yet marked (1)', '⭐ Must Have (2)', '💩 Poop (1)'])
+    expect(headings).toEqual(['⬡ No category yet (1)', '⭐ Must Have (2)', '💩 Poop (1)'])
     expect(result.text).toContain('• Cascadia – https://boardgamegeek.com/boardgame/295947')
   })
 
@@ -123,10 +123,11 @@ describe('share text', () => {
 
   it('counts the games per group for the checkboxes', () => {
     expect(shareGroups('c1', entries)).toEqual([
-      { mark: 'new', label: 'Not yet marked', emoji: '⬡', count: 1 },
+      { mark: 'new', label: 'No category yet', emoji: '⬡', count: 1 },
       { mark: 'must_have', label: 'Must Have', emoji: '⭐', count: 2 },
       { mark: 'interested', label: 'Interested', emoji: '👀', count: 1 },
       { mark: 'unsure', label: 'Unsure', emoji: '🤔', count: 0 },
+      { mark: 'later', label: 'For later', emoji: '⏳', count: 0 },
       { mark: 'poop', label: 'Poop', emoji: '💩', count: 1 },
       { mark: 'skip', label: 'Not interested', emoji: '🛑', count: 0 },
     ])

@@ -4,12 +4,13 @@ import type { StoredList, StoredListEntry } from '../../client/types.ts'
 import { gameUrl } from '../../domain/bgg-link.ts'
 import type { Collection, Entry } from '../../domain/collection.ts'
 import { publisherOf } from '../../domain/game-info.ts'
-import { markInfo } from '../../domain/marks.ts'
+import { type Mark, markInfo } from '../../domain/marks.ts'
 import { memberships } from '../../domain/membership.ts'
 import { useServices, useStoreData } from '../context.tsx'
 import { applyMembership } from '../list-actions.ts'
 import { href } from '../router.ts'
 import { InfoList } from './GameInfo.tsx'
+import { CategoryPicker } from './CategoryPicker.tsx'
 import { HexCover } from './HexCover.tsx'
 import { ImageViewer } from './ImageViewer.tsx'
 import { Sheet } from './Sheet.tsx'
@@ -34,6 +35,8 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
   const toast = useToast()
   const [ticked, setTicked] = useState<Set<string>>()
   const [busy, setBusy] = useState(false)
+  // F005: the category for collections the game is newly added to; tapping it again means none
+  const [mark, setMark] = useState<Mark>('new')
   const [viewer, setViewer] = useState(false)
   const data = useStoreData(
     async store => {
@@ -58,7 +61,7 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
     if (!changed) return onClose()
     setBusy(true)
     try {
-      const { added, removed } = await applyMembership(services, list, item, before, after)
+      const { added, removed } = await applyMembership(services, list, item, before, after, mark)
       onClose()
       toast([added && `Added ${item.name} to ${plural(added)}`, removed && `Removed it from ${plural(removed)}`].filter(Boolean).join('. '))
     } finally {
@@ -104,6 +107,8 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
               />
             ))}
           </div>
+          <p className="label">Category when added (optional)</p>
+          <CategoryPicker value={mark} onPick={key => setMark(m => (m === key ? 'new' : key))} />
         </>
       )}
       <div className="sheet-actions">

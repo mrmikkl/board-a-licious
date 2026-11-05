@@ -1,6 +1,34 @@
 import { type Collection, type Entry, newEntry } from './collection.ts'
 import { type ListFacts, factsFromList } from './facts.ts'
 
+/**
+ * F005 R11: a copy keeps the category, facts and their source; the purchase stays behind.
+ * `target` is the game's entry in the target collection, if any: a live one refuses the copy, a
+ * removed one is revived.
+ */
+export function copyEntry(entry: Entry, targetCollectionId: string, now: string, target?: Entry): Entry {
+  refuseIfLive(target)
+  return {
+    ...entry,
+    collectionId: targetCollectionId,
+    bought: false,
+    paidCents: null,
+    paidCurrency: null,
+    deleted: false,
+    updatedAt: now,
+  }
+}
+
+/** F005 R11: a move takes everything along; the source becomes a tombstone so other devices drop it. */
+export function moveEntry(entry: Entry, targetCollectionId: string, now: string, target?: Entry): [Entry, Entry] {
+  refuseIfLive(target)
+  return [{ ...entry, collectionId: targetCollectionId, deleted: false, updatedAt: now }, { ...entry, deleted: true, updatedAt: now }]
+}
+
+function refuseIfLive(target?: Entry) {
+  if (target && !target.deleted) throw new Error('The game is already in that collection.')
+}
+
 /** IDs of the collections a game is in (removed entries do not count). */
 export function memberships(entries: Entry[], bggId: number): Set<string> {
   return new Set(entries.filter(e => e.bggId === bggId && !e.deleted).map(e => e.collectionId))

@@ -117,3 +117,16 @@ git worktree list                                             # only the main fo
   again (migrations run on start). After that the full suite passed except `offline.spec.ts`,
   which also fails about 1 in 4 runs on `main` (its sync after going back online is timing-bound).
 
+
+## Lessons from F005
+
+- Workers ran their own database and dev servers (`PGPORT=54xx npm run db:local`, own Vite and
+  preview ports, local Playwright config): no clashes on the shared database while they tested.
+- A page reload during the app's sync aborts a request, and the local database's one connection
+  can stay stuck; a later `kill -9` of the database then corrupted `.pglite/`. Test helpers wait for
+  `networkidle` before reloading; a stuck or corrupt local database is moved aside and started fresh.
+- Seeding test collections straight through `POST /api/sync` (`seedCollection`) is much faster than
+  adding games by hand, but tests share one user: data a feature reads across all collections
+  (resync) needs ids of its own per test.
+- A worker's dispatch can end before its question is answered; the coordinator then finishes that
+  part itself after merging.

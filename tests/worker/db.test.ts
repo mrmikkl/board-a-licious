@@ -125,7 +125,7 @@ describe('repository', () => {
   })
 
   it('caches games and returns only fresh ones', async () => {
-    const game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: 'Tiles.', kind: 'boardgame' as const, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ["Tile Placement", 'Drafting'], publisher: 'Flatout Games' }
+    const game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: 'Tiles.', kind: 'boardgame' as const, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ["Tile Placement", 'Drafting'], publisher: 'Flatout Games', rating: null, geekRating: null }
     await upsertGames(db, [game], '2026-10-01T00:00:00.000Z')
     expect(await getCachedGames(db, [295947], '2026-09-30T00:00:00.000Z')).toEqual([game])
     expect(await getCachedGames(db, [295947], '2026-10-02T00:00:00.000Z')).toEqual([])

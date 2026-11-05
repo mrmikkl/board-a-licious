@@ -194,7 +194,12 @@ type GameRow = {
   designers: string[] | string | null
   mechanisms: string[] | string | null
   publisher: string | null
+  rating: string | number | null
+  geek_rating: string | number | null
 }
+
+/** A numeric column: the production driver hands it over as text, PGlite as a number. */
+const number = (value: string | number | null) => (value === null ? null : Number(value))
 
 /** A jsonb list of names; the production driver hands jsonb over as text, PGlite as parsed JSON. */
 function names(value: string[] | string | null): string[] {
@@ -202,11 +207,29 @@ function names(value: string[] | string | null): string[] {
   return Array.isArray(list) ? list.filter((v): v is string => typeof v === 'string') : []
 }
 
+/**
+ * F005: the two rating columns of migration 0005, added by the Worker itself (idempotent, once per
+ * isolate) so a deploy works before `npm run db:migrate:neon` has run; the migration also marks old
+ * games stale so they get their ratings.
+ */
+let ratingColumns: Promise<void> | undefined
+function ensureRatingColumns(db: Db): Promise<void> {
+  ratingColumns ??= (async () => {
+    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)')
+    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
+  })().catch(error => {
+    ratingColumns = undefined
+    throw error
+  })
+  return ratingColumns
+}
+
 /** Cached games fetched after `freshAfter` (older ones are refreshed from BGG). */
 export async function getCachedGames(db: Db, ids: number[], freshAfter: string): Promise<Game[]> {
   if (ids.length === 0) return []
+  await ensureRatingColumns(db)
   const rows = await db.query<GameRow>(
-    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher FROM game
+    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
     [pgArray(ids), freshAfter],
   )
@@ -222,19 +245,23 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
     designers: names(r.designers),
     mechanisms: names(r.mechanisms),
     publisher: r.publisher,
+    rating: number(r.rating),
+    geekRating: number(r.geek_rating),
   }))
 }
 
 export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
+  await ensureRatingColumns(db)
   for (const g of games) {
     await db.query(
       `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers,
-         mechanisms, publisher, fetched_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12)
+         mechanisms, publisher, rating, geek_rating, fetched_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14)
        ON CONFLICT (bgg_id) DO UPDATE SET name = excluded.name, year = excluded.year,
          thumbnail_url = excluded.thumbnail_url, description = excluded.description, kind = excluded.kind,
          min_players = excluded.min_players, max_players = excluded.max_players, designers = excluded.designers,
-         mechanisms = excluded.mechanisms, publisher = excluded.publisher, fetched_at = excluded.fetched_at`,
+         mechanisms = excluded.mechanisms, publisher = excluded.publisher, rating = excluded.rating,
+         geek_rating = excluded.geek_rating, fetched_at = excluded.fetched_at`,
       [
         g.bggId,
         g.name,
@@ -247,6 +274,8 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
         JSON.stringify(g.designers),
         JSON.stringify(g.mechanisms),
         g.publisher,
+        g.rating ?? null,
+        g.geekRating ?? null,
         fetchedAt,
       ],
     )

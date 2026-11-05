@@ -43,6 +43,12 @@ describe('applyMembership (list game sheet, Done)', () => {
     expect(calls).toEqual({ schedule: 1, details: 1 })
   })
 
+  it('F005: puts newly added games into the chosen category, leaving games already there alone', async () => {
+    const { services } = await setup()
+    await applyMembership(services, preview, item, new Set(), new Set(['essen']), 'later')
+    expect((await store.entries('essen'))[0]?.mark).toBe('later')
+  })
+
   it('does not mark the entry pending when the device already has the details', async () => {
     const { services, calls } = await setup()
     await store.putGames([{ bggId: 446453, name: 'Kalypso', year: 2026, thumbnailUrl: null, description: 'A game.', kind: 'boardgame' }])

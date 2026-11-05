@@ -55,8 +55,9 @@ valid `Cf-Access-Jwt-Assertion` with `401 {"error":"unauthenticated"}`. Bodies a
 ### `GET /api/bgg/games?ids=<id,id,…>`
 
 - 1–50 IDs. `200 { "games": [ { "bggId", "name", "year", "thumbnailUrl", "description", "kind",
-  "minPlayers", "maxPlayers", "designers", "mechanisms", "publisher" } ] }` (`publisher`: the game's
-  first BGG publisher; lists are `[]` when BGG has none).
+  "minPlayers", "maxPlayers", "designers", "mechanisms", "publisher", "rating", "geekRating" } ] }`
+  (`publisher`: the game's first BGG publisher; lists are `[]` when BGG has none; `rating` and
+  `geekRating`: BGG's average and Bayes average, two decimals, `null` when BGG has none (feature 005)).
 - Served from the `game` table when fresher than 7 days, else from BGG (cached).
 
 ### `GET /api/bgg/images?id=<bggId>` (feature 004)

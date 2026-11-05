@@ -15,11 +15,12 @@ async function addMustHave(page: Page, collection: string, link: string, game: s
   await page.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(page.getByLabel(/^name$/i)).toHaveValue(game)
   await page.getByRole('button', { name: 'Add to collection' }).click()
-  await page.getByRole('region', { name: /not yet marked/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
+  await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
   await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
-  // choosing a mark closes the sheet; open the game again from its new group
+  // a tap changes the category in place; Escape closes the details, then open the game from its new group
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
-  await page.getByRole('region', { name: /must have/i }).getByRole('button', { name: new RegExp(game, 'i') }).click()
+  await page.getByRole('region', { name: /must have/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
 }
 
 test('US4: manual facts, bought with a price, money spent, filter', async ({ page }) => {
@@ -47,27 +48,27 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   await sheet.getByRole('button', { name: /bought it/i }).click()
   const paid = sheet.getByLabel('What did you pay?')
   await expect(paid).toHaveValue('52')
-  await expect(sheet.getByRole('button', { name: /don't track the price/i })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Bought Cascadia?' }).getByRole('button', { name: 'Got it' })).toBeVisible()
   await expectAccessible(page)
   await paid.press('Enter')
   await expect(sheet).toBeHidden()
 
   // the game keeps its group, shows the price paid; the collection shows what was spent
   const mustHave = page.getByRole('region', { name: /must have/i })
-  await expect(mustHave.getByRole('button', { name: /cascadia/i })).toContainText('✅ €52')
-  await expect(mustHave.getByRole('button', { name: /cascadia/i })).toContainText('AEG€52 · Booth 3-A101')
+  await expect(mustHave.getByRole('button', { name: 'Not bought Cascadia' })).toContainText('€52')
+  await expect(mustHave.getByRole('button', { name: /^cascadia,/i })).toContainText('AEG€52 · Booth 3-A101')
   await expect(page.getByText('✅ 1 game bought, €52 spent')).toBeVisible()
 
   // FR-009: the hunt preset hides bought games and remembers itself
   await addMustHave(page, name, 'https://boardgamegeek.com/boardgame/342942/ark-nova', 'Ark Nova')
   await expect(sheet.getByText('The description is filled in from BoardGameGeek later.')).toBeVisible()
   await page.keyboard.press('Escape')
-  // filter and grouping hide behind Filter in the action bar (F003); nothing narrowed, so no summary line
+  // filter and grouping hide behind Filter in the action bar (F003); nothing narrowed: Filter is plain, Buy is off
   const icon = page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: /^filter/i })
-  const summary = page.locator('.filter-summary')
-  await expect(summary).toHaveCount(0)
+  await expect(icon).toHaveAccessibleName('Filter')
+  await expect(page.getByRole('button', { name: '🛒 Buy' })).toHaveAttribute('aria-pressed', 'false')
   await icon.click()
-  const panel = page.getByRole('group', { name: 'Filter' })
+  const panel = page.getByRole('group', { name: 'Filter', exact: true })
   await expect(panel.getByRole('checkbox', { name: /must have/i })).toBeChecked()
   await expectAccessible(page)
   // no presets any more: Select none, tick Must Have, then Not bought
@@ -80,18 +81,19 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click()
   await expect(panel).toBeHidden()
   await expect(icon).toHaveAccessibleName('Filter (active)')
-  await expect(summary).toContainText('⭐ Must Have, not bought')
-  await expect(summary).toContainText('1 game')
-  await expect(page.getByRole('button', { name: /cascadia/i })).toBeHidden()
-  await expect(page.getByRole('button', { name: /ark nova/i })).toBeVisible()
+  await expect(page.locator('.quick-count')).toHaveText('1 game')
+  await expect(page.getByRole('button', { name: /^cascadia,/i })).toBeHidden()
+  await expect(page.getByRole('button', { name: /^ark nova,/i })).toBeVisible()
 
   await page.reload()
-  await expect(summary).toContainText('⭐ Must Have, not bought')
+  await expect(icon).toHaveAccessibleName('Filter (active)')
 
   // buying the last Must Have without a price: nothing left to hunt
-  await page.getByRole('button', { name: /ark nova/i }).click()
+  await page.getByRole('button', { name: /^ark nova,/i }).click()
   await sheet.getByRole('button', { name: /bought it/i }).click()
-  await sheet.getByRole('button', { name: /don't track the price/i }).click()
+  // F005: an empty price ticks it off without one
+  await sheet.getByLabel('What did you pay?').fill('')
+  await sheet.getByRole('button', { name: 'Got it' }).click()
   await expect(page.getByRole('heading', { name: /nothing left to hunt/i })).toBeVisible()
   await expect(page.getByText('✅ 2 games bought, €52 spent')).toBeVisible()
   // the toast fades in; check contrast once it is fully shown
@@ -99,14 +101,14 @@ test('US4: manual facts, bought with a price, money spent, filter', async ({ pag
   await expectAccessible(page)
 
   // un-buying from "All games": back in the hunt, the price paid is gone
-  await summary.click()
+  await icon.click()
   await panel.getByRole('button', { name: 'Select all' }).click()
   await panel.getByRole('group', { name: 'Bought' }).getByRole('button', { name: 'All' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click()
   await expect(panel).toBeHidden()
-  await expect(summary).toHaveCount(0)
-  await mustHave.getByRole('button', { name: /cascadia/i }).click()
+  await expect(icon).toHaveAccessibleName('Filter')
+  await mustHave.getByRole('button', { name: /^cascadia,/i }).click()
   await sheet.getByRole('button', { name: /not bought after all/i }).click()
-  await expect(mustHave.getByRole('button', { name: /cascadia/i })).not.toContainText('✅')
+  await expect(mustHave.getByRole('button', { name: 'Buy Cascadia' })).toHaveAttribute('aria-pressed', 'false')
   await expect(page.getByText('✅ 1 game bought')).toBeVisible()
 })

@@ -1,0 +1,87 @@
+/* F005 worker B: category picker honeycomb, copy and move (docs/design.md v2.2.0 "Category picker", "Copy and move") */
+
+/* honeycomb (research R9): six half-columns, three hexagons on top (1st, 3rd, 5th) and two below
+   (2nd, 4th) shifted by half a hexagon and pulled up by a quarter of one; ≤ 88px each, 4px gaps */
+.catpick {
+  /* pointy-top hexagons: height = width × 2/√3; rows interlock by a quarter of the height */
+  --w: min(84px, calc((100vw - 2 * var(--gutter) - 8px) / 3));
+  --h: calc(var(--w) * 1.1547);
+  --g: 4px;
+  position: relative;
+  width: calc(3 * var(--w) + 2 * var(--g));
+  height: calc(var(--h) * 1.75 + var(--g));
+  margin: 12px auto 16px;
+}
+.catpick-btn {
+  position: absolute;
+  top: 0;
+  width: var(--w);
+  height: var(--h);
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.catpick-btn:nth-child(1) {
+  left: 0;
+}
+.catpick-btn:nth-child(3) {
+  left: calc(var(--w) + var(--g));
+}
+.catpick-btn:nth-child(5) {
+  left: calc(2 * (var(--w) + var(--g)));
+}
+.catpick-btn:nth-child(2),
+.catpick-btn:nth-child(4) {
+  top: calc(var(--h) * 0.75 + var(--g));
+}
+.catpick-btn:nth-child(2) {
+  left: calc((var(--w) + var(--g)) / 2);
+}
+.catpick-btn:nth-child(4) {
+  left: calc(1.5 * (var(--w) + var(--g)));
+}
+.catpick-hex {
+  display: block;
+  height: 100%;
+  padding: 2px;
+  background: var(--border-2);
+}
+.catpick-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.catpick-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.catpick-btn[aria-pressed="true"] .catpick-hex {
+  background: var(--orange);
+}
+.catpick-btn[aria-pressed="true"] .catpick-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.catpick-btn:is([data-tone="unsure"], [data-tone="poop"])[aria-pressed="true"]
+  .catpick-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.catpick-btn:focus-visible {
+  outline: none;
+}
+.catpick-btn:focus-visible .catpick-face {
+  box-shadow: inset 0 0 0 3px var(--orange);
+}

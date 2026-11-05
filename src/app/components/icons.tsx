@@ -69,3 +69,31 @@ export const IconShowOff = () => (
     <path d="M12 12.5 15.5 14.5v4L12 20.5 8.5 18.5v-4z" />
   </svg>
 )
+export const IconBag = () => (
+  <svg {...common} width={18} height={18}>
+    <path d="M5 8h14l-1 12H6z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+  </svg>
+)
+export const IconBagCheck = () => (
+  <svg {...common} width={18} height={18} strokeWidth={2.2}>
+    <path d="M5 8h14l-1 12H6z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    <path d="m9 14 2 2 4-4" />
+  </svg>
+)
+/** F005: the Category action of a game row, two hexagons */
+export const IconCategory = () => (
+  <svg {...common} width={18} height={18} strokeWidth={1.9}>
+    <path d="M9 3.5 13 5.8v4.6L9 12.7 5 10.4V5.8z" />
+    <path d="M15 11.3 19 13.6v4.6l-4 2.3-4-2.3v-4.6z" />
+  </svg>
+)
+export const IconResync = () => (
+  <svg {...common} strokeWidth={2.2}>
+    <path d="M20 11a8 8 0 0 0-14.3-4.9L4 8" />
+    <path d="M4 4v4h4" />
+    <path d="M4 13a8 8 0 0 0 14.3 4.9L20 16" />
+    <path d="M20 20v-4h-4" />
+  </svg>
+)

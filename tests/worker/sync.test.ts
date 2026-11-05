@@ -86,6 +86,13 @@ describe('/api/sync', () => {
     }
   })
 
+  it('F005: accepts and returns entries in For later', async () => {
+    const call = testApp(db)
+    const later = { ...entry, mark: 'later' as const }
+    expect(await (await call('/api/sync', json({ collections: [collection], entries: [later] }))).json()).toEqual({ applied: 2, ignored: 0 })
+    expect((await (await call('/api/sync')).json()).entries).toEqual([later])
+  })
+
   it("rejects entries for another user's collection", async () => {
     await testApp(db)('/api/sync', json({ collections: [collection], entries: [] }))
     const res = await testApp(db, { email: 'ben@example.com' })('/api/sync', json({ collections: [], entries: [entry] }))

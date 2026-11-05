@@ -6,7 +6,7 @@ import { navigate } from '../router.ts'
 import { Sheet } from './Sheet.tsx'
 
 /** The six groups in the collection's order (docs/design.md "Show-off"). */
-const GROUPS: Mark[] = ['must_have', 'interested', 'unsure', 'poop', 'new', 'skip']
+const GROUPS: Mark[] = ['must_have', 'interested', 'unsure', 'later', 'poop', 'new', 'skip']
 
 /** The groups last shown off in this collection; the first time Must Have (data-model "Show-off choice"). */
 function rememberedGroups(stored: unknown): Mark[] {
@@ -57,7 +57,7 @@ function Choice({
   }
   return (
     <Sheet open title="Show-off" onClose={onClose}>
-      <p className="lead">Which groups do you want to show? Their covers fill the screen as a honeycomb.</p>
+      <p className="lead">Which categories do you want to show? Their covers fill the screen as a honeycomb.</p>
       <ul className="showoff-groups">
         {GROUPS.map(key => {
           const mark = markInfo(key)

@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { type Api, ApiError } from '../../src/client/api.ts'
-import { createListLoader } from '../../src/client/lists.ts'
+import { RESYNC_BUSY, createListLoader } from '../../src/client/lists.ts'
 import { type Store, deleteStore, openStore } from '../../src/client/store.ts'
 import type { ListKind, StoredList, StoredListEntry } from '../../src/client/types.ts'
 import { type Entry, newEntry } from '../../src/domain/collection.ts'
@@ -318,5 +318,80 @@ describe('list loader', () => {
     await loader.idle()
     expect(list.kind).toBe('geeklist')
     expect((await store.list('geeklist', 66420))?.loadedPages).toBe(2)
+  })
+})
+
+describe('resync (US5, research R10)', () => {
+  const at = new Date(START).toISOString()
+  const typed = (bggId: number, facts: Entry['facts'], patch: Partial<Entry> = {}): Entry => ({
+    ...newEntry('c1', bggId, at),
+    facts,
+    factsSource: 'manual',
+    ...patch,
+  })
+
+  it('reloads every page from 1, reconciles after the last page and returns the result', async () => {
+    const bgg = fakeApi(clock)
+    const loader = loaderFor(bgg.api)
+    await loader.open('preview', 93)
+    await loader.idle()
+    // 100: hand-typed booth that differs from the list; 200: no facts yet; 999: not on the list
+    await store.saveEntries([typed(100, { booth: '2-B10' }), newEntry('c1', 200, at), newEntry('c1', 999, at)])
+    const pagesBefore = bgg.calls.length
+    const seenAt3: (string | null | undefined)[] = []
+    bgg.onPage[3] = () => void store.entries('c1').then(rows => seenAt3.push(rows.find(r => r.bggId === 200)?.factsSource))
+
+    const result = await loader.resync('preview', 93)
+
+    expect(bgg.calls.slice(pagesBefore).map(c => c.what)).toEqual(['page 1', 'page 2', 'page 3'])
+    expect(seenAt3).toEqual([null])
+    expect(result).toEqual({
+      updated: 2,
+      conflicts: [{ collectionId: 'c1', bggId: 100, field: 'booth', own: '2-B10', bgg: '3-R100', bggFacts: { booth: '3-R100' } }],
+    })
+    const rows = await store.entries('c1')
+    expect(rows.find(r => r.bggId === 200)).toMatchObject({ factsSource: 'preview', facts: { booth: '3-R200' } })
+    expect(rows.find(r => r.bggId === 100)).toMatchObject({ factsSource: 'manual', facts: { booth: '2-B10', priceCents: 1000, currency: 'EUR' } })
+    expect(rows.find(r => r.bggId === 999)).toMatchObject({ factsSource: null, facts: null })
+    await loader.idle()
+  })
+
+  it('writes the resync in one transaction after the pages (preview pages refresh on their own)', async () => {
+    const loader = loaderFor(fakeApi(clock).api)
+    await loader.open('preview', 93)
+    await loader.idle()
+    await store.saveEntries([newEntry('c1', 200, at)])
+    const spy = vi.spyOn(store, 'updateEntries')
+    await loader.resync('preview', 93)
+    // one per page (preview facts) and one for the reconcile
+    expect(spy).toHaveBeenCalledTimes(4)
+    spy.mockRestore()
+  })
+
+  it('stops at a failing page without reconciling and says BoardGameGeek is busy', async () => {
+    const bgg = fakeApi(clock)
+    const loader = loaderFor(bgg.api)
+    await loader.open('preview', 93)
+    await loader.idle()
+    await store.saveEntries([newEntry('c1', 200, at)])
+    bgg.failing.add(2)
+
+    await expect(loader.resync('preview', 93)).rejects.toMatchObject({ message: RESYNC_BUSY })
+    expect(await store.entries('c1')).toEqual([expect.objectContaining({ bggId: 200, factsSource: null, facts: null })])
+    await loader.idle()
+  })
+
+  it('writes the chosen BGG values, and records own values as declined', async () => {
+    const loader = loaderFor(fakeApi(clock).api)
+    await loader.open('preview', 93)
+    await loader.idle()
+    await store.saveEntries([typed(100, { booth: '2-B10', priceCents: 1000, currency: 'EUR', publisher: 'Inside Up Games' })])
+    const conflict = { collectionId: 'c1', bggId: 100, field: 'booth' as const, own: '2-B10', bgg: '3-R100', bggFacts: { booth: '3-R100' } }
+
+    await loader.settleConflicts([conflict], { 'c1:100:booth': 'bgg' })
+    expect(await store.entries('c1')).toEqual([expect.objectContaining({ bggId: 100, facts: expect.objectContaining({ booth: '3-R100' }), factsSource: 'manual' })])
+    await loader.settleConflicts([{ ...conflict, own: '3-R100', bgg: '3-R101', bggFacts: { booth: '3-R101' } }], { 'c1:100:booth': 'own' })
+    expect(await store.meta('declinedFacts')).toEqual({ 'c1:100:booth': '3-R101' })
+    await loader.idle()
   })
 })

@@ -27,6 +27,13 @@ export function InfoLine({ facts, details }: Source) {
   )
 }
 
+/** A BGG rating as a small hexagon: rating cool, geek rating dusk (docs/design.md, game info). */
+const Rating = ({ value, geek }: { value: string; geek: boolean }) => (
+  <span className="rating">
+    <i className={geek ? 'geek' : undefined}>{value}</i>
+  </span>
+)
+
 /** The publisher, then every info a game has in the order of FR-010: game details, swipe card. */
 export function InfoList({ facts, details, publisher }: Source & { publisher?: string | null }) {
   const infos = gameInfos(facts, details)
@@ -42,7 +49,17 @@ export function InfoList({ facts, details, publisher }: Source & { publisher?: s
       {infos.map(i => (
         <div key={i.key}>
           <dt>{i.label}</dt>
-          <dd>{i.items ? <Mechanisms items={i.items} /> : i.key === 'booth' ? i.text.replace(/^Booth /, '') : i.text}</dd>
+          <dd>
+            {i.key === 'rating' || i.key === 'geekRating' ? (
+              <Rating value={i.text} geek={i.key === 'geekRating'} />
+            ) : i.items ? (
+              <Mechanisms items={i.items} />
+            ) : i.key === 'booth' ? (
+              i.text.replace(/^Booth /, '')
+            ) : (
+              i.text
+            )}
+          </dd>
         </div>
       ))}
     </dl>

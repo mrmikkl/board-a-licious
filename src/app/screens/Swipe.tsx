@@ -35,7 +35,7 @@ function useReducedMotion() {
 type Leaving = { game: StoredListEntry; details?: Game; direction: SwipeDirection; fromX: number; key: number }
 
 /**
- * Swipe (FR-015): pick a list, then decide card by card; right adds the game as Not yet marked, left
+ * Swipe (FR-015): pick a list, then decide card by card; right adds the game with No category yet, left
  * as Not interested. Games already in the collection never come up. The list is open (loading its
  * pages) while this screen shows it.
  */
@@ -198,7 +198,7 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
               <div className="empty">
                 <div className="hex" />
                 <h2>You&apos;ve seen every game on this list</h2>
-                <p>Back to the collection to mark them.</p>
+                <p>Back to the collection to give them a category.</p>
                 <div className="actions">
                   <a className="btn btn-primary" href={back}>
                     Open {collection.name}

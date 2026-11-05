@@ -4,7 +4,7 @@ import { type SwipeDirection, swipeDecision } from '../domain/swipe.ts'
 import type { AppServices } from './context.tsx'
 
 /**
- * One swipe decision (FR-015): right adds the game as Not yet marked, left as Not interested. A game
+ * One swipe decision (FR-015): right adds the game with No category yet, left as Not interested. A game
  * this device has no details for yet stands in with the list's name and cover and is completed in the
  * background (FR-017), like a game added by link.
  */

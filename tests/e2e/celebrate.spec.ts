@@ -15,7 +15,7 @@ async function addByLink(page: Page, collection: string, link: string, game: str
   await page.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(page.getByLabel(/^name$/i)).toHaveValue(game)
   await page.getByRole('button', { name: 'Add to collection' }).click()
-  await expect(page.getByRole('button', { name: new RegExp(game, 'i') })).toBeVisible()
+  await expect(page.getByRole('button', { name: new RegExp(`^${game},`, 'i') })).toBeVisible()
 }
 
 const openGame = (page: Page, game: string) => page.getByRole('button', { name: new RegExp(`^${game}`, 'i') }).click()
@@ -35,8 +35,9 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   await openGame(page, 'Cascadia')
   const button = await sheet.getByRole('button', { name: /must have/i }).boundingBox()
   await sheet.getByRole('button', { name: /must have/i }).click()
+  await page.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
-  await expect(mustHaveCount).toHaveAccessibleName('Must Have 1')
+  await expect(mustHaveCount).toHaveAccessibleName(/Must Have 1/)
   if (reduced) {
     expect(await overlay.count()).toBe(0)
   } else {
@@ -53,7 +54,9 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   // a second Must Have: the count rolls from 1 to 2, the final value is in the name right away
   await openGame(page, 'Ark Nova')
   await sheet.getByRole('button', { name: /must have/i }).click()
-  await expect(mustHaveCount).toHaveAccessibleName('Must Have 2')
+  await page.keyboard.press('Escape')
+  await expect(sheet).toBeHidden()
+  await expect(mustHaveCount).toHaveAccessibleName(/Must Have 2/)
   const rolling = await mustHaveCount.locator('.counter-roll').count()
   const flashing = await mustHaveCount.locator('.counter.flash').count()
   if (reduced) {
@@ -70,7 +73,7 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
   await openGame(page, 'Ark Nova')
   await sheet.getByRole('button', { name: /bought it/i }).click()
   await sheet.getByLabel('What did you pay?').fill('45')
-  await sheet.getByRole('button', { name: /save, got it/i }).click()
+  await sheet.getByRole('button', { name: 'Got it' }).click()
   await expect(sheet).toBeHidden()
   if (reduced) {
     expect(await overlay.count()).toBe(0)

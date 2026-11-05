@@ -99,14 +99,9 @@
   color: var(--muted);
 }
 .swipe-desc {
-  display: -webkit-box;
-  margin: 0 0 10px;
-  overflow: hidden;
+  margin: 8px 0 0;
   font-size: 14px;
   line-height: 1.45;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
 }
 .swipe-wait {
   justify-content: center;
@@ -283,6 +278,11 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
+}
+.swipe-card .facts-box {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 }
 .swipe-card .info-list {
   width: 100%;
