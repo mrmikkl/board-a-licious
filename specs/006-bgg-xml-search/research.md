@@ -86,8 +86,9 @@ marked *Recorded*.
   answers carry no ratings; getting them for every match would need one `thing` request per 20
   matches before showing anything, breaking SC-002. Shorter-name-first gives the same feel for typical
   queries ("cascad" → Cascadia first). design.md is amended accordingly.
-- **Covers**: the app requests `GET /api/bgg/games?ids=<shown ids>` after the results arrive (visible
-  first, in chunks of 20); rows show initials until then (design rule "Search result row").
+- **Covers**: results show initials only. A game's details and cover are requested (`GET /api/bgg/games?ids=<id>`)
+  when it is opened (info sheet, + sheet, Add game pick). Loading covers for all results queued up to
+  3 BGG requests per search behind the 1 request/s limit and made quick typing slow (changed 2026-11-06).
 - **Cache**: search answers cached 1 day per normalised query (lower case, trimmed, single spaces) in
   the edge cache; `GET /api/bgg/search` caches the ranked result for the same key.
 

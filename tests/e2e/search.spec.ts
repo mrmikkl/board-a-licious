@@ -49,6 +49,26 @@ test.describe('F006 US1: find a game by its name', () => {
     await expect(page.getByRole('button', { name: 'Cascadia: Landmarks, 2023, expansion' })).toHaveAccessibleDescription(/in /)
   })
 
+  test('results load no details; opening a game loads only its own', async ({ page }) => {
+    await fakeSearch(page, { results })
+    const asked: string[] = []
+    const mine = new Set([String(HARMONIES.bggId)])
+    // the app also completes details of the (shared) test user's collections; only result ids count here
+    page.on('request', r => {
+      if (!r.url().includes('/api/bgg/games')) return
+      const ids = (new URL(r.url()).searchParams.get('ids') ?? '').split(',').filter(id => mine.has(id))
+      if (ids.length) asked.push(ids.join(','))
+    })
+    await page.goto('/#/search')
+    await field(page).fill('harmon')
+    await expect(page.getByRole('button', { name: 'Harmonies, 2024' })).toBeVisible()
+    await page.waitForTimeout(500)
+    expect(asked).toEqual([])
+    await page.getByRole('button', { name: 'Harmonies, 2024' }).click()
+    await expect(page.getByRole('dialog', { name: 'Harmonies' }).getByText('From BoardGameGeek')).toBeVisible()
+    expect(asked).toEqual([String(HARMONIES.bggId)])
+  })
+
   test('tapping a game shows only its info', async ({ page }) => {
     await fakeSearch(page, { results })
     await page.goto('/#/search')

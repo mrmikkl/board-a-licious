@@ -11,14 +11,13 @@ export const SEARCH_PAUSE_MS = 500
 /** When BGG asks to wait: tries and the pause between them before "not reachable". */
 const WAIT_TRIES = 3
 const WAIT_MS = 3000
-/** Covers come through /api/bgg/games, 20 games per request. */
-const COVER_CHUNK = 20
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 /**
  * F006: BoardGameGeek search by name for the Search place (limit 50) and Add game (limit 8): a pause in
- * typing, only the newest answer shown, then covers and details for the results.
+ * typing, only the newest answer shown. Results show at once with initials; a game's details and cover
+ * are loaded only when it is opened (`loadGame`), so typing never queues BGG requests for covers.
  */
 export function useBggSearch(limit: number) {
   const { api } = useServices()
@@ -30,16 +29,15 @@ export function useBggSearch(limit: number) {
   const known = useRef(games)
   known.current = games
 
-  const loadCovers = useCallback(
-    async (ids: number[], mine: number) => {
-      const missing = ids.filter(id => !known.current.has(id))
-      for (let i = 0; i < missing.length && mine === seq.current; i += COVER_CHUNK) {
-        try {
-          const found = await api.games(missing.slice(i, i + COVER_CHUNK))
-          setGames(current => new Map([...current, ...found.map(g => [g.bggId, g] as const)]))
-        } catch {
-          return // covers are a nicety: rows keep their initials
-        }
+  /** One game's details and cover, when it is opened; a failure leaves its initials. */
+  const loadGame = useCallback(
+    async (bggId: number) => {
+      if (known.current.has(bggId)) return
+      try {
+        const [game] = await api.games([bggId])
+        if (game) setGames(current => new Map(current).set(game.bggId, game))
+      } catch {
+        // offline or BGG busy: the sheet says the details are loading, the row keeps its initials
       }
     },
     [api],
@@ -60,10 +58,6 @@ export function useBggSearch(limit: number) {
         try {
           const results = await api.search(query.text, limit, controller.signal)
           dispatch({ type: 'results', seq: mine, results })
-          void loadCovers(
-            results.map(r => r.bggId),
-            mine,
-          )
           return
         } catch (error) {
           if (controller.signal.aborted) return
@@ -78,7 +72,7 @@ export function useBggSearch(limit: number) {
         }
       }
     },
-    [api, limit, loadCovers],
+    [api, limit],
   )
 
   /** The text changed: search after a pause. */
@@ -101,5 +95,5 @@ export function useBggSearch(limit: number) {
     [],
   )
 
-  return { state, games, change, searchNow: () => void run(state.text), retry: () => void run(state.text) }
+  return { state, games, change, loadGame, searchNow: () => void run(state.text), retry: () => void run(state.text) }
 }

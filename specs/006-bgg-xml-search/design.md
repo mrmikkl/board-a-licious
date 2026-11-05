@@ -20,7 +20,7 @@ choices only.
 |---|---|---|
 | **Search** | heading "Search"; label "Search BoardGameGeek"; search field ("Game name, e.g. Cascadia", clear ×); hint "Type at least 2 letters."; separator; status line ("6 games · exact matches first"); result rows. **No action bar** | — |
 | ↳ typing | search 0.5 s after the last key (Enter: at once); first search: 4 placeholder rows; later: old results dimmed until the new ones arrive; an older answer arriving late is dropped | — |
-| ↳ result row | cover (initials until covers arrive), name, year or "Year unknown", **Expansion** pill, teal "in Essen 2026" / "in 2 collections"; a **big +** at the right | row: Game info sheet; +: Add to collections sheet |
+| ↳ result row | initials (cover once opened), name, year or "Year unknown", **Expansion** pill, teal "in Essen 2026" / "in 2 collections"; a **big +** at the right | row: Game info sheet; +: Add to collections sheet |
 | ↳ 50 results | status "50 games · the first 50, exact matches first"; below the list "More games match. Type more of the name to narrow it down." | — |
 | ↳ no match | empty state "No game called “…” on BoardGameGeek", "Check the spelling, or try a shorter part of the name." | — |
 | ↳ BGG asks to wait | status "BoardGameGeek asks us to wait a moment… still searching" (no error) | results |
@@ -48,3 +48,6 @@ Game info, Image viewer, Empty state, Sheet, Toast, Separator.
 - Results sort exact matches first, then names starting with the text, then the rest; within each, the shorter name first (closer match), then alphabetical. Changed after the review
   (research R5): search answers carry no ratings, and fetching them first would slow every search; the
   prototype's geek-rating order is not built.
+- After the release (2026-11-06): results no longer load covers in the background; typing quickly queued
+  BGG requests and "spirit island" took long. Rows show initials; a game's details and cover load only
+  when it is opened (tap or +).

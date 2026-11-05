@@ -11,7 +11,7 @@ export const yearText = (year: number | null | undefined) => (year ? String(year
 export const resultLabel = (name: string, result: SearchResult) => `${name}, ${yearText(result.year)}${result.kind === 'expansion' ? ', expansion' : ''}`
 
 /**
- * F006: a game found on BoardGameGeek: cover (initials until the details arrive), name, year, Expansion,
+ * F006: a game found on BoardGameGeek: initials (the cover once the game was opened), name, year, Expansion,
  * where the person already has it; a big + beside it adds it to collections. `compact` (Add game's
  * matches) is one smaller button without the +.
  */

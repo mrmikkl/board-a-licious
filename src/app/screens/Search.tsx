@@ -66,7 +66,7 @@ const inText = (names: string[] | undefined) => (!names?.length ? null : names.l
 function SearchBgg() {
   const fieldId = useId()
   const hintId = useId()
-  const { state, games, change, searchNow, retry } = useBggSearch(LIMIT)
+  const { state, games, change, loadGame, searchNow, retry } = useBggSearch(LIMIT)
   const inCollections = useInCollections()
   const [sheet, setSheet] = useState<{ kind: 'info' | 'add'; result: SearchResult }>()
 
@@ -142,8 +142,14 @@ function SearchBgg() {
                 result={result}
                 game={games.get(result.bggId)}
                 inText={inText(inCollections?.get(result.bggId))}
-                onOpen={() => setSheet({ kind: 'info', result })}
-                onAdd={() => setSheet({ kind: 'add', result })}
+                onOpen={() => {
+                  void loadGame(result.bggId)
+                  setSheet({ kind: 'info', result })
+                }}
+                onAdd={() => {
+                  void loadGame(result.bggId)
+                  setSheet({ kind: 'add', result })
+                }}
               />
             </li>
           ))}
