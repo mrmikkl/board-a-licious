@@ -1,6 +1,6 @@
 # Feature design: Essen Feedback
 
-**Design rules**: [docs/design.md](../../docs/design.md) v2.2.0 | **Prototype**: [design/prototype.html](design/prototype.html)
+**Design rules**: [docs/design.md](../../docs/design.md) v2.3.0 | **Prototype**: [design/prototype.html](design/prototype.html)
 | **Agreed**: 2026-10-22
 
 Open the prototype in Chrome, switch the developer tools to device mode (phone size) and pick a
@@ -56,3 +56,18 @@ line), Game info (ratings), Sheet, Toast, Separator, Screen heading, Action bar.
 - **BG-Tinder shows the same game details** as the details sheet (info box with ratings, full description), added after the review.
 - The Buy action shows the price paid as its label once bought; the row's info line no longer
   repeats it.
+
+## Changes after the fair release (2026-10-23 – 2026-10-24)
+
+Asked for while using the app at SPIEL; built and deployed directly, recorded here and in
+docs/design.md v2.3.0:
+
+- Every game row carries a **category tag** in its top-left corner (the category's name in its colour).
+- **Copy** and **Move** instead of "Copy to collection" / "Move to collection", side by side.
+- The honeycomb picker got class names of its own (`.catpick*`); the Category sheet's `.cat-hex`
+  had squeezed it.
+- Long mechanism pills wrap inside the info box instead of pushing past the screen.
+- **By booth**, games inside a hall are sorted by category (Must Have first), then booth.
+- **Add game** and the **BGG list's game sheet** offer an optional category for the games they add.
+- The **BG-Tinder cover** opens the image viewer; the card's info box shows the publisher too.
+- Search fields have a **thumb-sized clear ×**.

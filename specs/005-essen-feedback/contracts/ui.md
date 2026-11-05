@@ -42,7 +42,7 @@ cached with the game, through the existing throttled client.
 | category picker | group "Category"; five buttons (emoji + label), `aria-pressed` |
 | Not interested | button "🛑 Not interested" (on such a game: "↩ Interested again") |
 | info box | term/definition pairs including "Rating" and "Geek rating" (when known) |
-| copy / move | buttons "Copy to collection", "Move to collection" |
+| copy / move | buttons "Copy", "Move" |
 
 ## BGG list
 
@@ -54,7 +54,7 @@ cached with the game, through the existing throttled client.
 
 ## BG-Tinder card
 
-Group "Game: <game>" containing "publisher · year", the info box (as details, with ratings) and the
+Group "Game: <game>" containing a button "Show the images of <game> big" (opens the image viewer), "publisher · year", the info box (as details, with ratings) and the
 full description.
 
 ## Toasts
