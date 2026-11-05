@@ -1,8 +1,9 @@
 # Research: Official BGG Data and Search
 
 Phase 0 of [plan.md](plan.md). Facts about BoardGameGeek's XML API from its page "Using the XML API"
-and BGG's API documentation (checked 2026-11-05; the page itself blocks automated reads, so the first
-task records real responses as fixtures and confirms each point below).
+and BGG's API documentation, **confirmed 2026-11-05 against real answers** recorded with the token in
+`tests/fixtures/bgg-xml/` (T002, `scripts/record-bgg-xml.mjs`). Findings from the recording are
+marked *Recorded*.
 
 ## R1. Sending the token
 
@@ -11,6 +12,8 @@ task records real responses as fixtures and confirms each point below).
   `Authorization: Bearer <BGG_TOKEN>` and the existing honest `User-Agent`. The token is read from the
   Worker env only, passed into the client at construction, never put into URLs, cache keys, logs,
   error messages or `/api/me`.
+- *Recorded*: `Authorization: Bearer` on `boardgamegeek.com` answered 200 for thing, search and
+  geeklist.
 - **Rationale**: BGG's documented form; a header keeps the token out of cache keys (the cache key is
   the URL) and out of request logs.
 - **Alternatives**: token as a query parameter (would land in cache keys and logs).
@@ -54,6 +57,10 @@ task records real responses as fixtures and confirms each point below).
   `link[type=boardgamedesigner|boardgamemechanic|boardgamepublisher]` (publisher: first); 
   `statistics.ratings.average` / `bayesaverage` → rating / geekRating (0 → null, rounded to two
   decimals as today). Unknown ids are simply missing from the answer → left out.
+- *Recorded*: `thing` answers any item type for an id (374341 is an `rpgitem`); a `type` filter with
+  two types answered "Invalid Item", so no `type` parameter is sent and items other than `boardgame`
+  / `boardgameexpansion` are dropped in code. A game can have a rating but `bayesaverage` 0 (477191:
+  8.19 / no geek rating). Cascadia's values match the website data (7.88 / 7.73 rounded).
 - The games route fetches at most `source.fetchLimit` games per request: geekdo 10 (two requests per
   game), official 40 (two requests of 20).
 - **Difference accepted**: the official description is BGG's full text, the website's was a short
@@ -68,6 +75,10 @@ task records real responses as fixtures and confirms each point below).
   `item[type, id]` with `name[type=primary|alternate, value]` and `yearpublished`; no covers. An
   expansion can appear twice (as `boardgame` and as `boardgameexpansion`): de-duplicate by id, an
   `expansion` entry wins. The shown name is the item's name (primary when present).
+- *Recorded* ("cascad", 34 items): expansions appear twice (as `boardgame` and as
+  `boardgameexpansion`); BGG also matches words inside names ("The Battle at Kemble's Cascade");
+  some items carry only an `alternate` name (the matched one, e.g. 388406 "Cascade"); names contain
+  entities (`&#039;`). Such a row shows that name until `/api/bgg/games` brings the primary name.
 - **Ranking** (`rankResults` in `src/domain/bgg-search.ts`): exact match of the folded name (case and
   accents ignored) first, then names starting with the query, then the rest; within each group the
   shorter name first (closer match), then alphabetical; cut at the limit (50 for Search, 8 for Add game).
@@ -88,6 +99,9 @@ task records real responses as fixtures and confirms each point below).
   `pageCount` and positions stay as today. Only `objecttype="thing"` with subtype `boardgame` or
   `boardgameexpansion` count. Thumbnails are not in the answer → `thumbnailUrl: null`; the list
   screen already fills covers from `/api/bgg/games`.
+- *Recorded*: 66420 answered 200 at once with all 34 items (`objecttype` `thing`, `geeklist` or
+  `thread`; things with `subtype="boardgame"`), attributes spread over several lines. The 202 body in
+  `geeklist-202.xml` is written by hand from BGG's documented message.
 - **202 Accepted**: BGG queues large geeklists and answers 202 first. The client retries the same URL
   up to 3 times, 2 s apart (through the 1 request/s queue); still 202 → `bgg_rate_limited` with
   `Retry-After: 5`, which the list loader already handles as "wait and retry".
