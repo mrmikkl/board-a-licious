@@ -36,6 +36,8 @@ describe('GET /api/bgg/games', () => {
           publisher: 'Flatout Games',
           rating: 7.88,
           geekRating: 7.73,
+          bestWith: null,
+          recommendedWith: null,
         },
       ],
     })

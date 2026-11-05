@@ -7,7 +7,8 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '',
   htmlEntities: true,
-  isArray: name => REPEATED.has(name),
+  // tags only: `name` is also an attribute (e.g. of a poll), which must stay a plain value
+  isArray: (name, _path, _leaf, isAttribute) => !isAttribute && REPEATED.has(name),
 })
 
 /** The official API's XML as plain objects; throws when the text holds no XML document. */

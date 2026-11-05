@@ -196,6 +196,8 @@ type GameRow = {
   publisher: string | null
   rating: string | number | null
   geek_rating: string | number | null
+  best_with: string | null
+  recommended_with: string | null
 }
 
 /** A numeric column: the production driver hands it over as text, PGlite as a number. */
@@ -217,6 +219,8 @@ function ensureRatingColumns(db: Db): Promise<void> {
   ratingColumns ??= (async () => {
     await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)')
     await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
+    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS best_with text')
+    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS recommended_with text')
   })().catch(error => {
     ratingColumns = undefined
     throw error
@@ -229,7 +233,7 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
   if (ids.length === 0) return []
   await ensureRatingColumns(db)
   const rows = await db.query<GameRow>(
-    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating FROM game
+    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating, best_with, recommended_with FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
     [pgArray(ids), freshAfter],
   )
@@ -247,6 +251,8 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
     publisher: r.publisher,
     rating: number(r.rating),
     geekRating: number(r.geek_rating),
+    bestWith: r.best_with,
+    recommendedWith: r.recommended_with,
   }))
 }
 
@@ -255,13 +261,14 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
   for (const g of games) {
     await db.query(
       `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers,
-         mechanisms, publisher, rating, geek_rating, fetched_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14)
+         mechanisms, publisher, rating, geek_rating, best_with, recommended_with, fetched_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14, $15, $16)
        ON CONFLICT (bgg_id) DO UPDATE SET name = excluded.name, year = excluded.year,
          thumbnail_url = excluded.thumbnail_url, description = excluded.description, kind = excluded.kind,
          min_players = excluded.min_players, max_players = excluded.max_players, designers = excluded.designers,
          mechanisms = excluded.mechanisms, publisher = excluded.publisher, rating = excluded.rating,
-         geek_rating = excluded.geek_rating, fetched_at = excluded.fetched_at`,
+         geek_rating = excluded.geek_rating, best_with = excluded.best_with, recommended_with = excluded.recommended_with,
+         fetched_at = excluded.fetched_at`,
       [
         g.bggId,
         g.name,
@@ -276,6 +283,8 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
         g.publisher,
         g.rating ?? null,
         g.geekRating ?? null,
+        g.bestWith ?? null,
+        g.recommendedWith ?? null,
         fetchedAt,
       ],
     )

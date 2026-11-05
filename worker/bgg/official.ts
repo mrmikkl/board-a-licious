@@ -24,7 +24,9 @@ type ThingItem = {
   maxplayers?: Value
   link?: Link[]
   statistics?: { ratings?: { average?: Value; bayesaverage?: Value } }
+  'poll-summary'?: PollSummary | PollSummary[]
 }
+type PollSummary = { name?: string; result?: { name?: string; value?: string } | { name?: string; value?: string }[] }
 type SearchItem = { type?: string; id?: string; name?: Name[]; yearpublished?: Value }
 type GeeklistItem = { objecttype?: string; subtype?: string; objectid?: string; objectname?: string }
 
@@ -44,6 +46,19 @@ const linked = (links: Link[] | undefined, type: string) => [
   ...new Set((links ?? []).filter(l => l.type === type && l.inbound !== 'true').map(l => decodeText(l.value)).filter(Boolean)),
 ]
 
+/** "Best with 2–3 players" → "2–3 players"; empty when nobody voted. */
+function pollSummary(item: ThingItem): { bestWith: string | null; recommendedWith: string | null } {
+  const summary = asArray(item['poll-summary']).find(p => p.name === 'suggested_numplayers')
+  const results = asArray(summary?.result)
+  // BGG spells the second one "recommmendedwith" (three m)
+  const text = (name: RegExp, prefix: RegExp) => {
+    const value = decodeText(results.find(r => name.test(r.name ?? ''))?.value).replace(prefix, '')
+    // empty or "(no votes)" when nobody voted
+    return /\d/.test(value) ? value : null
+  }
+  return { bestWith: text(/^bestwith$/, /^best with\s+/i), recommendedWith: text(/^recom+endedwith$/, /^recommended with\s+/i) }
+}
+
 function toGame(item: ThingItem, kind: Game['kind']): Game {
   const ratings = item.statistics?.ratings
   return {
@@ -60,6 +75,7 @@ function toGame(item: ThingItem, kind: Game['kind']): Game {
     publisher: linked(item.link, 'boardgamepublisher')[0] ?? null,
     rating: rating(ratings?.average?.value),
     geekRating: rating(ratings?.bayesaverage?.value),
+    ...pollSummary(item),
   }
 }
 

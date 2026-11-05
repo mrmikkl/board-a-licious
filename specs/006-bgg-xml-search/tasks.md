@@ -122,6 +122,14 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 
 ---
 
+## Phase 7: After the release (2026-11-06)
+
+- [X] T034 Give search result and BGG list rows the collection row's spacing between cover and name in `src/app/theme/search.css`
+- [X] T035 Show search results at once without covers; load a game's details and cover only when it is opened (`loadGame` in `src/app/hooks/useBggSearch.ts`), tested in `tests/e2e/search.spec.ts`
+- [X] T036 Show BGG's player poll ("Best with", "Recommended") in the info box (FR-006a): `bestWith`/`recommendedWith` in `src/domain/game-info.ts`, read from the thing `poll-summary` in `worker/bgg/official.ts`, stored in `migrations/0006_player_poll.sql` / `worker/db/repository.ts`, fetched once more on the phone (`src/client/details.ts`)
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → stories. T002 needs the owner's token locally; T010–T011, T017 need its fixtures.

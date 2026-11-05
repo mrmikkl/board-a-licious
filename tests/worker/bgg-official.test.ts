@@ -53,6 +53,14 @@ describe('OfficialSource.getGames (F006 research R4)', () => {
     expect(games[1]).toMatchObject({ name: 'Cascadia: Landmarks', rating: 7.73, geekRating: 6.84 })
   })
 
+  it('reads the player poll summary: best with and recommended (F006)', async () => {
+    const { source } = official(things)
+    const [cascadia] = await source.getGames([295947])
+    expect(cascadia).toMatchObject({ bestWith: '2–3 players', recommendedWith: '1–4 players' })
+    const [mini] = await source.getGames([477191])
+    expect(mini).toMatchObject({ bestWith: null, recommendedWith: null })
+  })
+
   it('decodes the full description, including entities BGG encodes twice', async () => {
     const { source } = official(things)
     const [cascadia] = await source.getGames([295947])
@@ -91,8 +99,8 @@ describe('OfficialSource.getGames (F006 research R4)', () => {
     })
     const [mine] = await source.getGames([295947])
     const [theirs] = await web.getGames([295947])
-    const { description: _a, mechanisms: m1, publisher: _p1, ...a } = mine!
-    const { description: _b, mechanisms: m2, publisher: _p2, ...b } = theirs!
+    const { description: _a, mechanisms: m1, publisher: _p1, bestWith: _w1, recommendedWith: _r1, ...a } = mine!
+    const { description: _b, mechanisms: m2, publisher: _p2, bestWith: _w2, recommendedWith: _r2, ...b } = theirs!
     expect(a).toEqual({ ...b, thumbnailUrl: a.thumbnailUrl })
     expect(new Set(m1)).toEqual(new Set(m2))
   })

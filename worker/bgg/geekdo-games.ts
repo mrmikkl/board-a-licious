@@ -55,6 +55,9 @@ const toGame = (item: GeekItem, ratings: Ratings): Game => {
     kind: item.subtype === 'boardgameexpansion' ? 'expansion' : 'boardgame',
     ...gameDetails(item),
     ...ratings,
+    // the website data has no player poll (official API only, F006)
+    bestWith: null,
+    recommendedWith: null,
   }
 }
 

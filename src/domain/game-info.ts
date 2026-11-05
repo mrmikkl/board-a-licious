@@ -12,9 +12,12 @@ export type GameDetails = {
   /** BGG's average rating and Bayes average ("geek rating"), null when BGG has none (R1). */
   rating?: number | null
   geekRating?: number | null
+  /** F006: BGG's player poll summary ("2–3 players"); official API only, null when nobody voted. */
+  bestWith?: string | null
+  recommendedWith?: string | null
 }
 
-export type InfoKey = 'price' | 'players' | 'rating' | 'geekRating' | 'booth' | 'edition' | 'designer' | 'mechanisms'
+export type InfoKey = 'price' | 'players' | 'bestWith' | 'recommendedWith' | 'rating' | 'geekRating' | 'booth' | 'edition' | 'designer' | 'mechanisms'
 export type Info = { key: InfoKey; label: string; text: string; items?: string[] }
 
 /** A game row shows this many infos; the details show all. */
@@ -34,7 +37,8 @@ function players(min: number | null | undefined, max: number | null | undefined)
 }
 
 /**
- * FR-010: the infos of a game in this order, each left out when unknown: price, players, rating,
+ * FR-010: the infos of a game in this order, each left out when unknown: price, players, best with,
+ * recommended (F006), rating,
  * geek rating, booth, edition, designer, mechanisms. Price, booth and edition come from a list (or
  * were typed in), the rest from the game's BGG details.
  */
@@ -45,6 +49,8 @@ export function gameInfos(facts: Facts | null | undefined, details: Partial<Game
   }
   add('price', 'Price', facts?.priceCents != null ? formatMoney(facts.priceCents, facts.currency) : null)
   add('players', 'Players', players(details?.minPlayers, details?.maxPlayers))
+  add('bestWith', 'Best with', clean(details?.bestWith))
+  add('recommendedWith', 'Recommended', clean(details?.recommendedWith))
   add('rating', 'Rating', stars(details?.rating))
   add('geekRating', 'Geek rating', stars(details?.geekRating))
   const booth = clean(facts?.booth)
@@ -57,10 +63,13 @@ export function gameInfos(facts: Facts | null | undefined, details: Partial<Game
   return infos
 }
 
-/** The first three infos, for a game row; ratings stay out of rows. */
+/** Infos shown only where all infos are: ratings and the player poll. */
+const DETAILS_ONLY = new Set<InfoKey>(['rating', 'geekRating', 'bestWith', 'recommendedWith'])
+
+/** The first three infos, for a game row; ratings and the player poll stay out of rows. */
 export const rowInfos = (facts: Facts | null | undefined, details: Partial<GameDetails> | null | undefined) =>
   gameInfos(facts, details)
-    .filter(i => i.key !== 'rating' && i.key !== 'geekRating')
+    .filter(i => !DETAILS_ONLY.has(i.key))
     .slice(0, ROW_INFOS)
 
 /** The publisher shown under the name: the list's (at the booth), else the game's first on BGG. */

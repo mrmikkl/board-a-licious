@@ -116,6 +116,7 @@ to collection: Harmonies is in Essen 2026 as Interested.
 - **FR-004**: The token MUST live only on the server as a secret; it MUST NOT reach the browser, the repository, logs or error messages.
 - **FR-005**: All official API use MUST keep the existing rules: server-side only, honest app identification, caching (game data 7 days, searches at least 1 day), at most one request per second, data loaded only when a person needs it.
 - **FR-006**: Game details read through the official API MUST show the same fields, order and rounding as today (players, rating, geek rating, booth, edition, designers, mechanisms, publisher, description, cover, year).
+- **FR-006a**: Where all game infos are shown (game details, a BGG list's game sheet, the BG-Tinder card, Search's game info sheet), the info box MUST add BGG's player poll after the players: "Best with" and "Recommended" (e.g. "2–3 players", "1–4 players"), left out when nobody voted or without the token; rows do not show them. Added after the release (2026-11-06).
 - **FR-007**: A rejected token MUST be reported to the person as "BoardGameGeek is not reachable" with retry, and recorded on the server with its reason; it MUST NOT fall back to website data for data the official API offers.
 
 **Search**
