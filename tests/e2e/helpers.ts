@@ -24,7 +24,20 @@ export async function fakeBgg(page: Page) {
 /** A name nobody else's test run uses, as the dev server's database is shared between runs. */
 export const unique = (name: string) => `${name} ${Date.now().toString(36).slice(-4)}${Math.random().toString(36).slice(2, 5)}`
 
+/** Waits for sheets, menus and fades to finish (endless loops excepted), so checks see the final state. */
+export async function settled(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter(a => a.effect?.getTiming().iterations !== Infinity)
+        .map(a => a.finished.catch(() => undefined)),
+    ),
+  )
+}
+
 export async function expectAccessible(page: Page) {
+  await settled(page)
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
   expect(results.violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([])
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
@@ -132,12 +145,13 @@ export async function seedCollection(page: Page, name: string, games: SeedGame[]
   if (page.url() === 'about:blank') await page.goto('/#/collections')
   const response = await page.request.post('/api/sync', { data: { collections: [{ id, name, updatedAt: now, deleted: false }], entries } })
   expect(response.ok()).toBe(true)
-  // the app pulls the new collection with its sync on start; a reload only once requests are done,
-  // as an aborted request can leave the local database's one connection stuck
+  // the app pulls the new collection with its sync on start: reload, and wait for that pull to
+  // answer before looking (and before anything else navigates: an aborted request can leave the local
+  // database's one connection stuck)
   await page.goto(`/#/collections/${id}`)
-  await page.waitForLoadState('networkidle')
+  const pulled = page.waitForResponse(r => r.url().includes('/api/sync') && r.request().method() === 'GET')
   await page.reload()
-  await page.waitForLoadState('networkidle')
+  await pulled
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   return id
 }

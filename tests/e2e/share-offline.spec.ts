@@ -73,7 +73,7 @@ test('offline share: framed note, added on the phone at once, synced once back o
   await select.selectOption(await select.locator('option').filter({ hasText: name }).getAttribute('value'))
   await sheet.getByRole('button', { name: 'Add to collection' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-  await expect(page.getByRole('button', { name: /offline fair game/i })).toContainText('Details follow from BoardGameGeek')
+  await expect(page.getByRole('button', { name: /^offline fair game,/i })).toContainText('Details follow from BoardGameGeek')
 
   await context.setOffline(false)
   await expect
@@ -102,7 +102,7 @@ test('share while signed out (API 401): the game is added on the phone and "Sign
   await sheet.getByLabel('Collection name').fill(created)
   await sheet.getByRole('button', { name: 'Create and add' }).click()
   await expect(page.getByRole('heading', { level: 1, name: created })).toBeVisible()
-  await expect(page.getByRole('button', { name: /cascadia/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^cascadia,/i })).toBeVisible()
   const banner = page.getByRole('status').filter({ hasText: /sign-in has expired/i })
   await expect(banner.getByRole('link', { name: 'Sign in again' })).toBeVisible()
 })

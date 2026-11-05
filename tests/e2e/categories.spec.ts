@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, seedCollection, unique } from './helpers.ts'
+import { expectAccessible, fakeBgg, seedCollection, settled, unique } from './helpers.ts'
 
 type Box = { x: number; y: number; width: number; height: number }
 
@@ -20,6 +20,7 @@ test('details: category picker as a honeycomb above the info box, a tap changes 
   await expect(buttons.nth(1)).toHaveAttribute('aria-pressed', 'true')
 
   // honeycomb: Must Have, Unsure, Poop on top; Interested and For later below, each 44–88px wide
+  await settled(page)
   const boxes = await Promise.all(
     [0, 1, 2, 3, 4].map(async i => {
       const box = await buttons.nth(i).boundingBox()

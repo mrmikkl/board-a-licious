@@ -183,9 +183,9 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `migrations/`, `
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T048 [P] Extend `tests/e2e/a11y.spec.ts` with: collection with quick filters and row actions, Category sheet, Buy sheet, details with the honeycomb, Copy/Move sheet, BGG list with Resync, Conflicts sheet (axe, focus order, 44px targets, reduced motion project)
-- [ ] T049 [P] Update `CLAUDE.md` if commands or layout changed (new `src/domain/search.ts`), and `docs/vision.md` release table if the user wants it noted
-- [ ] T050 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here
+- [X] T048 [P] Extend `tests/e2e/a11y.spec.ts` with: collection with quick filters and row actions, Category sheet, Buy sheet, details with the honeycomb, Copy/Move sheet, BGG list with Resync, Conflicts sheet (axe, focus order, 44px targets, reduced motion project)
+- [X] T049 [P] Update `CLAUDE.md` if commands or layout changed (new `src/domain/search.ts`), and `docs/vision.md` release table if the user wants it noted
+- [X] T050 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here — 2026-11-05: unit and worker 419 passed, build ok; e2e full run with one worker on a fresh local database, the 18 failures (helper waiting for network idle, measurements during animations, old row lookups) fixed and their 7 specs rerun: 50 passed
 - [ ] T051 Deploy (`npm run deploy`, migration on Neon via `npm run db:migrate:neon`) and walk through `specs/005-essen-feedback/quickstart.md` validation scenarios 1–14 on a phone with the user
 
 ---
