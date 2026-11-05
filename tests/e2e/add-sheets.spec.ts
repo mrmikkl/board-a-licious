@@ -25,7 +25,7 @@ test('BG-Tinder and Add game open as sheets over the collection', async ({ page 
   // Add game: description, link, Cancel leaves the collection as it was
   await page.getByRole('button', { name: /^add game$/i }).click()
   const addGame = page.getByRole('dialog', { name: 'Add game' })
-  await expect(addGame).toContainText('not on any of your lists')
+  await expect(addGame).toContainText("Type a game's name, or paste its link")
   await expect(addGame.getByRole('button', { name: 'Add to collection' })).toBeDisabled()
   await expectAccessible(page)
   await addGame.getByRole('button', { name: 'Cancel' }).click()

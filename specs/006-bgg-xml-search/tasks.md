@@ -103,11 +103,11 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 
 ### Tests for User Story 3
 
-- [ ] T028 [P] [US3] Write failing Playwright tests in `tests/e2e/add-game-name.spec.ts` with `fakeSearch`: textbox "Game name or BoardGameGeek link"; "harmon" lists at most 8 buttons in "Matching games" without add buttons; picking shows "Found game ID <id>", Change and the editable name; a pasted link behaves as before (existing add-game tests stay green); a game already in the collection shows "This game is already in Essen 2026." and disables Add to collection; without a token a name says to paste a link instead; axe clean
+- [X] T028 [P] [US3] Write failing Playwright tests in `tests/e2e/add-game-name.spec.ts` with `fakeSearch`: textbox "Game name or BoardGameGeek link"; "harmon" lists at most 8 buttons in "Matching games" without add buttons; picking shows "Found game ID <id>", Change and the editable name; a pasted link behaves as before (existing add-game tests stay green); a game already in the collection shows "This game is already in Essen 2026." and disables Add to collection; without a token a name says to paste a link instead; axe clean
 
 ### Implementation for User Story 3
 
-- [ ] T029 [US3] Change `src/app/components/AddGameSheet.tsx` to one field using `parseGameInput`: link → existing link state; name → `useBggSearch(8)` with compact `SearchResultRow`s; a pick or a recognised link shows the Found game card (cover via games loader, Change back to the field) and the Name field; status lines for searching/offline/not reachable under the field; keep the category picker and `addGameByLink`; adapt `src/app/components/GameLinkFields.tsx` so the shared Share sheet keeps its current look
+- [X] T029 [US3] Change `src/app/components/AddGameSheet.tsx` to one field using `parseGameInput`: link → existing link state; name → `useBggSearch(8)` with compact `SearchResultRow`s; a pick or a recognised link shows the Found game card (cover via games loader, Change back to the field) and the Name field; status lines for searching/offline/not reachable under the field; keep the category picker and `addGameByLink`; adapt `src/app/components/GameLinkFields.tsx` so the shared Share sheet keeps its current look — only Add game used it, so it was removed
 
 **Checkpoint**: all three stories done.
 
