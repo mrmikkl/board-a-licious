@@ -64,13 +64,17 @@ node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigati
 ## Code layout
 
 - `src/domain/`: pure TypeScript rules shared by app and Worker (marks, collections and merge,
-  filter, booths, facts and resync, name search, …).
+  filter, booths, facts and resync, name search, BGG search ranking and name-or-link input, …).
 - `src/client/`: browser adapters: `store.ts` (IndexedDB, one database per signed-in email, outbox),
   `api.ts` (fetch wrapper, `ApiError`), `sync.ts` (push outbox, pull since last sync).
 - `src/app/`: React UI; `theme/*.css` holds the design tokens of `docs/design.md`; hash router in
   `router.ts`; `context.tsx` boots the store and sync for the signed-in person.
 - `worker/`: `index.ts` (`createApp(deps)` router, testable with injected auth/db/clock), `auth.ts`
-  (Access JWT), `db/` (repository, SQL last-write-wins), `bgg/` (cached, throttled BGG client).
+  (Access JWT), `db/` (repository, SQL last-write-wins), `bgg/` (cached, throttled BGG client; `routing.ts` picks
+  the source per kind of data, ADR 0007: with `BGG_TOKEN` the official XML API in `official.ts` for game
+  details, geeklists and search, else and for previews/galleries the website JSON in `geekdo*.ts`).
+- The BGG token is a Worker secret (`npx wrangler secret put BGG_TOKEN`) or a line in `.dev.vars`;
+  never print it, log it or put it into the repository. XML test fixtures are in `tests/fixtures/bgg-xml/`.
 - E2E tests seed collections through `POST /api/sync` with `seedCollection` (`tests/e2e/helpers.ts`);
   all tests share one dev user, so data read across collections needs ids of its own per test.
 - Worker tests run in Node with PGlite and fakes, not in workerd. Pass arrays to SQL as PostgreSQL

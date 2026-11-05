@@ -40,6 +40,8 @@ test.describe('F006 US1: find a game by its name', () => {
 
     await page.getByRole('button', { name: 'Add Cascadia: Landmarks to a collection' }).click()
     const sheet = page.getByRole('dialog', { name: 'Add Cascadia: Landmarks' })
+    await expect(sheet.getByRole('checkbox', { name })).toBeVisible()
+    await expectAccessible(page)
     await sheet.getByRole('checkbox', { name }).check()
     await sheet.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Must Have/ }).click()
     await sheet.getByRole('button', { name: 'Done' }).click()
@@ -70,6 +72,7 @@ test.describe('F006 US1: find a game by its name', () => {
     await field(page).fill('zzz')
     await expect(page.getByRole('heading', { name: 'No game called “zzz” on BoardGameGeek' })).toBeVisible()
     await expect(page.getByText('Check the spelling, or try a shorter part of the name.')).toBeVisible()
+    await expectAccessible(page)
     await field(page).fill('the')
     await expect(page.getByRole('status').filter({ hasText: '50 games · the first 50, exact matches first' })).toBeVisible()
     await expect(page.getByText('More games match. Type more of the name to narrow it down.')).toBeVisible()
@@ -88,6 +91,7 @@ test.describe('F006 US1: find a game by its name', () => {
     await field(page).fill('cascad')
     await expect(page.getByText('BoardGameGeek is not reachable. Try again in a moment.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
+    await expectAccessible(page)
   })
 
   test('offline shows a note with Try again', async ({ page, context }) => {

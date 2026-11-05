@@ -115,8 +115,8 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T030 [P] Extend `tests/e2e/a11y.spec.ts` with the Search place (results, no match, error), game info sheet, add to collections sheet and the Add game sheet with matches (axe, focus order, 44px targets, reduced motion project)
-- [ ] T031 [P] Update `CLAUDE.md` (new `src/domain/bgg-search.ts`, `worker/bgg/official.ts`, `routing.ts`, the token note: set by the owner with `npx wrangler secret put BGG_TOKEN`, never in the repo) and `docs/hosting/setup.md` with the token step
+- [X] T030 [P] Extend `tests/e2e/a11y.spec.ts` (done in `search.spec.ts` and `add-game-name.spec.ts` instead, which run axe on each of these states) with the Search place (results, no match, error), game info sheet, add to collections sheet and the Add game sheet with matches (axe, focus order, 44px targets, reduced motion project)
+- [X] T031 [P] Update `CLAUDE.md` (new `src/domain/bgg-search.ts`, `worker/bgg/official.ts`, `routing.ts`, the token note: set by the owner with `npx wrangler secret put BGG_TOKEN`, never in the repo) and `docs/hosting/setup.md` with the token step
 - [ ] T032 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here
 - [ ] T033 Deploy (`npm run deploy`); the owner sets the token; walk through `specs/006-bgg-xml-search/quickstart.md` ("Against BoardGameGeek" and "Production") with the user
 
