@@ -7,8 +7,8 @@
   "kind": "boardgame" }, … ] }`, ranked (research R5). No covers: the app asks `/api/bgg/games`.
 - `400 bad_request`: `q` too short or long, `limit` out of range.
 - `503 bgg_search_unavailable` (`retryable: false`): no token on the server.
-- `503 bgg_unavailable` (`retryable: true`): BGG unreachable, token rejected, unexpected answer.
-- `429 bgg_rate_limited` with `Retry-After`: BGG asked to wait (incl. a queued 202 that stayed 202).
+- `502 bgg_unavailable` (`retryable: true`): BGG unreachable, token rejected, unexpected answer.
+- `503 bgg_rate_limited` with `Retry-After`: BGG asked to wait (incl. a queued 202 that stayed 202).
 - Cached 1 day per normalised query (and limit).
 
 ## `GET /api/me`

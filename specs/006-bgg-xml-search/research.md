@@ -111,7 +111,7 @@ marked *Recorded*.
 - 401/403 with the token → `BggError('bgg_unavailable', 'BoardGameGeek is not reachable.')`, plus
   `console.error('bgg token rejected', status)` (no token, no URL query) so the owner sees it in the
   Worker logs (FR-007). No fallback to website data for that request.
-- 429 and 503 → `bgg_rate_limited` with BGG's `Retry-After` (default 60 s as today); the app shows
+- 429 → `bgg_rate_limited` with BGG's `Retry-After` (default 60 s as today; 503 stays `bgg_unavailable` as before); the app shows
   the waiting state, not an error, for up to 10 s, then the "not reachable" note with Try again.
 - Malformed XML → `bgg_unavailable` ("sent something unexpected").
 

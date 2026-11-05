@@ -9,29 +9,35 @@ function clock(start = 0) {
 }
 
 function fakeFetch(respond: (url: string) => Response | Promise<Response> = () => Response.json({ ok: true })) {
-  const calls: { url: string; at: number; userAgent: string | null }[] = []
+  const calls: { url: string; at: number; userAgent: string | null; authorization: string | null }[] = []
   return {
     calls,
     bind(c: ReturnType<typeof clock>) {
       return async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input)
-        calls.push({ url, at: c.now(), userAgent: new Headers(init?.headers).get('User-Agent') })
+        const headers = new Headers(init?.headers)
+        calls.push({ url, at: c.now(), userAgent: headers.get('User-Agent'), authorization: headers.get('Authorization') })
         return respond(url)
       }
     },
   }
 }
 
-function setup(respond?: (url: string) => Response | Promise<Response>) {
+function setup(respond?: (url: string) => Response | Promise<Response>, token?: string) {
   const c = clock(1_000_000)
   const f = fakeFetch(respond)
-  const client = createBggClient({ fetch: f.bind(c), cache: memoryCache(c.now), now: c.now, sleep: c.sleep })
-  return { c, f, client }
+  const logs: string[] = []
+  const client = createBggClient({ fetch: f.bind(c), cache: memoryCache(c.now), now: c.now, sleep: c.sleep, token, log: line => logs.push(line) })
+  return { c, f, client, logs }
 }
+
+const TOKEN = 'test-token-not-real'
+const xml = (body: string, status = 200) => () => new Response(body, { status, headers: { 'Content-Type': 'text/xml' } })
+const THING = 'https://boardgamegeek.com/xmlapi2/thing?id=1&stats=1'
 
 describe('BGG client', () => {
   it('has the cache times of research R9/R10: lists 1 h, games 7 days, companies 30 days', () => {
-    expect(TTL).toEqual({ list: 3600, game: 7 * 86400, company: 30 * 86400 })
+    expect(TTL).toEqual({ list: 3600, game: 7 * 86400, company: 30 * 86400, search: 86400 })
   })
 
   it('serves a repeated request from the cache until it expires', async () => {
@@ -82,5 +88,57 @@ describe('BGG client', () => {
     fail = false
     expect(await client.getJson('https://api.geekdo.com/a', TTL.game)).toEqual({ ok: 1 })
     expect(f.calls).toHaveLength(2)
+  })
+
+  describe('official XML API (F006 research R1, R6, R7)', () => {
+    it('sends the token as a Bearer header to boardgamegeek.com only, never in the URL', async () => {
+      const { f, client } = setup(xml('<items/>'), TOKEN)
+      await client.getXml(THING, TTL.game)
+      await client.getJson('https://api.geekdo.com/api/geekpreviews/93', TTL.list).catch(() => undefined)
+      expect(f.calls[0]?.authorization).toBe(`Bearer ${TOKEN}`)
+      expect(f.calls[0]?.userAgent).toMatch(/^board-a-licious\//)
+      expect(f.calls[0]?.url).not.toContain(TOKEN)
+      expect(f.calls[1]?.authorization).toBeNull()
+    })
+
+    it('sends no Authorization header without a token', async () => {
+      const { f, client } = setup(xml('<items/>'))
+      await client.getXml(THING, TTL.game)
+      expect(f.calls[0]?.authorization).toBeNull()
+    })
+
+    it('caches XML by URL like JSON', async () => {
+      const { f, client } = setup(xml('<items><item id="1"/></items>'), TOKEN)
+      expect(await client.getXml(THING, TTL.game)).toBe(await client.getXml(THING, TTL.game))
+      expect(f.calls).toHaveLength(1)
+    })
+
+    it('retries a queued 202 up to 3 times, 2 s apart, then asks to wait 5 s', async () => {
+      let n = 0
+      const { f, client } = setup(() => (++n <= 2 ? new Response('<message>accepted</message>', { status: 202 }) : new Response('<geeklist/>')), TOKEN)
+      expect(await client.getXml('https://boardgamegeek.com/xmlapi/geeklist/1', TTL.list)).toBe('<geeklist/>')
+      expect(f.calls).toHaveLength(3)
+      expect(f.calls[2]!.at - f.calls[1]!.at).toBeGreaterThanOrEqual(2000)
+
+      const stuck = setup(() => new Response('<message>accepted</message>', { status: 202 }), TOKEN)
+      const error = await stuck.client.getXml('https://boardgamegeek.com/xmlapi/geeklist/2', TTL.list).catch((e: BggError) => e)
+      expect(stuck.f.calls).toHaveLength(4)
+      expect(error).toMatchObject({ code: 'bgg_rate_limited', retryAfter: 5 })
+    })
+
+    it('reports a rejected token as not reachable and logs the status without the token', async () => {
+      for (const status of [401, 403]) {
+        const { client, logs } = setup(xml('Unauthorized', status), TOKEN)
+        const error = (await client.getXml(THING, TTL.game).catch((e: BggError) => e)) as BggError
+        expect(error).toMatchObject({ code: 'bgg_unavailable', message: 'BoardGameGeek is not reachable.' })
+        expect(error.message).not.toContain(TOKEN)
+        expect(logs).toEqual([`bgg token rejected ${status}`])
+      }
+    })
+
+    it('maps malformed XML to bgg_unavailable', async () => {
+      const { client } = setup(xml('{"json": true}'), TOKEN)
+      await expect(client.getXml(THING, TTL.game)).rejects.toMatchObject({ code: 'bgg_unavailable' })
+    })
   })
 })
