@@ -2439,18 +2439,18 @@ function searchScreen() {
   <main class="screen">
     <div class="card soon-card"><h2 class="card-title">Searching all of BoardGameGeek comes soon</h2><p class="card-sub">It needs official access to BoardGameGeek's data, which is on its way. Until then, add a game by pasting its link.</p></div>
     <div class="form"><div><label class="label" for="search-bgg">Search BoardGameGeek</label><div class="field is-disabled">${ICON.search}<input id="search-bgg" type="search" placeholder="Game name" disabled></div></div></div>
-    <p class="proto-note">Unchanged from today: shown while the server has no token (local development).</p>
+    <p class="proto-note">As today, but without the disabled search button: shown while the server has no token (local development).</p>
   </main>
-  <nav class="actionbar" aria-label="Actions"><button type="button" class="main-btn hex hex-btn" aria-label="Search (not available yet)" disabled>${ICON.searchBig}</button></nav>`
+`
   return `<div class="top"><div class="top-title"><h1>Search</h1></div></div>
   <main class="screen">
     <label class="label" for="sq">Search BoardGameGeek</label>
     <div class="field search">${ICON.search}<input id="sq" type="search" placeholder="Game name, e.g. Cascadia" autocomplete="off" enterkeyhint="search" maxlength="100" value="${esc(S.search?.q || '')}" aria-describedby="shint"></div>
-    <p class="search-hint" id="shint">Board games and expansions on BoardGameGeek. Type at least 2 letters.</p>
+    <p class="search-hint" id="shint">Type at least 2 letters.</p>
     <hr class="separator" />
     <div id="results"></div>
   </main>
-  <nav class="actionbar" aria-label="Actions"><button type="button" class="main-btn hex hex-btn" data-act="search-now" aria-label="Search">${ICON.searchBig}</button></nav>`
+`
 }
 
 const resultRow = (g, compact) => `<li><button type="button" class="srow${compact ? ' compact' : ''}" data-act="${compact ? 'pick-match' : 'open-result'}" data-id="${g.id}" aria-label="${esc(g.name)}, ${yearText(g)}${g.exp ? ', expansion' : ''}"${inText(g) ? ` aria-describedby="in-${g.id}"` : ''}>${cover(g, compact ? 40 : 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${yearText(g)}${g.exp ? '<span class="kind">Expansion</span>' : ''}</span></span>${inText(g) ? `<span class="in-mark" id="in-${g.id}">${esc(inText(g))}</span>` : ''}</button></li>`
@@ -2622,7 +2622,6 @@ document.addEventListener('click', e => {
   if (a === 'close') return closeSheet()
   if (a === 'viewer') return viewer(+t.dataset.id)
   if (a === 'viewer-close') { viewerLayer.innerHTML = ''; return }
-  if (a === 'search-now') { const q = $('#sq'); q.focus(); return runSearch(q.value, { now: true }) }
   if (a === 'retry') return runSearch(S.search.q, { now: true })
   if (a === 'open-result') return openDetails(+t.dataset.id)
   if (a === 'tick') { const c = t.dataset.c; t.checked ? S.detail.ticked.add(c) : S.detail.ticked.delete(c); return setSheet(detailsBody(S.detail.g)) }
