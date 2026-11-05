@@ -37,7 +37,7 @@ Cascadia, tick "Essen 2026", choose Must Have, Done: the game is in Essen 2026 a
 
 **Acceptance Scenarios**:
 
-1. **Given** the Search place, **When** the user opens it, **Then** the search field is ready to type in and a short hint says what can be found; the main button is the search action and no longer disabled.
+1. **Given** the Search place, **When** the user opens it, **Then** the search field is ready to type in, with the hint "Type at least 2 letters."; the screen has no action bar (the search field is the only search control; Enter searches at once).
 2. **Given** the user types at least 2 characters and pauses, **When** the search runs, **Then** up to 50 matching games show with cover (or initials), name, year, an "Expansion" mark where it applies, and games already in one of the user's collections say so ("in Essen 2026"); exact name matches come first.
 3. **Given** results, **When** the user taps one, **Then** its details sheet opens with the cover (tap: image viewer), name, year, publisher, the info box (players, ratings, designers, mechanisms) and description, plus the collection ticks and the optional category, as in a BGG list's game sheet.
 4. **Given** the details sheet, **When** the user ticks collections and presses Done, **Then** the game is added to them (with the chosen category, or No category yet) and a toast confirms it; collections it is unticked from lose it, as in a BGG list.
@@ -120,7 +120,7 @@ to collection: Harmonies is in Essen 2026 as Interested.
 
 **Search**
 
-- **FR-008**: The Search place MUST offer a search field and search BoardGameGeek by name when the server has a token; without one it MUST keep today's "comes soon" note.
+- **FR-008**: The Search place MUST offer a search field and search BoardGameGeek by name when the server has a token; without one it MUST keep today's "comes soon" note. In both cases the Search place has no main button or action bar.
 - **FR-009**: A search MUST run for 2–100 characters after a short pause in typing (about half a second), return at most 50 board games and expansions, exact name matches first, and mark expansions.
 - **FR-010**: Each result MUST show cover or initials, name, year (or "Year unknown"), "Expansion" where it applies, and the user's collections that already hold it.
 - **FR-011**: Tapping a result MUST open a details sheet with the image viewer on the cover, the info box, the description, the collection ticks and the optional category, adding and removing exactly as a BGG list's game sheet does (with no booth or price, as search knows none).
