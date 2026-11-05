@@ -45,5 +45,6 @@ Game info, Image viewer, Empty state, Sheet, Toast, Separator.
   info** (alternative: one details sheet with info and collection ticks, not chosen).
 - The game info sheet has no "Add booth or price" link (no adding actions).
 - Add game uses **one field** for name or link (alternative: a Name | Link switch, not chosen).
-- Results sort exact matches first, then names starting with the text, then the rest; within each,
-  better-known games (geek rating) first.
+- Results sort exact matches first, then names starting with the text, then the rest; within each, the shorter name first (closer match), then alphabetical. Changed after the review
+  (research R5): search answers carry no ratings, and fetching them first would slow every search; the
+  prototype's geek-rating order is not built.

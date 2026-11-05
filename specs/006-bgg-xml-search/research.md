@@ -38,8 +38,8 @@ task records real responses as fixtures and confirms each point below).
 ## R3. Reading XML in the Worker
 
 - **Decision**: `fast-xml-parser` v5 (`XMLParser` with `ignoreAttributes: false`,
-  `attributeNamePrefix: ''`, `isArray` for `item`, `link`, `name`, `rank`; `processEntities: true`,
-  plus `he`-free decoding of numeric entities such as `&#10;` in descriptions in `worker/bgg/xml.ts`).
+  `attributeNamePrefix: ''`, `isArray` for `item`, `link`, `name`, `rank`; `processEntities: true`), plus decoding of numeric
+  entities such as `&#10;` in descriptions, in `worker/bgg/xml.ts`.
 - **Rationale**: Workers have no `DOMParser`; `HTMLRewriter` is not available in the Node worker tests;
   the library is pure JS, small, and widely used.
 - **Alternatives**: hand-written regex extraction (fragile with entities and attribute order);
