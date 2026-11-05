@@ -16,8 +16,13 @@
 .result-status:empty {
   display: none;
 }
-.srow {
-  min-height: 64px;
+/* the collection row (rows.css) keeps its spacing in an inner button; a row that is one button (a search
+   result, a BGG list game) carries the same spacing itself: 12px between cover and text */
+button.row {
+  --tone: var(--border);
+  gap: 12px;
+  min-height: 68px;
+  padding: 8px 12px;
 }
 .srow.compact {
   min-height: 52px;

@@ -42,7 +42,7 @@ export function SearchResultRow({
         aria-describedby={inText ? inId : undefined}
         onClick={onOpen}
       >
-        <HexCover game={game} name={name} size={compact ? 40 : 48} />
+        <HexCover game={game} name={name} size={compact ? 40 : 52} />
         <span className="row-meta">
           <span className="row-name">{name}</span>
           <span className="row-sub">
