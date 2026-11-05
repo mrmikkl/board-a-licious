@@ -25,22 +25,22 @@ official, permitted way, and people can finally find any game by its name instea
 ### User Story 1 - Find a game by its name (Priority: P1)
 
 In the menu's **Search** place, the user types part of a game's name. Matching BoardGameGeek games
-appear as a list: cover, name, year, and whether it is an expansion. Tapping one opens its details
-(cover that opens the images, the same info box as elsewhere, description) and lets the user put it
-into one or more collections, optionally with a category, as from a BGG list.
+appear as a list: cover, name, year, and whether it is an expansion. Tapping one shows its game info
+(cover that opens the images, the same info box as elsewhere, description). A big + next to each game
+lets the user put it into one or more collections, optionally with a category, as from a BGG list.
 
 **Why this priority**: the most asked-for gap since the first release; today a game not on any list
 can only be added by finding and pasting its link.
 
 **Independent Test**: open Search, type "cascad": Cascadia and its expansions are listed; tap
-Cascadia, tick "Essen 2026", choose Must Have, Done: the game is in Essen 2026 as Must Have.
+the + next to Cascadia, tick "Essen 2026", choose Must Have, Done: the game is in Essen 2026 as Must Have.
 
 **Acceptance Scenarios**:
 
 1. **Given** the Search place, **When** the user opens it, **Then** the search field is ready to type in, with the hint "Type at least 2 letters."; the screen has no action bar (the search field is the only search control; Enter searches at once).
 2. **Given** the user types at least 2 characters and pauses, **When** the search runs, **Then** up to 50 matching games show with cover (or initials), name, year, an "Expansion" mark where it applies, and games already in one of the user's collections say so ("in Essen 2026"); exact name matches come first.
-3. **Given** results, **When** the user taps one, **Then** its details sheet opens with the cover (tap: image viewer), name, year, publisher, the info box (players, ratings, designers, mechanisms) and description, plus the collection ticks and the optional category, as in a BGG list's game sheet.
-4. **Given** the details sheet, **When** the user ticks collections and presses Done, **Then** the game is added to them (with the chosen category, or No category yet) and a toast confirms it; collections it is unticked from lose it, as in a BGG list.
+3. **Given** results, **When** the user taps a game, **Then** a game info sheet opens with the cover (tap: image viewer), name, year, publisher, "Open on BoardGameGeek", the info box (players, ratings, designers, mechanisms) and description only: no collections, no state in a collection, no adding actions.
+4. **Given** results, **When** the user taps the big + next to a game, **Then** an "Add <game>" sheet opens with the collection ticks (starting from where the game is now) and the optional category, as in a BGG list's game sheet; **When** the user ticks collections and presses Done, **Then** the game is added to them (with the chosen category, or No category yet) and a toast confirms it; collections it is unticked from lose it, as in a BGG list.
 5. **Given** a search with no match, **When** it finishes, **Then** the screen says "No game called “…” on BoardGameGeek" and suggests checking the spelling.
 6. **Given** the user is offline or BoardGameGeek is busy, **When** a search would run, **Then** a clear one-line message says so and offers to try again; nothing else breaks.
 7. **Given** the user changes the search text, **When** an older search answers after a newer one, **Then** only the newest search's results are shown.
@@ -123,13 +123,13 @@ to collection: Harmonies is in Essen 2026 as Interested.
 - **FR-008**: The Search place MUST offer a search field and search BoardGameGeek by name when the server has a token; without one it MUST keep today's "comes soon" note. In both cases the Search place has no main button or action bar.
 - **FR-009**: A search MUST run for 2–100 characters after a short pause in typing (about half a second), return at most 50 board games and expansions, exact name matches first, and mark expansions.
 - **FR-010**: Each result MUST show cover or initials, name, year (or "Year unknown"), "Expansion" where it applies, and the user's collections that already hold it.
-- **FR-011**: Tapping a result MUST open a details sheet with the image viewer on the cover, the info box, the description, the collection ticks and the optional category, adding and removing exactly as a BGG list's game sheet does (with no booth or price, as search knows none).
+- **FR-011**: Tapping a result MUST open a game info sheet (image viewer on the cover, the info box, the description) without collections or adding actions. A big + next to each result MUST open an "Add <game>" sheet with the collection ticks and the optional category, adding and removing exactly as a BGG list's game sheet does (with no booth or price, as search knows none).
 - **FR-012**: Only the newest search's results MUST be shown; offline or with BoardGameGeek busy the screen MUST say so with a retry.
 - **FR-013**: The collection's Add game sheet MUST accept a game name as well as a link: a name shows up to 8 matches to pick from; a picked game behaves like a recognised link.
 
 **Cross-cutting**
 
-- **FR-014**: New screens and states MUST follow the design rules (search field with the thumb-sized clear ×, rows, sheets, empty and error states) and be accessible: results are a list of buttons named "<game>, <year>[, expansion]", the result count is announced.
+- **FR-014**: New screens and states MUST follow the design rules (search field with the thumb-sized clear ×, rows, sheets, empty and error states) and be accessible: results are a list of buttons named "<game>, <year>[, expansion]", each followed by a button "Add <game> to a collection", the result count is announced.
 
 ### Key Entities
 

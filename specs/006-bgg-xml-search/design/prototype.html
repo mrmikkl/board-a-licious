@@ -2269,6 +2269,11 @@ body:has(.actionbar) .toast {
 .srow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .srow:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
 .srow .in-mark { margin-left: auto; flex: none; max-width: 38%; text-align: right; }
+.srow .row-meta .in-mark { margin: 0; max-width: none; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sitem { display: flex; align-items: center; gap: 8px; }
+.sitem .srow { flex: 1; min-width: 0; }
+.sitem .add-mini { cursor: pointer; }
+.sitem .add-mini:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
 .srow.compact { min-height: 52px; padding: 6px 10px; box-shadow: none; background: var(--deck-2); }
 .kind { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid var(--violet); color: #c4b5fd; font-size: 11px; font-weight: 700; line-height: 18px; }
 .rows.is-stale { opacity: 0.45; }
@@ -2307,7 +2312,8 @@ body:has(.actionbar) .toast {
     <option value="busy">Search: BGG asks to wait</option>
     <option value="offline">Search: offline</option>
     <option value="down">Search: BGG not reachable</option>
-    <option value="details">Details sheet from Search</option>
+    <option value="details">Game info from Search (tap a row)</option>
+    <option value="addto">Add to collection from Search (the +)</option>
     <option value="notoken">Search without token (as today)</option>
     <option value="add">Add game sheet (one field)</option>
     <option value="add-seg">Add game sheet (Name | Link switch)</option>
@@ -2453,7 +2459,7 @@ function searchScreen() {
 `
 }
 
-const resultRow = (g, compact) => `<li><button type="button" class="srow${compact ? ' compact' : ''}" data-act="${compact ? 'pick-match' : 'open-result'}" data-id="${g.id}" aria-label="${esc(g.name)}, ${yearText(g)}${g.exp ? ', expansion' : ''}"${inText(g) ? ` aria-describedby="in-${g.id}"` : ''}>${cover(g, compact ? 40 : 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${yearText(g)}${g.exp ? '<span class="kind">Expansion</span>' : ''}</span></span>${inText(g) ? `<span class="in-mark" id="in-${g.id}">${esc(inText(g))}</span>` : ''}</button></li>`
+const resultRow = (g, compact) => `<li${compact ? '' : ' class="sitem"'}><button type="button" class="srow${compact ? ' compact' : ''}" data-act="${compact ? 'pick-match' : 'open-result'}" data-id="${g.id}" aria-label="${esc(g.name)}, ${yearText(g)}${g.exp ? ', expansion' : ''}"${inText(g) ? ` aria-describedby="in-${g.id}"` : ''}>${cover(g, compact ? 40 : 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${yearText(g)}${g.exp ? '<span class="kind">Expansion</span>' : ''}</span>${inText(g) ? `<span class="in-mark" id="in-${g.id}">${esc(inText(g))}</span>` : ''}</span></button>${compact ? '' : `<button type="button" class="add-mini" data-act="add-to" data-id="${g.id}" aria-label="Add ${esc(g.name)} to a collection"><span class="hex" aria-hidden="true">+</span></button>`}</li>`
 
 function drawResults() {
   const box = $('#results'); if (!box) return
@@ -2497,7 +2503,7 @@ function infoBox(g) {
   const rate = (v, cls) => (v == null ? null : `<span class="rating"><i class="${cls}">${v.toFixed(1)}</i></span>`)
   const infos = [['Players', g.players], ['Rating', rate(g.rating, '')], ['Geek rating', rate(g.geek, 'geek')], ['Designers', esc(g.designers)], ['Mechanisms', esc(g.mechanisms)], ['Publisher', esc(g.publisher)]].filter(([, v]) => v)
   return `<div class="facts-box"><dl class="info-list">${infos.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-  <div class="facts-foot"><span class="facts-by">From BoardGameGeek</span><button type="button" class="link-btn">Add booth or price</button></div></div>`
+  <div class="facts-foot"><span class="facts-by">From BoardGameGeek</span></div></div>`
 }
 
 function note(c, g, on) {
@@ -2508,23 +2514,32 @@ function note(c, g, on) {
   return 'Not in it'
 }
 function detailsBody(g) {
-  const d = S.detail
   return `<h2 class="sheet-title">${esc(g.name)}</h2>
   <div class="detail-head"><button type="button" class="cover-zoom" data-act="viewer" data-id="${g.id}" aria-label="Show the images of ${esc(g.name)} big">${cover(g, 84)}</button><div><p class="detail-sub">${yearText(g)}${g.exp ? ' · Expansion' : ''} · ${esc(g.publisher)}</p><a class="link-out">Open on BoardGameGeek</a></div></div>
   <p class="description">${DESC}</p>
   ${infoBox(g)}
-  <h3 class="section-title">In collections</h3>
+  <div class="sheet-actions"><button type="button" class="btn btn-block" data-act="close">Close</button></div>
+  <p class="proto-note">Game info only: no collections, no category, no adding. Adding is the + next to the game in the results.</p>`
+}
+function openDetails(id) {
+  const g = ALLBGG.find(x => x.id === id)
+  openSheet('details', detailsBody(g), g.name)
+}
+function addToBody(g) {
+  const d = S.detail
+  return `<h2 class="sheet-title">Add ${esc(g.name)}</h2>
+  <div class="found">${cover(g, 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${yearText(g)}${g.exp ? '<span class="kind">Expansion</span>' : ''}</span></span></div>
   <p class="lead">Tick every collection this game should be in, then press Done.</p>
   <div class="picks">${COLLS.map(c => `<label class="pick"><input type="checkbox" class="pick-input" data-act="tick" data-c="${c.id}" ${d.ticked.has(c.id) ? 'checked' : ''}><span class="tick hex" aria-hidden="true"></span><span class="pick-text"><span class="pick-name">${esc(c.name)}</span><small>${note(c, g, d.ticked.has(c.id))}</small></span></label>`).join('')}</div>
   <p class="label">Category when added (optional)</p>
   ${zigzag(d.mark, 'detail-mark')}
   <div class="sheet-actions"><button type="button" class="btn btn-primary btn-block" data-act="done">Done</button><button type="button" class="btn btn-block" data-act="close">Cancel</button></div>
-  <p class="proto-note">As a BGG list's game sheet, without booth or price (search knows none). Ticks change nothing until Done.</p>`
+  <p class="proto-note">The collection ticks of a BGG list's game sheet, without booth or price (search knows none). Ticks change nothing until Done.</p>`
 }
-function openDetails(id) {
+function openAddTo(id) {
   const g = ALLBGG.find(x => x.id === id)
   S.detail = { g, ticked: new Set(inColls(g).map(c => c.id)), mark: 'new' }
-  openSheet('details', detailsBody(g), g.name)
+  openSheet('add-to', addToBody(g), `Add ${g.name}`)
 }
 function done() {
   const { g, ticked, mark } = S.detail
@@ -2624,8 +2639,9 @@ document.addEventListener('click', e => {
   if (a === 'viewer-close') { viewerLayer.innerHTML = ''; return }
   if (a === 'retry') return runSearch(S.search.q, { now: true })
   if (a === 'open-result') return openDetails(+t.dataset.id)
-  if (a === 'tick') { const c = t.dataset.c; t.checked ? S.detail.ticked.add(c) : S.detail.ticked.delete(c); return setSheet(detailsBody(S.detail.g)) }
-  if (a === 'detail-mark') { S.detail.mark = S.detail.mark === t.dataset.cat ? 'new' : t.dataset.cat; return setSheet(detailsBody(S.detail.g)) }
+  if (a === 'add-to') return openAddTo(+t.dataset.id)
+  if (a === 'tick') { const c = t.dataset.c; t.checked ? S.detail.ticked.add(c) : S.detail.ticked.delete(c); return setSheet(addToBody(S.detail.g)) }
+  if (a === 'detail-mark') { S.detail.mark = S.detail.mark === t.dataset.cat ? 'new' : t.dataset.cat; return setSheet(addToBody(S.detail.g)) }
   if (a === 'done') return done()
   if (a === 'open-add') return openAdd()
   if (a === 'add-mode') { S.add = { ...S.add, mode: t.dataset.v, text: '', linkError: null }; S.addSearch = null; setSheet(addBody()); return $('#aq')?.focus() }
@@ -2655,13 +2671,14 @@ document.addEventListener('keydown', e => {
 function start() {
   const s = $('#start').value
   clearTimeout(S?.debounce)
-  S = { token: s !== 'notoken', net: { offline: 'offline', down: 'down', busy: 'busy' }[s] || 'ok', screen: s.startsWith('add') ? 'collection' : 'search', addSeg: s === 'add-seg', sheet: null, search: null, seq: 0, cache: new Map(), debounce: 0 }
+  S = { token: s !== 'notoken', net: { offline: 'offline', down: 'down', busy: 'busy' }[s] || 'ok', screen: (s === 'add' || s === 'add-seg') ? 'collection' : 'search', addSeg: s === 'add-seg', sheet: null, search: null, seq: 0, cache: new Map(), debounce: 0 }
   closeSheet(); viewerLayer.innerHTML = ''
   render()
-  const q = { results: 'cascad', nomatch: 'zzz', many: 'the', busy: 'cascad', offline: 'cascad', down: 'cascad', details: 'cascad' }[s]
+  const q = { results: 'cascad', nomatch: 'zzz', many: 'the', busy: 'cascad', offline: 'cascad', down: 'cascad', details: 'cascad', addto: 'cascad' }[s]
   if (q) { $('#sq').value = q; runSearch(q, { now: true }) }
   if (s === 'details') setTimeout(() => openDetails(295947), 900)
-  if (s.startsWith('add')) openAdd()
+  if (s === 'addto') setTimeout(() => openAddTo(295947), 900)
+  if ((s === 'add' || s === 'add-seg')) openAdd()
   if (s === 'search') $('#sq')?.focus()
 }
 $('#start').onchange = start
