@@ -229,6 +229,9 @@ Have, bought for €38, with its booth.
 
 - **FR-010**: The details MUST show the category picker above the info box.
 - **FR-011**: The picker MUST lay out Must Have, Interested, Unsure, For later and Poop as hexagons in one zigzag row (1st start of the row, 2nd lower right of the 1st, 3rd upper right of the 2nd, 4th lower right of the 3rd, 5th upper right of the 4th), fitting a 360 px wide screen; Not interested stays a separate action.
+- **FR-004a**: A game row MUST also show its category's name in a small tag in its top-left corner, in the category's colour, joined to the top and left border (added 2026-10-23).
+- **FR-012b**: Tapping the BG-Tinder card's cover MUST open the image viewer with the game's BGG gallery; neither the tap nor gestures in the viewer move or decide the card (added 2026-10-24).
+- **FR-012c**: Adding a game by link in a collection, and adding a game to collections from a BGG list's game sheet, MUST offer an optional category (default No category yet) for the newly added entries; games already in a collection keep theirs (added 2026-10-24).
 - **FR-012a**: The BG-Tinder card MUST show the same game details as a game's details sheet (publisher and year, the same info box with every info including the ratings, the full description), without the category picker and collection actions; a long card scrolls vertically.
 - **FR-012**: The info box MUST show Rating (BGG average) and Geek rating (BGG's ranked/Bayesian rating) with one decimal, after Players, each left out when BGG has no value.
 
@@ -245,7 +248,7 @@ Have, bought for €38, with its booth.
 **Booths**
 
 - **FR-019**: When grouping by booth, a booth part that is only a hall number ("3", or "Hall 3") MUST count as that hall; such games come after the games with full booths in that hall, then by name.
-- **FR-020**: Grouping by booth MUST show exactly the games the filter lets through, including Not interested when that category is selected; games without a booth go to "No booth yet".
+- **FR-020**: Grouping by booth MUST show exactly the games the filter lets through, including Not interested when that category is selected; games without a booth go to "No booth yet". Inside a hall, games MUST be ordered by category (Must Have first, Not interested last), then by booth, then by name (added 2026-10-23).
 
 **Resync a BGG list**
 
@@ -258,7 +261,7 @@ Have, bought for €38, with its booth.
 
 **Copy and move**
 
-- **FR-026a**: A game's details MUST offer Copy to collection and Move to collection besides Remove from <collection>; each opens a sheet with a dropdown of the person's other collections, those already holding the game shown as "(already in it)" and not selectable, and Cancel / Copy or Move (disabled while nothing can be chosen).
+- **FR-026a**: A game's details MUST offer Copy and Move (short labels, side by side on a phone) besides Remove from <collection>; each opens a sheet with a dropdown of the person's other collections, those already holding the game shown as "(already in it)" and not selectable, and Cancel / Copy or Move (disabled while nothing can be chosen).
 - **FR-026b**: Copy MUST add the game to the chosen collection with its category and facts (booth, price, publisher, edition and their source), not bought, and leave this collection unchanged.
 - **FR-026c**: Move MUST put the game into the chosen collection with category, facts, bought and price paid, and remove it from this collection, as one change that syncs like any other and works offline.
 
