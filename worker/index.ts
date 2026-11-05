@@ -1,6 +1,6 @@
 import { type AuthEnv, type Authenticate, createAuthenticator } from './auth.ts'
 import { BggError, edgeCache, memoryCache } from './bgg/cache.ts'
-import { GeekdoSource } from './bgg/geekdo.ts'
+import { createBggSource } from './bgg/routing.ts'
 import type { BggSource } from './bgg/source.ts'
 import { type Db, connect } from './db/db.ts'
 import { HttpError, errorResponse } from './http.ts'
@@ -96,7 +96,8 @@ export default {
       authenticate: authenticator,
       db: e => connect(e.ENVIRONMENT === 'development' && e.DATABASE_URL ? e.DATABASE_URL : (e.HYPERDRIVE?.connectionString ?? '')),
       now: () => new Date(),
-      bgg: () => (bggSource ??= new GeekdoSource({ fetch: (input, init) => fetch(input, init), cache: bggCache() })),
+      // one source (and one throttled client) per isolate; the token is a deployment secret, the same for every request
+      bgg: e => (bggSource ??= createBggSource({ fetch: (input, init) => fetch(input, init), cache: bggCache(), token: e.BGG_TOKEN || undefined })),
     })
     void ctx
     return app.fetch(request, env)
