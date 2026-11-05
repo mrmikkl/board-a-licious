@@ -1,6 +1,6 @@
 # 0005. BoardGameGeek behind one adapter, token-free bridge until the XML API
 
-- **Status**: Accepted
+- **Status**: Superseded by [0007](0007-bgg-source-per-kind-of-data.md) (selection rule only; the adapter stays)
 - **Date**: 2026-10-16
 - **Origin**: `specs/001-bgg-game-collection/research.md` R4, R4a; constitution v1.1.0 Principle V
 

@@ -1,6 +1,6 @@
 # 0007. BoardGameGeek source chosen per kind of data
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-05
 - **Origin**: `specs/006-bgg-xml-search/research.md` R2; constitution Principle V; supersedes the
   selection rule of [ADR 0005](0005-bgg-adapter-and-bridge.md)

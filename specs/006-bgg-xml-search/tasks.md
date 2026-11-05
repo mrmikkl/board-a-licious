@@ -62,7 +62,7 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 - [ ] T013 [US2] Implement `OfficialSource` in `worker/bgg/official.ts` (`getGames` in batches of 20, `fetchLimit = 40`, `getListPage` for geeklists only, `search` filled in by T020), using `parseXml`/`decodeText` from `worker/bgg/xml.ts` and the shared client
 - [ ] T014 [US2] Implement `pickSources` in `worker/bgg/routing.ts` returning one `BggSource` facade that sends `getGames`, `search` and geeklist pages to the official source and `getListPage('preview', …)`, `getCompanies`, `getGallery` to the website source when a token is set
 - [ ] T015 [US2] Wire it in `worker/index.ts`: build the shared client once per isolate with `token: env.BGG_TOKEN` and `log: console.error`, use `pickSources` instead of `new GeekdoSource`, keep `/api/me` as is; check that no response, error message or log line contains the token
-- [ ] T016 [US2] Update `docs/adr/0005-bgg-adapter-and-bridge.md` status to "Superseded by 0007 (selection rule only)" and `docs/adr/0007-bgg-source-per-kind-of-data.md` to Accepted, with the README table, once the user has accepted ADR 0007
+- [X] T016 [US2] Update `docs/adr/0005-bgg-adapter-and-bridge.md` status to "Superseded by 0007 (selection rule only)" and `docs/adr/0007-bgg-source-per-kind-of-data.md` to Accepted, with the README table, once the user has accepted ADR 0007
 
 **Checkpoint**: deployable; the owner can now set the token (`npx wrangler secret put BGG_TOKEN`) and see no visible change.
 
