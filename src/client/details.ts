@@ -15,8 +15,8 @@ export async function completeDetails(deps: { store: Store; api: { games(ids: nu
   const { store, api, now } = deps
   const live = (await store.allEntries()).filter(e => !e.deleted)
   const allIds = [...new Set(live.map(e => e.bggId))]
-  // F006: games stored before the player poll existed (no bestWith key) are fetched once more
-  const known = new Set((await store.games(allIds)).filter(g => Array.isArray(g.designers) && 'bestWith' in g).map(g => g.bggId))
+  // F006: games stored before the player poll existed (no playerPoll key) are fetched once more
+  const known = new Set((await store.games(allIds)).filter(g => Array.isArray(g.designers) && 'playerPoll' in g).map(g => g.bggId))
   const pendingIds = new Set(live.filter(e => e.detailsPending).map(e => e.bggId))
   const ids = allIds.filter(id => pendingIds.has(id) || !known.has(id))
   let completed = 0

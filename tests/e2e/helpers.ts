@@ -156,6 +156,15 @@ export async function seedCollection(page: Page, name: string, games: SeedGame[]
   return id
 }
 
+/** Cascadia's player poll (votes), from tests/fixtures/bgg-xml/thing-295947-385318.xml */
+export const CASCADIA_POLL = [
+  { players: '1', best: 133, recommended: 439, notRecommended: 145 },
+  { players: '2', best: 587, recommended: 334, notRecommended: 17 },
+  { players: '3', best: 551, recommended: 324, notRecommended: 17 },
+  { players: '4', best: 188, recommended: 552, notRecommended: 82 },
+  { players: '4+', best: 2, recommended: 37, notRecommended: 455 },
+]
+
 export type FakeResult = { bggId: number; name: string; year: number | null; kind: 'boardgame' | 'expansion' }
 
 /**
@@ -188,7 +197,7 @@ export async function fakeSearch(
     const games = ids.flatMap(i => {
       const r = all.get(i)
       return r
-        ? [{ bggId: i, name: r.name, year: r.year, thumbnailUrl: null, description: `About ${r.name}.`, kind: r.kind, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games', rating: 7.88, geekRating: 7.73, bestWith: '2–3 players', recommendedWith: '1–4 players' }]
+        ? [{ bggId: i, name: r.name, year: r.year, thumbnailUrl: null, description: `About ${r.name}.`, kind: r.kind, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games', rating: 7.88, geekRating: 7.73, bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: CASCADIA_POLL }]
         : []
     })
     await route.fulfill({ json: { games } })

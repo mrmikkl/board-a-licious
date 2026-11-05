@@ -38,6 +38,7 @@ describe('GET /api/bgg/games', () => {
           geekRating: 7.73,
           bestWith: null,
           recommendedWith: null,
+          playerPoll: null,
         },
       ],
     })

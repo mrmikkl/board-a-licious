@@ -58,6 +58,7 @@ const toGame = (item: GeekItem, ratings: Ratings): Game => {
     // the website data has no player poll (official API only, F006)
     bestWith: null,
     recommendedWith: null,
+    playerPoll: null,
   }
 }
 

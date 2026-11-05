@@ -1,5 +1,6 @@
 import { type SearchResult, rankResults } from '../../src/domain/bgg-search.ts'
 import type { GameGallery } from '../../src/domain/gallery.ts'
+import type { PlayerVotes } from '../../src/domain/player-poll.ts'
 import { BggError, type BggClient, TTL } from './cache.ts'
 import type { BggSource, Game, ListEntry, ListKind, ListPage } from './source.ts'
 import { asArray, decodeText, parseXml } from './xml.ts'
@@ -25,7 +26,10 @@ type ThingItem = {
   link?: Link[]
   statistics?: { ratings?: { average?: Value; bayesaverage?: Value } }
   'poll-summary'?: PollSummary | PollSummary[]
+  poll?: Poll | Poll[]
 }
+type Poll = { name?: string; results?: PollResults | PollResults[] }
+type PollResults = { numplayers?: string; result?: { value?: string; numvotes?: string } | { value?: string; numvotes?: string }[] }
 type PollSummary = { name?: string; result?: { name?: string; value?: string } | { name?: string; value?: string }[] }
 type SearchItem = { type?: string; id?: string; name?: Name[]; yearpublished?: Value }
 type GeeklistItem = { objecttype?: string; subtype?: string; objectid?: string; objectname?: string }
@@ -59,6 +63,17 @@ function pollSummary(item: ThingItem): { bestWith: string | null; recommendedWit
   return { bestWith: text(/^bestwith$/, /^best with\s+/i), recommendedWith: text(/^recom+endedwith$/, /^recommended with\s+/i) }
 }
 
+/** FR-006b: the votes per player count of the "suggested number of players" poll. */
+function playerPoll(item: ThingItem): PlayerVotes[] {
+  const poll = asArray(item.poll).find(p => p.name === 'suggested_numplayers')
+  return asArray(poll?.results).flatMap(r => {
+    const votes = (value: string) => Number(asArray(r.result).find(x => x.value === value)?.numvotes) || 0
+    const row = { players: r.numplayers ?? '', best: votes('Best'), recommended: votes('Recommended'), notRecommended: votes('Not Recommended') }
+    // a player count nobody voted on says nothing
+    return row.players && row.best + row.recommended + row.notRecommended > 0 ? [row] : []
+  })
+}
+
 function toGame(item: ThingItem, kind: Game['kind']): Game {
   const ratings = item.statistics?.ratings
   return {
@@ -76,6 +91,7 @@ function toGame(item: ThingItem, kind: Game['kind']): Game {
     rating: rating(ratings?.average?.value),
     geekRating: rating(ratings?.bayesaverage?.value),
     ...pollSummary(item),
+    playerPoll: playerPoll(item),
   }
 }
 

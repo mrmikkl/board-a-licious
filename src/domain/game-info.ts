@@ -1,5 +1,6 @@
 import type { Facts } from './collection.ts'
 import { formatMoney } from './money.ts'
+import type { PlayerVotes } from './player-poll.ts'
 
 /** What BoardGameGeek says about a game beyond its name: players, designers, mechanisms, publisher. */
 export type GameDetails = {
@@ -15,6 +16,8 @@ export type GameDetails = {
   /** F006: BGG's player poll summary ("2–3 players"); official API only, null when nobody voted. */
   bestWith?: string | null
   recommendedWith?: string | null
+  /** F006: the poll's votes per player count (FR-006b); empty when nobody voted, null without the official API. */
+  playerPoll?: PlayerVotes[] | null
 }
 
 export type InfoKey = 'price' | 'players' | 'bestWith' | 'recommendedWith' | 'rating' | 'geekRating' | 'booth' | 'edition' | 'designer' | 'mechanisms'

@@ -607,3 +607,54 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* F006 FR-006b: the player poll, folded below Best with / Recommended */
+.info-list .poll-row dd {
+  grid-column: 1 / -1;
+  font-weight: 400;
+}
+.poll-toggle {
+  min-height: 32px;
+  padding: 0;
+  font-size: 14px;
+}
+.poll-table {
+  width: 100%;
+  margin: 4px 0 2px;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.poll-table[hidden] {
+  display: none;
+}
+.poll-table th,
+.poll-table td {
+  padding: 5px 4px;
+  border-bottom: 1px solid var(--rim);
+  text-align: right;
+  vertical-align: bottom;
+}
+.poll-table thead th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.poll-table th[scope='row'],
+.poll-table thead th:first-child {
+  text-align: left;
+}
+.poll-table tbody th {
+  font-weight: 700;
+}
+.poll-table td {
+  color: var(--muted);
+}
+.poll-table td b {
+  color: var(--text);
+  font-weight: 800;
+}
+.poll-table tbody tr:last-child > * {
+  border-bottom: 0;
+}

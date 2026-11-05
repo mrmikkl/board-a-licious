@@ -127,6 +127,7 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 - [X] T034 Give search result and BGG list rows the collection row's spacing between cover and name in `src/app/theme/search.css`
 - [X] T035 Show search results at once without covers; load a game's details and cover only when it is opened (`loadGame` in `src/app/hooks/useBggSearch.ts`), tested in `tests/e2e/search.spec.ts`
 - [X] T036 Show BGG's player poll ("Best with", "Recommended") in the info box (FR-006a): `bestWith`/`recommendedWith` in `src/domain/game-info.ts`, read from the thing `poll-summary` in `worker/bgg/official.ts`, stored in `migrations/0006_player_poll.sql` / `worker/db/repository.ts`, fetched once more on the phone (`src/client/details.ts`)
+- [X] T037 Unfold the player poll as a table (FR-006b): `pollTable` in `src/domain/player-poll.ts` (percent per player count, highest per column), votes from the thing `poll` in `worker/bgg/official.ts`, stored as `game.player_poll` (jsonb, `migrations/0006_player_poll.sql`), `PlayerPoll` with Show/Hide details in `src/app/components/GameInfo.tsx`; tested in `tests/unit/player-poll.test.ts` and `tests/e2e/search.spec.ts`
 
 ---
 

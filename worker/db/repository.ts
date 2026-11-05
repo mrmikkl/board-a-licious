@@ -1,5 +1,6 @@
 import type { Collection, Entry } from '../../src/domain/collection.ts'
 import type { GameDetails } from '../../src/domain/game-info.ts'
+import type { PlayerVotes } from '../../src/domain/player-poll.ts'
 import type { LoadedList } from '../../src/domain/lists.ts'
 import type { Mark } from '../../src/domain/marks.ts'
 import type { Db } from './db.ts'
@@ -198,6 +199,7 @@ type GameRow = {
   geek_rating: string | number | null
   best_with: string | null
   recommended_with: string | null
+  player_poll: PlayerVotes[] | string | null
 }
 
 /** A numeric column: the production driver hands it over as text, PGlite as a number. */
@@ -221,6 +223,7 @@ function ensureRatingColumns(db: Db): Promise<void> {
     await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
     await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS best_with text')
     await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS recommended_with text')
+    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll jsonb')
   })().catch(error => {
     ratingColumns = undefined
     throw error
@@ -233,7 +236,7 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
   if (ids.length === 0) return []
   await ensureRatingColumns(db)
   const rows = await db.query<GameRow>(
-    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating, best_with, recommended_with FROM game
+    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
     [pgArray(ids), freshAfter],
   )
@@ -253,6 +256,8 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
     geekRating: number(r.geek_rating),
     bestWith: r.best_with,
     recommendedWith: r.recommended_with,
+    // jsonb: text from the production driver, parsed by PGlite
+    playerPoll: typeof r.player_poll === 'string' ? (JSON.parse(r.player_poll) as PlayerVotes[]) : r.player_poll,
   }))
 }
 
@@ -261,13 +266,13 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
   for (const g of games) {
     await db.query(
       `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers,
-         mechanisms, publisher, rating, geek_rating, best_with, recommended_with, fetched_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14, $15, $16)
+         mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll, fetched_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14, $15, $16::jsonb, $17)
        ON CONFLICT (bgg_id) DO UPDATE SET name = excluded.name, year = excluded.year,
          thumbnail_url = excluded.thumbnail_url, description = excluded.description, kind = excluded.kind,
          min_players = excluded.min_players, max_players = excluded.max_players, designers = excluded.designers,
          mechanisms = excluded.mechanisms, publisher = excluded.publisher, rating = excluded.rating,
-         geek_rating = excluded.geek_rating, best_with = excluded.best_with, recommended_with = excluded.recommended_with,
+         geek_rating = excluded.geek_rating, best_with = excluded.best_with, recommended_with = excluded.recommended_with, player_poll = excluded.player_poll,
          fetched_at = excluded.fetched_at`,
       [
         g.bggId,
@@ -285,6 +290,7 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
         g.geekRating ?? null,
         g.bestWith ?? null,
         g.recommendedWith ?? null,
+        g.playerPoll == null ? null : JSON.stringify(g.playerPoll),
         fetchedAt,
       ],
     )

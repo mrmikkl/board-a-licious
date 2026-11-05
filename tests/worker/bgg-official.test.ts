@@ -57,8 +57,15 @@ describe('OfficialSource.getGames (F006 research R4)', () => {
     const { source } = official(things)
     const [cascadia] = await source.getGames([295947])
     expect(cascadia).toMatchObject({ bestWith: '2–3 players', recommendedWith: '1–4 players' })
+    expect(cascadia?.playerPoll).toEqual([
+      { players: '1', best: 133, recommended: 439, notRecommended: 145 },
+      { players: '2', best: 587, recommended: 334, notRecommended: 17 },
+      { players: '3', best: 551, recommended: 324, notRecommended: 17 },
+      { players: '4', best: 188, recommended: 552, notRecommended: 82 },
+      { players: '4+', best: 2, recommended: 37, notRecommended: 455 },
+    ])
     const [mini] = await source.getGames([477191])
-    expect(mini).toMatchObject({ bestWith: null, recommendedWith: null })
+    expect(mini).toMatchObject({ bestWith: null, recommendedWith: null, playerPoll: [] })
   })
 
   it('decodes the full description, including entities BGG encodes twice', async () => {
@@ -99,8 +106,8 @@ describe('OfficialSource.getGames (F006 research R4)', () => {
     })
     const [mine] = await source.getGames([295947])
     const [theirs] = await web.getGames([295947])
-    const { description: _a, mechanisms: m1, publisher: _p1, bestWith: _w1, recommendedWith: _r1, ...a } = mine!
-    const { description: _b, mechanisms: m2, publisher: _p2, bestWith: _w2, recommendedWith: _r2, ...b } = theirs!
+    const { description: _a, mechanisms: m1, publisher: _p1, bestWith: _w1, recommendedWith: _r1, playerPoll: _q1, ...a } = mine!
+    const { description: _b, mechanisms: m2, publisher: _p2, bestWith: _w2, recommendedWith: _r2, playerPoll: _q2, ...b } = theirs!
     expect(a).toEqual({ ...b, thumbnailUrl: a.thumbnailUrl })
     expect(new Set(m1)).toEqual(new Set(m2))
   })
