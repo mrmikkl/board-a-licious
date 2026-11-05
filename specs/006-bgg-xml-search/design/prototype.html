@@ -2315,8 +2315,7 @@ body:has(.actionbar) .toast {
     <option value="details">Game info from Search (tap a row)</option>
     <option value="addto">Add to collection from Search (the +)</option>
     <option value="notoken">Search without token (as today)</option>
-    <option value="add">Add game sheet (one field)</option>
-    <option value="add-seg">Add game sheet (Name | Link switch)</option>
+    <option value="add">Add game sheet</option>
   </select>
 </div>
 <div id="root"></div>
@@ -2562,7 +2561,7 @@ const LINK = /boardgamegeek\.com\/(boardgame|boardgameexpansion)\/(\d+)(?:\/([^/
 const looksLikeLink = t => /boardgamegeek|bgg\.|https?:|\/boardgame/i.test(t)
 const essen = () => COLLS[0]
 function addBody() {
-  const a = S.add, seg = S.addSeg
+  const a = S.add, seg = false
   const fieldLabel = seg ? (a.mode === 'link' ? 'BoardGameGeek link' : 'Game name') : 'Game name or BoardGameGeek link'
   const ph = seg ? (a.mode === 'link' ? 'boardgamegeek.com/boardgame/…' : 'e.g. Harmonies') : 'Harmonies, or boardgamegeek.com/boardgame/…'
   const found = a.picked
@@ -2598,7 +2597,7 @@ function drawMatches() {
 function addInput(text) {
   const a = S.add
   a.text = text; a.linkError = null
-  const linkMode = S.addSeg ? a.mode === 'link' : looksLikeLink(text)
+  const linkMode = looksLikeLink(text)
   if (linkMode) {
     clearTimeout(S.debounce); S.seq++; S.addSearch = null
     const m = text.match(LINK)
@@ -2671,14 +2670,14 @@ document.addEventListener('keydown', e => {
 function start() {
   const s = $('#start').value
   clearTimeout(S?.debounce)
-  S = { token: s !== 'notoken', net: { offline: 'offline', down: 'down', busy: 'busy' }[s] || 'ok', screen: (s === 'add' || s === 'add-seg') ? 'collection' : 'search', addSeg: s === 'add-seg', sheet: null, search: null, seq: 0, cache: new Map(), debounce: 0 }
+  S = { token: s !== 'notoken', net: { offline: 'offline', down: 'down', busy: 'busy' }[s] || 'ok', screen: s === 'add' ? 'collection' : 'search', sheet: null, search: null, seq: 0, cache: new Map(), debounce: 0 }
   closeSheet(); viewerLayer.innerHTML = ''
   render()
   const q = { results: 'cascad', nomatch: 'zzz', many: 'the', busy: 'cascad', offline: 'cascad', down: 'cascad', details: 'cascad', addto: 'cascad' }[s]
   if (q) { $('#sq').value = q; runSearch(q, { now: true }) }
   if (s === 'details') setTimeout(() => openDetails(295947), 900)
   if (s === 'addto') setTimeout(() => openAddTo(295947), 900)
-  if ((s === 'add' || s === 'add-seg')) openAdd()
+  if (s === 'add') openAdd()
   if (s === 'search') $('#sq')?.focus()
 }
 $('#start').onchange = start
