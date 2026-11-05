@@ -36,7 +36,7 @@ async function setup() {
 describe('applyMembership (list game sheet, Done)', () => {
   it('adds with facts, stores the list name and cover as a stand-in and asks BGG for details', async () => {
     const { services, calls } = await setup()
-    expect(await applyMembership(services, preview, item, new Set(), new Set(['essen']))).toEqual({ added: 1, removed: 0 })
+    expect(await applyMembership(services, item, new Set(), new Set(['essen']))).toEqual({ added: 1, removed: 0 })
     const [entry] = await store.entries('essen')
     expect(entry).toMatchObject({ bggId: 446453, mark: 'new', detailsPending: true, factsSource: 'preview', facts: { booth: '3-R400' } })
     expect(await store.game(446453)).toMatchObject({ name: 'Kalypso', thumbnailUrl: item.thumbnailUrl, year: null })
@@ -45,14 +45,14 @@ describe('applyMembership (list game sheet, Done)', () => {
 
   it('F005: puts newly added games into the chosen category, leaving games already there alone', async () => {
     const { services } = await setup()
-    await applyMembership(services, preview, item, new Set(), new Set(['essen']), 'later')
+    await applyMembership(services, item, new Set(), new Set(['essen']), 'later')
     expect((await store.entries('essen'))[0]?.mark).toBe('later')
   })
 
   it('does not mark the entry pending when the device already has the details', async () => {
     const { services, calls } = await setup()
     await store.putGames([{ bggId: 446453, name: 'Kalypso', year: 2026, thumbnailUrl: null, description: 'A game.', kind: 'boardgame' }])
-    await applyMembership(services, preview, item, new Set(), new Set(['essen']))
+    await applyMembership(services, item, new Set(), new Set(['essen']))
     expect((await store.entries('essen'))[0]?.detailsPending).toBe(false)
     expect((await store.game(446453))?.year).toBe(2026)
     expect(calls.details).toBe(0)
@@ -60,7 +60,7 @@ describe('applyMembership (list game sheet, Done)', () => {
 
   it('does nothing when the ticks did not change', async () => {
     const { services, calls } = await setup()
-    expect(await applyMembership(services, preview, item, new Set(), new Set())).toEqual({ added: 0, removed: 0 })
+    expect(await applyMembership(services, item, new Set(), new Set())).toEqual({ added: 0, removed: 0 })
     expect(await store.allEntries()).toEqual([])
     expect(calls).toEqual({ schedule: 0, details: 0 })
   })

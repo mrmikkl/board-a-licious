@@ -1,4 +1,4 @@
-import type { StoredList, StoredListEntry } from '../client/types.ts'
+import type { StoredListEntry } from '../client/types.ts'
 import type { Mark } from '../domain/marks.ts'
 import { membershipChanges } from '../domain/membership.ts'
 import type { AppServices } from './context.tsx'
@@ -6,11 +6,17 @@ import type { AppServices } from './context.tsx'
 const now = () => new Date().toISOString()
 
 /**
- * Done in the list game sheet (FR-014): new ticks become entries (facts per FR-010), unticked ones
+ * Done in the list game sheet (FR-014) and in F006's add to collections sheet: new ticks become entries (facts per FR-010), unticked ones
  * tombstones. Until BGG details arrive the list's name and cover stand in for the game on this
  * device; new entries are marked `detailsPending` unless the device already has the details (FR-017).
  */
-export async function applyMembership(services: AppServices, list: StoredList, item: StoredListEntry, before: Set<string>, after: Set<string>, mark: Mark = 'new') {
+export async function applyMembership(
+  services: AppServices,
+  item: Pick<StoredListEntry, 'bggId' | 'name' | 'thumbnailUrl' | 'facts'>,
+  before: Set<string>,
+  after: Set<string>,
+  mark: Mark = 'new',
+) {
   const { store } = services
   const { adds, removals } = membershipChanges({
     bggId: item.bggId,

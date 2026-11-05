@@ -202,12 +202,12 @@ test.describe('US2', () => {
     await expect(page.getByRole('heading', { level: 1, name: /spiel/i })).toBeVisible()
   })
 
-  test('Search has the disabled main 🔍; Config, a list, Swipe and Share and backup have no action bar', async ({ page }) => {
+  test('Search (F006), Config, a list, Swipe and Share and backup have no action bar', async ({ page }) => {
     await fakeBgg(page)
     await fakePreview(page)
     await page.goto('/#/search')
-    await expect(mainButton(page)).toHaveAccessibleName('Search (not available yet)')
-    await expect(mainButton(page)).toBeDisabled()
+    await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Actions' })).toHaveCount(0)
     await expect(page.locator('main').getByRole('link', { name: /add a game/i })).toHaveCount(0)
 
     const collection = await newCollection(page)
