@@ -9,6 +9,7 @@ import type { RouteContext } from './routes/context.ts'
 import { gamesRoute } from './routes/games.ts'
 import { imagesRoute } from './routes/images.ts'
 import { listsRoute } from './routes/lists.ts'
+import { searchRoute } from './routes/search.ts'
 import { getSync, postSync } from './routes/sync.ts'
 
 /** The two Workers-only shapes the Worker uses (kept local so app and Worker share one type program). */
@@ -49,6 +50,8 @@ export function createApp(deps: Deps) {
         switch (route) {
           case 'GET /api/bgg/games':
             return await gamesRoute(ctx)
+          case 'GET /api/bgg/search':
+            return await searchRoute(ctx)
           case 'GET /api/bgg/images':
             return await imagesRoute(ctx)
           case 'GET /api/bgg/companies':

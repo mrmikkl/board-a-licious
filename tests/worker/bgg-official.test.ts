@@ -125,3 +125,41 @@ describe('OfficialSource.getListPage for geeklists (F006 research R6)', () => {
     await expect(source.getListPage('geeklist', 1, 1)).rejects.toMatchObject({ code: 'not_found' })
   })
 })
+
+describe('OfficialSource.search (F006 research R5)', () => {
+  it('asks for board games and expansions by the normalised text', async () => {
+    const { source, calls } = official(() => xmlFixture('search-cascad.xml'))
+    await source.search('  Cascad ', 50)
+    expect(calls).toEqual(['/xmlapi2/search?query=cascad&type=boardgame,boardgameexpansion'])
+  })
+
+  it('merges the double listing of expansions and ranks the results', async () => {
+    const { source } = official(() => xmlFixture('search-cascad.xml'))
+    const results = await source.search('cascad', 50)
+    expect(results).toHaveLength(25)
+    expect(new Set(results.map(r => r.bggId)).size).toBe(25)
+    expect(results.find(r => r.bggId === 385318)).toEqual({ bggId: 385318, name: 'Cascadia: Landmarks', year: 2023, kind: 'expansion' })
+    expect(results.find(r => r.bggId === 295947)).toMatchObject({ kind: 'boardgame', year: 2021 })
+    expect(results.slice(0, 2).map(r => r.name)).toEqual(['Cascade', 'Cascade'])
+    expect(results.at(-1)?.name).not.toMatch(/^cascad/i)
+  })
+
+  it('decodes names and keeps an alternate name when BGG gives no primary one', async () => {
+    const { source } = official(() => xmlFixture('search-cascad.xml'))
+    const results = await source.search('cascad', 50)
+    expect(results.find(r => r.bggId === 154301)?.name).toBe("The Battle at Kemble's Cascade")
+    expect(results.find(r => r.bggId === 388406)?.name).toBe('Cascade')
+  })
+
+  it('answers the same search within a day from the cache', async () => {
+    const { source, calls } = official(() => xmlFixture('search-cascad.xml'))
+    await source.search('cascad', 50)
+    await source.search('CASCAD', 8)
+    expect(calls).toHaveLength(1)
+  })
+
+  it('has no results when BGG has none', async () => {
+    const { source } = official(() => '<?xml version="1.0" encoding="utf-8"?><items total="0" termsofuse="x"></items>')
+    expect(await source.search('zzzq', 50)).toEqual([])
+  })
+})
