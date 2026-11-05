@@ -1,0 +1,2673 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>F006 Search BGG – prototype</title>
+<!-- Prototype for feature 006 (Spec Kit extended, Ext 2). Styles: the F005 prototype CSS (the app theme), plus F006 additions at the end. BoardGameGeek is a stand-in: no network; covers are generated. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ---- src/app/theme/tokens.css ---- */
+/* Design tokens: docs/design.md §3–§6, one-to-one */
+:root {
+  --ink: #0d0f1f;
+  --deck: #151831;
+  --deck-2: #1d2142;
+  --rim: #2c3160;
+  --border: #3a4078;
+  --border-2: #4a5196;
+  --raised: #232852;
+  --text: #eceeff;
+  --muted: #9aa0c8;
+  --placeholder: #6e74a0;
+  --orange: #ff7a1a;
+  --orange-2: #ffb020;
+  --indigo: #4c5bff;
+  --teal: #14c8c8;
+  --violet: #8b5cf6;
+  --danger: #ff4d5e;
+  --got: #0fb98f;
+
+  --grad-hot: linear-gradient(135deg, #ff7a1a 0%, #ffb020 100%);
+  --grad-cool: linear-gradient(135deg, #4c5bff 0%, #14c8c8 100%);
+  --grad-violet: linear-gradient(135deg, #6d4ae0 0%, #a78bfa 100%);
+  --grad-mud: linear-gradient(135deg, #7a6046 0%, #b0916e 100%);
+  --grad-red: linear-gradient(135deg, #c2183a 0%, #ff4d5e 100%);
+  --grad-got: linear-gradient(135deg, #0fb98f 0%, #7cf0c5 100%);
+  --grad-dusk: linear-gradient(135deg, #8b5cf6 0%, #4c5bff 55%, #14c8c8 100%);
+  --grad-white: linear-gradient(135deg, #ffffff 0%, #c9cdf0 100%);
+  --grad-separator: linear-gradient(90deg, #ff7a1a 0%, #8b5cf6 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --lift: 0 8px 22px rgba(3, 4, 12, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glow: 0 0 0 1px var(--orange), 0 0 18px rgba(255, 122, 26, 0.45);
+
+  --font-display: 'Chakra Petch', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --tap: 44px;
+  --gutter: 16px;
+  --column: 440px;
+  --gap: 8px;
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- src/app/theme/base.css ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--ink);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+a {
+  color: var(--orange-2);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Layout: the phone column (docs/design.md §6) */
+.app {
+  position: relative;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.screen {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--gutter);
+}
+.lead {
+  color: var(--muted);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.hex {
+  clip-path: var(--hex);
+}
+.separator {
+  height: 2px;
+  border: 0;
+  margin: 16px 0;
+  background: var(--grad-separator);
+  border-radius: 2px;
+}
+
+/* Surfaces */
+.card {
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift);
+  padding: 16px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  padding: 0 14px;
+  min-height: 50px;
+}
+.field:focus-within {
+  border-color: var(--orange);
+}
+.field input,
+.field select {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  padding: 12px 0;
+}
+.field input::placeholder {
+  color: var(--placeholder);
+}
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+/* Buttons (docs/design.md §7): text on gradients follows the contrast rule of §3 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  font-weight: 700;
+  box-shadow: var(--lift);
+  text-decoration: none;
+  color: var(--text);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--grad-hot);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-bought {
+  background: var(--grad-got);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-danger {
+  /* --danger itself reaches only 4.4:1 on the raised surface; text needs 4.5:1 (docs/design.md §3) */
+  color: #ff6b78;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Badges and pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Empty state */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 8px;
+}
+.empty .hex {
+  width: 72px;
+  height: 82px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.empty h2 {
+  font-size: 18px;
+}
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+.empty .actions {
+  display: grid;
+  gap: var(--gap);
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---- src/app/theme/shell.css ---- */
+/* App shell: app bar, menu, screen heading, sheet, toast (docs/design.md §6, §7) */
+
+/* App bar: its own sticky band on every screen; above the menu's scrim, so ☰ closes it again */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 28;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 2px var(--gutter);
+  background: var(--grad-hot);
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(255, 122, 26, 0.25);
+}
+.appbar-logo {
+  width: 34px;
+  height: auto;
+}
+.appbar-name {
+  grid-column: 2;
+  text-align: center;
+  font: 700 19px/1 var(--font-display);
+  letter-spacing: 0.02em;
+}
+/* a 38px translucent circle inside a 44px touch area */
+.menu-btn {
+  grid-column: 3;
+  justify-self: end;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(13, 15, 31, 0.14);
+  border: 1px solid rgba(13, 15, 31, 0.25);
+  transition: background 0.2s;
+}
+.menu-btn svg {
+  position: relative;
+}
+.menu-btn[aria-expanded='true']::before {
+  background: rgba(13, 15, 31, 0.28);
+}
+.menu-btn:focus-visible {
+  outline-color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu-btn:hover::before {
+    background: rgba(13, 15, 31, 0.24);
+  }
+}
+
+/* Menu: a solid panel just below the app bar at the right; between the action bar and sheets */
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  background: rgba(5, 6, 14, 0.5);
+  animation: fade-in 0.18s ease-out;
+}
+.menu {
+  position: fixed;
+  z-index: 27;
+  right: max(var(--gutter), calc(50% - var(--column) / 2 + var(--gutter)));
+  width: min(260px, calc(100% - 2 * var(--gutter)));
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  transform-origin: top right;
+  animation: menu-in 0.18s ease-out;
+}
+.menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.menu a svg {
+  color: var(--muted);
+}
+.menu a[aria-current='page'] {
+  background: var(--raised);
+}
+.menu a[aria-current='page'] svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu a:hover {
+    background: var(--raised);
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menu-scrim {
+    animation: none;
+  }
+}
+
+/* Screen heading: back (only where it belongs), title, an element right after it */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--gutter) 10px;
+}
+.top-title {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.top h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  /* at most two lines, then "…" */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.top-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .top h1 {
+    font-size: 26px;
+  }
+}
+.back {
+  font-size: 26px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* the light passing over the main button every 5 s */
+@keyframes shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 6, 14, 0.6);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 31;
+  width: 100%;
+  max-width: var(--column);
+  max-height: 88dvh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1e3e 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-grip {
+  /* a 5px bar with a 44px tall touch area around it */
+  width: 88px;
+  height: 25px;
+  margin: -10px auto 2px;
+  background: linear-gradient(var(--rim), var(--rim)) center / 44px 5px no-repeat;
+  border-radius: 3px;
+}
+.sheet-title {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+@keyframes sheet-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+/* above the action bar, near the bottom where there is none (research R7) */
+body:has(.actionbar) .toast {
+  bottom: calc(100px + env(safe-area-inset-bottom));
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast i {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: var(--orange);
+}
+
+/* Expired sign-in: above the screen, solid like every interactive surface */
+.signin-banner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  margin: 12px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--deck-2);
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+}
+.signin-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* Tablets and laptops use more of the screen (docs/design.md §6): a wider column, cards and game
+   rows in a grid; sheets and the swipe card keep a readable width. */
+@media (min-width: 768px) {
+  :root {
+    --column: 1040px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .rows {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .sheet {
+    max-width: 560px;
+  }
+  .hexboard {
+    max-width: none;
+  }
+  .swipe-screen,
+  .intro {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .form,
+  .share {
+    max-width: 640px;
+  }
+}
+
+/* Dragging a sheet down to close it follows the finger; it springs back if let go early */
+.sheet.is-dragging {
+  transition: none;
+  animation: none;
+}
+.sheet.is-settling {
+  transition: transform 0.2s ease-out;
+}
+.sheet-grip {
+  touch-action: none;
+}
+/* a heading that reacts to taps (Config: five taps show the developer section): no text selection,
+   no double-tap zoom swallowing taps, and the whole title width as target */
+.top h1.tappable {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  justify-self: stretch;
+}
+
+/* the page keeps room at the bottom only while an action bar is shown (research R7) */
+.app:not(:has(.actionbar)) {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+/* Collection heading (docs/design.md v2.0.0 "Collection screen", "Ticker"): the name runs as a
+   ticker before the pencil instead of wrapping to two lines; the pencil keeps its place after it */
+.top h1.ticker {
+  flex: 0 1 auto;
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow-wrap: normal;
+}
+.edit-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- src/app/theme/actionbar.css ---- */
+/* Action bar and main button (docs/design.md v2.0.0 "Action bar", "Main button"); F003 tasks T016 */
+
+/* Dock position, padding and safe area of the old tab bar (research R7) */
+.actionbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--column);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.actionbar-left,
+.actionbar-right,
+.actionbar-outer {
+  display: contents;
+}
+.actionbar-left > .act {
+  grid-column: 2;
+  grid-row: 1;
+}
+.actionbar-right > .act {
+  grid-column: 4;
+  grid-row: 1;
+}
+/* F004: the fourth action at the outer right (docs/design.md "Action bar") */
+.actionbar-outer > .act {
+  grid-column: 5;
+  grid-row: 1;
+}
+
+.act {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 600 11px var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+}
+.act svg {
+  transition:
+    transform 0.25s var(--spring),
+    color 0.2s;
+}
+.act:active svg {
+  transform: scale(0.85);
+}
+.act.is-active svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .act:hover {
+    color: var(--text);
+  }
+  .act:hover svg {
+    color: var(--orange-2);
+  }
+}
+
+.main-btn {
+  position: relative;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  background: var(--grad-hot);
+  color: var(--ink);
+  cursor: pointer;
+}
+.main-btn svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+/* a light shimmer passes over it every 5 s */
+.main-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: main-shimmer 5s ease-in-out infinite;
+}
+@keyframes main-shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+/* not available yet: raised grey, no shimmer, no hover or press */
+.main-btn.hex-btn:disabled {
+  background: var(--raised);
+  color: var(--placeholder);
+  cursor: not-allowed;
+  scale: none;
+  filter: none;
+}
+.main-btn:disabled::after {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-btn::after {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .actionbar {
+    max-width: 560px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+}
+
+/* ---- src/app/theme/components.css ---- */
+/* Feature components: docs/design.md §7 (collection card, game row, group heading, hexagon picker, forms) */
+
+/* Mark gradients (docs/design.md §4), used by pickers, pills and group dots */
+[data-mark='new'],
+[data-tone='new'] {
+  --tone: var(--grad-white);
+  --tone-text: var(--ink);
+}
+[data-mark='must_have'],
+[data-tone='must_have'],
+[data-tone='hot'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='interested'],
+[data-tone='interested'] {
+  --tone: var(--grad-cool);
+  --tone-text: var(--ink);
+}
+[data-mark='unsure'],
+[data-tone='unsure'] {
+  --tone: var(--grad-violet);
+  --tone-text: #fff;
+}
+[data-mark='poop'],
+[data-tone='poop'] {
+  --tone: var(--grad-mud);
+  --tone-text: #fff;
+}
+[data-mark='skip'],
+[data-tone='skip'] {
+  --tone: var(--grad-red);
+  --tone-text: #fff;
+}
+[data-mark='bought'] {
+  --tone: var(--grad-got);
+  --tone-text: var(--ink);
+}
+/* hall groups (group by booth): halls in the hot gradient, "No booth yet" muted */
+[data-mark='hall'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='none'] {
+  --tone: linear-gradient(135deg, #6e74a0, #9aa0c8);
+  --tone-text: var(--ink);
+}
+
+.section-title {
+  font-size: 18px;
+  margin: 20px 0 10px;
+}
+.section-title small {
+  font: 600 13px var(--font-body);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hint.error {
+  color: #ff8a95;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field.is-disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.field svg {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Dropdown: field look with an orange hexagon as arrow */
+.field.select {
+  position: relative;
+}
+.field.select select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.field.select select option {
+  background: var(--deck);
+}
+.field.select::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  pointer-events: none;
+}
+
+/* Switch ("Essen collection") */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.toggle-text {
+  flex: 1;
+  font-weight: 600;
+}
+.toggle-text small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 6px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  clip-path: var(--hex);
+  background: var(--muted);
+  transition: transform 0.25s var(--spring);
+}
+.switch:checked {
+  background: var(--grad-hot);
+  border-color: transparent;
+}
+.switch:checked::after {
+  background: var(--ink);
+  transform: translateX(20px);
+}
+
+/* Hexagon picker: honeycomb, every second hexagon offset down */
+/* one straight, centred row of equal hexagons, whatever their labels and the phone's text scaling */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 84px));
+  justify-content: center;
+  align-items: start;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+.picker-btn {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+.picker-hex {
+  display: block;
+  aspect-ratio: 0.88;
+  padding: 2px;
+  background: var(--border-2);
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.picker-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.picker-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.picker-btn[aria-pressed='true'] .picker-hex {
+  background: var(--orange);
+}
+.picker-btn[aria-pressed='true'] .picker-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.picker-btn:is([data-tone='unsure'], [data-tone='poop'])[aria-pressed='true'] .picker-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Collection cards with the hexagon cluster in the top-right corner */
+.cards {
+  display: grid;
+  gap: var(--gap);
+}
+/* off-screen cards skip layout, paint and their cluster animation (long lists stay fast) */
+.cards > .card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  padding-right: 64px;
+}
+.card-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+/* the six counts always in one row; the text shrinks on narrow phones instead of wrapping */
+.counts {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 10px 0 0;
+  font: 700 clamp(12px, 3.7vw, 15px) var(--font-display);
+  white-space: nowrap;
+}
+.cluster {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 58px;
+  height: 52px;
+  animation: sway 6s ease-in-out infinite;
+}
+.cluster i {
+  position: absolute;
+  width: 22px;
+  height: 25px;
+  background: var(--grad-dusk);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+.cluster i:nth-child(1) {
+  top: 0;
+  right: 0;
+}
+.cluster i:nth-child(2) {
+  top: 0;
+  right: 24px;
+  opacity: 0.7;
+}
+.cluster i:nth-child(3) {
+  top: 20px;
+  right: 12px;
+  opacity: 0.85;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.soon-card {
+  margin-bottom: 16px;
+}
+.soon-card .card-title {
+  padding-right: 0;
+}
+/* F002 Share hint at the top of Config */
+.hint-card .card-title {
+  padding-right: 0;
+}
+
+.row-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.row-actions .btn {
+  padding-inline: 10px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.group-title i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  background: var(--tone);
+}
+.group-count {
+  color: var(--muted);
+  font-weight: 700;
+}
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.chev {
+  margin-left: auto;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.fold[aria-expanded='true'] .chev {
+  transform: rotate(90deg);
+}
+
+.rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows[hidden] {
+  display: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+.row-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-sub {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* F002 "Just added": the hover highlight, kept until the user scrolls or taps (not an animation) */
+.row.is-just-added {
+  border-color: var(--orange);
+  box-shadow: var(--lift), var(--glow);
+}
+.row.skip .row-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.row.skip .cover {
+  opacity: 0.5;
+}
+.row .pill,
+.detail-head .pill {
+  flex: none;
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.mark-pill {
+  padding: 4px 8px;
+}
+
+/* Hexagon covers */
+.cover {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.cover-hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--grad-dusk);
+}
+.cover-hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-initials {
+  font: 700 17px var(--font-display);
+  color: var(--ink);
+}
+.cover-got {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Game details sheet */
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.detail-sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+.sheet-actions {
+  display: grid;
+  gap: var(--gap);
+  margin-top: 12px;
+}
+
+/* "Group by" under the filter in a collection */
+.group-by {
+  margin-top: 12px;
+}
+
+/* Config → Developer: plain links, each a full-width 44px target */
+.dev-links {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dev-links a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Cancel and the main action side by side, the main action on the right */
+.sheet-actions-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Game info (docs/design.md §7 "Game info"): year beside the name, publisher, then three infos */
+.row-year {
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row-info > span:first-child {
+  flex: none;
+}
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.row-info .info-pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.info-pill {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.info-list > div {
+  display: contents;
+}
+.info-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.info-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* F003: the SPIEL preview suggestion above a BGG list link field */
+.list-suggestion {
+  margin-bottom: 10px;
+}
+
+/* ---- src/app/theme/fair.css ---- */
+/* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
+
+/* Filter: one full-width button, a panel below it */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--raised);
+  box-shadow: var(--glow);
+}
+.seg-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg {
+  /* one column per option, all in one row */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.seg button {
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0 4px;
+  overflow-wrap: anywhere;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  border-top: 1px solid var(--rim);
+  cursor: pointer;
+}
+.filter-row:first-child {
+  border-top: 0;
+}
+.filter-row input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+}
+.filter-row span {
+  flex: 1;
+}
+.filter-row small {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+.chip:active,
+.seg button:active {
+  scale: 0.96;
+}
+
+/* "✅ 1 game bought, €52 spent" under the filter */
+.bought-line {
+  margin: 10px 2px 0;
+  font-weight: 700;
+  color: #7cf0c5;
+}
+
+/* Game details: description, facts, price question */
+.detail-head .pill {
+  margin-top: 4px;
+}
+.desc {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+.muted {
+  color: var(--muted);
+}
+.facts-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.facts-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.facts-by {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.link-btn {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-2);
+  font-weight: 700;
+  text-align: left;
+}
+.facts-add {
+  margin-bottom: 8px;
+}
+.facts-form {
+  margin-bottom: 12px;
+}
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: var(--gap);
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.currency {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* "Groups" with Select all / Select none on the same line */
+.seg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.seg-actions {
+  display: flex;
+  gap: 4px;
+}
+.seg-actions .link-btn {
+  min-height: var(--tap);
+  padding: 0 8px;
+}
+
+/* filter icon in the collection header; a dot while a filter or the hall grouping is active */
+.filter-icon {
+  position: relative;
+}
+.filter-icon.is-active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 11px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+}
+/* what is shown while narrowed; a tap opens "Filter and group" */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* ---- src/app/theme/lists.css ---- */
+/* BGG lists: list cards, list rows with +, progress, list game sheet (docs/design.md §7) */
+
+.example {
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Loading progress: pages loaded so far */
+.progress {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: var(--r-pill);
+  background: var(--rim);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-hot);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .progress span {
+    transition: width 0.4s ease-out;
+  }
+}
+.list-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.list-status p {
+  margin: 0;
+}
+.list-status.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #ff8a95;
+}
+
+/* List rows: the row opens the game, the hexagon + next to it does the same */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-item .row {
+  flex: 1;
+  min-width: 0;
+}
+.in-mark {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.add-mini {
+  flex: none;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.add-mini .hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 26px var(--font-display);
+}
+
+/* List game sheet */
+.description {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Multi-choice list: a hexagon tick per collection; the ticks always show the current truth */
+.picks {
+  display: grid;
+  gap: var(--gap);
+}
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  cursor: pointer;
+}
+.pick:has(.pick-input:focus-visible) {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.pick-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.tick {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  background: var(--border-2);
+}
+.tick::before {
+  content: '';
+  width: 24px;
+  height: 28px;
+  clip-path: var(--hex);
+  background: var(--raised);
+}
+.pick-input:checked + .tick {
+  background: var(--orange);
+}
+.pick-input:checked + .tick::before {
+  background: var(--grad-hot);
+}
+.pick-input:checked + .tick::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 800;
+}
+.pick-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.pick-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.pick-text small {
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+
+/* ---- src/app/theme/interaction.css ---- */
+/* Interaction states: docs/design.md §8. Nothing moves on hover; press squishes; focus is orange. */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn,
+.icon-btn,
+.card,
+.row,
+.tile {
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    scale 0.25s var(--spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not([aria-disabled='true']):hover,
+  .row:hover,
+  .tile:hover,
+  .field:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .btn:not(:disabled):not(.btn-primary):not(.btn-bought):hover,
+  .icon-btn:hover {
+    background: var(--grad-hot);
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--grad-red);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover,
+  .btn-bought:not(:disabled):hover {
+    box-shadow: var(--lift), 0 0 22px rgba(255, 176, 32, 0.55);
+  }
+  .hex-btn:hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Press: a short squish that springs back (touch and pointer) */
+.card:active,
+.row:active,
+.tile:active {
+  scale: 0.98;
+  transition-duration: 0.08s;
+}
+.btn:not(:disabled):active,
+.icon-btn:active {
+  scale: 0.96;
+  transition-duration: 0.08s;
+}
+.hex-btn {
+  transition:
+    scale 0.25s var(--spring),
+    filter 0.2s;
+}
+.hex-btn:active {
+  scale: 0.9;
+  transition-duration: 0.08s;
+}
+
+/* Tap pulse: an orange hexagon expanding from the tap point */
+.tap-pulse {
+  position: fixed;
+  z-index: 60;
+  width: 56px;
+  height: 64px;
+  margin: -32px 0 0 -28px;
+  clip-path: var(--hex);
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.55), rgba(255, 122, 26, 0) 70%);
+  pointer-events: none;
+  animation: tap-pulse 0.5s ease-out forwards;
+}
+@keyframes tap-pulse {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion (docs/design.md §9): every animation and press squish off */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .card:active,
+  .row:active,
+  .tile:active,
+  .btn:active,
+  .icon-btn:active,
+  .hex-btn:active,
+  .hex-btn:hover {
+    scale: none;
+  }
+  .tap-pulse {
+    display: none;
+  }
+}
+
+/* ---- src/app/theme/ticker.css ---- */
+/* Ticker for headings too long for their row (docs/design.md v2.0.0 "Ticker"); F003 tasks T024 */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.ticker > span {
+  display: inline-block;
+}
+/* soft fades at both edges; the left padding keeps the first letter clear of the fade */
+.ticker.is-long {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  padding-left: 10px;
+  margin-left: -10px;
+}
+.ticker.is-long > span {
+  animation: ticker var(--ticker-time, 8s) linear infinite;
+}
+@keyframes ticker {
+  /* read the start */
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  /* the end is visible, then start over */
+  82%,
+  100% {
+    transform: translateX(calc(-1 * var(--ticker-shift)));
+  }
+}
+/* reduced motion: the text stands still and ends in "…" */
+@media (prefers-reduced-motion: reduce) {
+  .ticker {
+    text-overflow: ellipsis;
+  }
+  .ticker.is-long {
+    -webkit-mask-image: none;
+    mask-image: none;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  .ticker.is-long > span {
+    display: inline;
+    animation: none;
+  }
+}
+
+/* ---- src/app/theme/swipe.css ---- */
+/* Swipe screen and list picker: docs/design.md §7 (swipe card), §9 (swipe motion) */
+
+/* A card dragged or flung past the edge never scrolls the page sideways */
+.swipe-screen {
+  overflow-x: clip;
+}
+
+/* Source note: which list, whether facts are kept */
+.swipe-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.swipe-note b {
+  color: var(--text);
+}
+.swipe-note > .hex {
+  flex: none;
+  width: 14px;
+  height: 16px;
+  margin-top: 2px;
+  background: var(--grad-dusk);
+}
+
+/* Card stack */
+.deck {
+  position: relative;
+  height: min(400px, 54vh);
+  min-height: 340px;
+  margin: 0 0 14px;
+}
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #1f2350 0%, var(--deck) 70%);
+  box-shadow: var(--lift);
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-card > * {
+  flex-shrink: 0;
+}
+.swipe-card.behind {
+  transform: scale(0.95) translateY(14px);
+  opacity: 0.6;
+}
+.swipe-card.top {
+  touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.5s var(--spring);
+}
+.swipe-card.top.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.swipe-card.enter {
+  animation: swipe-card-in 0.45s var(--spring);
+}
+@keyframes swipe-card-in {
+  from {
+    transform: scale(0.94) translateY(16px);
+    opacity: 0.6;
+  }
+}
+.swipe-card.leaving {
+  pointer-events: none;
+  animation: swipe-fling 0.38s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes swipe-fling {
+  from {
+    transform: translateX(var(--from-x)) rotate(calc(var(--from-x) / 14px * 1deg));
+  }
+  to {
+    transform: translate(calc(var(--dir) * 520px), -40px) rotate(calc(var(--dir) * 30deg));
+    opacity: 0;
+  }
+}
+.swipe-card .cover {
+  margin-bottom: 12px;
+}
+.swipe-name {
+  margin: 0;
+  font: 700 24px/1.15 var(--font-display);
+}
+.swipe-year {
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+.swipe-desc {
+  display: -webkit-box;
+  margin: 0 0 10px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.swipe-wait {
+  justify-content: center;
+  gap: 12px;
+  cursor: default;
+}
+.swipe-wait .hex {
+  width: 56px;
+  height: 64px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.swipe-wait p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ADD / NOPE stamps grow while dragging; the leaving card shows its stamp in full */
+.swipe-stamp {
+  position: absolute;
+  top: 20px;
+  padding: 4px 10px;
+  border: 2px solid;
+  border-radius: 10px;
+  font: 700 18px var(--font-display);
+  opacity: 0;
+  scale: 0.7;
+}
+.swipe-stamp.add {
+  left: 16px;
+  color: var(--teal);
+  rotate: -12deg;
+}
+.swipe-stamp.nope {
+  right: 16px;
+  color: var(--danger);
+  rotate: 12deg;
+}
+.leaving-right .swipe-stamp.add,
+.leaving-left .swipe-stamp.nope {
+  opacity: 1;
+  scale: 1.2;
+}
+
+/* ✕ / ✓ hexagon buttons */
+.swipe-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+.swipe-btn {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 80px;
+  border: 0;
+  clip-path: var(--hex);
+  font: 700 28px var(--font-display);
+  cursor: pointer;
+}
+.swipe-btn.no {
+  background: var(--grad-red);
+  color: #fff;
+}
+.swipe-btn.yes {
+  background: var(--grad-cool);
+  color: #04161a;
+}
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.swipe-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* List picker */
+.pick-list {
+  display: grid;
+  gap: var(--gap);
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.pick {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pick-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.pick small {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not(:disabled):hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .swipe-btn:not(:disabled):hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Reduced motion: no tilt, fling or pop-in; the card just changes */
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card.leaving {
+    display: none;
+  }
+}
+
+/* "Add by list": the chosen list is clearly marked (orange edge, glow and a tick) */
+.pick[aria-pressed='true'] {
+  position: relative;
+  border: 2px solid var(--orange);
+  box-shadow: var(--lift), var(--glow);
+  padding-right: 44px;
+}
+.pick[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 27px;
+  transform: translateY(-50%);
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  color: var(--ink);
+  font-weight: 700;
+}
+.pick-list,
+.pick-new,
+.pick-empty {
+  margin-top: 16px;
+}
+.pick-intro {
+  margin: 0 0 14px;
+}
+
+/* All game info on the card (FR-010): compact, left-aligned; a long card scrolls up and down
+   (pan-y), sideways stays the swipe */
+.swipe-card.top {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.swipe-card .info-list {
+  width: 100%;
+  margin: 4px 0 0;
+  gap: 4px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+.swipe-card .info-list dt {
+  font-size: 13px;
+}
+.swipe-card .info-list dd {
+  font-weight: 600;
+}
+
+/* ---- F005 prototype additions ---- */
+[data-mark='later'], [data-tone='later'] { --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%); --tone-text: var(--ink); }
+.proto-later-teal [data-mark='later'], .proto-later-teal [data-tone='later'] { --tone: linear-gradient(135deg, #0ea5e9 0%, #a5f3fc 100%); }
+
+.proto-bar { position: relative; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 12px; background: #05060e; border-bottom: 1px solid var(--rim); font-size: 12px; color: var(--muted); }
+.proto-bar select { background: var(--deck-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; font: inherit; }
+.proto-note { margin: 8px 0; font-size: 12px; color: var(--placeholder); }
+
+/* Game row: category as the border colour, actions on the right */
+.crow { position: relative; display: flex; align-items: stretch; min-height: 68px; border-radius: var(--r-md); box-shadow: var(--lift);
+  border: 1px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone, linear-gradient(var(--border), var(--border))) border-box; }
+.crow[data-mark='new'] { --tone: linear-gradient(var(--border), var(--border)); }
+.crow[data-mark='skip'] { opacity: 0.75; }
+.crow[data-mark='skip'] .row-name { text-decoration: line-through; color: var(--muted); }
+.crow[data-mark='skip'] .cover { opacity: 0.5; }
+/* B: a coloured edge at the left instead of the whole border */
+.proto-edge .crow { border: 1px solid var(--border); background: var(--deck); padding-left: 6px; }
+.proto-edge .crow::before { content: ''; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 7px; border-radius: var(--r-md) 0 0 var(--r-md); background: var(--tone); }
+.proto-edge .crow[data-mark='new']::before { background: var(--border); }
+.crow-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px 4px 8px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: var(--r-md) 0 0 var(--r-md); }
+.crow-acts { flex: none; display: flex; align-items: center; gap: 2px; padding-right: 6px; }
+.ract { width: 46px; min-height: 52px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--muted); font: 600 10px var(--font-body); cursor: pointer; }
+.ract .rhex { width: 32px; height: 36px; display: grid; place-items: center; clip-path: var(--hex); background: var(--raised); color: var(--text); transition: background 0.2s, color 0.2s, scale 0.25s var(--spring); }
+.ract:active .rhex { scale: 0.85; }
+.ract.buy[aria-pressed='true'] { color: #7cf0c5; }
+.ract.buy[aria-pressed='true'] .rhex { background: var(--grad-got); color: var(--ink); }
+.ract.cat .rhex { background: var(--raised); }
+.proto-catemoji .ract.cat .rhex { background: var(--tone); color: var(--tone-text); font-size: 16px; }
+@media (hover: hover) and (pointer: fine) { .ract:hover .rhex { background: var(--grad-hot); color: var(--ink); } }
+.row-price { color: #7cf0c5; font-weight: 700; }
+
+/* Quick filters between the two lines */
+.quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qtoggle { display: inline-grid; grid-auto-flow: column; padding: 3px; min-height: var(--tap); border: 1px solid var(--border); border-radius: var(--r-pill); background: var(--deck); cursor: pointer; font: 700 14px var(--font-body); }
+.qtoggle span { display: grid; place-items: center; padding: 0 14px; border-radius: var(--r-pill); color: var(--muted); transition: background 0.2s, color 0.2s; }
+.qtoggle span.on { background: var(--grad-hot); color: var(--ink); }
+.quick .chip { gap: 6px; cursor: pointer; }
+.quick .chip[aria-pressed='true'] { background: var(--grad-hot); color: var(--ink); border-color: transparent; }
+.quick-count { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; }
+.search { margin-top: 10px; }
+.search svg { color: var(--muted); flex: none; }
+.no-match { text-align: center; color: var(--muted); padding: 24px 0; }
+
+/* filter action highlighted while not default: orange icon and label, hexagon dot */
+.act.is-active { color: var(--text); }
+.act.is-active svg { color: var(--orange); }
+.act { position: relative; }
+.act.is-active::after { content: ''; position: absolute; top: 4px; left: calc(50% + 8px); width: 10px; height: 11px; clip-path: var(--hex); background: var(--grad-hot); }
+
+/* hall-only booths */
+.hall-only { color: var(--orange-2); font-weight: 700; }
+
+/* Category sheet (list) */
+.cat-list { display: grid; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+.cat-list button { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--deck-2); color: var(--text); font: 600 16px var(--font-body); text-align: left; cursor: pointer; }
+.cat-list .chex { width: 22px; height: 25px; flex: none; clip-path: var(--hex); background: var(--tone); }
+.cat-list button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.cat-list button[aria-pressed='true']::after { content: 'current'; margin-left: auto; font-size: 12px; color: var(--muted); }
+.cat-list .sep { height: 1px; background: var(--rim); margin: 4px 0; }
+
+/* Zigzag category picker */
+.zz { position: relative; margin: 6px auto 4px; }
+.zz .picker-btn { position: absolute; padding: 0; }
+.zz.flat .picker-hex, .zz.flat .picker-face { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.zz .picker-hex { aspect-ratio: auto; width: 100%; height: 100%; }
+.zz .picker-face { font-size: 11px; }
+.zz .picker-face b { font-size: 20px; line-height: 1; font-weight: 400; }
+.not-int { display: flex; justify-content: center; margin: 0 0 6px; }
+
+/* Ratings in the info box */
+.rating { display: inline-flex; align-items: center; gap: 6px; }
+.rating i { font-style: normal; display: inline-grid; place-items: center; width: 26px; height: 29px; clip-path: var(--hex); background: var(--grad-cool); color: var(--ink); font: 700 11px var(--font-display); }
+.rating i.geek { background: var(--grad-dusk); color: #fff; }
+.rating small { color: var(--muted); font-weight: 600; }
+
+/* BGG list with resync */
+.lrow { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.lrow .in { margin-left: auto; font-size: 12px; color: var(--muted); }
+.resync-btn svg { display: block; }
+.resync-btn.spin svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .resync-btn.spin svg { animation: none; } }
+
+/* Conflicts sheet */
+.conflict { padding: 12px 0; border-top: 1px solid var(--rim); }
+.conflict:first-of-type { border-top: 0; }
+.conflict h3 { margin: 0 0 2px; font-size: 16px; }
+.conflict p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice button { min-height: 56px; padding: 6px 10px; display: grid; align-content: center; gap: 2px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck-2); color: var(--text); font: 700 15px var(--font-body); text-align: left; cursor: pointer; }
+.choice button small { font-size: 11px; font-weight: 700; color: var(--muted); }
+.choice button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.choice button[aria-pressed='true'] small { color: var(--orange-2); }
+.all-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 8px; }
+.sheet-lead-row { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* BG-Tinder card: the same info box as the details; full description */
+.swipe-card .facts-box { width: 100%; text-align: left; margin-top: 4px; }
+.swipe-card .desc { text-align: left; margin-top: 10px; }
+
+
+/* ---------- F006: search ---------- */
+.search-hint { margin: 6px 0 12px; font-size: 13px; color: var(--muted); }
+.result-status { display: flex; align-items: center; gap: 8px; min-height: 24px; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.result-status b { color: var(--text); }
+.srow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.srow:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.srow .in-mark { margin-left: auto; flex: none; max-width: 38%; text-align: right; }
+.srow.compact { min-height: 52px; padding: 6px 10px; box-shadow: none; background: var(--deck-2); }
+.kind { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid var(--violet); color: #c4b5fd; font-size: 11px; font-weight: 700; line-height: 18px; }
+.rows.is-stale { opacity: 0.45; }
+.skel { height: 64px; border-radius: var(--r-md); border: 1px solid var(--rim); background: linear-gradient(90deg, var(--deck) 0%, var(--deck-2) 50%, var(--deck) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.spin-hex { flex: none; width: 16px; height: 18px; clip-path: var(--hex); background: var(--grad-hot); animation: spin 1.2s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .skel, .spin-hex { animation: none; } }
+.notice { display: grid; gap: 10px; justify-items: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.notice p { margin: 0; }
+.notice.warn { border-color: var(--danger); }
+.notice small { color: var(--muted); }
+.more-note { margin: 12px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+.matches { display: grid; gap: 6px; margin: 8px 0 4px; padding: 0; list-style: none; }
+.found { display: flex; align-items: center; gap: 12px; margin: 4px 0 8px; padding: 10px 12px; border: 1px solid var(--orange); border-radius: var(--r-md); background: var(--deck); }
+.found .row-meta { flex: 1; }
+.picks { display: grid; gap: 8px; margin: 0 0 12px; }
+.picks .pick { position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); cursor: pointer; }
+.cover-zoom { padding: 0; border: 0; background: none; cursor: zoom-in; }
+.cover-zoom:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.viewer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(5, 6, 14, 0.94); }
+.viewer .big { width: min(78vw, 340px); aspect-ratio: 120 / 134; clip-path: var(--hex); }
+.viewer .big img { width: 100%; height: 100%; display: block; }
+.viewer .icon-btn { position: absolute; top: 16px; right: 16px; }
+.viewer p { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 13px; }
+.proto-bar { flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <label for="start">Start</label>
+  <select id="start">
+    <option value="search">Search (empty)</option>
+    <option value="results">Search: “cascad”</option>
+    <option value="nomatch">Search: no match</option>
+    <option value="many">Search: 50 results (“the”)</option>
+    <option value="busy">Search: BGG asks to wait</option>
+    <option value="offline">Search: offline</option>
+    <option value="down">Search: BGG not reachable</option>
+    <option value="details">Details sheet from Search</option>
+    <option value="notoken">Search without token (as today)</option>
+    <option value="add">Add game sheet (one field)</option>
+    <option value="add-seg">Add game sheet (Name | Link switch)</option>
+  </select>
+</div>
+<div id="root"></div>
+<div id="layer"></div>
+<div id="viewer-layer"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const svgI = (body, w = 2, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`
+const ICON = {
+  plus: svgI('<path d="M12 5v14M5 12h14"/>'),
+  heart: svgI('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>', 2.6),
+  filter: svgI('<path d="M3 5h18l-7 8v5l-4 2v-7z"/>'),
+  honey: svgI('<path d="M7 3.5 10.5 5.5v4L7 11.5 3.5 9.5v-4z"/><path d="M17 3.5 20.5 5.5v4L17 11.5 13.5 9.5v-4z"/><path d="M12 12.5 15.5 14.5v4L12 20.5 8.5 18.5v-4z"/>', 1.8),
+  search: svgI('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>', 2, 18),
+  searchBig: svgI('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>', 2.6),
+  close: svgI('<path d="M6 6l12 12M18 6 6 18"/>', 2.4),
+}
+
+const CATS = [
+  { k: 'must_have', l: 'Must Have', e: '⭐' }, { k: 'interested', l: 'Interested', e: '👀' }, { k: 'unsure', l: 'Unsure', e: '🤔' },
+  { k: 'later', l: 'For later', e: '⏳' }, { k: 'poop', l: 'Poop', e: '💩' }, { k: 'new', l: 'No category yet', e: '⬡' }, { k: 'skip', l: 'Not interested', e: '🛑' },
+]
+const CAT = Object.fromEntries(CATS.map(c => [c.k, c]))
+const PICK = CATS.slice(0, 5)
+
+// BoardGameGeek stand-in: id, name, year (null = unknown), expansion?, publisher, players, rating, geek rating, designers, mechanisms
+const BGG = [
+  [342942, 'Ark Nova', 2021, 0, 'Feuerland', '1–4', 8.5, 8.4, 'Mathias Wigge', 'Hand management, Tags'],
+  [367150, 'Ark Nova: Marine Worlds', 2022, 1, 'Feuerland', '1–4', 8.7, 7.4, 'Mathias Wigge', 'Hand management'],
+  [295947, 'Cascadia', 2021, 0, 'Kosmos', '1–4', 7.9, 7.7, 'Randy Flynn', 'Tile placement, Pattern building'],
+  [374341, 'Cascadia: Landmarks', 2023, 1, 'Flatout Games', '1–5', 8.2, 6.9, 'Randy Flynn', 'Tile placement'],
+  [389281, 'Cascadia: Rolling Hills', 2023, 0, 'Flatout Games', '1–6', 7.2, 6.4, 'Randy Flynn', 'Dice rolling, Roll and write'],
+  [412083, 'Cascadia Junior', 2024, 0, 'Flatout Games', '1–4', 7.0, 5.9, 'Randy Flynn', 'Tile placement'],
+  [356871, 'Cascadia: Kickstarter Promo Cards', null, 1, 'Flatout Games', '1–4', 7.6, null, 'Randy Flynn', 'Pattern building'],
+  [148229, 'Cascadero', 2009, 0, 'Amigo', '2–4', 6.3, 5.7, 'Reiner Knizia', 'Network building'],
+  [184267, 'Café', 2021, 0, 'Board&Dice', '1–4', 7.2, 6.4, 'Eryk Kokot', 'Worker placement'],
+  [123540, 'Tokaido', 2012, 0, 'Funforge', '2–5', 7.0, 6.9, 'Antoine Bauza', 'Set collection'],
+  [391834, 'Tôkaidô Duo', 2023, 0, 'Funforge', '1–2', 7.1, 6.2, 'Antoine Bauza', 'Set collection'],
+  [414317, 'Harmonies', 2024, 0, 'Libellud', '1–4', 7.9, 7.6, 'Johan Benvenuto', 'Pattern building'],
+  [373106, 'Sky Team', 2023, 0, 'Le Scorpion Masqué', '2', 8.0, 7.5, 'Luc Rémond', 'Cooperative, Dice placement'],
+  [429001, 'Sky Team: Turbulence Training', 2025, 1, 'Le Scorpion Masqué', '2', 8.3, 6.5, 'Luc Rémond', 'Cooperative'],
+  [359871, 'Arcs', 2024, 0, 'Leder Games', '2–4', 8.1, 7.7, 'Cole Wehrle', 'Trick-taking, Area control'],
+  [385761, 'Faraway', 2023, 0, 'Catch Up Games', '2–6', 7.6, 7.1, 'Johannes Goupy, Corentin Lebrat', 'Card drafting'],
+  [397598, 'Harmonies: Promo Spirits', 2025, 1, 'Libellud', '1–4', 7.4, null, 'Johan Benvenuto', 'Pattern building'],
+  [327831, 'ito', 2019, 0, 'Arclight', '2–10', 6.8, 6.2, 'Yu Hayashi', 'Cooperative, Communication limits'],
+].map(([id, name, year, exp, publisher, players, rating, geek, designers, mechanisms], i) => ({ id, i, name, year, exp: !!exp, publisher, players, rating, geek, designers, mechanisms }))
+// a long tail so "the" fills the 50-result cap
+const WORDS = ['Castles', 'Rivers', 'Crowns', 'Gardens', 'Lanterns', 'Ruins', 'Islands', 'Stars', 'Towers', 'Forests', 'Spires', 'Harbors', 'Dragons', 'Mines', 'Kings', 'Moons', 'Valleys', 'Bridges', 'Orchards', 'Comets']
+const EXTRA = []
+for (let n = 0; n < 72; n++) EXTRA.push({ id: 500000 + n, i: 30 + n, name: `${['The', 'Of', 'Beyond the', 'Under the'][n % 4]} ${WORDS[n % 20]}${n >= 20 ? ' ' + ['II', 'of the North', 'Deluxe'][n % 3] : ''}`, year: 2000 + (n % 26), exp: n % 7 === 3, publisher: 'Stand-in Games', players: '2–4', rating: 6 + (n % 20) / 10, geek: 5.5 + (n % 15) / 10, designers: 'A. Designer', mechanisms: 'Set collection' })
+const ALLBGG = [...BGG, ...EXTRA]
+
+const COLLS = [
+  { id: 'essen', name: 'Essen 2026', has: { 295947: 'interested', 414317: 'must_have', 373106: 'must_have', 359871: 'must_have', 367150: 'interested', 385761: 'interested' } },
+  { id: 'spiel25', name: 'SPIEL 2025', has: { 295947: 'must_have', 359871: 'interested' } },
+  { id: 'wish', name: 'Wishlist', has: {} },
+]
+const DESC = 'Build landscapes of rivers, fields, mountains and forests, then bring animals to live where their habitat fits. A calm puzzle of tile drafting and pattern building, about 30–45 minutes, with a solo mode and scenario cards for variety.'
+
+const $ = s => document.querySelector(s)
+const root = $('#root'), layer = $('#layer'), viewerLayer = $('#viewer-layer')
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const initials = n => n.split(/\s+/).filter(w => /\w/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+const fold = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+const plural = (n, w) => `${n} ${n === 1 ? w : w + 's'}`
+function toast(text) { const t = $('#toast'); t.innerHTML = '<i class="hex"></i>' + esc(text); t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600) }
+
+const PAL = [['#1b6f6a', '#f2c14e'], ['#3b2c85', '#ff7a1a'], ['#8a1c3c', '#ffd166'], ['#24527a', '#7cf0c5'], ['#5b3a1a', '#e8c39e'], ['#14532d', '#a3e635'], ['#4c1d95', '#f0abfc']]
+function art(g) {
+  const [bg, fg] = PAL[g.i % PAL.length]
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 134"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${bg}"/><stop offset="1" stop-color="#05060e"/></linearGradient></defs><rect width="120" height="134" fill="url(#g)"/><circle cx="${30 + g.i * 7 % 60}" cy="45" r="26" fill="${fg}" opacity=".5"/><polygon points="80,70 104,84 104,110 80,124 56,110 56,84" fill="${fg}" opacity=".7"/><text x="60" y="122" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="15" fill="#fff">${esc(initials(g.name))}</text></svg>`
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+}
+// search answers carry no covers; they arrive a moment later (one batch per 20 games) and replace the initials
+const covered = new Set()
+const noCover = g => g.id === 356871
+const cover = (g, size) => `<span class="cover" style="width:${size}px;height:${Math.round(size * 1.12)}px" aria-hidden="true"><span class="cover-hex hex">${covered.has(g.id) && !noCover(g) ? `<img src="${art(g)}" alt="">` : `<span class="cover-initials" style="font-size:${Math.round(size / 3.2)}px">${esc(initials(g.name))}</span>`}</span></span>`
+const yearText = g => (g.year ? String(g.year) : 'Year unknown')
+const inColls = g => COLLS.filter(c => c.has[g.id])
+const inText = g => { const cs = inColls(g); return cs.length === 0 ? '' : cs.length === 1 ? 'in ' + cs[0].name : `in ${cs.length} collections` }
+
+/* ---------- the stand-in search: exact matches first, then names starting with it, then the rest; within each, the better-known games (geek rating) first ---------- */
+function find(q, max) {
+  const f = fold(q.trim())
+  const rank = g => (fold(g.name) === f ? 0 : fold(g.name).startsWith(f) ? 1 : 2)
+  return ALLBGG.filter(g => fold(g.name).includes(f)).sort((a, b) => rank(a) - rank(b) || (b.geek ?? 0) - (a.geek ?? 0) || a.name.localeCompare(b.name)).slice(0, max)
+}
+const valid = q => q.trim().length >= 2 && q.trim().length <= 100
+
+/* ---------- state ---------- */
+let S
+const net = () => S.net // 'ok' | 'offline' | 'down' | 'busy'
+
+function runSearch(q, { now = false, max = 50, into = 'search' } = {}) {
+  clearTimeout(S.debounce)
+  const seq = ++S.seq
+  const go = () => {
+    if (!valid(q)) { S[into] = { q, state: q.trim() ? 'short' : 'idle' }; return draw(into) }
+    if (net() === 'offline') { S[into] = { q, state: 'offline' }; return draw(into) }
+    const prev = S[into]
+    S[into] = { q, state: 'loading', results: prev?.results, waiting: false }
+    draw(into)
+    const cached = S.cache.get(q.trim().toLowerCase() + '|' + max)
+    const wait = cached ? 120 : net() === 'busy' ? 3200 : 650
+    if (net() === 'busy' && !cached) setTimeout(() => { if (seq === S.seq && S[into].state === 'loading') { S[into].waiting = true; draw(into) } }, 900)
+    setTimeout(() => {
+      if (seq !== S.seq) return // an older search answered after a newer one: ignored
+      if (net() === 'down') { S[into] = { q, state: 'down' }; return draw(into) }
+      const results = cached || find(q, max)
+      S.cache.set(q.trim().toLowerCase() + '|' + max, results)
+      S[into] = { q, state: 'done', results }
+      draw(into)
+      setTimeout(() => { results.forEach(g => covered.add(g.id)); if (seq === S.seq) draw(into) }, cached ? 0 : 700)
+    }, wait)
+  }
+  if (now) go(); else S.debounce = setTimeout(go, 500)
+}
+const draw = into => (into === 'search' ? drawResults() : drawMatches())
+
+/* ---------- Search screen ---------- */
+const appbar = () => `<header class="appbar"><span class="appbar-name">Board-a-licious</span><button type="button" class="menu-btn" aria-label="Menu">${svgI('<path d="M4 7h16M4 12h16M4 17h16"/>', 2.4)}</button></header>`
+
+function searchScreen() {
+  if (!S.token) return `<div class="top"><div class="top-title"><h1>Search</h1></div></div>
+  <main class="screen">
+    <div class="card soon-card"><h2 class="card-title">Searching all of BoardGameGeek comes soon</h2><p class="card-sub">It needs official access to BoardGameGeek's data, which is on its way. Until then, add a game by pasting its link.</p></div>
+    <div class="form"><div><label class="label" for="search-bgg">Search BoardGameGeek</label><div class="field is-disabled">${ICON.search}<input id="search-bgg" type="search" placeholder="Game name" disabled></div></div></div>
+    <p class="proto-note">Unchanged from today: shown while the server has no token (local development).</p>
+  </main>
+  <nav class="actionbar" aria-label="Actions"><button type="button" class="main-btn hex hex-btn" aria-label="Search (not available yet)" disabled>${ICON.searchBig}</button></nav>`
+  return `<div class="top"><div class="top-title"><h1>Search</h1></div></div>
+  <main class="screen">
+    <label class="label" for="sq">Search BoardGameGeek</label>
+    <div class="field search">${ICON.search}<input id="sq" type="search" placeholder="Game name, e.g. Cascadia" autocomplete="off" enterkeyhint="search" maxlength="100" value="${esc(S.search?.q || '')}" aria-describedby="shint"></div>
+    <p class="search-hint" id="shint">Board games and expansions on BoardGameGeek. Type at least 2 letters.</p>
+    <hr class="separator" />
+    <div id="results"></div>
+  </main>
+  <nav class="actionbar" aria-label="Actions"><button type="button" class="main-btn hex hex-btn" data-act="search-now" aria-label="Search">${ICON.searchBig}</button></nav>`
+}
+
+const resultRow = (g, compact) => `<li><button type="button" class="srow${compact ? ' compact' : ''}" data-act="${compact ? 'pick-match' : 'open-result'}" data-id="${g.id}" aria-label="${esc(g.name)}, ${yearText(g)}${g.exp ? ', expansion' : ''}"${inText(g) ? ` aria-describedby="in-${g.id}"` : ''}>${cover(g, compact ? 40 : 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${yearText(g)}${g.exp ? '<span class="kind">Expansion</span>' : ''}</span></span>${inText(g) ? `<span class="in-mark" id="in-${g.id}">${esc(inText(g))}</span>` : ''}</button></li>`
+
+function drawResults() {
+  const box = $('#results'); if (!box) return
+  const r = S.search || { state: 'idle' }
+  const status = html => `<p class="result-status" role="status">${html}</p>`
+  if (r.state === 'idle') return (box.innerHTML = status('') + `<p class="proto-note">Try “cascad”, “tokaido” (finds Tôkaidô), “harmon”, “the” (50 results) or “zzz” (no match). The proto bar switches network states.</p>`)
+  if (r.state === 'short') return (box.innerHTML = status(r.q.trim().length > 100 ? 'At most 100 letters.' : 'Type at least 2 letters.'))
+  if (r.state === 'offline') return (box.innerHTML = status('') + `<div class="notice warn"><p><b>You're offline.</b> Searching needs a connection.</p><button type="button" class="btn" data-act="retry">Try again</button></div>`)
+  if (r.state === 'down') return (box.innerHTML = status('') + `<div class="notice warn"><p><b>BoardGameGeek is not reachable.</b> Try again in a moment.</p><button type="button" class="btn" data-act="retry">Try again</button></div>`)
+  if (r.state === 'loading') {
+    const line = r.waiting ? 'BoardGameGeek asks us to wait a moment… still searching' : 'Searching BoardGameGeek…'
+    return (box.innerHTML = status(`<span class="spin-hex"></span>${line}`) + (r.results?.length ? `<ul class="rows is-stale" aria-hidden="true">${r.results.map(g => resultRow(g)).join('')}</ul>` : `<div class="rows">${'<div class="skel"></div>'.repeat(4)}</div>`))
+  }
+  const n = r.results.length
+  if (!n) return (box.innerHTML = status('') + `<div class="empty"><div class="hex"></div><h2>No game called “${esc(r.q.trim())}” on BoardGameGeek</h2><p>Check the spelling, or try a shorter part of the name.</p></div>`)
+  box.innerHTML = status(n === 50 ? '<b>50 games</b> · the first 50, exact matches first' : `<b>${plural(n, 'game')}</b> · exact matches first`) +
+    `<ul class="rows">${r.results.map(g => resultRow(g)).join('')}</ul>` +
+    (n === 50 ? '<p class="more-note">More games match. Type more of the name to narrow it down.</p>' : '')
+}
+
+/* ---------- sheets ---------- */
+function openSheet(name, html, label) {
+  S.sheet = name
+  layer.innerHTML = `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1"><div class="sheet-grip"></div><div id="sheet-body">${html}</div></div>`
+  layer.querySelector('.sheet').focus()
+}
+const setSheet = html => { const b = $('#sheet-body'); if (b) { const y = b.parentElement.scrollTop; b.innerHTML = html; b.parentElement.scrollTop = y } }
+function closeSheet() { S.sheet = null; layer.innerHTML = '' }
+
+function zigzag(selected, act) {
+  const avail = Math.min(440, window.innerWidth) - 32, gap = 4
+  const w = Math.min(84, Math.floor((avail - 2 * gap) / 3)), h = Math.round(w * 1.1547)
+  const pos = i => (i % 2 === 0 ? [(i / 2) * (w + gap), 0] : [(w + gap) / 2 + ((i - 1) / 2) * (w + gap), h * 0.75 + gap])
+  return `<div class="zz pointy" role="group" aria-label="Category" style="width:${3 * w + 2 * gap}px;height:${h * 1.75 + gap}px">${PICK.map((c, i) => {
+    const [x, y] = pos(i)
+    return `<button type="button" class="picker-btn" data-tone="${c.k}" data-act="${act}" data-cat="${c.k}" aria-pressed="${selected === c.k}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><span class="picker-hex hex"><span class="picker-face hex"><b>${c.e}</b><span>${c.l}</span></span></span></button>`
+  }).join('')}</div>`
+}
+
+function infoBox(g) {
+  const rate = (v, cls) => (v == null ? null : `<span class="rating"><i class="${cls}">${v.toFixed(1)}</i></span>`)
+  const infos = [['Players', g.players], ['Rating', rate(g.rating, '')], ['Geek rating', rate(g.geek, 'geek')], ['Designers', esc(g.designers)], ['Mechanisms', esc(g.mechanisms)], ['Publisher', esc(g.publisher)]].filter(([, v]) => v)
+  return `<div class="facts-box"><dl class="info-list">${infos.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+  <div class="facts-foot"><span class="facts-by">From BoardGameGeek</span><button type="button" class="link-btn">Add booth or price</button></div></div>`
+}
+
+function note(c, g, on) {
+  const m = c.has[g.id]
+  if (m && on) return m === 'new' ? 'In it, not yet marked' : `In it, marked ${CAT[m].l}`
+  if (m) return 'Will be removed, including its mark'
+  if (on) return 'Will be added'
+  return 'Not in it'
+}
+function detailsBody(g) {
+  const d = S.detail
+  return `<h2 class="sheet-title">${esc(g.name)}</h2>
+  <div class="detail-head"><button type="button" class="cover-zoom" data-act="viewer" data-id="${g.id}" aria-label="Show the images of ${esc(g.name)} big">${cover(g, 84)}</button><div><p class="detail-sub">${yearText(g)}${g.exp ? ' · Expansion' : ''} · ${esc(g.publisher)}</p><a class="link-out">Open on BoardGameGeek</a></div></div>
+  <p class="description">${DESC}</p>
+  ${infoBox(g)}
+  <h3 class="section-title">In collections</h3>
+  <p class="lead">Tick every collection this game should be in, then press Done.</p>
+  <div class="picks">${COLLS.map(c => `<label class="pick"><input type="checkbox" class="pick-input" data-act="tick" data-c="${c.id}" ${d.ticked.has(c.id) ? 'checked' : ''}><span class="tick hex" aria-hidden="true"></span><span class="pick-text"><span class="pick-name">${esc(c.name)}</span><small>${note(c, g, d.ticked.has(c.id))}</small></span></label>`).join('')}</div>
+  <p class="label">Category when added (optional)</p>
+  ${zigzag(d.mark, 'detail-mark')}
+  <div class="sheet-actions"><button type="button" class="btn btn-primary btn-block" data-act="done">Done</button><button type="button" class="btn btn-block" data-act="close">Cancel</button></div>
+  <p class="proto-note">As a BGG list's game sheet, without booth or price (search knows none). Ticks change nothing until Done.</p>`
+}
+function openDetails(id) {
+  const g = ALLBGG.find(x => x.id === id)
+  S.detail = { g, ticked: new Set(inColls(g).map(c => c.id)), mark: 'new' }
+  openSheet('details', detailsBody(g), g.name)
+}
+function done() {
+  const { g, ticked, mark } = S.detail
+  let added = 0, removed = 0
+  for (const c of COLLS) {
+    if (ticked.has(c.id) && !c.has[g.id]) { c.has[g.id] = mark; added++ }
+    if (!ticked.has(c.id) && c.has[g.id]) { delete c.has[g.id]; removed++ }
+  }
+  closeSheet(); drawResults()
+  if (added || removed) toast([added && `Added ${g.name} to ${plural(added, 'collection')}`, removed && `Removed it from ${plural(removed, 'collection')}`].filter(Boolean).join('. '))
+}
+function viewer(id) {
+  const g = ALLBGG.find(x => x.id === id)
+  viewerLayer.innerHTML = `<div class="viewer" role="dialog" aria-modal="true" aria-label="Images of ${esc(g.name)}"><div class="big">${noCover(g) ? '' : `<img src="${art(g)}" alt="${esc(g.name)}">`}</div><button type="button" class="icon-btn" data-act="viewer-close" aria-label="Close">${ICON.close}</button><p>${noCover(g) ? 'No images on BoardGameGeek yet' : '1 / 12 · swipe for the gallery'}</p></div>`
+  viewerLayer.querySelector('.icon-btn').focus()
+}
+
+/* ---------- Add game sheet (in Essen 2026) ---------- */
+const LINK = /boardgamegeek\.com\/(boardgame|boardgameexpansion)\/(\d+)(?:\/([^/?#\s]+))?/i
+const looksLikeLink = t => /boardgamegeek|bgg\.|https?:|\/boardgame/i.test(t)
+const essen = () => COLLS[0]
+function addBody() {
+  const a = S.add, seg = S.addSeg
+  const fieldLabel = seg ? (a.mode === 'link' ? 'BoardGameGeek link' : 'Game name') : 'Game name or BoardGameGeek link'
+  const ph = seg ? (a.mode === 'link' ? 'boardgamegeek.com/boardgame/…' : 'e.g. Harmonies') : 'Harmonies, or boardgamegeek.com/boardgame/…'
+  const found = a.picked
+  const already = found && essen().has[found.id]
+  return `<h2 class="sheet-title">Add game</h2>
+  <form class="form" id="add-form">
+    <p class="lead">${seg ? 'Find a game by its name, or paste its link from boardgamegeek.com.' : 'Type a game\'s name, or paste its link from boardgamegeek.com.'}</p>
+    ${seg ? `<div class="seg" role="group" aria-label="Find by"><button type="button" data-act="add-mode" data-v="name" aria-pressed="${a.mode === 'name'}">Name</button><button type="button" data-act="add-mode" data-v="link" aria-pressed="${a.mode === 'link'}">Link</button></div>` : ''}
+    ${found ? '' : `<div><label class="label" for="aq">${fieldLabel}</label><div class="field">${a.mode === 'link' && seg ? '' : ICON.search}<input id="aq" ${a.mode === 'link' && seg ? 'inputmode="url"' : 'type="search"'} autocomplete="off" placeholder="${ph}" value="${esc(a.text)}"></div><div id="matches"></div></div>`}
+    ${found ? `<div><h2 class="section-title">Found game <small>ID ${found.id}</small></h2>
+      <div class="found">${cover(found, 48)}<span class="row-meta"><span class="row-name">${esc(found.name)}</span><span class="row-sub">${yearText(found)}${found.exp ? '<span class="kind">Expansion</span>' : ''}</span></span><button type="button" class="link-btn" data-act="unpick">Change</button></div>
+      <label class="label" for="aname">Name</label><div class="field"><input id="aname" value="${esc(a.name)}" autocomplete="off"></div>
+      <p class="hint">Year, cover and details are filled in from BoardGameGeek.</p>
+      ${already ? `<p class="hint error">This game is already in ${essen().name}.</p>` : ''}</div>` : ''}
+    <p class="label">Category (optional)</p>
+    ${zigzag(a.mark, 'add-mark')}
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn btn-primary" ${found && !already && a.name.trim() ? '' : 'disabled'}>Add to collection</button></div>
+  </form>
+  <p class="proto-note">${seg ? 'Variant: a Name | Link switch with one field each.' : 'Variant: one field; a link is recognised as today, anything else is searched by name.'} Try “harmon”, “sky team” (already in Essen 2026) or paste boardgamegeek.com/boardgame/295947/cascadia.</p>`
+}
+function drawMatches() {
+  const box = $('#matches'); if (!box) return
+  const a = S.add, r = S.addSearch
+  if (a.linkError) return (box.innerHTML = `<p class="hint error">${a.linkError}</p>`)
+  if (!r || r.state === 'idle') return (box.innerHTML = '')
+  if (r.state === 'short') return (box.innerHTML = '<p class="hint">Type at least 2 letters.</p>')
+  if (r.state === 'offline') return (box.innerHTML = `<p class="hint error">You're offline. Paste a link instead, or <button type="button" class="link-btn" data-act="add-retry">try again</button>.</p>`)
+  if (r.state === 'down') return (box.innerHTML = `<p class="hint error">BoardGameGeek is not reachable. <button type="button" class="link-btn" data-act="add-retry">Try again</button></p>`)
+  if (r.state === 'loading') return (box.innerHTML = `<p class="result-status" role="status"><span class="spin-hex"></span>${r.waiting ? 'BoardGameGeek asks us to wait…' : 'Searching BoardGameGeek…'}</p>`)
+  if (!r.results.length) return (box.innerHTML = `<p class="hint" role="status">No game called “${esc(r.q.trim())}” on BoardGameGeek.</p>`)
+  box.innerHTML = `<p class="visually-hidden" role="status">${plural(r.results.length, 'match')}</p><ul class="matches" aria-label="Matching games">${r.results.map(g => resultRow(g, true)).join('')}</ul>`
+}
+function addInput(text) {
+  const a = S.add
+  a.text = text; a.linkError = null
+  const linkMode = S.addSeg ? a.mode === 'link' : looksLikeLink(text)
+  if (linkMode) {
+    clearTimeout(S.debounce); S.seq++; S.addSearch = null
+    const m = text.match(LINK)
+    if (!text.trim()) return drawMatches()
+    if (!m) { a.linkError = 'That is not a BoardGameGeek game link.'; return drawMatches() }
+    const id = +m[2]
+    const known = ALLBGG.find(g => g.id === id)
+    const name = known?.name ?? (m[3] || 'Game ' + id).replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    a.picked = known ?? { id, i: 99, name, year: null, exp: m[1] === 'boardgameexpansion' }
+    a.name = name
+    return setSheet(addBody())
+  }
+  runSearch(text, { max: 8, into: 'addSearch' })
+}
+
+/* ---------- render and events ---------- */
+function render() {
+  root.innerHTML = `<div class="app">${appbar()}${S.screen === 'collection' ? collectionStub() : searchScreen()}</div>`
+  drawResults()
+}
+function collectionStub() {
+  return `<div class="top"><div class="top-title"><h1>Essen 2026</h1></div></div>
+  <main class="screen"><p class="bought-line">✅ 2 games bought, €93 spent</p><hr class="separator" /><p class="proto-note">The collection as today (F005). Add game opens the sheet with search by name.</p></main>
+  <nav class="actionbar" aria-label="Actions"><div class="actionbar-left"><button type="button" class="act" data-act="open-add">${ICON.plus}<span>Add game</span></button></div><button type="button" class="main-btn hex hex-btn" aria-label="BG-Tinder">${ICON.heart}</button><div class="actionbar-right"><button type="button" class="act">${ICON.filter}<span>Filter</span></button></div><div class="actionbar-outer"><button type="button" class="act">${ICON.honey}<span>Show-off</span></button></div></nav>`
+}
+function openAdd() {
+  S.add = { text: '', mode: 'name', picked: null, name: '', mark: 'new', linkError: null }
+  S.addSearch = null
+  openSheet('add', addBody(), 'Add game')
+  setTimeout(() => $('#aq')?.focus(), 50)
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return
+  const a = t.dataset.act
+  if (a === 'close') return closeSheet()
+  if (a === 'viewer') return viewer(+t.dataset.id)
+  if (a === 'viewer-close') { viewerLayer.innerHTML = ''; return }
+  if (a === 'search-now') { const q = $('#sq'); q.focus(); return runSearch(q.value, { now: true }) }
+  if (a === 'retry') return runSearch(S.search.q, { now: true })
+  if (a === 'open-result') return openDetails(+t.dataset.id)
+  if (a === 'tick') { const c = t.dataset.c; t.checked ? S.detail.ticked.add(c) : S.detail.ticked.delete(c); return setSheet(detailsBody(S.detail.g)) }
+  if (a === 'detail-mark') { S.detail.mark = S.detail.mark === t.dataset.cat ? 'new' : t.dataset.cat; return setSheet(detailsBody(S.detail.g)) }
+  if (a === 'done') return done()
+  if (a === 'open-add') return openAdd()
+  if (a === 'add-mode') { S.add = { ...S.add, mode: t.dataset.v, text: '', linkError: null }; S.addSearch = null; setSheet(addBody()); return $('#aq')?.focus() }
+  if (a === 'add-retry') return runSearch(S.add.text, { now: true, max: 8, into: 'addSearch' })
+  if (a === 'pick-match') { const g = ALLBGG.find(x => x.id === +t.dataset.id); S.add.picked = g; S.add.name = g.name; return setSheet(addBody()) }
+  if (a === 'unpick') { S.add.picked = null; setSheet(addBody()); drawMatches(); return $('#aq')?.focus() }
+  if (a === 'add-mark') { S.add.mark = S.add.mark === t.dataset.cat ? 'new' : t.dataset.cat; setSheet(addBody()); return drawMatches() }
+})
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'add-form') return
+  e.preventDefault()
+  const { picked, name, mark } = S.add
+  essen().has[picked.id] = mark
+  closeSheet()
+  toast(`Added ${name.trim()} to ${essen().name}`)
+})
+document.addEventListener('input', e => {
+  if (e.target.id === 'sq') return runSearch(e.target.value)
+  if (e.target.id === 'aq') return addInput(e.target.value)
+  if (e.target.id === 'aname') { S.add.name = e.target.value; const b = layer.querySelector('[type=submit]'); b.disabled = !e.target.value.trim() || !!essen().has[S.add.picked.id] }
+})
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (viewerLayer.innerHTML) viewerLayer.innerHTML = ''; else if (S.sheet) closeSheet() }
+  if (e.key === 'Enter' && e.target.id === 'sq') { e.preventDefault(); runSearch(e.target.value, { now: true }) }
+})
+
+function start() {
+  const s = $('#start').value
+  clearTimeout(S?.debounce)
+  S = { token: s !== 'notoken', net: { offline: 'offline', down: 'down', busy: 'busy' }[s] || 'ok', screen: s.startsWith('add') ? 'collection' : 'search', addSeg: s === 'add-seg', sheet: null, search: null, seq: 0, cache: new Map(), debounce: 0 }
+  closeSheet(); viewerLayer.innerHTML = ''
+  render()
+  const q = { results: 'cascad', nomatch: 'zzz', many: 'the', busy: 'cascad', offline: 'cascad', down: 'cascad', details: 'cascad' }[s]
+  if (q) { $('#sq').value = q; runSearch(q, { now: true }) }
+  if (s === 'details') setTimeout(() => openDetails(295947), 900)
+  if (s.startsWith('add')) openAdd()
+  if (s === 'search') $('#sq')?.focus()
+}
+$('#start').onchange = start
+start()
+</script>
+
+</body>
+</html>
