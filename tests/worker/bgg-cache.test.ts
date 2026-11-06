@@ -2,10 +2,25 @@ import { describe, expect, it } from 'vitest'
 
 import { BggError, TTL, createBggClient, memoryCache } from '../../worker/bgg/cache.ts'
 
-/** A fake clock: sleeping advances time instantly. */
+/**
+ * A fake clock: sleepers wake in the order of their wake-up times (1/1000 of the real time), each with
+ * time moved on to its own wake-up time, so concurrent requests see the times the client booked.
+ */
 function clock(start = 0) {
   let t = start
-  return { now: () => t, sleep: async (ms: number) => void (t += ms), advance: (ms: number) => void (t += ms) }
+  return {
+    now: () => t,
+    sleep: (ms: number) => {
+      const wake = t + ms
+      return new Promise<void>(resolve =>
+        setTimeout(() => {
+          t = Math.max(t, wake)
+          resolve()
+        }, ms / 1000),
+      )
+    },
+    advance: (ms: number) => void (t += ms),
+  }
 }
 
 function fakeFetch(respond: (url: string) => Response | Promise<Response> = () => Response.json({ ok: true })) {
@@ -55,6 +70,14 @@ describe('BGG client', () => {
     await Promise.all(['a', 'b', 'c'].map(p => client.getJson(`https://api.geekdo.com/${p}`, TTL.game)))
     const gaps = f.calls.slice(1).map((call, i) => call.at - (f.calls[i]?.at ?? 0))
     expect(gaps.every(gap => gap >= 1000)).toBe(true)
+  })
+
+  it('a request that never finishes (cancelled with its Worker request) does not hold up later ones', async () => {
+    const { f, client } = setup(url => (url.endsWith('/stuck') ? new Promise<Response>(() => {}) : Response.json({ ok: true })))
+    void client.getJson('https://api.geekdo.com/stuck', TTL.game)
+    await expect(client.getJson('https://api.geekdo.com/next', TTL.game)).resolves.toEqual({ ok: true })
+    expect(f.calls.map(c => c.url)).toEqual(['https://api.geekdo.com/stuck', 'https://api.geekdo.com/next'])
+    expect(f.calls[1]!.at - f.calls[0]!.at).toBeGreaterThanOrEqual(1000)
   })
 
   it('identifies the app honestly', async () => {

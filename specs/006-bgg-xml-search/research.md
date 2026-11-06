@@ -145,3 +145,13 @@ marked *Recorded*.
   `/api/me`, so no test calls BGG.
 - Real check: `quickstart.md` runs against BGG once with the token as a local secret in `.dev.vars`
   (git-ignored), which the owner adds themselves.
+
+## R11. Cancelled requests and shared promises (found 2026-11-06)
+
+- **Finding**: a search for "great western" hung for 45 s. The client's throttle chained every BGG
+  request onto the previous one's promise. When the app aborts an older search, Cloudflare cancels that
+  Worker request, and its pending promises never settle, so every later request of the isolate waited.
+- **Decision**: nothing in module scope may await another request's promise. The throttle books start
+  times (`nextSlot`, at least 1 s apart) and each request waits only on its own timer; one-time setup
+  (game columns) is a flag, not a cached promise.
+

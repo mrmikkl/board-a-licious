@@ -91,19 +91,16 @@ export function createBggClient(deps: {
   const now = deps.now ?? Date.now
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)))
   const log = deps.log ?? (line => console.error(line))
-  let lastStart = -Infinity
-  let queue: Promise<unknown> = Promise.resolve()
-
-  const throttled = <T>(task: () => Promise<T>): Promise<T> => {
-    const run = queue.then(task)
-    queue = run.catch(() => undefined)
-    return run
-  }
+  // Each request books its own start time, at least a second after the last one booked. It never waits
+  // on another request's promise: a Worker request that is cancelled (the app drops an older search)
+  // leaves its promises unsettled forever, and a chained queue would then hold up every later request.
+  let nextSlot = -Infinity
 
   const send = async (url: string, accept: string): Promise<Response> => {
-    const wait = lastStart + MIN_GAP_MS - now()
+    const slot = Math.max(now(), nextSlot)
+    nextSlot = slot + MIN_GAP_MS
+    const wait = slot - now()
     if (wait > 0) await sleep(wait)
-    lastStart = now()
     const headers: Record<string, string> = { 'User-Agent': USER_AGENT, Accept: accept }
     const official = url.startsWith(OFFICIAL)
     if (official && deps.token) headers.Authorization = `Bearer ${deps.token}`
@@ -118,7 +115,7 @@ export function createBggClient(deps: {
     const cached = await deps.cache.get(url)
     if (cached !== undefined) return cached
 
-    const body = await throttled(async () => {
+    const body = await (async () => {
       let res = await send(url, accept)
       for (let retry = 0; res.status === 202 && retry < QUEUED_RETRIES; retry++) {
         await sleep(QUEUED_WAIT_MS)
@@ -138,7 +135,7 @@ export function createBggClient(deps: {
       const text = await res.text()
       if (!valid(text)) throw new BggError('bgg_unavailable', 'BoardGameGeek sent something unexpected.')
       return text
-    })
+    })()
     await deps.cache.put(url, body, ttlSeconds)
     return body
   }

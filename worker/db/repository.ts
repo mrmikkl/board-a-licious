@@ -217,20 +217,18 @@ function names(value: string[] | string | null): string[] {
  * isolate) so a deploy works before `npm run db:migrate:neon` has run; the migration also marks old
  * games stale so they get their ratings.
  */
-let ratingColumns: Promise<void> | undefined
-function ensureRatingColumns(db: Db): Promise<void> {
-  ratingColumns ??= (async () => {
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)')
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS best_with text')
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS recommended_with text')
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll jsonb')
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll_voters integer')
-  })().catch(error => {
-    ratingColumns = undefined
-    throw error
-  })
-  return ratingColumns
+// a flag, not a shared promise: a cancelled Worker request leaves its promises unsettled forever, and
+// later requests awaiting it would hang; running the idempotent ALTERs twice is harmless
+let gameColumnsReady = false
+async function ensureRatingColumns(db: Db): Promise<void> {
+  if (gameColumnsReady) return
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS best_with text')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS recommended_with text')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll jsonb')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll_voters integer')
+  gameColumnsReady = true
 }
 
 /** Cached games fetched after `freshAfter` (older ones are refreshed from BGG). */
