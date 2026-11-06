@@ -1,11 +1,13 @@
 import { type ReactNode, useEffect, useRef } from 'react'
 
 import { type Route, href } from '../router.ts'
-import { IconCollections, IconConfig, IconLists, IconSearch } from './icons.tsx'
+import { IconBuy, IconCollections, IconConfig, IconLists, IconSearch } from './icons.tsx'
 
-type Place = 'collections' | 'lists' | 'search' | 'config'
+type Place = 'buy' | 'collections' | 'lists' | 'search' | 'config'
 
 const PLACES: { name: Place; label: string; icon: ReactNode }[] = [
+  // F007: Buy is the first place
+  { name: 'buy', label: 'Buy', icon: <IconBuy /> },
   { name: 'collections', label: 'Collections', icon: <IconCollections /> },
   { name: 'lists', label: 'BGG lists', icon: <IconLists /> },
   { name: 'search', label: 'Search', icon: <IconSearch /> },
@@ -22,6 +24,8 @@ function place(route: Route): Place {
       return 'collections'
     case 'list':
       return 'lists'
+    case 'prices':
+      return 'buy'
     case 'share':
       return 'config'
     default:

@@ -13,7 +13,8 @@ type Item = { name: string; url: string; versions?: { lang?: string[]; version?:
 const COUNTRIES: Record<string, string> = {
   DE: 'Germany', AT: 'Austria', CH: 'Switzerland', NL: 'the Netherlands', BE: 'Belgium', LU: 'Luxembourg', FR: 'France',
   GB: 'the UK', IE: 'Ireland', DK: 'Denmark', SE: 'Sweden', NO: 'Norway', FI: 'Finland', PL: 'Poland', CZ: 'Czechia',
-  ES: 'Spain', PT: 'Portugal', IT: 'Italy', GR: 'Greece', HU: 'Hungary',
+  ES: 'Spain', PT: 'Portugal', IT: 'Italy', GR: 'Greece', HU: 'Hungary', SK: 'Slovakia', SI: 'Slovenia', HR: 'Croatia',
+  RO: 'Romania', BG: 'Bulgaria', EE: 'Estonia', LV: 'Latvia', LT: 'Lithuania', US: 'the US', CA: 'Canada', AU: 'Australia', JP: 'Japan',
 }
 export const countryName = (code: string) => COUNTRIES[code] ?? code
 

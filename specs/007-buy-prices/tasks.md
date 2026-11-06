@@ -22,7 +22,7 @@ code it covers and must fail first. No live sources in tests: answers come from
 ## Phase 1: Setup
 
 - [X] T001 Record real answers into `tests/fixtures/prices/` with a one-off script `scripts/record-prices.mjs` (honest User-Agent, one request per second): `brettspielpreise-295947.json` (`/api/info?eid=295947&sitename=<app url>&currency=EUR&destination=DE&locale=en&sort=CHEAP1`), `bgg-market-295947.xml` (`thing?id=295947&marketplace=1`, token from `.dev.vars`, never printed), `unknowns-feed.xml` (`/marketplace/marketplace-feed/`), `ecb-daily.xml`; trim each to a handful of entries and add, by hand, one unknowns.de feed entry "Biete: Cascadia (deutsch)" so the matcher has a hit
-- [ ] T002 [P] Add `fakePrices(page, answer)` to `tests/e2e/helpers.ts`: fakes `GET /api/prices` with a given `PricesAnswer` (contracts/api.md), optional delay and a `failed` list; export a `CASCADIA_PRICES` sample with new EN/DE/unknown offers, used BGG (EUR and GBP) and unknowns.de offers, and the three links
+- [X] T002 [P] Add `fakePrices(page, answer)` to `tests/e2e/helpers.ts`: fakes `GET /api/prices` with a given `PricesAnswer` (contracts/api.md), optional delay and a `failed` list; export a `CASCADIA_PRICES` sample with new EN/DE/unknown offers, used BGG (EUR and GBP) and unknowns.de offers, and the three links
 
 ---
 
@@ -47,16 +47,16 @@ code it covers and must fail first. No live sources in tests: answers come from
 
 - [X] T007 [P] [US1] Write failing worker tests in `tests/worker/prices-sources.test.ts` against the fixtures: `brettspielpreise.ts` maps items with `versions.lang` GB → en and DE → de, drops other languages, an item without `lang` → unknown, `seller` "Shop in <country>" (DE → Germany, BE → Belgium, …), `price`/`shipping` (`shipping_known` false → null), `available` for stock Y/P, `link` kept as given, `sitename` and `destination=DE` in the request; `bgg-market.ts` keeps only European currencies, maps condition (likenew → like new, verygood → very good, …), note (≤ 140 chars), `listedAt`, `euroTotal` via the ECB rates, language from `listingLanguage(notes)`; `ecb.ts` parses the daily rates; `unknowns.ts` returns only "Biete:" entries whose title contains the game's name (case and accents ignored), price null, link to the entry; `links.ts` builds the Kleinanzeigen search (`https://www.kleinanzeigen.de/s-<name>/k0`), eBay.de search for used board games and the unknowns.de marketplace link
 - [X] T008 [P] [US1] Write failing worker tests in `tests/worker/prices-route.test.ts` for `GET /api/prices` (contracts/api.md): 400 for a missing or invalid `bggId` ("positive integer") or `name` ("1–100 characters"); all sources asked in parallel; a source that throws or exceeds 8 s is named in `failed` while the others answer 200; `checkedAt` is the oldest cached part; a second call within an hour makes no upstream request
-- [ ] T009 [P] [US1] Write failing Playwright tests in `tests/e2e/buy.spec.ts` with `fakePrices` and feature 006's `fakeSearch` against contracts/ui.md: Buy is the first menu link; Buy has the search field "Find a game's prices", no action bar, result rows without add buttons; picking Cascadia opens `#/buy/<id>` with heading "Prices", the game, New offers in order with links named "<seller>, <total>, <language>[, not in stock]" and `target="_blank"`, Used offers with "used" in their names and "≈ €" for GBP, the unknown-language checkbox shows the hidden offer, the three link chips, a failed source line with Retry, the loading status and the none state with "Open on brettspielpreise.de"; New and Used fold and unfold (`aria-expanded`); axe clean at 360 px and with reduced motion
+- [X] T009 [P] [US1] Write failing Playwright tests in `tests/e2e/buy.spec.ts` with `fakePrices` and feature 006's `fakeSearch` against contracts/ui.md: Buy is the first menu link; Buy has the search field "Find a game's prices", no action bar, result rows without add buttons; picking Cascadia opens `#/buy/<id>` with heading "Prices", the game, New offers in order with links named "<seller>, <total>, <language>[, not in stock]" and `target="_blank"`, Used offers with "used" in their names and "≈ €" for GBP, the unknown-language checkbox shows the hidden offer, the three link chips, a failed source line with Retry, the loading status and the none state with "Open on brettspielpreise.de"; New and Used fold and unfold (`aria-expanded`); axe clean at 360 px and with reduced motion
 
 ### Implementation for User Story 1
 
 - [X] T010 [P] [US1] Implement `worker/prices/brettspielpreise.ts`, `worker/prices/ecb.ts`, `worker/prices/unknowns.ts` and `worker/prices/links.ts` to pass T007 (brettspielpreise.de cached 1 h as its terms ask; ECB 12 h; unknowns.de feed 1 h)
 - [X] T011 [US1] Implement `worker/prices/bgg-market.ts` through feature 006's official client (`getXml`, `TTL.list` 1 h) to pass T007; without the BGG token it returns nothing (no website fallback)
 - [X] T012 [US1] Add `worker/routes/prices.ts` and wire `GET /api/prices` in `worker/index.ts` to pass T008 (sources in parallel with `Promise.allSettled`, each wrapped in the 8 s timeout)
-- [ ] T013 [P] [US1] Add `prices(bggId, name)` to `src/client/api.ts`, `IconBuy` (bag with €, as in the prototype) to `src/app/components/icons.tsx`, the routes `#/buy` and `#/buy/<bggId>` to `src/app/router.ts` (with tests in `tests/unit/router.test.ts`), and Buy as the first entry of `PLACES` in `src/app/components/Menu.tsx`
-- [ ] T014 [US1] Add `src/app/components/OffersBlock.tsx` and `src/app/theme/prices.css` per docs/design.md "Offers block": language segment (state from props for now), fair-price line, New/Used fold buttons, offer tiles as links (`target="_blank" rel="noopener noreferrer"`), unknown-language checkbox, link chips, failed line with Retry, loading and none states, sources line linking to brettspielpreise.de; it calls `arrangeOffers`
-- [ ] T015 [US1] Add `src/app/screens/Buy.tsx` (feature 006's `useBggSearch(50)` and `SearchResultRow` without `onAdd`, label "Find a game's prices") and `src/app/screens/Prices.tsx` (game head from `/api/bgg/games`, `OffersBlock` fed by `api.prices`, Back to Buy); render both in the app's route switch
+- [X] T013 [P] [US1] Add `prices(bggId, name)` to `src/client/api.ts`, `IconBuy` (bag with €, as in the prototype) to `src/app/components/icons.tsx`, the routes `#/buy` and `#/buy/<bggId>` to `src/app/router.ts` (with tests in `tests/unit/router.test.ts`), and Buy as the first entry of `PLACES` in `src/app/components/Menu.tsx`
+- [X] T014 [US1] Add `src/app/components/OffersBlock.tsx` and `src/app/theme/prices.css` per docs/design.md "Offers block": language segment (state from props for now), fair-price line, New/Used fold buttons, offer tiles as links (`target="_blank" rel="noopener noreferrer"`), unknown-language checkbox, link chips, failed line with Retry, loading and none states, sources line linking to brettspielpreise.de; it calls `arrangeOffers`
+- [X] T015 [US1] Add `src/app/screens/Buy.tsx` (feature 006's `useBggSearch(50)` and `SearchResultRow` without `onAdd`, label "Find a game's prices") and `src/app/screens/Prices.tsx` (game head from `/api/bgg/games`, `OffersBlock` fed by `api.prices`, Back to Buy); render both in the app's route switch
 
 **Checkpoint**: Buy works end to end and is deployable.
 
@@ -70,11 +70,11 @@ code it covers and must fail first. No live sources in tests: answers come from
 
 ### Tests for User Story 2
 
-- [ ] T016 [P] [US2] Write failing Playwright tests in `tests/e2e/prices-section.spec.ts` with `fakePrices` and `seedCollection` (a game with a listed price): the details show a button "Prices" with `aria-expanded="false"` and no request to `/api/prices` yet; tapping it loads and shows the offers and "At the fair: €38,00"; tapping again folds it; the same section works in Search's game info sheet; axe clean
+- [X] T016 [P] [US2] Write failing Playwright tests in `tests/e2e/prices-section.spec.ts` with `fakePrices` and `seedCollection` (a game with a listed price): the details show a button "Prices" with `aria-expanded="false"` and no request to `/api/prices` yet; tapping it loads and shows the offers and "At the fair: €38,00"; tapping again folds it; the same section works in Search's game info sheet; axe clean
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Add `src/app/components/PricesSection.tsx` (heading button "💶 Prices" with chevron and `aria-expanded`, `OffersBlock` without the unknown-language switch, fetch on first expand, fair price from the entry's facts) and place it in `src/app/components/GameSheet.tsx` between the info box and the actions, and in `src/app/components/GameInfoSheet.tsx` before Close
+- [X] T017 [US2] Add `src/app/components/PricesSection.tsx` (heading button "💶 Prices" with chevron and `aria-expanded`, `OffersBlock` without the unknown-language switch, fetch on first expand, fair price from the entry's facts) and place it in `src/app/components/GameSheet.tsx` between the info box and the actions, and in `src/app/components/GameInfoSheet.tsx` before Close
 
 **Checkpoint**: prices from a collection in one tap.
 
@@ -88,11 +88,11 @@ code it covers and must fail first. No live sources in tests: answers come from
 
 ### Tests for User Story 3
 
-- [ ] T018 [P] [US3] Extend `tests/e2e/buy.spec.ts`: choosing German leaves only German new offers (used offers with an unstated language stay); after opening another game and reloading, German is still pressed; the Prices section uses the same choice
+- [X] T018 [P] [US3] Extend `tests/e2e/buy.spec.ts`: choosing German leaves only German new offers (used offers with an unstated language stay); after opening another game and reloading, German is still pressed; the Prices section uses the same choice
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Add device meta `priceLanguage` (`'both' | 'en' | 'de'`, default `'both'`) to `src/client/store.ts` (`MetaValues`) with a unit test in `tests/unit/store.test.ts`, and connect `OffersBlock`'s segment to it in `src/app/components/OffersBlock.tsx`
+- [X] T019 [US3] Add device meta `priceLanguage` (`'both' | 'en' | 'de'`, default `'both'`) to `src/client/store.ts` (`MetaValues`) with a unit test in `tests/unit/store.test.ts`, and connect `OffersBlock`'s segment to it in `src/app/components/OffersBlock.tsx`
 
 ---
 

@@ -3,6 +3,7 @@ import { type DBSchema, type IDBPDatabase, deleteDB, openDB } from 'idb'
 import { type Collection, type Entry, entryKey, merge } from '../domain/collection.ts'
 import type { LoadedList } from '../domain/lists.ts'
 import type { Mark } from '../domain/marks.ts'
+import type { PriceLanguage } from '../domain/offers.ts'
 import type { Game, ListKind, StoredList } from './types.ts'
 
 export type Change = { kind: 'collection'; row: Collection } | { kind: 'entry'; row: Entry } | { kind: 'list'; row: LoadedList }
@@ -21,6 +22,8 @@ export type MetaValues = {
   showOff: Record<string, Mark[]>
   /** US5: the BGG value a hand-typed field was kept against, per `collectionId:bggId:field`. */
   declinedFacts: Record<string, string>
+  /** F007: the editions the price lists show (Both, English, German); missing → both. */
+  priceLanguage: PriceLanguage
 }
 
 interface Schema extends DBSchema {

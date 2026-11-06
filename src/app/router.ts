@@ -15,6 +15,9 @@ export type Route =
   | { name: 'lists'; load?: true }
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
   | { name: 'search' }
+  /** F007: the Buy place (search) and a game's price screen */
+  | { name: 'buy' }
+  | { name: 'prices'; bggId: number }
   | { name: 'config' }
   | { name: 'share' }
   /** F002: something shared to the app (contracts/share-target.md) */
@@ -52,6 +55,8 @@ export function parseRoute(hash: string): Route {
       return second === 'collection' ? { name: 'collections', create: true } : second === 'list' ? { name: 'lists', load: true } : { name: 'collections' }
     case 'search':
       return { name: 'search' }
+    case 'buy':
+      return Number.isSafeInteger(Number(second)) && Number(second) > 0 ? { name: 'prices', bggId: Number(second) } : { name: 'buy' }
     case 'config':
       return second === 'share' ? { name: 'share' } : { name: 'config' }
     case 'share': // old links
@@ -81,6 +86,10 @@ export function href(route: Route): string {
       return `#/lists/${route.kind}/${route.listId}`
     case 'search':
       return '#/search'
+    case 'buy':
+      return '#/buy'
+    case 'prices':
+      return `#/buy/${route.bggId}`
     case 'config':
       return '#/config'
     case 'share':

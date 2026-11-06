@@ -39,7 +39,7 @@ async function expectCurrent(page: Page, place: Place) {
   await openMenu(page)
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'true')
   const links = menu(page).getByRole('link')
-  await expect(links).toHaveText(['Collections', 'BGG lists', 'Search', 'Config'])
+  await expect(links).toHaveText(['Buy', 'Collections', 'BGG lists', 'Search', 'Config'])
   await expect(menu(page).locator('[aria-current="page"]')).toHaveText(place)
   await page.keyboard.press('Escape')
   await expect(menu(page)).toHaveCount(0)

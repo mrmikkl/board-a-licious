@@ -1,0 +1,48 @@
+/* F007: Buy, price screen, offers block, Prices section (docs/design.md v2.5.0) */
+.game-head { display: flex; align-items: center; gap: 14px; margin: 4px 0 12px; }
+.game-head .row-name { font: 700 20px/1.2 var(--font-display); white-space: normal; }
+.lang-seg { margin: 0 0 8px; }
+.fair-line { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--got); border-radius: var(--r-md); background: var(--deck); font-weight: 700; }
+.offer-group { margin: 14px 0 8px; }
+.group-fold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.group-fold small { margin-left: auto; color: var(--muted); font: 600 12px var(--font-body); }
+.group-fold .chev { color: var(--orange); transform: rotate(90deg); transition: transform 0.2s; }
+.group-fold[aria-expanded='false'] .chev { transform: none; }
+.offers { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.offers[hidden] { display: none; }
+.offer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); text-decoration: none; }
+.offer:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.offer.out { opacity: 0.6; }
+.offer-shop { font-weight: 700; overflow-wrap: anywhere; }
+.offer-shop .ext { margin-left: 4px; color: var(--muted); font-size: 12px; }
+.offer-via { display: block; color: var(--muted); font-size: 11px; font-weight: 600; }
+.offer-total { font: 700 18px var(--font-display); text-align: right; white-space: nowrap; }
+.offer-total small { display: block; color: var(--muted); font: 600 11px var(--font-body); }
+.offer-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.offer-note { grid-column: 1 / -1; margin: 2px 0 0; overflow: hidden; color: var(--muted); font-size: 12px; font-style: italic; text-overflow: ellipsis; white-space: nowrap; }
+.lang { display: inline-block; padding: 0 6px; border-radius: 6px; background: var(--grad-cool); color: var(--ink); font-size: 11px; font-weight: 800; line-height: 18px; }
+.lang.de { background: var(--grad-hot); }
+.lang.unknown { border: 1px solid var(--border-2); background: var(--raised); color: var(--muted); }
+.stock { display: inline-flex; align-items: center; gap: 4px; }
+.stock::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--got); }
+.stock.no::before { background: var(--danger); }
+.cond { display: inline-block; padding: 0 7px; border: 1px solid var(--violet); border-radius: var(--r-pill); color: #c4b5fd; font-size: 11px; font-weight: 700; line-height: 18px; }
+.unknown-switch { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+.unknown-switch input { width: 20px; height: 20px; accent-color: var(--orange); }
+.fail-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; padding: 8px 12px; border: 1px solid var(--danger); border-radius: var(--r-md); font-size: 13px; }
+.price-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+.price-links .chip { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.sources-line { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+.sources-line a { color: var(--orange-2); }
+.offers-block .skel { height: 72px; }
+/* the folded Prices section in a game's details */
+.prices-sec { margin: 12px 0; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.prices-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 14px; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.prices-toggle .chev { margin-left: auto; color: var(--orange); transition: transform 0.2s; }
+.prices-toggle[aria-expanded='true'] .chev { transform: rotate(90deg); }
+.prices-body { padding: 0 12px 12px; }
+.prices-body .offer { background: var(--deck-2); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) {
+  .group-fold .chev,
+  .prices-toggle .chev { transition: none; }
+}

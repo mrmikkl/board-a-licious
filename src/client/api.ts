@@ -1,4 +1,5 @@
 import type { SearchResult } from '../domain/bgg-search.ts'
+import type { PricesAnswer } from '../domain/offers.ts'
 import type { Collection, Entry } from '../domain/collection.ts'
 import type { GameGallery } from '../domain/gallery.ts'
 import type { LoadedList } from '../domain/lists.ts'
@@ -92,6 +93,8 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
     companies: (ids: number[]) =>
       call<{ companies: { id: number; name: string }[] }>(`/api/bgg/companies?ids=${ids.join(',')}`).then(r => r.companies),
     gallery,
+    /** F007: offers and links for a game (contracts/api.md of feature 007) */
+    prices: (bggId: number, name: string) => call<PricesAnswer>(`/api/prices?bggId=${bggId}&name=${encodeURIComponent(name)}`),
     /** F006: ranked games and expansions for a name (contracts/api.md); covers come through `games`. */
     search: (q: string, limit: number, signal?: AbortSignal) =>
       call<{ query: string; results: SearchResult[] }>(`/api/bgg/search?q=${encodeURIComponent(q)}&limit=${limit}`, { signal }).then(r => r.results),

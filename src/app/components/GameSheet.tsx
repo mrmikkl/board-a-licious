@@ -21,6 +21,7 @@ import { CopyMoveSheet } from "./CopyMoveSheet.tsx";
 import { InfoList } from "./GameInfo.tsx";
 import { HexCover } from "./HexCover.tsx";
 import { ImageViewer } from "./ImageViewer.tsx";
+import { PricesSection } from "./PricesSection.tsx";
 import { Sheet } from "./Sheet.tsx";
 import { useToast } from "./Toast.tsx";
 
@@ -171,6 +172,11 @@ export function GameSheet({
       ) : (
         <FactsBox entry={entry} game={game} onEdit={() => setStep("facts")} />
       )}
+      <PricesSection
+        bggId={entry.bggId}
+        name={name}
+        fairPrice={entry.facts?.priceCents != null ? formatMoney(entry.facts.priceCents, entry.facts.currency) : null}
+      />
       <div className="sheet-actions">
         {entry.bought ? (
           <button
