@@ -99,7 +99,7 @@ code it covers and must fail first. No live sources in tests: answers come from
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [X] T020 [P] Update `CLAUDE.md` (code layout: `worker/prices/`, `src/domain/offers.ts`; ADR 0008 rule: no scraping, links where reading is not allowed) and `docs/hosting/setup.md` (no new secret; eBay keys later)
-- [ ] T021 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here
+- [X] T021 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here — 2026-11-06: unit and worker 522 passed, build ok; e2e with one worker 223 of 225 passed; the 2 failures are `resync.spec.ts:73` (both projects): the resync and its conflicts work, but the toast's "1 game updated" count includes games from earlier runs in the shared local database (untouched by F007; see the e2e notes in CLAUDE.md)
 - [ ] T022 Deploy (`npm run deploy`) and walk through `specs/007-buy-prices/quickstart.md` ("Against the real sources") with the user
 
 ---
