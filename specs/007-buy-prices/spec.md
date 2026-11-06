@@ -6,67 +6,72 @@
 
 **Status**: Draft
 
-**Input**: User description: "I would like to add to our burger menu an option for Buy. The whole idea is to search for a game, and we use various platforms like Brettspielpreise.de, and maybe you know other sources, which we then search for that board game and then list below the prices of the board game. Two languages for the board game are valid: English and German."
+**Input**: User description: "I would like to add to our burger menu an option for Buy. The whole idea is to search for a game, and we use various platforms like Brettspielpreise.de, and maybe you know other sources, which we then search for that board game and then list below the prices of the board game. Two languages for the board game are valid: English and German." Refined after the first draft: Buy is the menu's first place; tapping an offer leads to the shop's website; a game's details get an expandable "Prices" section; sources also include the BoardGameGeek marketplace and the unknowns.de marketplace.
 
 Product context: [docs/vision.md](../../docs/vision.md). Builds on feature
-[006](../006-bgg-xml-search/spec.md) (search BoardGameGeek by name, game info sheet). Rules:
-[constitution](../../.specify/memory/constitution.md) (mobile-first and accessible, respectful use of
-other sites, secrets never in the repository). Look and feel: [docs/design.md](../../docs/design.md) v2.4.0.
+[006](../006-bgg-xml-search/spec.md) (search BoardGameGeek by name, game info sheet, official BGG
+access). Rules: [constitution](../../.specify/memory/constitution.md) (mobile-first and accessible,
+respectful use of other sites, secrets never in the repository). Look and feel:
+[docs/design.md](../../docs/design.md) v2.4.0.
 
-**Goal**: before (or instead of) buying a game at the fair, see in one place what it costs in online
-shops, for the editions the group can actually play: English or German.
+**Goal**: before (or instead of) buying a game at the fair, see in one place what it costs, new in
+online shops and used on marketplaces, for the editions the group can actually play: English or German.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Find the best price for a game (Priority: P1)
 
-The menu gets a new place, **Buy**. There the user searches a game by its name (the same search as in
-the Search place) and picks it. The app then lists the offers it finds at price comparison sites and
-shops: shop name, price, shipping, total, the edition's language, whether it is in stock, and a link
-to the offer. Only English and German editions are listed; the cheapest total comes first.
+The menu's first place is **Buy**. There the user searches a game by its name (the same search as in
+the Search place) and picks it. The app then lists the offers it finds: new copies at shops (through
+price comparison sites and shops) and used copies on marketplaces. Each offer shows where it is, the
+price, shipping, total, the edition's language, new or used, and whether it is available. Tapping an
+offer opens it on the shop's or marketplace's website. Only English and German editions are listed;
+the cheapest total comes first.
 
 **Why this priority**: the core of the request; it answers "is the fair price good, and where else
 can I get it?".
 
-**Independent Test**: open Buy, type "cascadia", pick Cascadia: a list of offers appears, cheapest
-total first, each with shop, price, shipping, total, language (EN or DE), stock and a working link;
-no French or Spanish edition is listed.
+**Independent Test**: open Buy, type "cascadia", pick Cascadia: new offers appear, cheapest total
+first, each with shop, price, shipping, total, language (EN or DE) and stock; used offers follow in
+their own group; tapping an offer opens the shop's page; no French or Spanish edition is listed.
 
 **Acceptance Scenarios**:
 
-1. **Given** the menu, **When** the user opens it, **Then** it has a place **Buy** (with its own icon) between Search and Config.
+1. **Given** the menu, **When** the user opens it, **Then** **Buy** (with its own icon) is the first place, above Collections.
 2. **Given** the Buy place, **When** it opens, **Then** a search field is ready (as in Search); typing a name lists matching games after a short pause.
 3. **Given** results, **When** the user picks a game, **Then** a price screen opens for that game with its cover and name, and the offers load (a waiting state while they do).
-4. **Given** offers were found, **When** they are shown, **Then** each offer shows the shop, the item price, the shipping cost (or "shipping unknown"), the total, the edition's language (English or German), availability (in stock / not in stock), and when the price was last checked; the cheapest available total comes first, offers not in stock after the available ones.
-5. **Given** an offer, **When** the user taps it, **Then** the shop's page for it opens in a new tab.
-6. **Given** sources list editions in other languages or with unknown language, **When** offers are shown, **Then** only English and German editions are listed; offers whose language is not known are left out by default and can be shown with a "Show offers with unknown language" switch.
-7. **Given** no source has an offer, **When** the search finishes, **Then** the screen says "No offers in English or German found" and offers to open the game's page at the price comparison site.
-8. **Given** a source is not reachable, **When** offers load, **Then** offers from the other sources still show and one line names the source that failed.
+4. **Given** new offers were found, **When** they are shown, **Then** each shows the shop, the item price, the shipping cost (or "shipping unknown"), the total, the edition's language (English or German), availability (in stock / not in stock) and when the price was checked; the cheapest available total comes first, offers not in stock after the available ones.
+5. **Given** used offers were found on marketplaces, **When** they are shown, **Then** they are listed in their own group "Used" below the new offers, each with the marketplace, price, shipping (or "shipping unknown"), condition, the seller's location when the source gives it, the language when stated ("language not stated" otherwise), the start of the seller's note, and the date it was listed.
+6. **Given** any offer, **When** the user taps it, **Then** the offer opens on the shop's or marketplace's website in a new tab (the whole offer is the link).
+7. **Given** sources list new editions in other languages or with unknown language, **When** offers are shown, **Then** only English and German editions are listed; new offers whose language is not known are left out by default and can be shown with a "Show offers with unknown language" switch.
+8. **Given** no source has an offer, **When** the search finishes, **Then** the screen says "No offers in English or German found" and offers to open the game's page at the price comparison site.
+9. **Given** a source is not reachable, **When** offers load, **Then** offers from the other sources still show and one line names the source that failed.
 
 ---
 
-### User Story 2 - Check prices from a game the user already has (Priority: P2)
+### User Story 2 - Prices in a game's details (Priority: P2)
 
-From a game's details in a collection (and from Search's game info sheet), a **Prices** action opens
-the same price screen for that game, without searching again.
+A game's details in a collection (and Search's game info sheet) get a folded section **Prices**. A tap
+on it expands it and loads the same offers as the price screen, right there; a second tap folds it.
 
 **Why this priority**: most price checks happen for games already in a collection, standing at the
 fair booth.
 
-**Independent Test**: in Essen 2026, open Cascadia's details, tap Prices: the price screen for
-Cascadia opens with its offers.
+**Independent Test**: in Essen 2026, open Cascadia's details, tap Prices: the section expands and
+lists Cascadia's offers; tapping an offer opens the shop's page.
 
 **Acceptance Scenarios**:
 
-1. **Given** a game's details in a collection, **When** the user taps **Prices**, **Then** the price screen for that game opens; Back returns to the details.
-2. **Given** a game with a known fair price (booth price from a list or typed in), **When** the price screen shows, **Then** the fair price is shown above the offers for comparison ("At the fair: €38").
-3. **Given** Search's game info sheet, **When** the user taps **Prices**, **Then** the same price screen opens.
+1. **Given** a game's details in a collection, **When** the details open, **Then** a folded **Prices** section is shown (nothing is loaded yet).
+2. **Given** the folded section, **When** the user taps **Prices**, **Then** it expands, shows a waiting state, then the offers (new, then used) as on the price screen, with the same language choice; tapping again folds it.
+3. **Given** a game with a known fair price (booth price from a list or typed in), **When** the section expands, **Then** the fair price is shown above the offers for comparison ("At the fair: €38").
+4. **Given** Search's game info sheet, **When** the user taps **Prices**, **Then** the same section expands there.
 
 ---
 
 ### User Story 3 - Choose which editions count (Priority: P3)
 
-The user can narrow the offers to one language (English only or German only) on the price screen.
+The user can narrow the offers to one language (English only or German only).
 
 **Why this priority**: some in the group only play one language; both stay the default.
 
@@ -74,8 +79,8 @@ The user can narrow the offers to one language (English only or German only) on 
 
 **Acceptance Scenarios**:
 
-1. **Given** the price screen, **When** the user picks English, German or Both, **Then** the list shows only those editions; Both is the default.
-2. **Given** the user picked a language, **When** they open the price screen for another game, **Then** the same choice applies (remembered on the device).
+1. **Given** the price screen or an expanded Prices section, **When** the user picks English, German or Both, **Then** the list shows only those editions; Both is the default.
+2. **Given** the user picked a language, **When** they look at another game's prices, **Then** the same choice applies (remembered on the device).
 
 ---
 
@@ -83,33 +88,36 @@ The user can narrow the offers to one language (English only or German only) on 
 
 - A game with several editions (e.g. base game and a big box) at one shop: each edition is its own offer, with the edition's name when the source gives one.
 - The same shop listed by two sources: shown once, with the lower total, naming the source.
-- Prices in other currencies are not converted: only offers in euros from shops delivering to Germany are shown.
+- Prices in other currencies are not converted: only offers in euros are shown (marketplace listings in other currencies are left out).
+- Marketplace listings are free text: the language is taken from the listing when it states it ("English", "deutsch", …), else "language not stated"; used offers are not hidden for an unstated language.
+- A marketplace listing that bundles several games: shown with its title as the edition name and "bundle".
 - An expansion picked in Buy: works like a base game.
-- The user is offline: the price screen says so and offers to retry; nothing is queued.
-- A source changes its pages or answers slowly: its offers are missing with the one-line note, the screen never hangs longer than about 10 seconds before showing what it has.
-- Very long shop or edition names wrap; the total stays visible.
+- The user is offline: the price screen or section says so and offers to retry; nothing is queued.
+- A source changes its pages or answers slowly: its offers are missing with the one-line note; the screen never waits longer than about 10 seconds before showing what it has.
+- Very long shop, edition or listing names wrap; the total stays visible.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: The menu MUST offer a place **Buy** with its own icon, between Search and Config.
+- **FR-001**: The menu MUST offer a place **Buy** with its own icon as its first place, above Collections.
 - **FR-002**: Buy MUST start with a search by name that works like the Search place (same results, pause and states); picking a result opens the price screen.
-- **FR-003**: The price screen MUST show the game (cover, name, year) and the offers found for it at the price sources, each with shop, item price, shipping (or "shipping unknown"), total, edition language, availability, the time the price was checked, and a link that opens the offer in a new tab.
-- **FR-004**: Offers MUST be limited to English and German editions; offers of unknown language MUST be hidden by default and shown on request; other languages MUST never be shown.
-- **FR-005**: Offers MUST be ordered by total price (item + shipping), available offers first; shipping is to Germany, prices in euros.
-- **FR-006**: Price sources MUST include brettspielpreise.de; further sources MAY be added when they allow automated reading of their prices (see Assumptions); each offer MUST name the source it came from.
-- **FR-007**: When a source fails or times out, the other sources' offers MUST still be shown, with one line naming the failed source and a retry.
-- **FR-008**: A game's details in a collection and Search's game info sheet MUST offer a **Prices** action that opens the price screen for that game.
-- **FR-009**: When the game has a fair price in the current collection, the price screen MUST show it above the offers for comparison.
-- **FR-010**: The price screen MUST offer a language choice (Both, English, German), Both by default, remembered on the device.
-- **FR-011**: Prices MUST be read only on the server, only when a person opens a price screen, cached for a while (prices up to a few hours old are acceptable and labelled with their age), and never more often than the source allows.
-- **FR-012**: New screens MUST follow the design rules and be accessible: offers are a list, each offer's link is named "<shop>, <total>, <language>", the language choice is a segmented control, states (loading, none found, source failed, offline) are announced.
+- **FR-003**: The price screen MUST show the game (cover, name, year) and the offers found for it: new offers (shop, item price, shipping or "shipping unknown", total, edition language, availability, time checked) and, in their own group "Used", marketplace offers (marketplace, price, shipping or "shipping unknown", condition, seller's location when known, language or "language not stated", the start of the seller's note, date listed).
+- **FR-004**: Every offer MUST be a link that opens the offer on the shop's or marketplace's website in a new tab.
+- **FR-005**: New offers MUST be limited to English and German editions; new offers of unknown language MUST be hidden by default and shown on request; offers stating another language MUST never be shown.
+- **FR-006**: Offers MUST be ordered by total price (item + shipping) within their group, available new offers first; prices in euros, shipping to Germany.
+- **FR-007**: Sources MUST include brettspielpreise.de and the BoardGameGeek marketplace; the unknowns.de marketplace and further shops or price sites (Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de, idealo) MUST be included when they allow automated reading of their offers (see Assumptions); each offer MUST name its source.
+- **FR-008**: When a source fails or times out, the other sources' offers MUST still be shown, with one line naming the failed source and a retry.
+- **FR-009**: A game's details in a collection and Search's game info sheet MUST have a folded **Prices** section that expands on tap, loads the offers only then, and shows them like the price screen.
+- **FR-010**: When the game has a fair price in the current collection, the price screen and the Prices section MUST show it above the offers for comparison.
+- **FR-011**: The price screen and the Prices section MUST offer a language choice (Both, English, German), Both by default, remembered on the device.
+- **FR-012**: Offers MUST be read only on the server, only when a person opens a price screen or expands Prices, cached for a while (prices up to a few hours old are acceptable and labelled with their age), and never more often than the source allows.
+- **FR-013**: New screens and sections MUST follow the design rules and be accessible: offers are a list of links named "<shop or marketplace>, <total>, <language>[, used]", the Prices section is a button with its expanded state, the language choice is a segmented control, and states (loading, none found, source failed, offline) are announced.
 
 ### Key Entities
 
-- **Price source**: a price comparison site or shop the app reads offers from (name, link, which shops it covers).
-- **Offer**: one buyable edition of a game at one shop: shop, source, item price, shipping, total, currency (EUR), language (English, German, unknown), edition name, availability, link, checked at.
+- **Price source**: a price comparison site, shop or marketplace the app reads offers from (name, link, kind: new or used).
+- **Offer**: one buyable copy or edition of a game: source, shop or marketplace, new or used (with condition), item price, shipping, total, currency (EUR), language (English, German, unknown), edition or listing name, availability, seller's location (used), link, checked or listed at.
 - **Language choice**: Both, English or German; stored per device.
 
 ## Success Criteria *(mandatory)*
@@ -118,16 +126,19 @@ The user can narrow the offers to one language (English only or German only) on 
 
 - **SC-001**: From the menu, a person sees the offers for a named game in under 20 seconds and at most 4 taps after typing.
 - **SC-002**: Offers appear within 5 seconds for 90% of games (within 1 second when the game's prices were checked in the last hours).
-- **SC-003**: For a sample of 10 popular games, at least 8 show at least 3 offers in English or German.
-- **SC-004**: 0 offers in other languages are shown (checked on the same sample).
-- **SC-005**: From a game in a collection, the price screen opens in one tap.
+- **SC-003**: For a sample of 10 popular games, at least 8 show at least 3 new offers in English or German.
+- **SC-004**: 0 new offers in other languages are shown (checked on the same sample).
+- **SC-005**: From a game's details, the offers are visible after one tap on Prices.
 
 ## Assumptions
 
 - "by" in the request means **Buy**.
 - Shipping destination is Germany and prices are in euros; other countries and currencies are out of scope.
-- brettspielpreise.de is the first source. It lists many German shops and the edition language. Further candidates are checked in the plan: board game price sites and large shops such as Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de and idealo. A source is used only if it offers an official way to read prices (an API or a feed) or its terms allow automated reading. Sites whose terms forbid it are left out, with no scraping against a site's terms (in the spirit of constitution V). If brettspielpreise.de itself needs an API key or agreement, the owner requests it; the key lives only as a server secret.
-- Buying happens at the shop; the app does not put anything into a cart, track orders or mark the game bought (the existing Buy action in a collection stays as it is).
-- Used/second-hand offers and BGG marketplace listings are out of scope.
-- The edition language comes from the source; when it does not say, the offer's language is "unknown".
-- An ADR records the choice of price sources and how they are read (they bind later features).
+- brettspielpreise.de is the first source for new offers. It lists many German shops and the edition language.
+- The BoardGameGeek marketplace is read through BGG's official API (feature 006's token): checked 2026-11-06, it lists a game's offers with date, price and currency, condition, the seller's note and a link (74 for Cascadia, in GBP, USD, EUR, …), but no seller location or shipping; only the EUR ones are shown.
+- Sources the plan checks: unknowns.de's marketplace (a forum section), Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de and idealo.
+  - A source is used only if it offers an official way to read offers (an API or a feed) or its terms allow automated reading. Sites whose terms forbid it, or that need a personal login, are left out, with no scraping against a site's terms (in the spirit of constitution V).
+  - Where a source needs an API key or agreement, the owner requests it; the key lives only as a server secret.
+- Buying happens at the shop or with the seller; the app does not put anything into a cart, contact sellers, track orders or mark the game bought. The existing Buy action in a collection stays as it is.
+- The edition language comes from the source; for marketplace listings it is read from the listing's text when stated.
+- An ADR records the choice of sources and how they are read (they bind later features).

@@ -32,6 +32,9 @@
 ## Notes
 
 - Defaults chosen instead of questions: "by" = Buy; shipping to Germany, euros only; unknown-language
-  offers hidden but showable; new offers only (no used/marketplace); sources only where reading is
-  allowed (API, feed or terms), brettspielpreise.de first. `/speckit-clarify` can revisit them.
+  new offers hidden but showable, used offers listed with "language not stated"; sources only where
+  reading is allowed (API, feed or terms): brettspielpreise.de and the BGG marketplace first.
+  `/speckit-clarify` can revisit them.
+- Revised 2026-11-06 after the user's review: Buy first in the menu, offers link to the shop, a folded
+  Prices section in the details instead of a Prices action, BGG and unknowns.de marketplaces added.
 - Which further sources qualify is a research question for the plan, not a spec gap.
