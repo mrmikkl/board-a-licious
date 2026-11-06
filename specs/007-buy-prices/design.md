@@ -40,5 +40,7 @@ state, Separator, Screen heading.
   a Prices action opening the price screen, not chosen).
 - **Used offers** come from the BGG marketplace (Europe only, judged by currency), eBay.de,
   Kleinanzeigen and unknowns.de, in their own group below New.
-- **New and Used fold** with a tap on their heading; both start unfolded.
+- **New and Used fold** with a tap on their heading; both start unfolded. Changed after the release
+  (2026-11-07): **New and Used are tabs** (New active), and New shows the **5 cheapest** with an orange
+  **Show more** for 5 more at a time.
 - Config's menu icon is the **cog**.

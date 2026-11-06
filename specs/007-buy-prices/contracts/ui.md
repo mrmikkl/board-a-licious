@@ -24,7 +24,7 @@
 | Prices section | button "Prices", `aria-expanded` (details, game info sheet) |
 | language | group "Language": buttons "Both", "English", "German", `aria-pressed` |
 | fair price | text "At the fair: €38,00" (when known) |
-| New / Used | buttons "New …" / "Used …", `aria-expanded`; lists "New offers" / "Used offers" |
+| New / Used | tablist "Offers": tabs "New <n>" / "Used <n>", `aria-selected` (New by default); lists "New offers" / "Used offers"; button "Show more" (New, while more than shown) |
 | offer | link "<seller>, <total>, <English\|German\|language unknown\|language not stated>[, used][, not in stock]", opens in a new tab |
 | unknown switch | checkbox "Show offers with unknown language (n)" (price screen) |
 | links | links "Search on Kleinanzeigen", "Search on eBay.de" (without keys), "Search on unknowns.de" (its marketplace search) |
