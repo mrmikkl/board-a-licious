@@ -137,8 +137,12 @@ and sign in again: the collection appears there, so the way through Hyperdrive t
   ```bash
   npx wrangler hyperdrive update fe856b6ea9814a788872db3a9ff9ef89 --connection-string='<new direct string>'
   ```
-- **BGG token (Release 1.0)**: `npx wrangler secret put BGG_TOKEN`; the Worker then reports
-  search as available.
+- **BGG token** (feature 006, ADR 0007): `npx wrangler secret put BGG_TOKEN` (type the token at the
+  prompt; never into a file in the repository or a chat). The Worker then reads game details,
+  geeklists and search from BGG's official XML API and reports search as available; previews and
+  galleries stay on the website data. Locally, `BGG_TOKEN=…` in the git-ignored `.dev.vars` does the
+  same. A rejected token shows as "bgg token rejected 401" in `npx wrangler tail`; renew it with the
+  same command. `node --env-file=.dev.vars scripts/record-bgg-xml.mjs` re-records the XML test fixtures.
 - **Logs when something breaks**: `npx wrangler tail` shows live requests and errors; for stored
   logs switch on Workers Logs (`"observability": { "enabled": true }` in `wrangler.jsonc`).
 - **Local development** needs none of this: see the commands in [CLAUDE.md](../../CLAUDE.md)

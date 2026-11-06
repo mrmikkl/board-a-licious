@@ -1,6 +1,6 @@
 import { type AuthEnv, type Authenticate, createAuthenticator } from './auth.ts'
 import { BggError, edgeCache, memoryCache } from './bgg/cache.ts'
-import { GeekdoSource } from './bgg/geekdo.ts'
+import { createBggSource } from './bgg/routing.ts'
 import type { BggSource } from './bgg/source.ts'
 import { type Db, connect } from './db/db.ts'
 import { HttpError, errorResponse } from './http.ts'
@@ -9,6 +9,7 @@ import type { RouteContext } from './routes/context.ts'
 import { gamesRoute } from './routes/games.ts'
 import { imagesRoute } from './routes/images.ts'
 import { listsRoute } from './routes/lists.ts'
+import { searchRoute } from './routes/search.ts'
 import { getSync, postSync } from './routes/sync.ts'
 
 /** The two Workers-only shapes the Worker uses (kept local so app and Worker share one type program). */
@@ -49,6 +50,8 @@ export function createApp(deps: Deps) {
         switch (route) {
           case 'GET /api/bgg/games':
             return await gamesRoute(ctx)
+          case 'GET /api/bgg/search':
+            return await searchRoute(ctx)
           case 'GET /api/bgg/images':
             return await imagesRoute(ctx)
           case 'GET /api/bgg/companies':
@@ -96,7 +99,8 @@ export default {
       authenticate: authenticator,
       db: e => connect(e.ENVIRONMENT === 'development' && e.DATABASE_URL ? e.DATABASE_URL : (e.HYPERDRIVE?.connectionString ?? '')),
       now: () => new Date(),
-      bgg: () => (bggSource ??= new GeekdoSource({ fetch: (input, init) => fetch(input, init), cache: bggCache() })),
+      // one source (and one throttled client) per isolate; the token is a deployment secret, the same for every request
+      bgg: e => (bggSource ??= createBggSource({ fetch: (input, init) => fetch(input, init), cache: bggCache(), token: e.BGG_TOKEN || undefined })),
     })
     void ctx
     return app.fetch(request, env)

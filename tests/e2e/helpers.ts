@@ -155,3 +155,51 @@ export async function seedCollection(page: Page, name: string, games: SeedGame[]
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   return id
 }
+
+/** Cascadia's player poll (votes), from tests/fixtures/bgg-xml/thing-295947-385318.xml */
+export const CASCADIA_POLL = [
+  { players: '1', best: 133, recommended: 439, notRecommended: 145 },
+  { players: '2', best: 587, recommended: 334, notRecommended: 17 },
+  { players: '3', best: 551, recommended: 324, notRecommended: 17 },
+  { players: '4', best: 188, recommended: 552, notRecommended: 82 },
+  { players: '4+', best: 2, recommended: 37, notRecommended: 455 },
+]
+
+export type FakeResult = { bggId: number; name: string; year: number | null; kind: 'boardgame' | 'expansion' }
+
+/**
+ * F006: BoardGameGeek search without BGG: `/api/me` says whether the server has the token, and
+ * `/api/bgg/search` answers by the text (`results[q]`, else none); `status` makes it fail, `delayMs`
+ * slows it (per text). Result games get covers-less details from `/api/bgg/games`.
+ */
+export async function fakeSearch(
+  page: Page,
+  options: { token?: boolean; results?: Record<string, FakeResult[]>; status?: number; delayMs?: Record<string, number> } = {},
+) {
+  const { token = true, results = {}, status, delayMs = {} } = options
+  const all = new Map(Object.values(results).flat().map(r => [r.bggId, r]))
+  await page.route('**/api/me', async route => {
+    const res = await route.fetch()
+    await route.fulfill({ response: res, json: { ...(await res.json()), bggSearch: token } })
+  })
+  await page.route('**/api/bgg/search?**', async route => {
+    const url = new URL(route.request().url())
+    const q = (url.searchParams.get('q') ?? '').toLowerCase()
+    const limit = Number(url.searchParams.get('limit') ?? 50)
+    if (delayMs[q]) await new Promise(resolve => setTimeout(resolve, delayMs[q]))
+    if (!token) return route.fulfill({ status: 503, json: { error: 'bgg_search_unavailable', message: 'No token.', retryable: false } })
+    if (status) return route.fulfill({ status, json: { error: status === 503 ? 'bgg_rate_limited' : 'bgg_unavailable', message: 'BGG failed.', retryable: true } })
+    await route.fulfill({ json: { query: q, results: (results[q] ?? []).slice(0, limit) } })
+  })
+  await page.route('**/api/bgg/games?**', async route => {
+    const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',').map(Number) ?? []
+    if (!ids.some(i => all.has(i))) return route.fallback()
+    const games = ids.flatMap(i => {
+      const r = all.get(i)
+      return r
+        ? [{ bggId: i, name: r.name, year: r.year, thumbnailUrl: null, description: `About ${r.name}.`, kind: r.kind, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games', rating: 7.88, geekRating: 7.73, bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: CASCADIA_POLL, playerPollVoters: 1043 }]
+        : []
+    })
+    await route.fulfill({ json: { games } })
+  })
+}

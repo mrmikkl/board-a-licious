@@ -1,5 +1,6 @@
 import type { Collection, Entry } from '../../src/domain/collection.ts'
 import type { GameDetails } from '../../src/domain/game-info.ts'
+import type { PlayerVotes } from '../../src/domain/player-poll.ts'
 import type { LoadedList } from '../../src/domain/lists.ts'
 import type { Mark } from '../../src/domain/marks.ts'
 import type { Db } from './db.ts'
@@ -196,6 +197,10 @@ type GameRow = {
   publisher: string | null
   rating: string | number | null
   geek_rating: string | number | null
+  best_with: string | null
+  recommended_with: string | null
+  player_poll: PlayerVotes[] | string | null
+  player_poll_voters: number | null
 }
 
 /** A numeric column: the production driver hands it over as text, PGlite as a number. */
@@ -212,16 +217,18 @@ function names(value: string[] | string | null): string[] {
  * isolate) so a deploy works before `npm run db:migrate:neon` has run; the migration also marks old
  * games stale so they get their ratings.
  */
-let ratingColumns: Promise<void> | undefined
-function ensureRatingColumns(db: Db): Promise<void> {
-  ratingColumns ??= (async () => {
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)')
-    await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
-  })().catch(error => {
-    ratingColumns = undefined
-    throw error
-  })
-  return ratingColumns
+// a flag, not a shared promise: a cancelled Worker request leaves its promises unsettled forever, and
+// later requests awaiting it would hang; running the idempotent ALTERs twice is harmless
+let gameColumnsReady = false
+async function ensureRatingColumns(db: Db): Promise<void> {
+  if (gameColumnsReady) return
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS rating numeric(4,2)')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS geek_rating numeric(4,2)')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS best_with text')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS recommended_with text')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll jsonb')
+  await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll_voters integer')
+  gameColumnsReady = true
 }
 
 /** Cached games fetched after `freshAfter` (older ones are refreshed from BGG). */
@@ -229,7 +236,7 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
   if (ids.length === 0) return []
   await ensureRatingColumns(db)
   const rows = await db.query<GameRow>(
-    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating FROM game
+    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll, player_poll_voters FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
     [pgArray(ids), freshAfter],
   )
@@ -247,6 +254,11 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
     publisher: r.publisher,
     rating: number(r.rating),
     geekRating: number(r.geek_rating),
+    bestWith: r.best_with,
+    recommendedWith: r.recommended_with,
+    // jsonb: text from the production driver, parsed by PGlite
+    playerPoll: typeof r.player_poll === 'string' ? (JSON.parse(r.player_poll) as PlayerVotes[]) : r.player_poll,
+    playerPollVoters: r.player_poll_voters,
   }))
 }
 
@@ -255,13 +267,14 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
   for (const g of games) {
     await db.query(
       `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers,
-         mechanisms, publisher, rating, geek_rating, fetched_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14)
+         mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll, player_poll_voters, fetched_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14, $15, $16::jsonb, $17, $18)
        ON CONFLICT (bgg_id) DO UPDATE SET name = excluded.name, year = excluded.year,
          thumbnail_url = excluded.thumbnail_url, description = excluded.description, kind = excluded.kind,
          min_players = excluded.min_players, max_players = excluded.max_players, designers = excluded.designers,
          mechanisms = excluded.mechanisms, publisher = excluded.publisher, rating = excluded.rating,
-         geek_rating = excluded.geek_rating, fetched_at = excluded.fetched_at`,
+         geek_rating = excluded.geek_rating, best_with = excluded.best_with, recommended_with = excluded.recommended_with, player_poll = excluded.player_poll, player_poll_voters = excluded.player_poll_voters,
+         fetched_at = excluded.fetched_at`,
       [
         g.bggId,
         g.name,
@@ -276,6 +289,10 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
         g.publisher,
         g.rating ?? null,
         g.geekRating ?? null,
+        g.bestWith ?? null,
+        g.recommendedWith ?? null,
+        g.playerPoll == null ? null : JSON.stringify(g.playerPoll),
+        g.playerPollVoters ?? null,
         fetchedAt,
       ],
     )

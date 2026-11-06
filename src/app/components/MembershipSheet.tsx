@@ -19,7 +19,7 @@ import { useToast } from './Toast.tsx'
 const plural = (n: number) => `${n} ${n === 1 ? 'collection' : 'collections'}`
 
 /** What Done will do to this collection, or what the game is there now. */
-function note(entry: Entry | undefined, ticked: boolean) {
+export function note(entry: Entry | undefined, ticked: boolean) {
   if (entry && ticked) return entry.mark === 'new' ? 'In it, not yet marked' : `In it, marked ${markInfo(entry.mark).label}`
   if (entry) return entry.bought ? 'Will be removed, including its mark and the price you paid' : 'Will be removed, including its mark'
   if (ticked) return 'Will be added'
@@ -61,7 +61,7 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
     if (!changed) return onClose()
     setBusy(true)
     try {
-      const { added, removed } = await applyMembership(services, list, item, before, after, mark)
+      const { added, removed } = await applyMembership(services, item, before, after, mark)
       onClose()
       toast([added && `Added ${item.name} to ${plural(added)}`, removed && `Removed it from ${plural(removed)}`].filter(Boolean).join('. '))
     } finally {
@@ -125,7 +125,7 @@ export function MembershipSheet({ list, item, onClose }: { list: StoredList; ite
 }
 
 /** A row of the multi-choice list: hexagon tick, collection name and what Done does (docs/design.md §7). */
-function Pick({ collection, checked, note, onChange }: { collection: Collection; checked: boolean; note: string; onChange: (on: boolean) => void }) {
+export function Pick({ collection, checked, note, onChange }: { collection: Collection; checked: boolean; note: string; onChange: (on: boolean) => void }) {
   const nameId = useId()
   const noteId = useId()
   return (

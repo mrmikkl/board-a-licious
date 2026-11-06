@@ -1,8 +1,9 @@
+import type { SearchResult } from '../../src/domain/bgg-search.ts'
 import type { GameDetails } from '../../src/domain/game-info.ts'
 import type { GameGallery } from '../../src/domain/gallery.ts'
 import type { Game } from '../db/repository.ts'
 
-export type { Game }
+export type { Game, SearchResult }
 
 export type ListKind = 'preview' | 'geeklist'
 
@@ -34,14 +35,18 @@ export type ListPage = {
 }
 
 /**
- * Where BGG data comes from (ADR 0005): `GeekdoSource` reads BGG's public website JSON under the
- * constitution V exception (Release 0.5); `XmlApiSource` uses the official XML API with a token (1.0).
+ * Where BGG data comes from (ADR 0005, ADR 0007): `GeekdoSource` reads BGG's public website JSON under the
+ * constitution V exception; `OfficialSource` uses the official XML API with the token. Which one answers
+ * which kind of data is chosen in worker/bgg/routing.ts.
  */
 export interface BggSource {
+  /** How many games one /api/bgg/games request may fetch from BGG (each source needs a different number of calls). */
+  readonly fetchLimit: number
   getGames(ids: number[]): Promise<Game[]>
   getListPage(kind: ListKind, id: number, page: number): Promise<ListPage>
   getCompanies(ids: number[]): Promise<{ id: number; name: string }[]>
   /** F004: the game's image gallery; the official API has none, so it stays on the exception (research R1). */
   getGallery(bggId: number): Promise<GameGallery>
-  search(query: string): Promise<Game[]>
+  /** F006: ranked games and expansions for a valid query (`searchQuery`), at most `limit`. */
+  search(query: string, limit: number): Promise<SearchResult[]>
 }

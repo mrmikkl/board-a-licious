@@ -67,4 +67,16 @@ describe('game info (FR-010)', () => {
     expect(publisherOf({ booth: 'X' }, details)).toBe('Flatout Games')
     expect(publisherOf(null, undefined)).toBeNull()
   })
+
+  it('F006: shows the player poll after the players, in details only', () => {
+    const polled = { ...details, bestWith: '2–3 players', recommendedWith: '1–4 players', rating: 7.9 }
+    expect(gameInfos(null, polled).slice(0, 4)).toEqual([
+      { key: 'players', label: 'Players', text: '1–4 players' },
+      { key: 'bestWith', label: 'Best with', text: '2–3 players' },
+      { key: 'recommendedWith', label: 'Recommended', text: '1–4 players' },
+      { key: 'rating', label: 'Rating', text: '7.9' },
+    ])
+    expect(rowInfos(null, polled).map(i => i.key)).toEqual(['players', 'designer', 'mechanisms'])
+    expect(gameInfos(null, { bestWith: null, recommendedWith: '' })).toEqual([])
+  })
 })

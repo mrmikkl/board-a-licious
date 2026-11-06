@@ -3,7 +3,7 @@ import type { GameGallery } from '../../src/domain/gallery.ts'
 import { getGames } from './geekdo-games.ts'
 import { getGallery } from './geekdo-images.ts'
 import { getCompanies, getListPage } from './geekdo-lists.ts'
-import type { BggSource, Game, ListKind, ListPage } from './source.ts'
+import type { BggSource, Game, ListKind, ListPage, SearchResult } from './source.ts'
 
 /**
  * Release 0.5 source: BGG's public website JSON on api.geekdo.com (constitution V exception, ADR 0005).
@@ -11,9 +11,11 @@ import type { BggSource, Game, ListKind, ListPage } from './source.ts'
  */
 export class GeekdoSource implements BggSource {
   readonly client: BggClient
+  /** two requests per game (details, ratings) */
+  readonly fetchLimit = 10
 
-  constructor(deps: { fetch: typeof fetch; cache: BggCache; now?: () => number; sleep?: (ms: number) => Promise<void> }) {
-    this.client = createBggClient(deps)
+  constructor(deps: { fetch: typeof fetch; cache: BggCache; now?: () => number; sleep?: (ms: number) => Promise<void> } | { client: BggClient }) {
+    this.client = 'client' in deps ? deps.client : createBggClient(deps)
   }
 
   getGames(ids: number[]): Promise<Game[]> {
@@ -32,7 +34,7 @@ export class GeekdoSource implements BggSource {
     return getGallery(this.client, bggId)
   }
 
-  async search(): Promise<Game[]> {
-    throw new BggError('bgg_unavailable', 'Search needs the official BGG API (Release 1.0).')
+  async search(): Promise<SearchResult[]> {
+    throw new BggError('bgg_search_unavailable', 'Searching BoardGameGeek needs the official API token.')
   }
 }

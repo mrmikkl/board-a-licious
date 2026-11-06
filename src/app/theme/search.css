@@ -1,0 +1,124 @@
+/* F006: Search BoardGameGeek, result rows, add to collections, Add game matches (docs/design.md v2.4.0) */
+.search-hint {
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.result-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.result-status:empty {
+  display: none;
+}
+/* the collection row (rows.css) keeps its spacing in an inner button; a row that is one button (a search
+   result, a BGG list game) carries the same spacing itself: 12px between cover and text */
+button.row {
+  --tone: var(--border);
+  gap: 12px;
+  min-height: 68px;
+  padding: 8px 12px;
+}
+.srow.compact {
+  min-height: 52px;
+  padding: 6px 10px;
+  box-shadow: none;
+  background: var(--deck-2);
+}
+.srow .row-meta .in-mark {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kind-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 7px;
+  border: 1px solid var(--violet);
+  border-radius: var(--r-pill);
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+}
+.rows.is-stale {
+  opacity: 0.45;
+}
+.skel {
+  height: 64px;
+  border: 1px solid var(--rim);
+  border-radius: var(--r-md);
+  background: linear-gradient(90deg, var(--deck) 0%, var(--deck-2) 50%, var(--deck) 100%);
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.2s linear infinite;
+}
+@keyframes skel-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.spin-hex {
+  flex: none;
+  width: 16px;
+  height: 18px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  animation: spin-hex 1.2s linear infinite;
+}
+@keyframes spin-hex {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.notice {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.notice p {
+  margin: 0;
+}
+.notice.warn {
+  border-color: var(--danger);
+}
+.more-note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.found {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.found .row-meta {
+  flex: 1;
+}
+.matches {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel,
+  .spin-hex {
+    animation: none;
+  }
+}
