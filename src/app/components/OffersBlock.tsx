@@ -57,33 +57,22 @@ function OfferTile({ offer: o }: { offer: Offer }) {
   )
 }
 
-function Group({ name, note, offers }: { name: 'New' | 'Used'; note: string; offers: Offer[] }) {
-  const [open, setOpen] = useState(true)
-  const listId = useId()
+/** New offers start with this many (the cheapest); "Show more" adds as many again. */
+export const PAGE = 5
+
+function OfferList({ label, offers }: { label: string; offers: Offer[] }) {
   return (
-    <>
-      <h3 className="offer-group">
-        <button type="button" className="group-fold" aria-expanded={open} aria-controls={listId} onClick={() => setOpen(o => !o)}>
-          {name}
-          <small>
-            {offers.length} {offers.length === 1 ? 'offer' : 'offers'} · {note}
-          </small>
-          <span className="chev" aria-hidden="true">
-            ›
-          </span>
-        </button>
-      </h3>
-      <ul className="offers" id={listId} aria-label={`${name} offers`} hidden={!open}>
-        {offers.map(o => (
-          <OfferTile key={o.link} offer={o} />
-        ))}
-      </ul>
-    </>
+    <ul className="offers" aria-label={label}>
+      {offers.map(o => (
+        <OfferTile key={o.link} offer={o} />
+      ))}
+    </ul>
   )
 }
 
 /**
- * F007 (docs/design.md "Offers block"): language choice, the fair price, New and Used offers (fold),
+ * F007 (docs/design.md "Offers block"): language choice, the fair price, New and Used offers as tabs
+ * (New: the 5 cheapest, "Show more" adds 5),
  * the unknown-language switch, search links, a failed source, the sources line. Used by the price screen
  * and the Prices section in a game's details (`compact`: no unknown-language switch).
  */
@@ -103,6 +92,10 @@ export function OffersBlock({
   onRetry: () => void
 }) {
   const [showUnknown, setShowUnknown] = useState(false)
+  // New is the first tab; New starts with the 5 cheapest, "Show more" adds 5 (a reload starts over)
+  const [tab, setTab] = useState<'new' | 'used'>('new')
+  const [shown, setShown] = useState(PAGE)
+  const tabsId = useId()
   if (state.status === 'loading') {
     return (
       <div className="offers-block">
@@ -156,14 +149,54 @@ export function OffersBlock({
         </div>
       ) : (
         <>
-          <Group name="New" note="cheapest first" offers={newOffers} />
-          {!compact && unknownCount > 0 && (
-            <label className="unknown-switch">
-              <input type="checkbox" checked={showUnknown} onChange={e => setShowUnknown(e.target.checked)} />
-              Show offers with unknown language ({unknownCount})
-            </label>
-          )}
-          <Group name="Used" note="from Europe" offers={usedOffers} />
+          <div className="offer-tabs" role="tablist" aria-label="Offers">
+            {(['new', 'used'] as const).map(t => (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                id={`${tabsId}-${t}`}
+                aria-selected={tab === t}
+                aria-controls={`${tabsId}-${t}-panel`}
+                tabIndex={tab === t ? 0 : -1}
+                onClick={() => setTab(t)}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    const next = t === 'new' ? 'used' : 'new'
+                    setTab(next)
+                    document.getElementById(`${tabsId}-${next}`)?.focus()
+                  }
+                }}
+              >
+                {t === 'new' ? 'New' : 'Used'}
+                <small>{t === 'new' ? newOffers.length : usedOffers.length}</small>
+              </button>
+            ))}
+          </div>
+          <div role="tabpanel" id={`${tabsId}-${tab}-panel`} aria-labelledby={`${tabsId}-${tab}`} className="offer-panel">
+            {tab === 'new' ? (
+              <>
+                <p className="panel-note">Cheapest first</p>
+                <OfferList label="New offers" offers={newOffers.slice(0, shown)} />
+                {shown < newOffers.length && (
+                  <button type="button" className="btn btn-primary btn-block show-more" onClick={() => setShown(n => n + PAGE)}>
+                    Show more
+                  </button>
+                )}
+                {!compact && unknownCount > 0 && (
+                  <label className="unknown-switch">
+                    <input type="checkbox" checked={showUnknown} onChange={e => setShowUnknown(e.target.checked)} />
+                    Show offers with unknown language ({unknownCount})
+                  </label>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="panel-note">From Europe, cheapest first</p>
+                <OfferList label="Used offers" offers={usedOffers} />
+              </>
+            )}
+          </div>
         </>
       )}
       {answer.failed.map(source => (
