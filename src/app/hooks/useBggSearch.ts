@@ -7,7 +7,7 @@ import { useServices } from '../context.tsx'
 import { initialSearch, searchReducer } from './search-state.ts'
 
 /** Research R8: a search runs this long after the last keystroke (SC-005). */
-export const SEARCH_PAUSE_MS = 500
+export const SEARCH_PAUSE_MS = 750
 /** When BGG asks to wait: tries and the pause between them before "not reachable". */
 const WAIT_TRIES = 3
 const WAIT_MS = 3000

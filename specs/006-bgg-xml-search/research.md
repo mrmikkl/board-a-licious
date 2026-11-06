@@ -118,7 +118,7 @@ marked *Recorded*.
 
 ## R8. Search in the app
 
-- **Decision**: `useBggSearch(limit)` keeps the text, waits 0.5 s after the last change (Enter: at
+- **Decision**: `useBggSearch(limit)` keeps the text, waits 0.75 s after the last change (0.5 s until 2026-11-06) (Enter: at
   once), aborts the previous request (`AbortController`) and ignores answers whose sequence number is
   not the newest. States: idle, short (1 char / only spaces / > 100), loading (first or with old
   results dimmed), waiting (BGG asked to wait), done, offline (`navigator.onLine` false or fetch

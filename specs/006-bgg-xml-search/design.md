@@ -19,7 +19,7 @@ choices only.
 | Screen | Content | Leads to |
 |---|---|---|
 | **Search** | heading "Search"; label "Search BoardGameGeek"; search field ("Game name, e.g. Cascadia", clear ×); hint "Type at least 2 letters."; separator; status line ("6 games · exact matches first"); result rows. **No action bar** | — |
-| ↳ typing | search 0.5 s after the last key (Enter: at once); first search: 4 placeholder rows; later: old results dimmed until the new ones arrive; an older answer arriving late is dropped | — |
+| ↳ typing | search 0.75 s after the last key (Enter: at once); first search: 4 placeholder rows; later: old results dimmed until the new ones arrive; an older answer arriving late is dropped | — |
 | ↳ result row | initials (cover once opened), name, year or "Year unknown", **Expansion** pill, teal "in Essen 2026" / "in 2 collections"; a **big +** at the right | row: Game info sheet; +: Add to collections sheet |
 | ↳ 50 results | status "50 games · the first 50, exact matches first"; below the list "More games match. Type more of the name to narrow it down." | — |
 | ↳ no match | empty state "No game called “…” on BoardGameGeek", "Check the spelling, or try a shorter part of the name." | — |

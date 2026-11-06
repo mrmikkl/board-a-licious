@@ -123,7 +123,7 @@ to collection: Harmonies is in Essen 2026 as Interested.
 **Search**
 
 - **FR-008**: The Search place MUST offer a search field and search BoardGameGeek by name when the server has a token; without one it MUST keep today's "comes soon" note. In both cases the Search place has no main button or action bar.
-- **FR-009**: A search MUST run for 2–100 characters after a short pause in typing (about half a second), return at most 50 board games and expansions, exact name matches first, and mark expansions.
+- **FR-009**: A search MUST run for 2–100 characters after a short pause in typing (about three quarters of a second), return at most 50 board games and expansions, exact name matches first, and mark expansions.
 - **FR-010**: Each result MUST show cover or initials, name, year (or "Year unknown"), "Expansion" where it applies, and the user's collections that already hold it.
 - **FR-011**: Tapping a result MUST open a game info sheet (image viewer on the cover, the info box, the description) without collections or adding actions. A big + next to each result MUST open an "Add <game>" sheet with the collection ticks and the optional category, adding and removing exactly as a BGG list's game sheet does (with no booth or price, as search knows none).
 - **FR-012**: Only the newest search's results MUST be shown; offline or with BoardGameGeek busy the screen MUST say so with a retry.
