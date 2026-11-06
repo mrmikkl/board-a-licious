@@ -88,7 +88,7 @@ The user can narrow the offers to one language (English only or German only).
 
 - A game with several editions (e.g. base game and a big box) at one shop: each edition is its own offer, with the edition's name when the source gives one.
 - The same shop listed by two sources: shown once, with the lower total, naming the source.
-- Prices in other currencies are not converted: only offers in euros are shown (marketplace listings in other currencies are left out).
+- New offers are in euros (shops delivering to Germany). Used offers on the BGG marketplace come only from Europe; BGG gives no seller location, so a listing counts as European by its currency (EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK, HUF). A non-euro listing shows its own price with an approximate euro value ("£25 ≈ €29"), which is used for sorting; listings in other currencies (USD, CAD, AUD, …) are left out.
 - Marketplace listings are free text: the language is taken from the listing when it states it ("English", "deutsch", …), else "language not stated"; used offers are not hidden for an unstated language.
 - A marketplace listing that bundles several games: shown with its title as the edition name and "bundle".
 - An expansion picked in Buy: works like a base game.
@@ -105,8 +105,9 @@ The user can narrow the offers to one language (English only or German only).
 - **FR-003**: The price screen MUST show the game (cover, name, year) and the offers found for it: new offers (shop, item price, shipping or "shipping unknown", total, edition language, availability, time checked) and, in their own group "Used", marketplace offers (marketplace, price, shipping or "shipping unknown", condition, seller's location when known, language or "language not stated", the start of the seller's note, date listed).
 - **FR-004**: Every offer MUST be a link that opens the offer on the shop's or marketplace's website in a new tab.
 - **FR-005**: New offers MUST be limited to English and German editions; new offers of unknown language MUST be hidden by default and shown on request; offers stating another language MUST never be shown.
-- **FR-006**: Offers MUST be ordered by total price (item + shipping) within their group, available new offers first; prices in euros, shipping to Germany.
+- **FR-006**: Offers MUST be ordered by total price (item + shipping) within their group, available new offers first; new offers in euros with shipping to Germany; used offers from Europe only (FR-007a), non-euro prices with an approximate euro value used for sorting.
 - **FR-007**: Sources MUST include brettspielpreise.de and the BoardGameGeek marketplace; the unknowns.de marketplace and further shops or price sites (Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de, idealo) MUST be included when they allow automated reading of their offers (see Assumptions); each offer MUST name its source.
+- **FR-007a**: BGG marketplace offers MUST come from Europe only; as BGG gives no seller location, a listing counts as European by its currency (EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK, HUF).
 - **FR-008**: When a source fails or times out, the other sources' offers MUST still be shown, with one line naming the failed source and a retry.
 - **FR-009**: A game's details in a collection and Search's game info sheet MUST have a folded **Prices** section that expands on tap, loads the offers only then, and shows them like the price screen.
 - **FR-010**: When the game has a fair price in the current collection, the price screen and the Prices section MUST show it above the offers for comparison.
@@ -135,7 +136,7 @@ The user can narrow the offers to one language (English only or German only).
 - "by" in the request means **Buy**.
 - Shipping destination is Germany and prices are in euros; other countries and currencies are out of scope.
 - brettspielpreise.de is the first source for new offers. It lists many German shops and the edition language.
-- The BoardGameGeek marketplace is read through BGG's official API (feature 006's token): checked 2026-11-06, it lists a game's offers with date, price and currency, condition, the seller's note and a link (74 for Cascadia, in GBP, USD, EUR, …), but no seller location or shipping; only the EUR ones are shown.
+- The BoardGameGeek marketplace is read through BGG's official API (feature 006's token): checked 2026-11-06, it lists a game's offers with date, price and currency, condition, the seller's note and a link (74 for Cascadia, in GBP, USD, EUR, …), but no seller location or shipping; only listings in European currencies are shown (FR-007a), converted to an approximate euro value at a daily exchange rate.
 - Sources the plan checks: unknowns.de's marketplace (a forum section), Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de and idealo.
   - A source is used only if it offers an official way to read offers (an API or a feed) or its terms allow automated reading. Sites whose terms forbid it, or that need a personal login, are left out, with no scraping against a site's terms (in the spirit of constitution V).
   - Where a source needs an API key or agreement, the owner requests it; the key lives only as a server secret.
