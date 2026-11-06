@@ -39,6 +39,7 @@ describe('GET /api/bgg/games', () => {
           bestWith: null,
           recommendedWith: null,
           playerPoll: null,
+          playerPollVoters: null,
         },
       ],
     })

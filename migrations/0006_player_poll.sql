@@ -5,5 +5,6 @@
 ALTER TABLE game ADD COLUMN IF NOT EXISTS best_with text;
 ALTER TABLE game ADD COLUMN IF NOT EXISTS recommended_with text;
 ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll jsonb;
+ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll_voters integer;
 UPDATE game SET fetched_at = '2000-01-01T00:00:00Z'
-  WHERE player_poll IS NULL AND fetched_at < '2026-11-07T00:00:00Z' AND fetched_at > '2000-01-01T00:00:00Z';
+  WHERE player_poll_voters IS NULL AND fetched_at < '2026-11-07T00:00:00Z' AND fetched_at > '2000-01-01T00:00:00Z';

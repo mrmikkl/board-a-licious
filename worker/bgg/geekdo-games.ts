@@ -59,6 +59,7 @@ const toGame = (item: GeekItem, ratings: Ratings): Game => {
     bestWith: null,
     recommendedWith: null,
     playerPoll: null,
+    playerPollVoters: null,
   }
 }
 

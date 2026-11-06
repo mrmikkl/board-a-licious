@@ -28,7 +28,7 @@ type ThingItem = {
   'poll-summary'?: PollSummary | PollSummary[]
   poll?: Poll | Poll[]
 }
-type Poll = { name?: string; results?: PollResults | PollResults[] }
+type Poll = { name?: string; totalvotes?: string; results?: PollResults | PollResults[] }
 type PollResults = { numplayers?: string; result?: { value?: string; numvotes?: string } | { value?: string; numvotes?: string }[] }
 type PollSummary = { name?: string; result?: { name?: string; value?: string } | { name?: string; value?: string }[] }
 type SearchItem = { type?: string; id?: string; name?: Name[]; yearpublished?: Value }
@@ -63,15 +63,16 @@ function pollSummary(item: ThingItem): { bestWith: string | null; recommendedWit
   return { bestWith: text(/^bestwith$/, /^best with\s+/i), recommendedWith: text(/^recom+endedwith$/, /^recommended with\s+/i) }
 }
 
-/** FR-006b: the votes per player count of the "suggested number of players" poll. */
-function playerPoll(item: ThingItem): PlayerVotes[] {
+/** FR-006b: the votes per player count of the "suggested number of players" poll, and how many voted. */
+function playerPoll(item: ThingItem): { playerPoll: PlayerVotes[]; playerPollVoters: number } {
   const poll = asArray(item.poll).find(p => p.name === 'suggested_numplayers')
-  return asArray(poll?.results).flatMap(r => {
+  const rows = asArray(poll?.results).flatMap(r => {
     const votes = (value: string) => Number(asArray(r.result).find(x => x.value === value)?.numvotes) || 0
     const row = { players: r.numplayers ?? '', best: votes('Best'), recommended: votes('Recommended'), notRecommended: votes('Not Recommended') }
     // a player count nobody voted on says nothing
     return row.players && row.best + row.recommended + row.notRecommended > 0 ? [row] : []
   })
+  return { playerPoll: rows, playerPollVoters: Number(poll?.totalvotes) || 0 }
 }
 
 function toGame(item: ThingItem, kind: Game['kind']): Game {
@@ -91,7 +92,7 @@ function toGame(item: ThingItem, kind: Game['kind']): Game {
     rating: rating(ratings?.average?.value),
     geekRating: rating(ratings?.bayesaverage?.value),
     ...pollSummary(item),
-    playerPoll: playerPoll(item),
+    ...playerPoll(item),
   }
 }
 

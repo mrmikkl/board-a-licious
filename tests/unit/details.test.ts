@@ -8,7 +8,7 @@ import { newEntry } from '../../src/domain/collection.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
-const cascadia: Game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: 'https://cf.geekdo-images.com/x.jpg', description: 'Tiles.', kind: 'boardgame', minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games', bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: [] }
+const cascadia: Game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: 'https://cf.geekdo-images.com/x.jpg', description: 'Tiles.', kind: 'boardgame', minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games', bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: [], playerPollVoters: 0 }
 
 let store: Store
 afterEach(async () => {
@@ -39,11 +39,11 @@ describe('completing link-added games (FR-017)', () => {
 
   it('F006: fetches games again once that were stored before the player poll existed', async () => {
     store = await openStore('anna@example.com')
-    const { bestWith: _a, recommendedWith: _b, playerPoll: _c, ...old } = cascadia
+    const { bestWith: _a, recommendedWith: _b, playerPoll: _c, playerPollVoters: _d, ...old } = cascadia
     await store.putGames([old])
     await store.saveEntry({ ...newEntry('c1', 295947, T1), mark: 'must_have' as const })
     const asked: number[][] = []
-    const api = { games: async (ids: number[]) => (asked.push(ids), [{ ...cascadia, bestWith: null, recommendedWith: null, playerPoll: null }]) }
+    const api = { games: async (ids: number[]) => (asked.push(ids), [{ ...cascadia, bestWith: null, recommendedWith: null, playerPoll: null, playerPollVoters: null }]) }
     await completeDetails({ store, api, now: () => T2 })
     await completeDetails({ store, api, now: () => T2 })
     expect(asked).toEqual([[295947]])

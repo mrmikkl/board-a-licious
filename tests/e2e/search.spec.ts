@@ -92,6 +92,7 @@ test.describe('F006 US1: find a game by its name', () => {
     await expect(sheet.getByRole('button', { name: 'Hide details' })).toHaveAttribute('aria-expanded', 'true')
     await expect(table.getByRole('row', { name: /^2 / })).toContainText('63%')
     await expect(table.locator('b')).toHaveText(['63%', '67%', '92%'])
+    await expect(sheet.getByText('1,043 votes on BoardGameGeek')).toBeVisible()
     await expectAccessible(page)
     await expect(sheet.getByRole('checkbox')).toHaveCount(0)
     await expect(sheet.getByRole('group', { name: 'Category' })).toHaveCount(0)

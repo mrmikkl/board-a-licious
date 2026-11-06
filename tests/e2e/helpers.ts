@@ -197,7 +197,7 @@ export async function fakeSearch(
     const games = ids.flatMap(i => {
       const r = all.get(i)
       return r
-        ? [{ bggId: i, name: r.name, year: r.year, thumbnailUrl: null, description: `About ${r.name}.`, kind: r.kind, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games', rating: 7.88, geekRating: 7.73, bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: CASCADIA_POLL }]
+        ? [{ bggId: i, name: r.name, year: r.year, thumbnailUrl: null, description: `About ${r.name}.`, kind: r.kind, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ['Tile Placement'], publisher: 'Flatout Games', rating: 7.88, geekRating: 7.73, bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: CASCADIA_POLL, playerPollVoters: 1043 }]
         : []
     })
     await route.fulfill({ json: { games } })

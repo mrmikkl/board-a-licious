@@ -658,3 +658,9 @@
 .poll-table tbody tr:last-child > * {
   border-bottom: 0;
 }
+/* the number of people who answered the poll: how much the percentages say (FR-006b) */
+.poll-voters {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}

@@ -18,6 +18,8 @@ export type GameDetails = {
   recommendedWith?: string | null
   /** F006: the poll's votes per player count (FR-006b); empty when nobody voted, null without the official API. */
   playerPoll?: PlayerVotes[] | null
+  /** How many people answered the poll (BGG's `totalvotes`); null without the official API. */
+  playerPollVoters?: number | null
 }
 
 export type InfoKey = 'price' | 'players' | 'bestWith' | 'recommendedWith' | 'rating' | 'geekRating' | 'booth' | 'edition' | 'designer' | 'mechanisms'

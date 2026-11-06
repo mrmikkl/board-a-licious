@@ -77,7 +77,9 @@ export function InfoList({
           {i.key ===
             (infos.some((x) => x.key === "recommendedWith")
               ? "recommendedWith"
-              : "bestWith") && <PlayerPoll poll={details?.playerPoll} />}
+              : "bestWith") && (
+                <PlayerPoll poll={details?.playerPoll} voters={details?.playerPollVoters} />
+              )}
         </Fragment>
       ))}
     </dl>
@@ -88,7 +90,7 @@ export function InfoList({
  * F006 FR-006b: "Show details" unfolds BGG's player poll as a table: per player count the share of
  * Best, Recommended and Not recommended votes; the highest share of each column bold.
  */
-function PlayerPoll({ poll }: { poll?: PlayerVotes[] | null }) {
+function PlayerPoll({ poll, voters }: { poll?: PlayerVotes[] | null; voters?: number | null }) {
   const [open, setOpen] = useState(false);
   const tableId = useId();
   const table = pollTable(poll);
@@ -132,6 +134,9 @@ function PlayerPoll({ poll }: { poll?: PlayerVotes[] | null }) {
             ))}
           </tbody>
         </table>
+        {open && voters ? (
+          <p className="poll-voters">{`${voters.toLocaleString("en")} ${voters === 1 ? "vote" : "votes"} on BoardGameGeek`}</p>
+        ) : null}
       </dd>
     </div>
   );
