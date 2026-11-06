@@ -1,0 +1,266 @@
+{
+ "currency": "EUR",
+ "sitename": "Brettspielpreise.de",
+ "url": "https://brettspielpreise.de",
+ "logo": "https://brettspielpreise.de/img/meeple-logo-DE.png",
+ "items": [
+  {
+   "id": 38409,
+   "name": "Cascadia",
+   "url": "https://brettspielpreise.de/item/show/38409/cascadia?utm_source=site_https%3A%2F%2Fboard-a-licious.boardgamegeek.workers.dev&utm_medium=cmsplugin&utm_content=getprice&utm_campaign=wpplugin",
+   "image": "https://d2qg6c07ydxh2f.cloudfront.net/items/9/img_38409_MAIN.png",
+   "thumbnail": "https://d2qg6c07ydxh2f.cloudfront.net/items/9/img_38409_THUMBNAIL.png",
+   "versions": {
+    "lang": [
+     "GB"
+    ]
+   },
+   "external_id": "295947",
+   "prices": [
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=6719470",
+     "price": 34.4,
+     "product": 34.4,
+     "shipping": 0,
+     "discount": null,
+     "fee": 0,
+     "stock": "Y",
+     "shipping_known": false,
+     "country": "CA"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3358216",
+     "price": 37.89,
+     "product": 32.99,
+     "shipping": "4.90",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "DE"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3100975",
+     "price": 38.85,
+     "product": 34.95,
+     "shipping": "3.90",
+     "discount": null,
+     "fee": 0,
+     "stock": "P",
+     "shipping_known": true,
+     "country": "DE"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3284636",
+     "price": 39.99,
+     "product": 39.99,
+     "shipping": 0,
+     "discount": null,
+     "fee": 0,
+     "stock": "Y",
+     "shipping_known": false,
+     "country": "DE"
+    }
+   ]
+  },
+  {
+   "id": 51503,
+   "name": "Cascadia",
+   "url": "https://brettspielpreise.de/item/show/51503/cascadia?utm_source=site_https%3A%2F%2Fboard-a-licious.boardgamegeek.workers.dev&utm_medium=cmsplugin&utm_content=getprice&utm_campaign=wpplugin",
+   "image": "https://d2qg6c07ydxh2f.cloudfront.net/items/3/img_51503_MAIN.png",
+   "thumbnail": "https://d2qg6c07ydxh2f.cloudfront.net/items/3/img_51503_THUMBNAIL.png",
+   "versions": {
+    "lang": [
+     "DE"
+    ]
+   },
+   "external_id": "295947",
+   "prices": [
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3415770",
+     "price": 34.89,
+     "product": 29.99,
+     "shipping": "4.90",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "DE"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=4263208",
+     "price": 35.5,
+     "product": 33,
+     "shipping": "2.50",
+     "discount": null,
+     "fee": 0,
+     "stock": " ",
+     "shipping_known": true,
+     "country": "DE"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3445400",
+     "price": 35.85,
+     "product": 31.95,
+     "shipping": "3.90",
+     "discount": null,
+     "fee": 0,
+     "stock": "Y",
+     "shipping_known": true,
+     "country": "DE"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=5886220",
+     "price": 36,
+     "product": 36,
+     "shipping": "0.00",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "DE"
+    }
+   ]
+  },
+  {
+   "id": 51505,
+   "name": "Cascadia",
+   "url": "https://brettspielpreise.de/item/show/51505/cascadia?utm_source=site_https%3A%2F%2Fboard-a-licious.boardgamegeek.workers.dev&utm_medium=cmsplugin&utm_content=getprice&utm_campaign=wpplugin",
+   "image": "https://d2qg6c07ydxh2f.cloudfront.net/items/5/img_51505_MAIN.png",
+   "thumbnail": "https://d2qg6c07ydxh2f.cloudfront.net/items/5/img_51505_THUMBNAIL.png",
+   "versions": {
+    "lang": [
+     "FR"
+    ]
+   },
+   "external_id": "295947",
+   "prices": [
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3355514",
+     "price": 39.6,
+     "product": 35.65,
+     "shipping": "3.95",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "FR"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3475375",
+     "price": 43.4,
+     "product": 35.9,
+     "shipping": "7.50",
+     "discount": null,
+     "fee": 0,
+     "stock": "Y",
+     "shipping_known": true,
+     "country": "FR"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3247130",
+     "price": 45.8,
+     "product": 35.9,
+     "shipping": "9.90",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "FR"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3430857",
+     "price": 47.9,
+     "product": 35.9,
+     "shipping": "12.00",
+     "discount": null,
+     "fee": 0,
+     "stock": "Y",
+     "shipping_known": true,
+     "country": "FR"
+    }
+   ]
+  },
+  {
+   "id": 115166,
+   "name": "Cascadia Kickstarter Edition",
+   "url": "https://brettspielpreise.de/item/show/115166/cascadia-kickstarter-edition?utm_source=site_https%3A%2F%2Fboard-a-licious.boardgamegeek.workers.dev&utm_medium=cmsplugin&utm_content=getprice&utm_campaign=wpplugin",
+   "image": "https://d2qg6c07ydxh2f.cloudfront.net/items/66/img_115166_MAIN.png",
+   "thumbnail": "https://d2qg6c07ydxh2f.cloudfront.net/items/66/img_115166_THUMBNAIL.png",
+   "versions": {
+    "lang": [
+     "GB"
+    ]
+   },
+   "external_id": "295947",
+   "prices": [
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=6251157",
+     "price": 47.06,
+     "product": 39.93,
+     "shipping": "7.13",
+     "discount": null,
+     "fee": 0,
+     "stock": "Y",
+     "shipping_known": true,
+     "country": "GB"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=5881790",
+     "price": 48.75,
+     "product": 40.76,
+     "shipping": "7.99",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "IT"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3141024",
+     "price": 49.05,
+     "product": 37.29,
+     "shipping": "11.76",
+     "discount": null,
+     "fee": 0,
+     "stock": "Y",
+     "shipping_known": true,
+     "country": "DK"
+    },
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3434174",
+     "price": 49.11,
+     "product": 39.11,
+     "shipping": "10.00",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "RO"
+    }
+   ]
+  },
+  {
+   "id": 99999,
+   "name": "Cascadia",
+   "url": "https://brettspielpreise.de/item/show/51503/cascadia?utm_source=site_https%3A%2F%2Fboard-a-licious.boardgamegeek.workers.dev&utm_medium=cmsplugin&utm_content=getprice&utm_campaign=wpplugin",
+   "image": "https://d2qg6c07ydxh2f.cloudfront.net/items/3/img_51503_MAIN.png",
+   "thumbnail": "https://d2qg6c07ydxh2f.cloudfront.net/items/3/img_51503_THUMBNAIL.png",
+   "versions": {},
+   "external_id": "295947",
+   "prices": [
+    {
+     "link": "https://brettspielpreise.de/item/go?source=A&storeitemid=3415770",
+     "price": 34.89,
+     "product": 29.99,
+     "shipping": "4.90",
+     "discount": null,
+     "fee": 0,
+     "stock": "N",
+     "shipping_known": true,
+     "country": "DE"
+    }
+   ]
+  }
+ ]
+}
