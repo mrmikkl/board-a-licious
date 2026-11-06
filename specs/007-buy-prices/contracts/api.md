@@ -18,12 +18,13 @@
         "euroTotal": 29.3, "available": true, "condition": "very good", "note": "Collection only…",
         "auction": null, "listedAt": "2026-10-30", "link": "https://boardgamegeek.com/market/product/4176814" }
     ],
-    "links": [ { "name": "Kleinanzeigen", "url": "https://www.kleinanzeigen.de/s-cascadia/k0" } ] }
+    "links": [ { "name": "Kleinanzeigen", "url": "https://www.kleinanzeigen.de/s-cascadia/k0" } ],
+    "siteSearch": "https://brettspielpreise.de/item/search?search=Cascadia" }
   ```
 - Offers in other languages and BGG listings in non-European currencies are dropped on the server.
 - A source that fails or takes over 8 s is listed in `failed`; the rest still answer (never 5xx for one source).
 - `400 bad_request` for a missing or invalid `bggId`/`name`.
-- Cached per source (see research R7); the answer's `checkedAt` is the oldest cached part.
+- Cached per source (see research R7): parts may be up to an hour old; `checkedAt` is the time of this answer, and the screen says "prices up to an hour old".
 
 ## Upstream (server only)
 

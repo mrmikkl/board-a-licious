@@ -3,6 +3,7 @@ import type { GameGallery } from '../../src/domain/gallery.ts'
 import { getGames } from './geekdo-games.ts'
 import { getGallery } from './geekdo-images.ts'
 import { getCompanies, getListPage } from './geekdo-lists.ts'
+import type { Offer } from '../../src/domain/offers.ts'
 import type { BggSource, Game, ListKind, ListPage, SearchResult } from './source.ts'
 
 /**
@@ -32,6 +33,11 @@ export class GeekdoSource implements BggSource {
 
   getGallery(bggId: number): Promise<GameGallery> {
     return getGallery(this.client, bggId)
+  }
+
+  /** The marketplace needs the official API: no website fallback (constitution V). */
+  async getMarketOffers(): Promise<Offer[]> {
+    return []
   }
 
   async search(): Promise<SearchResult[]> {

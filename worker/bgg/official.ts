@@ -1,6 +1,8 @@
 import { type SearchResult, rankResults } from '../../src/domain/bgg-search.ts'
 import type { GameGallery } from '../../src/domain/gallery.ts'
+import type { Offer } from '../../src/domain/offers.ts'
 import type { PlayerVotes } from '../../src/domain/player-poll.ts'
+import { getMarketOffers } from '../prices/bgg-market.ts'
 import { BggError, type BggClient, TTL } from './cache.ts'
 import type { BggSource, Game, ListEntry, ListKind, ListPage } from './source.ts'
 import { asArray, decodeText, parseXml } from './xml.ts'
@@ -161,6 +163,10 @@ export class OfficialSource implements BggSource {
       entries.push({ position: (page - 1) * PER_PAGE + i + 1, bggId, name: decodeText(item.objectname), thumbnailUrl: null })
     })
     return { kind: 'geeklist', id, title: decodeText(list.title), page, pageCount, entries }
+  }
+
+  getMarketOffers(bggId: number, rates: Record<string, number>): Promise<Offer[]> {
+    return getMarketOffers(this.client, bggId, rates)
   }
 
   async getCompanies(): Promise<{ id: number; name: string }[]> {

@@ -2,6 +2,7 @@ import { memoryCache } from '../../worker/bgg/cache.ts'
 import { createBggSource } from '../../worker/bgg/routing.ts'
 import type { BggSource } from '../../worker/bgg/source.ts'
 import type { Db } from '../../worker/db/db.ts'
+import { type PriceHttp, createPriceHttp } from '../../worker/prices/http.ts'
 import { createApp } from '../../worker/index.ts'
 
 export const ANNA = 'anna@example.com'
@@ -21,6 +22,7 @@ export function testApp(
     return options.bgg(url)
   }
   let source: BggSource | undefined
+  let prices: PriceHttp | undefined
   const app = createApp({
     authenticate: async () => (options.email === undefined ? ANNA : options.email),
     db: () => db,
@@ -34,6 +36,8 @@ export function testApp(
         token: env.BGG_TOKEN || undefined,
         log: () => {},
       })),
+    // F007: price sources go through the same fake (by host)
+    prices: () => (prices ??= createPriceHttp({ fetch: bggFetch, cache: memoryCache(() => now().getTime()), now: () => now().getTime(), sleep: async () => {} })),
   })
   return (path: string, init?: RequestInit) =>
     app.fetch(new Request(`https://app.example${path}`, init), { ENVIRONMENT: 'production', ACCESS_AUD: '', ACCESS_TEAM_DOMAIN: '', ...options.env })

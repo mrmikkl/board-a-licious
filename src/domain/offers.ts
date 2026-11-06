@@ -37,6 +37,8 @@ export type PricesAnswer = {
   failed: string[]
   offers: Offer[]
   links: PriceLink[]
+  /** brettspielpreise.de's search for the game ("Open on brettspielpreise.de") */
+  siteSearch: string
 }
 
 /** Research R3: a BGG marketplace listing counts as European by its currency (FR-007a). */
