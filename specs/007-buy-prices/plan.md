@@ -14,8 +14,8 @@ game details and Search's game info sheet get a folded **Prices** section with t
 block**. One Worker route `GET /api/prices` asks the allowed sources in parallel:
 brettspielpreise.de's public API for new offers (English and German editions, by BGG id), the BGG
 marketplace through the official API (Europe only, by currency, with ECB rates for "≈ €"), eBay.de's
-Browse API once the owner has approved keys, and unknowns.de's public marketplace feed. Kleinanzeigen
-forbids automated access, so it (and eBay until approved) is a **search link**. Sources and access
+Browse API later (not in this feature), and unknowns.de's public marketplace feed. Kleinanzeigen
+forbids automated access, so it and eBay (until the owner has API keys) are **search links**. Sources and access
 rules are recorded in [ADR 0008](../../docs/adr/0008-price-sources.md).
 
 Research changed two things in the spec (amended): brettspielpreise.de gives no shop names, so a new
@@ -78,9 +78,8 @@ worker/
 │   ├── brettspielpreise.ts  # NEW api/info → new offers (GB → en, DE → de, others dropped)
 │   ├── bgg-market.ts        # NEW thing?marketplace=1 through the official BGG client → used offers (European currencies)
 │   ├── ecb.ts               # NEW daily reference rates → toEuro
-│   ├── ebay.ts              # NEW Browse API with client-credentials token; off without EBAY_CLIENT_ID/SECRET
 │   ├── unknowns.ts          # NEW marketplace RSS → "Biete:" entries matching the name
-│   └── links.ts             # NEW search links: Kleinanzeigen, eBay.de (without keys), unknowns.de
+│   └── links.ts             # NEW search links: Kleinanzeigen, eBay.de, unknowns.de marketplace
 ├── routes/prices.ts         # NEW GET /api/prices?bggId=&name= (parallel, 8 s per source, partial failure)
 └── index.ts                 # wire the route and the sources
 src/domain/
@@ -110,5 +109,5 @@ marketplace adapter reuses the BGG client.
 
 | Addition | Why needed | Simpler alternative rejected because |
 |---|---|---|
-| Five source adapters | the user asked for these sources; each has its own format and rules | one source would leave out used copies entirely |
+| Four source adapters (brettspielpreise.de, BGG marketplace, ECB, unknowns.de) | the user asked for these sources; each has its own format and rules | one source would leave out used copies entirely |
 | Link-outs beside offers | Kleinanzeigen forbids automated access; eBay needs approval first | leaving them out hides useful places; scraping them breaks their terms |

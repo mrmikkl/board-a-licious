@@ -6,7 +6,7 @@ No database change. Prices live only in the Worker's edge cache; the device stor
 
 | Field | Type | Rule |
 |---|---|---|
-| `source` | `'brettspielpreise' \| 'bgg' \| 'ebay' \| 'unknowns'` | where it came from |
+| `source` | `'brettspielpreise' \| 'bgg' \| 'unknowns'` (`'ebay'` later) | where it came from |
 | `kind` | `'new' \| 'used'` | brettspielpreise: new; others: used (eBay: by condition) |
 | `seller` | string | brettspielpreise: "Shop in <country>"; BGG: "BGG marketplace"; eBay: "eBay.de"; unknowns: "unknowns.de" |
 | `country` | ISO code \| null | brettspielpreise: shop's country |

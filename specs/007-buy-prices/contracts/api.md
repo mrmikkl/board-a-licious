@@ -32,5 +32,5 @@
 | brettspielpreise.de | `https://brettspielpreise.de/api/info?eid=<id>&sitename=<app>&currency=EUR&destination=DE&locale=en&sort=CHEAP1` | 1 h |
 | BGG marketplace | `https://boardgamegeek.com/xmlapi2/thing?id=<id>&marketplace=1` (official client, token) | 1 h |
 | ECB | `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml` | 12 h |
-| eBay (with keys) | `POST https://api.ebay.com/identity/v1/oauth2/token` (client credentials); `GET https://api.ebay.com/buy/browse/v1/item_summary/search?q=<name>&category_ids=180349&filter=…` with `X-EBAY-C-MARKETPLACE-ID: EBAY_DE` | token until expiry; search 1 h |
+| eBay (later, with keys; not in this feature) | `POST https://api.ebay.com/identity/v1/oauth2/token` (client credentials); `GET https://api.ebay.com/buy/browse/v1/item_summary/search?q=<name>&category_ids=180349&filter=…` with `X-EBAY-C-MARKETPLACE-ID: EBAY_DE` | token until expiry; search 1 h |
 | unknowns.de | `https://unknowns.de/marketplace/marketplace-feed/` | 1 h |

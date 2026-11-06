@@ -1,6 +1,6 @@
 # 0008. Price sources: only official APIs and published feeds, links elsewhere
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-11-06
 - **Origin**: `specs/007-buy-prices/research.md` R1–R7; constitution Principle V (by analogy) and
   Product & Technical Constraints (secrets)
@@ -20,8 +20,10 @@ source's terms (caching times, attribution, links through the site), from the Wo
 opens prices, with an honest User-Agent and at most one request per second per host. Sites that forbid
 automated access or offer no such interface are shown as **search links** only. Keys (eBay) are Worker
 secrets; a source whose keys are missing falls back to its link. Sources: brettspielpreise.de (new),
-BGG marketplace (used, Europe by currency), eBay.de (used, with approved keys), unknowns.de feed (used);
-links: Kleinanzeigen, eBay.de (without keys), unknowns.de, brettspielpreise.de.
+BGG marketplace (used, Europe by currency), unknowns.de feed (used), later eBay.de through its Browse API
+(used, once the owner has approved keys); links: Kleinanzeigen, eBay.de (until then), unknowns.de,
+brettspielpreise.de. Loading a site's search result page and parsing it counts as scraping, even as a
+single request, and is not done; neither is logging in with a person's account.
 
 ## Consequences
 
