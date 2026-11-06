@@ -49,7 +49,7 @@ test.describe('F007 US1: find the best price for a game', () => {
     await expect(usedOffers(page).nth(2)).toHaveAccessibleName('BGG marketplace, £25 ≈ €29.41, language not stated, used')
     await expect(page.getByRole('link', { name: 'Search on Kleinanzeigen ↗' })).toHaveAttribute('href', 'https://www.kleinanzeigen.de/s-cascadia/k0')
     await expect(page.getByRole('link', { name: 'Search on eBay.de ↗' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Marketplace on unknowns.de ↗' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Search on unknowns.de ↗' })).toHaveAttribute('href', /unknowns\.de\/search\/\?q=Cascadia&type=com\.viecode\.marketplace\.entry/)
     await expectAccessible(page)
   })
 

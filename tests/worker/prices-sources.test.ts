@@ -133,7 +133,7 @@ describe('search links (research R4–R6)', () => {
     expect(priceLinks('Sky Team')).toEqual([
       { name: 'Kleinanzeigen', url: 'https://www.kleinanzeigen.de/s-sky-team/k0' },
       { name: 'eBay.de', url: 'https://www.ebay.de/sch/i.html?_nkw=Sky%20Team&_sacat=180349&LH_ItemCondition=3000' },
-      { name: 'unknowns.de', url: 'https://unknowns.de/marketplace/' },
+      { name: 'unknowns.de', url: 'https://unknowns.de/search/?q=Sky%20Team&type=com.viecode.marketplace.entry&sortField=time&sortOrder=DESC' },
     ])
   })
 })

@@ -178,7 +178,7 @@ export function OffersBlock({
         {answer.links.map(l => (
           <li key={l.name}>
             <a className="chip" href={l.url} target="_blank" rel="noopener noreferrer">
-              {l.name === 'unknowns.de' ? 'Marketplace on unknowns.de' : `Search on ${l.name}`} ↗
+              Search on {l.name} ↗
             </a>
           </li>
         ))}

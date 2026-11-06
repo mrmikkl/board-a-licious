@@ -228,7 +228,7 @@ export const CASCADIA_PRICES = {
   links: [
     { name: 'Kleinanzeigen', url: 'https://www.kleinanzeigen.de/s-cascadia/k0' },
     { name: 'eBay.de', url: 'https://www.ebay.de/sch/i.html?_nkw=Cascadia&_sacat=180349&LH_ItemCondition=3000' },
-    { name: 'unknowns.de', url: 'https://unknowns.de/marketplace/' },
+    { name: 'unknowns.de', url: 'https://unknowns.de/search/?q=Cascadia&type=com.viecode.marketplace.entry&sortField=time&sortOrder=DESC' },
   ],
   siteSearch: 'https://brettspielpreise.de/item/search?search=Cascadia',
 }
