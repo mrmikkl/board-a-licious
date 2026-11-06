@@ -58,7 +58,8 @@ test.describe('F007 US1: find the best price for a game', () => {
     await fakePrices(page)
     await openPrices(page)
     await page.getByRole('checkbox', { name: 'Show offers with unknown language (1)' }).check()
-    await expect(newOffers(page).first()).toHaveAccessibleName('Shop in Belgium, €27.99, language unknown')
+    // unknown shipping: after the offers with known shipping
+    await expect(newOffers(page).nth(2)).toHaveAccessibleName('Shop in Belgium, €27.99, language unknown')
     const used = page.getByRole('button', { name: /^Used/ })
     await used.click()
     await expect(used).toHaveAttribute('aria-expanded', 'false')

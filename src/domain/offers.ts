@@ -67,7 +67,7 @@ const byTotal = (a: Offer, b: Offer) => (a.euroTotal ?? Infinity) - (b.euroTotal
 /**
  * The offers as the price screen shows them (FR-005, FR-006): only the chosen language; new offers of
  * unknown language only on request (used ones always, marketplaces rarely say); new offers available
- * first, then the cheapest total; used offers by total; unknown totals last.
+ * first, then those with known shipping, then the cheapest total; used offers by total; unknown totals last.
  */
 export function arrangeOffers(offers: Offer[], options: { language: PriceLanguage; showUnknown: boolean }) {
   const fits = (o: Offer) => options.language === 'both' || o.language === options.language || o.language === 'unknown'
@@ -75,7 +75,8 @@ export function arrangeOffers(offers: Offer[], options: { language: PriceLanguag
   const hiddenUnknown = options.showUnknown ? 0 : allNew.filter(o => o.language === 'unknown').length
   const newOffers = allNew
     .filter(o => options.showUnknown || o.language !== 'unknown')
-    .sort((a, b) => Number(b.available) - Number(a.available) || byTotal(a, b))
+    // a total without shipping is only a lower bound: those come after the ones with known shipping
+    .sort((a, b) => Number(b.available) - Number(a.available) || Number(a.shipping === null) - Number(b.shipping === null) || byTotal(a, b))
   const usedOffers = offers.filter(o => o.kind === 'used' && fits(o)).sort(byTotal)
   return { newOffers, usedOffers, hiddenUnknown }
 }

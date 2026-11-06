@@ -98,7 +98,7 @@ code it covers and must fail first. No live sources in tests: answers come from
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T020 [P] Update `CLAUDE.md` (code layout: `worker/prices/`, `src/domain/offers.ts`; ADR 0008 rule: no scraping, links where reading is not allowed) and `docs/hosting/setup.md` (no new secret; eBay keys later)
+- [X] T020 [P] Update `CLAUDE.md` (code layout: `worker/prices/`, `src/domain/offers.ts`; ADR 0008 rule: no scraping, links where reading is not allowed) and `docs/hosting/setup.md` (no new secret; eBay keys later)
 - [ ] T021 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here
 - [ ] T022 Deploy (`npm run deploy`) and walk through `specs/007-buy-prices/quickstart.md` ("Against the real sources") with the user
 

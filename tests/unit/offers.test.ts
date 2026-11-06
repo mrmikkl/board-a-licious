@@ -34,9 +34,9 @@ describe('arrangeOffers (F007 data-model "Arranged offers")', () => {
   ]
   const links = (list: Offer[]) => list.map(o => o.link)
 
-  it('orders new offers: available first, then the cheapest total, unknown totals last', () => {
-    const { newOffers, hiddenUnknown } = arrangeOffers(offers, { language: 'both', showUnknown: false })
-    expect(links(newOffers)).toEqual(['en-30', 'de-35', 'de-null', 'de-out-20'])
+  it('orders new offers: available first, then those with known shipping, then the cheapest total', () => {
+    const { newOffers, hiddenUnknown } = arrangeOffers([...offers, offer({ link: 'de-noship-25', euroTotal: 25, shipping: null })], { language: 'both', showUnknown: false })
+    expect(links(newOffers)).toEqual(['en-30', 'de-35', 'de-noship-25', 'de-null', 'de-out-20'])
     expect(hiddenUnknown).toBe(1)
   })
 
