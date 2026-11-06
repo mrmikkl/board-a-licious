@@ -42,10 +42,11 @@ their own group; tapping an offer opens the shop's page; no French or Spanish ed
 3. **Given** results, **When** the user picks a game, **Then** a price screen opens for that game with its cover and name, and the offers load (a waiting state while they do).
 4. **Given** new offers were found, **When** they are shown, **Then** each shows the shop, the item price, the shipping cost (or "shipping unknown"), the total, the edition's language (English or German), availability (in stock / not in stock) and when the price was checked; the cheapest available total comes first, offers not in stock after the available ones.
 5. **Given** used offers were found on marketplaces, **When** they are shown, **Then** they are listed in their own group "Used" below the new offers, each with the marketplace, price, shipping (or "shipping unknown"), condition, the seller's location when the source gives it, the language when stated ("language not stated" otherwise), the start of the seller's note, and the date it was listed.
-6. **Given** any offer, **When** the user taps it, **Then** the offer opens on the shop's or marketplace's website in a new tab (the whole offer is the link).
-7. **Given** sources list new editions in other languages or with unknown language, **When** offers are shown, **Then** only English and German editions are listed; new offers whose language is not known are left out by default and can be shown with a "Show offers with unknown language" switch.
-8. **Given** no source has an offer, **When** the search finishes, **Then** the screen says "No offers in English or German found" and offers to open the game's page at the price comparison site.
-9. **Given** a source is not reachable, **When** offers load, **Then** offers from the other sources still show and one line names the source that failed.
+6. **Given** the New and Used groups, **When** the user taps a group's heading, **Then** the group folds (its count stays visible) and unfolds again; both start unfolded.
+7. **Given** any offer, **When** the user taps it, **Then** the offer opens on the shop's or marketplace's website in a new tab (the whole offer is the link).
+8. **Given** sources list new editions in other languages or with unknown language, **When** offers are shown, **Then** only English and German editions are listed; new offers whose language is not known are left out by default and can be shown with a "Show offers with unknown language" switch.
+9. **Given** no source has an offer, **When** the search finishes, **Then** the screen says "No offers in English or German found" and offers to open the game's page at the price comparison site.
+10. **Given** a source is not reachable, **When** offers load, **Then** offers from the other sources still show and one line names the source that failed.
 
 ---
 
@@ -91,6 +92,7 @@ The user can narrow the offers to one language (English only or German only).
 - New offers are in euros (shops delivering to Germany). Used offers on the BGG marketplace come only from Europe; BGG gives no seller location, so a listing counts as European by its currency (EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK, HUF). A non-euro listing shows its own price with an approximate euro value ("£25 ≈ €29"), which is used for sorting; listings in other currencies (USD, CAD, AUD, …) are left out.
 - Marketplace listings are free text: the language is taken from the listing when it states it ("English", "deutsch", …), else "language not stated"; used offers are not hidden for an unstated language.
 - A marketplace listing that bundles several games: shown with its title as the edition name and "bundle".
+- An eBay auction: shown with its current bid, "auction" and the time left; a fixed price as "Buy it now". A Kleinanzeigen price marked negotiable shows "VB"; pickup-only listings say so, with the town.
 - An expansion picked in Buy: works like a base game.
 - The user is offline: the price screen or section says so and offers to retry; nothing is queued.
 - A source changes its pages or answers slowly: its offers are missing with the one-line note; the screen never waits longer than about 10 seconds before showing what it has.
@@ -103,10 +105,11 @@ The user can narrow the offers to one language (English only or German only).
 - **FR-001**: The menu MUST offer a place **Buy** with its own icon as its first place, above Collections.
 - **FR-002**: Buy MUST start with a search by name that works like the Search place (same results, pause and states); picking a result opens the price screen.
 - **FR-003**: The price screen MUST show the game (cover, name, year) and the offers found for it: new offers (shop, item price, shipping or "shipping unknown", total, edition language, availability, time checked) and, in their own group "Used", marketplace offers (marketplace, price, shipping or "shipping unknown", condition, seller's location when known, language or "language not stated", the start of the seller's note, date listed).
+- **FR-003a**: The New and Used groups MUST fold and unfold with a tap on their heading (a button with its expanded state; the count stays visible); both start unfolded.
 - **FR-004**: Every offer MUST be a link that opens the offer on the shop's or marketplace's website in a new tab.
 - **FR-005**: New offers MUST be limited to English and German editions; new offers of unknown language MUST be hidden by default and shown on request; offers stating another language MUST never be shown.
 - **FR-006**: Offers MUST be ordered by total price (item + shipping) within their group, available new offers first; new offers in euros with shipping to Germany; used offers from Europe only (FR-007a), non-euro prices with an approximate euro value used for sorting.
-- **FR-007**: Sources MUST include brettspielpreise.de and the BoardGameGeek marketplace; the unknowns.de marketplace and further shops or price sites (Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de, idealo) MUST be included when they allow automated reading of their offers (see Assumptions); each offer MUST name its source.
+- **FR-007**: Sources MUST include brettspielpreise.de and the BoardGameGeek marketplace; for used copies also eBay.de, Kleinanzeigen and the unknowns.de marketplace, and for new copies further shops or price sites (Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de, idealo), each when it allows automated reading of its offers (see Assumptions); each offer MUST name its source.
 - **FR-007a**: BGG marketplace offers MUST come from Europe only; as BGG gives no seller location, a listing counts as European by its currency (EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK, HUF).
 - **FR-008**: When a source fails or times out, the other sources' offers MUST still be shown, with one line naming the failed source and a retry.
 - **FR-009**: A game's details in a collection and Search's game info sheet MUST have a folded **Prices** section that expands on tap, loads the offers only then, and shows them like the price screen.
@@ -137,7 +140,7 @@ The user can narrow the offers to one language (English only or German only).
 - Shipping destination is Germany and prices are in euros; other countries and currencies are out of scope.
 - brettspielpreise.de is the first source for new offers. It lists many German shops and the edition language.
 - The BoardGameGeek marketplace is read through BGG's official API (feature 006's token): checked 2026-11-06, it lists a game's offers with date, price and currency, condition, the seller's note and a link (74 for Cascadia, in GBP, USD, EUR, …), but no seller location or shipping; only listings in European currencies are shown (FR-007a), converted to an approximate euro value at a daily exchange rate.
-- Sources the plan checks: unknowns.de's marketplace (a forum section), Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de and idealo.
+- Sources the plan checks: for used copies eBay.de (fixed-price and auction offers, with the auction's end time), Kleinanzeigen (classifieds, with the seller's town and whether the price is negotiable, "VB") and unknowns.de's marketplace (a forum section); for new copies Spiele-Offensive, Milan-Spiele, Fantasywelt, Amazon.de and idealo.
   - A source is used only if it offers an official way to read offers (an API or a feed) or its terms allow automated reading. Sites whose terms forbid it, or that need a personal login, are left out, with no scraping against a site's terms (in the spirit of constitution V).
   - Where a source needs an API key or agreement, the owner requests it; the key lives only as a server secret.
 - Buying happens at the shop or with the seller; the app does not put anything into a cart, contact sellers, track orders or mark the game bought. The existing Buy action in a collection stays as it is.

@@ -2307,9 +2307,13 @@ body:has(.actionbar) .toast {
 .fair-line { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--got); border-radius: var(--r-md); background: var(--deck); font-weight: 700; }
 .fair-line small { color: var(--muted); font-weight: 600; }
 .lang-seg { margin: 0 0 8px; }
-.offer-group { display: flex; align-items: baseline; justify-content: space-between; margin: 14px 0 8px; }
-.offer-group h3 { margin: 0; font: 700 16px var(--font-display); }
-.offer-group small { color: var(--muted); font-size: 12px; }
+.offer-group { margin: 14px 0 8px; }
+.offer-group h3 { margin: 0; }
+.group-fold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.group-fold small { margin-left: auto; color: var(--muted); font: 600 12px var(--font-body); }
+.group-fold .chev { color: var(--orange); transition: transform 0.2s; transform: rotate(90deg); }
+.group-fold[aria-expanded='false'] .chev { transform: none; }
+.offers[hidden] { display: none; }
 .offers { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .offer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); text-decoration: none; }
 .offer:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
@@ -2405,6 +2409,9 @@ const USED = [
   { market: 'BGG marketplace', cond: 'Like new', lang: 'en', cur: '€', price: 2200, eur: 2200, ship: null, note: 'Played twice, cards sleeved, all tokens punched and bagged.', listed: '29 Oct 2026' },
   { market: 'BGG marketplace', cond: 'Very good', lang: 'unknown', cur: '£', price: 2500, eur: 2930, ship: null, note: 'Collection only or buyer pays shipping from Bristol.', listed: '30 Oct 2026' },
   { market: 'unknowns.de', cond: 'Very good', lang: 'de', cur: '€', price: 2000, eur: 2000, ship: 500, note: 'Cascadia DE, 1x gespielt, Versand 5 € als Paket.', listed: '2 Nov 2026' },
+  { market: 'eBay.de', cond: 'Good', lang: 'de', cur: '€', price: 1850, eur: 1850, ship: 549, note: 'Cascadia Brettspiel Kosmos – vollständig, sehr guter Zustand', listed: '4 Nov 2026', extra: 'Auction · current bid · 1 day 4 h left' },
+  { market: 'eBay.de', cond: 'Like new', lang: 'en', cur: '€', price: 2690, eur: 2690, ship: 0, note: 'Cascadia board game (English), unplayed, shrink removed', listed: '3 Nov 2026', extra: 'Buy it now' },
+  { market: 'Kleinanzeigen', cond: 'Very good', lang: 'de', cur: '€', price: 2200, eur: 2200, ship: null, note: 'Cascadia Spiel des Jahres 2022, komplett, Nichtraucher', listed: '5 Nov 2026', extra: 'VB · pickup in Essen-Rüttenscheid' },
 ]
 const RESULTS = [
   { name: 'Cascadia', year: 2021, exp: false },
@@ -2430,11 +2437,11 @@ function newOffer(o) {
 }
 function usedOffer(o) {
   const price = o.cur === '€' ? eur(o.price) : `${o.cur}${(o.price / 100).toFixed(2).replace('.', ',')} ≈ ${eur(o.eur)}`
-  const ship = o.ship == null ? 'shipping unknown' : `+ ${eur(o.ship)} shipping`
+  const ship = o.ship == null ? 'shipping unknown' : o.ship === 0 ? 'free shipping' : `+ ${eur(o.ship)} shipping`
   return `<li><a class="offer" href="#" data-act="go" data-shop="${esc(o.market)}" aria-label="${esc(o.market)}, ${price}, ${o.lang === 'unknown' ? 'language not stated' : LANGNAME[o.lang]}, used">
     <span class="offer-shop">${esc(o.market)}<span class="ext">↗</span></span>
     <span class="offer-total">${price}<small>${ship}</small></span>
-    <span class="offer-meta"><span class="cond">Used · ${o.cond}</span><span class="lang ${o.lang}">${LANG[o.lang]}</span>${o.lang === 'unknown' ? '<span>language not stated</span>' : ''}<span>listed ${o.listed}</span></span>
+    <span class="offer-meta"><span class="cond">Used · ${o.cond}</span><span class="lang ${o.lang}">${LANG[o.lang]}</span>${o.lang === 'unknown' ? '<span>language not stated</span>' : ''}${o.extra ? `<span>${esc(o.extra)}</span>` : ''}<span>listed ${o.listed}</span></span>
     <span class="offer-note">“${esc(o.note)}”</span>
   </a></li>`
 }
@@ -2445,13 +2452,13 @@ function offersHTML({ compact = false } = {}) {
   const hiddenUnknown = NEW.filter(o => o.lang === 'unknown').length
   return `<div class="seg lang-seg" role="group" aria-label="Language">${[['both', 'Both'], ['en', 'English'], ['de', 'German']].map(([v, t]) => `<button type="button" data-act="lang" data-v="${v}" aria-pressed="${S.lang === v}">${t}</button>`).join('')}</div>
     ${S.fair ? `<p class="fair-line">At the fair: ${eur(3800)} <small>· booth 3-A101, Essen 2026</small></p>` : ''}
-    <div class="offer-group"><h3>New</h3><small>${n.length} offers · cheapest first</small></div>
-    <ul class="offers" aria-label="New offers">${n.map(newOffer).join('')}</ul>
-    ${hiddenUnknown && !compact ? `<label class="unknown-switch"><input type="checkbox" data-act="unknown" ${S.unknown ? 'checked' : ''}> Show offers with unknown language (${hiddenUnknown})</label>` : ''}
+    <div class="offer-group"><h3><button type="button" class="group-fold" data-act="fold" data-g="new" aria-expanded="${!S.folded.has('new')}" aria-controls="offers-new">New<small>${n.length} offers · cheapest first</small><span class="chev" aria-hidden="true">›</span></button></h3></div>
+    <ul class="offers" id="offers-new" aria-label="New offers" ${S.folded.has('new') ? 'hidden' : ''}>${n.map(newOffer).join('')}</ul>
+    ${hiddenUnknown && !compact && !S.folded.has('new') ? `<label class="unknown-switch"><input type="checkbox" data-act="unknown" ${S.unknown ? 'checked' : ''}> Show offers with unknown language (${hiddenUnknown})</label>` : ''}
     ${S.state === 'failed' ? `<div class="fail-line"><span>idealo is not reachable right now.</span><button class="link-btn" data-act="retry">Retry</button></div>` : ''}
-    <div class="offer-group"><h3>Used</h3><small>${u.length} offers · from Europe</small></div>
-    <ul class="offers" aria-label="Used offers">${u.map(usedOffer).join('')}</ul>
-    <p class="sources-line">New: brettspielpreise.de${S.state === 'failed' ? '' : ', idealo'}, checked 2 h ago. Used: BGG marketplace, unknowns.de.</p>`
+    <div class="offer-group"><h3><button type="button" class="group-fold" data-act="fold" data-g="used" aria-expanded="${!S.folded.has('used')}" aria-controls="offers-used">Used<small>${u.length} offers · from Europe</small><span class="chev" aria-hidden="true">›</span></button></h3></div>
+    <ul class="offers" id="offers-used" aria-label="Used offers" ${S.folded.has('used') ? 'hidden' : ''}>${u.map(usedOffer).join('')}</ul>
+    <p class="sources-line">New: brettspielpreise.de${S.state === 'failed' ? '' : ', idealo'}, checked 2 h ago. Used: BGG marketplace, eBay.de, Kleinanzeigen, unknowns.de.</p>`
 }
 
 const appbar = () => `<header class="appbar"><span class="appbar-name">Board-a-licious</span><button type="button" class="menu-btn" data-act="menu" aria-label="Menu" aria-expanded="${S.menu}">${ICON.menu}</button></header>`
@@ -2512,6 +2519,7 @@ document.addEventListener('click', e => {
   if (a === 'pick') { S.screen = 'prices'; S.fair = false; render(); return load() }
   if (a === 'back') { S.screen = 'buy'; render(); return }
   if (a === 'lang') { S.lang = t.dataset.v; return redrawOffers() }
+  if (a === 'fold') { const g = t.dataset.g; S.folded.has(g) ? S.folded.delete(g) : S.folded.add(g); return redrawOffers() }
   if (a === 'unknown') { S.unknown = t.checked; return redrawOffers() }
   if (a === 'retry') return load()
   if (a === 'go') return toast(`Opens ${t.dataset.shop} in a new tab`)
@@ -2528,7 +2536,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { layer.inne
 
 function start() {
   const s = $('#start').value
-  S = { screen: { buy: 'buy', prices: 'prices', loading: 'prices', failed: 'prices', none: 'prices' }[s] || 'other', menu: s === 'menu', q: '', searched: false, lang: 'both', unknown: false, state: { failed: 'failed', none: 'none', loading: 'loading' }[s] || 'ok', fair: false, open: s === 'details-open' }
+  S = { screen: { buy: 'buy', prices: 'prices', loading: 'prices', failed: 'prices', none: 'prices' }[s] || 'other', menu: s === 'menu', q: '', searched: false, lang: 'both', unknown: false, state: { failed: 'failed', none: 'none', loading: 'loading' }[s] || 'ok', folded: new Set(), fair: false, open: s === 'details-open' }
   layer.innerHTML = ''
   render()
   if (s.startsWith('details')) { S.fair = true; openDetails() }
