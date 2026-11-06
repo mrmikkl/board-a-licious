@@ -118,7 +118,7 @@ As before: `src/domain/`, `src/client/`, `src/app/`, `worker/`, `tests/{unit,wor
 - [X] T030 [P] Extend `tests/e2e/a11y.spec.ts` (done in `search.spec.ts` and `add-game-name.spec.ts` instead, which run axe on each of these states) with the Search place (results, no match, error), game info sheet, add to collections sheet and the Add game sheet with matches (axe, focus order, 44px targets, reduced motion project)
 - [X] T031 [P] Update `CLAUDE.md` (new `src/domain/bgg-search.ts`, `worker/bgg/official.ts`, `routing.ts`, the token note: set by the owner with `npx wrangler secret put BGG_TOKEN`, never in the repo) and `docs/hosting/setup.md` with the token step
 - [X] T032 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here — 2026-11-06: unit and worker 472 passed, build ok; e2e with one worker 204 of 205 passed; the one failure (resync US5 conflicts, reduced motion; the preview resync is unchanged by this feature) passed in isolation on both projects twice, a load flake as in F005
-- [ ] T033 Deploy (`npm run deploy`); the owner sets the token; walk through `specs/006-bgg-xml-search/quickstart.md` ("Against BoardGameGeek" and "Production") with the user
+- [X] T033 Deploy (`npm run deploy`); the owner sets the token; walk through `specs/006-bgg-xml-search/quickstart.md` ("Against BoardGameGeek" and "Production") with the user — 2026-11-06: deployed (latest 0cf8d80f), token set by the owner; Search, the +, game info with the player poll and Add game by name used on the phone; searches fast after T035, T039 and the 0.75 s pause
 
 ---
 
