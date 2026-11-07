@@ -33,6 +33,7 @@ test.describe('F007 US2: prices in a game\'s details', () => {
     await page.getByRole('button', { name: 'Cascadia, 2021', exact: true }).click()
     const sheet = page.getByRole('dialog', { name: 'Cascadia' })
     await sheet.getByRole('button', { name: 'Prices' }).click()
+    await sheet.getByRole('tab', { name: /^Used/ }).click()
     await expect(sheet.getByRole('list', { name: 'Used offers' }).getByRole('link')).toHaveCount(3)
   })
 })

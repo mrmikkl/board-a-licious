@@ -14,6 +14,7 @@ async function openPrices(page: Page) {
 }
 const newOffers = (page: Page) => page.getByRole('list', { name: 'New offers' }).getByRole('link')
 const usedOffers = (page: Page) => page.getByRole('list', { name: 'Used offers' }).getByRole('link')
+const tab = (page: Page, name: 'New' | 'Used') => page.getByRole('tablist', { name: 'Offers' }).getByRole('tab', { name: new RegExp(`^${name}`) })
 
 test.describe('F007 US1: find the best price for a game', () => {
   test('Buy is the first place in the menu', async ({ page }) => {
@@ -44,6 +45,12 @@ test.describe('F007 US1: find the best price for a game', () => {
     await expect(newOffers(page).nth(1)).toHaveAccessibleName('Shop in Germany, €35.39, German')
     await expect(newOffers(page).nth(2)).toHaveAccessibleName('Shop in Germany, €33.90, German, not in stock')
     await expect(newOffers(page).first()).toHaveAttribute('target', '_blank')
+    await expect(tab(page, 'New')).toHaveAttribute('aria-selected', 'true')
+    // the search links belong to used copies: only in the Used tab
+    await expect(page.getByRole('link', { name: /^Search on/ })).toHaveCount(0)
+    await tab(page, 'Used').click()
+    await expect(tab(page, 'Used')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('list', { name: 'New offers' })).toHaveCount(0)
     await expect(usedOffers(page)).toHaveCount(3)
     await expect(usedOffers(page).nth(0)).toHaveAccessibleName('BGG marketplace, €22, English, used')
     await expect(usedOffers(page).nth(2)).toHaveAccessibleName('BGG marketplace, £25 ≈ €29.41, language not stated, used')
@@ -53,19 +60,31 @@ test.describe('F007 US1: find the best price for a game', () => {
     await expectAccessible(page)
   })
 
-  test('new offers of unknown language show on request; New and Used fold', async ({ page }) => {
+  test('new offers of unknown language show on request', async ({ page }) => {
     await fakeSearch(page, { results: { cascad: [CASCADIA] } })
     await fakePrices(page)
     await openPrices(page)
     await page.getByRole('checkbox', { name: 'Show offers with unknown language (1)' }).check()
     // unknown shipping: after the offers with known shipping
     await expect(newOffers(page).nth(2)).toHaveAccessibleName('Shop in Belgium, €27.99, language unknown')
-    const used = page.getByRole('button', { name: /^Used/ })
-    await used.click()
-    await expect(used).toHaveAttribute('aria-expanded', 'false')
-    await expect(page.getByRole('list', { name: 'Used offers' })).toBeHidden()
-    await used.click()
-    await expect(usedOffers(page)).toHaveCount(3)
+  })
+
+  test('New shows the 5 cheapest; Show more adds 5 until all are shown; a reload starts over', async ({ page }) => {
+    const many = Array.from({ length: 12 }, (_, i) => ({ ...CASCADIA_PRICES.offers[0]!, price: { amount: 20 + i, currency: 'EUR' }, shipping: 0, euroTotal: 20 + i, link: `https://brettspielpreise.de/item/go?storeitemid=${i}` }))
+    await fakeSearch(page, { results: { cascad: [CASCADIA] } })
+    await fakePrices(page, { offers: many })
+    await openPrices(page)
+    await expect(tab(page, 'New')).toContainText('12')
+    await expect(newOffers(page)).toHaveCount(5)
+    await expect(newOffers(page).first()).toHaveAccessibleName('Shop in Germany, €20, German')
+    const more = page.getByRole('button', { name: 'Show more' })
+    await more.click()
+    await expect(newOffers(page)).toHaveCount(10)
+    await more.click()
+    await expect(newOffers(page)).toHaveCount(12)
+    await expect(more).toHaveCount(0)
+    await page.reload()
+    await expect(newOffers(page)).toHaveCount(5)
   })
 
   test('a failed source is named with Retry; none found offers brettspielpreise.de', async ({ page }) => {
@@ -98,6 +117,7 @@ test.describe('F007 US3: choose which editions count', () => {
     await openPrices(page)
     await page.getByRole('group', { name: 'Language' }).getByRole('button', { name: 'German' }).click()
     await expect(newOffers(page)).toHaveCount(2)
+    await tab(page, 'Used').click()
     await expect(usedOffers(page)).toHaveCount(2)
     await page.reload()
     await expect(page.getByRole('group', { name: 'Language' }).getByRole('button', { name: 'German' })).toHaveAttribute('aria-pressed', 'true')

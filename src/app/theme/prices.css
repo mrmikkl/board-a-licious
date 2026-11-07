@@ -38,7 +38,6 @@
 .prices-body { padding: 0 12px 12px; }
 .prices-body .offer { background: var(--deck-2); box-shadow: none; }
 @media (prefers-reduced-motion: reduce) {
-  .group-fold .chev,
   .prices-toggle .chev { transition: none; }
 }
 /* New | Used tabs (docs/design.md v2.5.0, after the review) */
