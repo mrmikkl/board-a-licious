@@ -203,3 +203,41 @@ export async function fakeSearch(
     await route.fulfill({ json: { games } })
   })
 }
+
+const offer = (o: Record<string, unknown>) => ({
+  source: 'brettspielpreise', kind: 'new', seller: 'Shop in Germany', country: 'DE', title: 'Cascadia', language: 'de',
+  price: { amount: 30, currency: 'EUR' }, shipping: 0, euroTotal: 30, available: true, condition: null, note: null,
+  auction: null, listedAt: null, link: `https://brettspielpreise.de/item/go?storeitemid=${Math.random().toString(36).slice(2)}`, ...o,
+})
+
+/** F007: an answer of `/api/prices` for Cascadia (contracts/api.md of feature 007). */
+export const CASCADIA_PRICES = {
+  bggId: 295947,
+  checkedAt: '2026-11-06T18:00:00.000Z',
+  sources: ['brettspielpreise.de', 'BGG marketplace', 'unknowns.de'],
+  failed: [] as string[],
+  offers: [
+    offer({ title: 'Cascadia (Kosmos)', price: { amount: 29.49, currency: 'EUR' }, shipping: 5.9, euroTotal: 35.39 }),
+    offer({ title: 'Cascadia (Flatout Games)', language: 'en', price: { amount: 34.99, currency: 'EUR' }, shipping: 0, euroTotal: 34.99 }),
+    offer({ title: 'Cascadia (Kosmos)', price: { amount: 33.9, currency: 'EUR' }, shipping: 0, euroTotal: 33.9, available: false }),
+    offer({ seller: 'Shop in Belgium', country: 'BE', title: 'Cascadia', language: 'unknown', price: { amount: 27.99, currency: 'EUR' }, shipping: null, euroTotal: 27.99 }),
+    offer({ source: 'bgg', kind: 'used', seller: 'BGG marketplace', country: null, title: null, language: 'en', price: { amount: 22, currency: 'EUR' }, shipping: null, euroTotal: 22, condition: 'like new', note: 'Played twice, sleeved.', listedAt: '2026-10-29', link: 'https://boardgamegeek.com/market/product/1' }),
+    offer({ source: 'bgg', kind: 'used', seller: 'BGG marketplace', country: null, title: null, language: 'unknown', price: { amount: 25, currency: 'GBP' }, shipping: null, euroTotal: 29.41, condition: 'very good', note: 'Buyer pays shipping.', listedAt: '2026-10-30', link: 'https://boardgamegeek.com/market/product/2' }),
+    offer({ source: 'unknowns', kind: 'used', seller: 'unknowns.de', title: 'Cascadia (deutsch) – 1x gespielt', price: { amount: 25, currency: 'EUR' }, shipping: null, euroTotal: 25, note: 'Cascadia, deutsche Ausgabe.', listedAt: '2026-11-06', link: 'https://unknowns.de/marketplace/entry/99999-cascadia-deutsch/' }),
+  ],
+  links: [
+    { name: 'Kleinanzeigen', url: 'https://www.kleinanzeigen.de/s-cascadia/k0' },
+    { name: 'eBay.de', url: 'https://www.ebay.de/sch/i.html?_nkw=Cascadia&_sacat=180349&LH_ItemCondition=3000' },
+    { name: 'unknowns.de', url: 'https://unknowns.de/search/?q=Cascadia&type=com.viecode.marketplace.entry&sortField=time&sortOrder=DESC' },
+  ],
+  siteSearch: 'https://brettspielpreise.de/item/search?search=Cascadia',
+}
+
+/** F007: `/api/prices` without the sources: the given answer (default Cascadia's), optionally slowed. */
+export async function fakePrices(page: Page, answer: Partial<typeof CASCADIA_PRICES> = {}, options: { delayMs?: number; asked?: string[] } = {}) {
+  await page.route('**/api/prices?**', async route => {
+    options.asked?.push(route.request().url())
+    if (options.delayMs) await new Promise(resolve => setTimeout(resolve, options.delayMs))
+    await route.fulfill({ json: { ...CASCADIA_PRICES, ...answer } })
+  })
+}

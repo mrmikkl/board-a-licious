@@ -143,6 +143,10 @@ and sign in again: the collection appears there, so the way through Hyperdrive t
   galleries stay on the website data. Locally, `BGG_TOKEN=…` in the git-ignored `.dev.vars` does the
   same. A rejected token shows as "bgg token rejected 401" in `npx wrangler tail`; renew it with the
   same command. `node --env-file=.dev.vars scripts/record-bgg-xml.mjs` re-records the XML test fixtures.
+- **Prices** (feature 007) need no secret: brettspielpreise.de's API is free (with a link back and at least
+  one hour of caching). eBay offers would need eBay developer keys (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`),
+  a later step; until then eBay is a search link. `node --env-file=.dev.vars scripts/record-prices.mjs`
+  re-records the price fixtures.
 - **Logs when something breaks**: `npx wrangler tail` shows live requests and errors; for stored
   logs switch on Workers Logs (`"observability": { "enabled": true }` in `wrangler.jsonc`).
 - **Local development** needs none of this: see the commands in [CLAUDE.md](../../CLAUDE.md)

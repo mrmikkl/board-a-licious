@@ -76,5 +76,9 @@ describe('browser store', () => {
     expect(await store.meta('soundOn')).toBeUndefined()
     await store.setMeta('soundOn', false)
     expect(await store.meta('soundOn')).toBe(false)
+    // F007: the price language choice, remembered on the device
+    expect(await store.meta('priceLanguage')).toBeUndefined()
+    await store.setMeta('priceLanguage', 'de')
+    expect(await store.meta('priceLanguage')).toBe('de')
   })
 })

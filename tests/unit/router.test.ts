@@ -68,3 +68,18 @@ describe('unchanged routes', () => {
     expect(route).toEqual({ name: 'shared', title: 'Cascadia', text: undefined, url: 'https://boardgamegeek.com/boardgame/295947' })
   })
 })
+
+describe('Buy routes (F007)', () => {
+  it.each<[string, Route]>([
+    ['#/buy', { name: 'buy' }],
+    ['#/buy/295947', { name: 'prices', bggId: 295947 }],
+  ])('%s', (hash, route) => {
+    expect(parseRoute(hash)).toEqual(route)
+    expect(href(route)).toBe(hash)
+  })
+
+  it('treats an invalid game id as the Buy search', () => {
+    expect(parseRoute('#/buy/abc')).toEqual({ name: 'buy' })
+    expect(parseRoute('#/buy/0')).toEqual({ name: 'buy' })
+  })
+})

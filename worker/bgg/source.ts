@@ -1,4 +1,5 @@
 import type { SearchResult } from '../../src/domain/bgg-search.ts'
+import type { Offer } from '../../src/domain/offers.ts'
 import type { GameDetails } from '../../src/domain/game-info.ts'
 import type { GameGallery } from '../../src/domain/gallery.ts'
 import type { Game } from '../db/repository.ts'
@@ -49,4 +50,6 @@ export interface BggSource {
   getGallery(bggId: number): Promise<GameGallery>
   /** F006: ranked games and expansions for a valid query (`searchQuery`), at most `limit`. */
   search(query: string, limit: number): Promise<SearchResult[]>
+  /** F007: the game's marketplace offers from Europe; the website data has none (official API only). */
+  getMarketOffers(bggId: number, rates: Record<string, number>): Promise<Offer[]>
 }

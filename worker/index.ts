@@ -4,11 +4,13 @@ import { createBggSource } from './bgg/routing.ts'
 import type { BggSource } from './bgg/source.ts'
 import { type Db, connect } from './db/db.ts'
 import { HttpError, errorResponse } from './http.ts'
+import { type PriceHttp, createPriceHttp } from './prices/http.ts'
 import { companiesRoute } from './routes/companies.ts'
 import type { RouteContext } from './routes/context.ts'
 import { gamesRoute } from './routes/games.ts'
 import { imagesRoute } from './routes/images.ts'
 import { listsRoute } from './routes/lists.ts'
+import { pricesRoute } from './routes/prices.ts'
 import { searchRoute } from './routes/search.ts'
 import { getSync, postSync } from './routes/sync.ts'
 
@@ -29,6 +31,8 @@ export type Deps = {
   now: () => Date
   /** BGG data source; one per isolate in production so the 1 request/s throttle holds. */
   bgg: (env: Env) => BggSource
+  /** F007: fetch for the price sources; one per isolate so the per-host throttle holds. */
+  prices: (env: Env) => PriceHttp
 }
 
 /** The Worker as a plain object, so tests can inject sign-in, database and clock. */
@@ -42,7 +46,7 @@ export function createApp(deps: Deps) {
 
       let db: Db | undefined
       const database = () => (db ??= deps.db(env))
-      const ctx: RouteContext = { request, url, email, db: database, bgg: deps.bgg(env), now: deps.now() }
+      const ctx: RouteContext = { request, url, email, db: database, bgg: deps.bgg(env), prices: deps.prices(env), now: deps.now() }
       try {
         const listMatch = /^\/api\/bgg\/lists\/([^/]+)\/([^/]+)$/.exec(url.pathname)
         if (request.method === 'GET' && listMatch) return await listsRoute(ctx, listMatch[1] ?? '', listMatch[2] ?? '')
@@ -50,6 +54,8 @@ export function createApp(deps: Deps) {
         switch (route) {
           case 'GET /api/bgg/games':
             return await gamesRoute(ctx)
+          case 'GET /api/prices':
+            return await pricesRoute(ctx)
           case 'GET /api/bgg/search':
             return await searchRoute(ctx)
           case 'GET /api/bgg/images':
@@ -85,6 +91,7 @@ export function createApp(deps: Deps) {
 
 let authenticator: Authenticate | undefined
 let bggSource: BggSource | undefined
+let priceHttp: PriceHttp | undefined
 
 /** The Workers edge cache when available (not in every local runtime), else memory. */
 function bggCache() {
@@ -100,6 +107,7 @@ export default {
       db: e => connect(e.ENVIRONMENT === 'development' && e.DATABASE_URL ? e.DATABASE_URL : (e.HYPERDRIVE?.connectionString ?? '')),
       now: () => new Date(),
       // one source (and one throttled client) per isolate; the token is a deployment secret, the same for every request
+      prices: () => (priceHttp ??= createPriceHttp({ fetch: (input, init) => fetch(input, init), cache: bggCache() })),
       bgg: e => (bggSource ??= createBggSource({ fetch: (input, init) => fetch(input, init), cache: bggCache(), token: e.BGG_TOKEN || undefined })),
     })
     void ctx

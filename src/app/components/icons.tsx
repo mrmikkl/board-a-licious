@@ -17,6 +17,14 @@ export const IconPlus = () => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 )
+/** F007: a shopping bag with €, the Buy place */
+export const IconBuy = () => (
+  <svg {...common}>
+    <path d="M5 8h14l-1 12H6z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    <path d="M14 12.2a2.4 2.4 0 1 0 0 4.6M9.5 13.8h3.5M9.5 15.4h3.5" />
+  </svg>
+)
 export const IconSearch = () => (
   <svg {...common}>
     <circle cx="11" cy="11" r="7" />

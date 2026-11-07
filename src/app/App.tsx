@@ -11,6 +11,8 @@ import { Collections } from './screens/Collections.tsx'
 import { Intro } from './screens/Intro.tsx'
 import { List } from './screens/List.tsx'
 import { Lists } from './screens/Lists.tsx'
+import { Buy } from './screens/Buy.tsx'
+import { Prices } from './screens/Prices.tsx'
 import { Search } from './screens/Search.tsx'
 import { Config } from './screens/Config.tsx'
 import { Share } from './screens/Share.tsx'
@@ -34,6 +36,10 @@ function Screen({ route }: { route: Route }) {
       return <List key={`${route.kind}:${route.listId}`} kind={route.kind} listId={route.listId} />
     case 'search':
       return <Search />
+    case 'buy':
+      return <Buy />
+    case 'prices':
+      return <Prices key={route.bggId} bggId={route.bggId} />
     case 'share':
       return <Share />
     case 'config':

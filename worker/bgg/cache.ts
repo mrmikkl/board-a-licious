@@ -1,3 +1,5 @@
+import { createSlots } from '../throttle.ts'
+
 /** Cache times in seconds (research R9/R10, FR-025). */
 export const TTL = { list: 3600, game: 7 * 86400, company: 30 * 86400, search: 86400 } as const
 
@@ -91,16 +93,11 @@ export function createBggClient(deps: {
   const now = deps.now ?? Date.now
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)))
   const log = deps.log ?? (line => console.error(line))
-  // Each request books its own start time, at least a second after the last one booked. It never waits
-  // on another request's promise: a Worker request that is cancelled (the app drops an older search)
-  // leaves its promises unsettled forever, and a chained queue would then hold up every later request.
-  let nextSlot = -Infinity
+  // one booked slot per request, never a shared promise (research R11 of feature 006)
+  const waitForSlot = createSlots(MIN_GAP_MS, now, sleep)
 
   const send = async (url: string, accept: string): Promise<Response> => {
-    const slot = Math.max(now(), nextSlot)
-    nextSlot = slot + MIN_GAP_MS
-    const wait = slot - now()
-    if (wait > 0) await sleep(wait)
+    await waitForSlot()
     const headers: Record<string, string> = { 'User-Agent': USER_AGENT, Accept: accept }
     const official = url.startsWith(OFFICIAL)
     if (official && deps.token) headers.Authorization = `Bearer ${deps.token}`

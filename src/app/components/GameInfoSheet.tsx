@@ -6,6 +6,7 @@ import type { SearchResult } from '../../domain/bgg-search.ts'
 import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
 import { ImageViewer } from './ImageViewer.tsx'
+import { PricesSection } from './PricesSection.tsx'
 import { yearText } from './SearchResultRow.tsx'
 import { Sheet } from './Sheet.tsx'
 
@@ -39,6 +40,7 @@ export function GameInfoSheet({ result, game, onClose }: { result: SearchResult;
           </div>
         </div>
       )}
+      <PricesSection bggId={result.bggId} name={name} />
       <div className="sheet-actions">
         <button type="button" className="btn btn-block" onClick={onClose}>
           Close

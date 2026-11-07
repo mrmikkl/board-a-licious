@@ -27,5 +27,6 @@ export function createBggSource(deps: {
     getListPage: (kind, id, page) => (kind === 'geeklist' ? official : web).getListPage(kind, id, page),
     getCompanies: ids => web.getCompanies(ids),
     getGallery: bggId => web.getGallery(bggId),
+    getMarketOffers: (bggId, rates) => official.getMarketOffers(bggId, rates),
   }
 }

@@ -15,6 +15,7 @@ must respect it too (see [Spec Kit extended](../speckit-extended.md), extension 
 | [0005](0005-bgg-adapter-and-bridge.md) | BoardGameGeek behind one adapter, token-free bridge until the XML API | Superseded by 0007 (selection rule) | 2026-10-16 |
 | [0006](0006-typescript-react-shared-domain.md) | TypeScript, React + Vite, shared domain module | Accepted | 2026-10-16 |
 | [0007](0007-bgg-source-per-kind-of-data.md) | BoardGameGeek source chosen per kind of data (supersedes 0005's selection rule) | Accepted | 2026-11-05 |
+| [0008](0008-price-sources.md) | Price sources: only official APIs and published feeds, links elsewhere | Accepted | 2026-11-06 |
 
 ## Rules
 

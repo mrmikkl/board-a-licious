@@ -16,7 +16,7 @@ Access (Zitadel login) in front; shared pure domain logic in `src/domain/`.
 
 ## Rules that apply to all work
 
-- Look and feel: `docs/design.md` (design rules v2.4.0) is binding for every UI change; the
+- Look and feel: `docs/design.md` (design rules v2.5.0) is binding for every UI change; the
   feature's screens are in `specs/<NNN>/design.md`.
 - Project principles (mobile-first and accessible, test-first, domain logic separate from the UI,
   YAGNI, respectful BGG integration): `.specify/memory/constitution.md`. Plans and reviews check
@@ -73,6 +73,10 @@ node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigati
   (Access JWT), `db/` (repository, SQL last-write-wins), `bgg/` (cached, throttled BGG client; `routing.ts` picks
   the source per kind of data, ADR 0007: with `BGG_TOKEN` the official XML API in `official.ts` for game
   details, geeklists and search, else and for previews/galleries the website JSON in `geekdo*.ts`).
+- `worker/prices/` (F007, ADR 0008): price sources read only through official APIs or published feeds
+  (brettspielpreise.de, the BGG marketplace through the official client, unknowns.de's feed, ECB rates);
+  sites that forbid automated access are search links (`links.ts`). No scraping, also not "one request".
+  Offer sorting and filtering live in `src/domain/offers.ts`.
 - The BGG token is a Worker secret (`npx wrangler secret put BGG_TOKEN`) or a line in `.dev.vars`;
   never print it, log it or put it into the repository. XML test fixtures are in `tests/fixtures/bgg-xml/`.
 - E2E tests seed collections through `POST /api/sync` with `seedCollection` (`tests/e2e/helpers.ts`);

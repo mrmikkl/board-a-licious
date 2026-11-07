@@ -24,6 +24,7 @@ import './theme/share-sheet.css'
 import './theme/intro.css'
 import './theme/celebrate.css'
 import './theme/search.css'
+import './theme/prices.css'
 
 const root = document.getElementById('root')
 if (root) {
