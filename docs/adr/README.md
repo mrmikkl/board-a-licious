@@ -16,6 +16,7 @@ must respect it too (see [Spec Kit extended](../speckit-extended.md), extension 
 | [0006](0006-typescript-react-shared-domain.md) | TypeScript, React + Vite, shared domain module | Accepted | 2026-10-16 |
 | [0007](0007-bgg-source-per-kind-of-data.md) | BoardGameGeek source chosen per kind of data (supersedes 0005's selection rule) | Accepted | 2026-11-05 |
 | [0008](0008-price-sources.md) | Price sources: only official APIs and published feeds, links elsewhere | Accepted | 2026-11-06 |
+| [0009](0009-writing-to-a-persons-bgg-collection.md) | Writing to a person's own BGG collection with their own session | Accepted | 2026-11-08 |
 
 ## Rules
 

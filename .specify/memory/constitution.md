@@ -66,8 +66,20 @@ earns.
   data. Data the official API does not offer (BGG previews) MAY continue under this exception
   until BoardGameGeek provides an official way or until 2027-01-31, whichever comes first.
 
+- **Writing to a person's own collection** (amendment 1.4.0, ADR 0009): the official API cannot
+  write, so the app MAY use BoardGameGeek's website with the person's own BoardGameGeek session,
+  under these rules: each write is triggered by the person (one action, no bulk or background
+  writes); the password is used once to sign in and never kept; the session stays on the person's
+  device, encrypted and not readable by scripts, and is never stored, cached or logged on the
+  server; only the person's own collection is written, only statuses and the private info fields
+  the person sees (price paid, currency, acquisition date, acquired from), never deletions; writes
+  share the BoardGameGeek throttle and are not cached; the website endpoints are confined to one
+  adapter; the app's official API token is never sent together with a person's session. The
+  "no login session" condition of the reading exception above still applies to reading.
+
 Rationale: the app depends on a third-party site it does not control and must not abuse it. The
-exception bridges the wait for API approval before SPIEL Essen 2026 with bounded, polite use.
+exception bridges the wait for API approval before SPIEL Essen 2026 with bounded, polite use. Writes
+act for one person, in that person's own account, exactly as they would on the website themselves.
 
 ## Product & Technical Constraints
 
@@ -101,4 +113,4 @@ exception bridges the wait for API approval before SPIEL Essen 2026 with bounded
 - Every plan and review MUST verify compliance; unjustified complexity is grounds to reject a
   change.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-17
+**Version**: 1.4.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-11-08
