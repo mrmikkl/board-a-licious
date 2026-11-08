@@ -1,9 +1,10 @@
 import type { SearchResult } from '../domain/bgg-search.ts'
+import type { BggCollectionAnswer } from '../domain/bgg-status.ts'
 import type { PricesAnswer } from '../domain/offers.ts'
 import type { Collection, Entry } from '../domain/collection.ts'
 import type { GameGallery } from '../domain/gallery.ts'
 import type { LoadedList } from '../domain/lists.ts'
-import type { Game, ListKind, StoredListEntry } from './types.ts'
+import type { FollowedBggUser, Game, ListKind, StoredListEntry, UserSetting } from './types.ts'
 
 export type ApiErrorCode =
   | 'offline'
@@ -13,6 +14,10 @@ export type ApiErrorCode =
   | 'bgg_unavailable'
   | 'bgg_rate_limited'
   | 'bgg_search_unavailable'
+  | 'bgg_preparing'
+  | 'bgg_signed_out'
+  | 'bgg_refused'
+  | 'price_conflict'
   | 'internal'
 
 export class ApiError extends Error {
@@ -34,7 +39,23 @@ export type ListPage = {
   entries: StoredListEntry[]
 }
 
-export type SyncPull = { collections: Collection[]; entries: Entry[]; lists?: LoadedList[]; serverTime: string }
+export type SyncChanges = {
+  collections: Collection[]
+  entries: Entry[]
+  lists?: LoadedList[]
+  settings?: UserSetting[]
+  follows?: FollowedBggUser[]
+}
+export type SyncPull = SyncChanges & { serverTime: string }
+
+/** F008: `GET /api/bgg/collection`: the collection, BGG still preparing it, or no such user. */
+export type BggCollectionResult =
+  | { kind: 'loaded'; answer: BggCollectionAnswer }
+  | { kind: 'preparing'; retryAfter: number }
+  | { kind: 'not_found' }
+
+/** Seconds to wait when a 202 carries no usable Retry-After. */
+const DEFAULT_RETRY_AFTER = 5
 
 /** Thin fetch wrapper for /api (contracts/api.md); every failure becomes an ApiError. */
 export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthenticated?: () => void } = {}) {
@@ -42,6 +63,11 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
   const base = deps.base ?? ''
 
   async function call<T>(path: string, init?: RequestInit): Promise<T> {
+    return (await send(path, init)).json() as Promise<T>
+  }
+
+  /** The successful response itself (any 2xx); every failure becomes an ApiError. */
+  async function send(path: string, init?: RequestInit): Promise<Response> {
     let res: Response
     try {
       // never follow redirects: Cloudflare Access answers an expired session with a redirect to its
@@ -55,7 +81,7 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
       deps.onUnauthenticated?.()
       throw new ApiError('unauthenticated', 'Your sign-in has expired. Sign in again to sync.', false)
     }
-    if (res.ok) return (await res.json()) as T
+    if (res.ok) return res
     let body: { error?: ApiErrorCode; message?: string; retryable?: boolean } = {}
     try {
       body = await res.json()
@@ -86,13 +112,27 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
   return {
     me: () => call<{ email: string; bggSearch: boolean }>('/api/me'),
     pull: (since?: string) => call<SyncPull>(`/api/sync${since ? `?since=${encodeURIComponent(since)}` : ''}`),
-    push: (changes: { collections: Collection[]; entries: Entry[]; lists?: LoadedList[] }) =>
+    push: (changes: SyncChanges) =>
       call<{ applied: number; ignored: number }>('/api/sync', post(changes)),
     games: (ids: number[]) => call<{ games: Game[] }>(`/api/bgg/games?ids=${ids.join(',')}`).then(r => r.games),
     listPage: (kind: ListKind, id: number, page: number) => call<ListPage>(`/api/bgg/lists/${kind}/${id}?page=${page}`),
     companies: (ids: number[]) =>
       call<{ companies: { id: number; name: string }[] }>(`/api/bgg/companies?ids=${ids.join(',')}`).then(r => r.companies),
     gallery,
+    /** F008: a person's BGG collection; `fresh` skips the Worker's edge cache (only on Refresh). */
+    async bggCollection(user: string, fresh = false): Promise<BggCollectionResult> {
+      try {
+        const res = await send(`/api/bgg/collection?user=${encodeURIComponent(user)}${fresh ? '&fresh=1' : ''}`)
+        if (res.status === 202) {
+          const seconds = Number(res.headers.get('Retry-After'))
+          return { kind: 'preparing', retryAfter: Number.isFinite(seconds) && seconds > 0 ? seconds : DEFAULT_RETRY_AFTER }
+        }
+        return { kind: 'loaded', answer: (await res.json()) as BggCollectionAnswer }
+      } catch (error) {
+        if (error instanceof ApiError && error.code === 'not_found') return { kind: 'not_found' }
+        throw error
+      }
+    },
     /** F007: offers and links for a game (contracts/api.md of feature 007) */
     prices: (bggId: number, name: string) => call<PricesAnswer>(`/api/prices?bggId=${bggId}&name=${encodeURIComponent(name)}`),
     /** F006: ranked games and expansions for a name (contracts/api.md); covers come through `games`. */
