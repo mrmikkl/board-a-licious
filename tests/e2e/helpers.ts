@@ -305,10 +305,18 @@ export async function fakeBggCollection(
  */
 export async function fakeBggAccount(
   page: Page,
-  options: { signedIn?: boolean; bggUser?: string; saves?: unknown[]; saveStatus?: number; priceConflict?: { amount: number; currency: string } } = {},
+  options: {
+    signedIn?: boolean
+    bggUser?: string
+    saves?: unknown[]
+    saveStatus?: number
+    priceConflict?: { amount: number; currency: string }
+    /** What BGG holds before the saves, by game (a save merges into it, as the Worker does). */
+    statuses?: Record<number, Record<string, unknown>>
+  } = {},
 ) {
   const state = { signedIn: options.signedIn ?? false, bggUser: options.bggUser ?? 'mrmikkl' }
-  const statuses = new Map<number, Record<string, unknown>>()
+  const statuses = new Map<number, Record<string, unknown>>(Object.entries(options.statuses ?? {}).map(([id, s]) => [Number(id), s]))
   await page.route('**/api/bgg/account', route => route.fulfill({ json: state.signedIn ? state : { signedIn: false } }))
   await page.route('**/api/bgg/account/signin', async route => {
     const body = route.request().postDataJSON() as { username: string; password: string }

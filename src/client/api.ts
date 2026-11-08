@@ -1,5 +1,5 @@
 import type { SearchResult } from '../domain/bgg-search.ts'
-import type { BggCollectionAnswer } from '../domain/bgg-status.ts'
+import type { BggCollectionAnswer, PrivateInfo, Status, StatusChange } from '../domain/bgg-status.ts'
 import type { PricesAnswer } from '../domain/offers.ts'
 import type { Collection, Entry } from '../domain/collection.ts'
 import type { GameGallery } from '../domain/gallery.ts'
@@ -25,6 +25,8 @@ export class ApiError extends Error {
     readonly code: ApiErrorCode,
     message: string,
     readonly retryable: boolean,
+    /** The error answer's other fields (F008: `current` of a price conflict). */
+    readonly body: Record<string, unknown> = {},
   ) {
     super(message)
   }
@@ -54,6 +56,15 @@ export type BggCollectionResult =
   | { kind: 'preparing'; retryAfter: number }
   | { kind: 'not_found' }
 
+/** F008: `GET /api/bgg/account` and the sign-in answer; the cookie decides, the app only shows it. */
+export type BggAccount = { signedIn: true; bggUser: string } | { signedIn: false }
+
+/** F008: `POST /api/bgg/account/collection/<bggId>`: only the changed keys, the private info once after buying. */
+export type BggSaveBody = { status?: StatusChange; privateInfo?: PrivateInfo; replacePrice?: boolean }
+export type Money = { amount: number; currency: string }
+/** Saved (the statuses as BGG has them now), or BGG already has another price paid (nothing written). */
+export type BggSaveResult = { kind: 'saved'; status: Status } | { kind: 'conflict'; current: Money }
+
 /** Seconds to wait when a 202 carries no usable Retry-After. */
 const DEFAULT_RETRY_AFTER = 5
 
@@ -78,17 +89,22 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
       throw new ApiError('offline', 'No connection. Your changes are kept and sent later.', true)
     }
     if (res.type === 'opaqueredirect' || res.status === 401) {
+      // F008: BGG refused the person's BGG session or password; the app's own sign-in is fine
+      if (res.status === 401) {
+        const body = await res.clone().json().catch(() => ({})) as { error?: string; message?: string }
+        if (body.error === 'bgg_signed_out') throw new ApiError('bgg_signed_out', body.message ?? 'Sign in to BoardGameGeek.', false)
+      }
       deps.onUnauthenticated?.()
       throw new ApiError('unauthenticated', 'Your sign-in has expired. Sign in again to sync.', false)
     }
     if (res.ok) return res
-    let body: { error?: ApiErrorCode; message?: string; retryable?: boolean } = {}
+    let body: { error?: ApiErrorCode; message?: string; retryable?: boolean; [key: string]: unknown } = {}
     try {
       body = await res.json()
     } catch {
       // Access redirects or HTML error pages: treat as a temporary server problem
     }
-    throw new ApiError(body.error ?? 'internal', body.message ?? `The server answered ${res.status}.`, body.retryable ?? res.status >= 500)
+    throw new ApiError(body.error ?? 'internal', body.message ?? `The server answered ${res.status}.`, body.retryable ?? res.status >= 500, body)
   }
 
   // F004: galleries asked for in this session, by game; a failure is not kept (research R3)
@@ -130,6 +146,22 @@ export function createApi(deps: { fetch?: typeof fetch; base?: string; onUnauthe
         return { kind: 'loaded', answer: (await res.json()) as BggCollectionAnswer }
       } catch (error) {
         if (error instanceof ApiError && error.code === 'not_found') return { kind: 'not_found' }
+        throw error
+      }
+    },
+    /** F008 (US3): who is signed in to BGG on this device; reads only the cookie. */
+    account: () => call<BggAccount>('/api/bgg/account'),
+    /** F008 (US3): the password goes into this one request and nowhere else. */
+    signIn: (username: string, password: string) => call<BggAccount>('/api/bgg/account/signin', post({ username, password })),
+    signOut: () => call<BggAccount>('/api/bgg/account/signout', post({})),
+    /** F008 (US4, US5): writes the signed-in person's own BGG collection; 409 is the price conflict. */
+    async saveStatus(bggId: number, body: BggSaveBody): Promise<BggSaveResult> {
+      try {
+        const saved = await call<{ status: Status }>(`/api/bgg/account/collection/${bggId}`, post(body))
+        return { kind: 'saved', status: saved.status }
+      } catch (error) {
+        const current = error instanceof ApiError && error.code === 'price_conflict' ? (error.body.current as Money | undefined) : undefined
+        if (current) return { kind: 'conflict', current }
         throw error
       }
     },
