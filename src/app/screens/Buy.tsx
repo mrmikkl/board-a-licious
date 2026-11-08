@@ -1,9 +1,8 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId } from 'react'
 
 import type { Game } from '../../client/types.ts'
 import type { SearchResult } from '../../domain/bgg-search.ts'
 import { inText } from '../../domain/membership.ts'
-import { AddToCollectionsSheet } from '../components/AddToCollectionsSheet.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { Header } from '../components/Header.tsx'
 import { IconSearch } from '../components/icons.tsx'
@@ -19,7 +18,7 @@ const LIMIT = 50
 
 /**
  * F008 (docs/design.md "Buy"): the menu's first place with the tabs Search (find any game on
- * BoardGameGeek; a result opens the game sheet) and Shopping lists (the person's collections).
+ * BoardGameGeek; a result opens that one game with its prices) and Shopping lists (the person's collections).
  */
 export function Buy({ tab, game, create }: { tab: 'search' | 'shopping'; game?: number; create?: boolean }) {
   return (
@@ -55,7 +54,8 @@ function useListNames() {
 
 /**
  * Buy › Search (F006 search, docs/design.md "Search BoardGameGeek"): the field is the only control, no
- * action bar. Results are list game rows; `game` (`#/buy?game=`) opens a game's sheet.
+ * action bar. Results are list game rows without Add: Buy › Search is about one game and its prices;
+ * `game` (`#/buy?game=`) opens the game sheet with the prices open.
  */
 function Search({ game: openId }: { game?: number }) {
   const { bggSearch } = useServices()
@@ -63,7 +63,6 @@ function Search({ game: openId }: { game?: number }) {
   const hintId = useId()
   const { state, games, change, loadGame, searchNow, retry } = useBggSearch(LIMIT)
   const listNames = useListNames()
-  const [adding, setAdding] = useState<SearchResult>()
   // a game opened by its address may be on the device already
   const stored = useStoreData(async s => (openId ? s.game(openId) : undefined), [openId])
   useEffect(() => {
@@ -152,10 +151,6 @@ function Search({ game: openId }: { game?: number }) {
                   game={game}
                   inText={inText(listNames?.get(result.bggId) ?? [])}
                   onOpen={() => open(result)}
-                  onAdd={() => {
-                    void loadGame(result.bggId)
-                    setAdding(result)
-                  }}
                 />
               </li>
             )
@@ -164,14 +159,7 @@ function Search({ game: openId }: { game?: number }) {
       )}
       {state.status === 'done' && state.results.length === LIMIT && <p className="more-note">More games match. Type more of the name to narrow it down.</p>}
       {opened && (
-        <GameSheet context="browse" item={opened.item} game={opened.game} onClose={() => navigate({ name: 'buy' }, { replace: true })} />
-      )}
-      {adding && (
-        <AddToCollectionsSheet
-          item={{ bggId: adding.bggId, name: adding.name, year: adding.year, kind: adding.kind, thumbnailUrl: null }}
-          game={games.get(adding.bggId)}
-          onClose={() => setAdding(undefined)}
-        />
+        <GameSheet context="buy" item={opened.item} game={opened.game} onClose={() => navigate({ name: 'buy' }, { replace: true })} />
       )}
     </main>
   )

@@ -7,7 +7,7 @@ import type { Mark } from '../../domain/marks.ts'
 import { addGameByLink } from '../actions.ts'
 import { useServices } from '../context.tsx'
 import { useBggSearch } from '../hooks/useBggSearch.ts'
-import { CategoryPicker } from './CategoryPicker.tsx'
+import { CategoryChoice } from './CategorySection.tsx'
 import { HexCover } from './HexCover.tsx'
 import { IconSearch } from './icons.tsx'
 import { yearText } from './ListGameRow.tsx'
@@ -165,8 +165,7 @@ export function AddGameSheet({ collection, inside, onClose }: { collection: Coll
             )}
           </div>
         )}
-        <p className="label">Category (optional)</p>
-        <CategoryPicker value={mark} onPick={key => setMark(m => (m === key ? 'new' : key))} />
+        <CategoryChoice label="Category" value={mark} onPick={setMark} />
         <div className="sheet-actions sheet-actions-row">
           <button type="button" className="btn" onClick={onClose}>
             Cancel

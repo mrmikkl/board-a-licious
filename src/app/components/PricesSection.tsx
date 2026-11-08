@@ -7,8 +7,19 @@ import { OffersBlock } from './OffersBlock.tsx'
  * F007 US2 (docs/design.md "Prices section"): a folded block in a game's details; nothing is loaded
  * until it is opened, then the offers block with the fair price on top.
  */
-export function PricesSection({ bggId, name, fairPrice }: { bggId: number; name: string; fairPrice?: string | null }) {
-  const [open, setOpen] = useState(false)
+export function PricesSection({
+  bggId,
+  name,
+  fairPrice,
+  initiallyOpen = false,
+}: {
+  bggId: number
+  name: string
+  fairPrice?: string | null
+  /** F008: Buy › Search is about one game's prices, so they are open there from the start. */
+  initiallyOpen?: boolean
+}) {
+  const [open, setOpen] = useState(initiallyOpen)
   const bodyId = useId()
   const { state, retry } = usePrices(bggId, name, open)
   const [language, setLanguage] = usePriceLanguage()

@@ -33,7 +33,9 @@ const PRICE_ERROR = "Type a price from 0 to 9,999, like 12,50.";
 /** Where the game sheet is opened: inside a shopping list (its entry), or anywhere else (search, BGG lists). */
 export type GameSheetContext =
   | { context: "shopping"; entry: Entry; collection: Collection }
-  | { context: "browse"; item: AddItem & { info?: Partial<Game> } };
+  | { context: "browse"; item: AddItem & { info?: Partial<Game> } }
+  /** F008: Buy › Search: one game and its prices (open from the start), no shopping list actions. */
+  | { context: "buy"; item: AddItem & { info?: Partial<Game> } };
 
 /**
  * F008 (docs/design.md "Game sheet"): the one sheet for a game, wherever it is opened. Name; cover
@@ -59,7 +61,8 @@ export function GameSheet(
   const [bggState, setBggState] = useState<BggStatusState>({ open: false });
   const [viewer, setViewer] = useState(false);
   const shopping = props.context === "shopping" ? props : undefined;
-  const browse = props.context === "browse" ? props.item : undefined;
+  const browse = props.context !== "shopping" ? props.item : undefined;
+  const buy = props.context === "buy";
   const entry = shopping?.entry;
   const bggId = entry?.bggId ?? browse!.bggId;
   const name = game?.name || browse?.name || `Game ${bggId}`;
@@ -241,12 +244,13 @@ export function GameSheet(
         onSaved={onClose}
       />
       <PricesSection
+        initiallyOpen={buy}
         bggId={bggId}
         name={name}
         fairPrice={fair?.priceCents != null ? formatMoney(fair.priceCents, fair.currency) : null}
       />
       <div className="sheet-actions">
-        {!shopping && (
+        {!shopping && !buy && (
           <button
             type="button"
             className="btn btn-primary btn-block"

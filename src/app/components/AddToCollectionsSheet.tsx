@@ -7,7 +7,7 @@ import { memberships } from '../../domain/membership.ts'
 import { useServices, useStoreData } from '../context.tsx'
 import { applyMembership } from '../list-actions.ts'
 import { href } from '../router.ts'
-import { CategoryPicker } from './CategoryPicker.tsx'
+import { CategoryChoice } from './CategorySection.tsx'
 import { HexCover } from './HexCover.tsx'
 import { yearText } from './ListGameRow.tsx'
 import { Sheet } from './Sheet.tsx'
@@ -126,8 +126,7 @@ export function AddToCollectionsSheet({ item, game, onClose }: { item: AddItem; 
               />
             ))}
           </div>
-          <p className="label">Category when added (optional)</p>
-          <CategoryPicker value={mark} onPick={key => setMark(m => (m === key ? 'new' : key))} />
+          <CategoryChoice label="Category when added" value={mark} onPick={setMark} />
         </>
       )}
       <div className="sheet-actions">

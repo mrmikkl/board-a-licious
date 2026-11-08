@@ -113,19 +113,15 @@ test('Shopping lists shows the seeded shopping lists; a shopping list goes back 
   await expect(page.getByRole('button', { name: 'Create shopping list' })).toBeDisabled()
 })
 
-test('a Buy › Search result is a list game row with Add inside; it opens the game sheet', async ({ page }) => {
+test('a Buy › Search result is a list game row without Add; it opens the game sheet with its prices open', async ({ page }) => {
   await fakeSearch(page, { results: { cascad: [CASCADIA, LANDMARKS] } })
   await fakePrices(page)
   await page.goto('/#/buy')
   await page.getByRole('searchbox', { name: 'Find a game' }).fill('cascad')
   const row = page.locator('.list-row').filter({ has: page.getByRole('button', { name: 'Cascadia, 2021', exact: true }) })
-  await expect(row.getByRole('button', { name: 'Add Cascadia to shopping lists' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Cascadia: Landmarks, 2023, expansion' })).toBeVisible()
+  await expect(row.getByRole('button', { name: 'Add Cascadia to shopping lists' })).toHaveCount(0)
   await expectAccessible(page)
-
-  await row.getByRole('button', { name: 'Add Cascadia to shopping lists' }).click()
-  await expect(page.getByRole('dialog', { name: 'Add Cascadia' })).toBeVisible()
-  await page.getByRole('dialog', { name: 'Add Cascadia' }).getByRole('button', { name: 'Cancel' }).click()
 
   await page.getByRole('button', { name: 'Cascadia, 2021', exact: true }).click()
   await expect(page).toHaveURL(/#\/buy\?game=295947$/)
@@ -133,16 +129,13 @@ test('a Buy › Search result is a list game row with Add inside; it opens the g
   await expect(sheet.getByText('2021 · Flatout Games')).toBeVisible()
   await expect(sheet.getByRole('link', { name: /Open on BoardGameGeek/ })).toHaveAttribute('href', 'https://boardgamegeek.com/boardgame/295947')
   await expect(sheet.locator('.facts-box')).toContainText('1–4 players')
-  await expect(sheet.getByRole('button', { name: /Prices/ })).toHaveAttribute('aria-expanded', 'false')
-  await expect(sheet.getByRole('button', { name: 'Add to shopping lists' })).toBeVisible()
+  await expect(sheet.getByRole('button', { name: /Prices/ })).toHaveAttribute('aria-expanded', 'true')
+  await expect(sheet.getByRole('button', { name: 'Add to shopping lists' })).toHaveCount(0)
   await expect(sheet.getByRole('button', { name: '✅ Bought it' })).toBeVisible()
   await expect(sheet.getByRole('button', { name: /Category/ })).toHaveCount(0)
   await expect(sheet.getByText('About Cascadia.')).toBeVisible()
   await expectAccessible(page)
 
-  await sheet.getByRole('button', { name: 'Add to shopping lists' }).click()
-  await expect(page.getByRole('dialog', { name: 'Add Cascadia' })).toBeVisible()
-  await page.getByRole('dialog', { name: 'Add Cascadia' }).getByRole('button', { name: 'Cancel' }).click()
   await page.getByRole('dialog', { name: 'Cascadia' }).getByRole('button', { name: 'Close' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page).toHaveURL(/#\/buy$/)

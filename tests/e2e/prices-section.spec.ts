@@ -24,7 +24,7 @@ test.describe('F007 US2: prices in a game\'s details', () => {
     await expect(sheet.getByRole('list', { name: 'New offers' })).toBeHidden()
   })
 
-  test('the game sheet of Buy › Search has the same section', async ({ page }) => {
+  test('the game sheet of Buy › Search has the same section, open from the start', async ({ page }) => {
     const game: FakeResult = { bggId: 295947, name: 'Cascadia', year: 2021, kind: 'boardgame' }
     await fakeSearch(page, { results: { cascad: [game] } })
     await fakePrices(page)
@@ -32,7 +32,7 @@ test.describe('F007 US2: prices in a game\'s details', () => {
     await page.getByRole('searchbox', { name: 'Find a game' }).fill('cascad')
     await page.getByRole('button', { name: 'Cascadia, 2021', exact: true }).click()
     const sheet = page.getByRole('dialog', { name: 'Cascadia' })
-    await sheet.getByRole('button', { name: 'Prices' }).click()
+    await expect(sheet.getByRole('button', { name: 'Prices' })).toHaveAttribute('aria-expanded', 'true')
     await sheet.getByRole('tab', { name: /^Used/ }).click()
     await expect(sheet.getByRole('list', { name: 'Used offers' }).getByRole('link')).toHaveCount(3)
   })

@@ -27,16 +27,21 @@ export function CategoryList({ entry, name, onChosen }: { entry: Entry; name: st
     const { emoji, label } = markInfo(mark)
     toast(`${name} → ${emoji} ${label}`)
   }
+  return <CategoryOptions current={entry.mark} onPick={(event, mark) => void choose(event, mark)} />
+}
+
+/** The category options without an entry behind them: `current` is marked, a tap calls `onPick`. */
+export function CategoryOptions({ current, onPick }: { current: Mark; onPick: (event: MouseEvent<HTMLButtonElement>, mark: Mark) => void }) {
   const option = (mark: Mark) => {
     const { emoji, label } = markInfo(mark)
-    const current = entry.mark === mark
+    const isCurrent = current === mark
     return (
-      <button key={mark} type="button" className="cat-option" aria-pressed={current} onClick={e => void choose(e, mark)}>
+      <button key={mark} type="button" className="cat-option" aria-pressed={isCurrent} onClick={e => onPick(e, mark)}>
         <span className="cat-hex" data-mark={mark}>
           {emoji}
         </span>
         <span className="cat-name">{label}</span>
-        {current && <small>current</small>}
+        {isCurrent && <small>current</small>}
       </button>
     )
   }

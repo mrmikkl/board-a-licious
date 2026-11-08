@@ -24,7 +24,7 @@ test.describe('F006 US1: find a game by its name', () => {
     await expectAccessible(page)
   })
 
-  test('results show year, Expansion and where the game already is; Add puts it into shopping lists with a category', async ({ page }) => {
+  test('results show year, Expansion and where the game already is; no Add (Buy › Search is about prices)', async ({ page }) => {
     await fakeSearch(page, { results })
     const name = unique('Essen 2026')
     await seedCollection(page, name, [{ bggId: CASCADIA.bggId, name: 'Cascadia', mark: 'interested' }])
@@ -38,15 +38,7 @@ test.describe('F006 US1: find a game by its name', () => {
     await expect(page.getByRole('button', { name: 'Cascadia: Promo Cards, Year unknown, expansion' })).toBeVisible()
     await expectAccessible(page)
 
-    await page.getByRole('button', { name: 'Add Cascadia: Landmarks to shopping lists' }).click()
-    const sheet = page.getByRole('dialog', { name: 'Add Cascadia: Landmarks' })
-    await expect(sheet.getByRole('checkbox', { name })).toBeVisible()
-    await expectAccessible(page)
-    await sheet.getByRole('checkbox', { name }).check()
-    await sheet.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Must Have/ }).click()
-    await sheet.getByRole('button', { name: 'Done' }).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Added Cascadia: Landmarks to 1 shopping list' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Cascadia: Landmarks, 2023, expansion' })).toHaveAccessibleDescription(/in /)
+    await expect(page.getByRole('button', { name: 'Add Cascadia: Landmarks to shopping lists' })).toHaveCount(0)
   })
 
   test('results load no details; opening a game loads only its own', async ({ page }) => {

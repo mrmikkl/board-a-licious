@@ -1,12 +1,15 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useId, useState } from 'react'
 
 import { type BggCollectionItem, PRIORITY_NAMES, STATUS_NAMES, type StatusKey, type WishlistPriority, statusList } from '../../domain/bgg-status.ts'
 import { inText } from '../../domain/membership.ts'
+import { matchesName } from '../../domain/search.ts'
+import { ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { AddToCollectionsSheet } from '../components/AddToCollectionsSheet.tsx'
+import { AddToStatusSheet } from '../components/AddToStatusSheet.tsx'
 import { colourOf, useBgg } from '../components/BggBadges.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { Header } from '../components/Header.tsx'
-import { IconResync } from '../components/icons.tsx'
+import { IconPlus, IconResync } from '../components/icons.tsx'
 import { ListGameRow } from '../components/ListGameRow.tsx'
 import { useStoreData } from '../context.tsx'
 import { useBggCollection } from '../hooks/useBggCollection.ts'
@@ -43,10 +46,14 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
   const listNames = useListNames()
   const [openGame, setOpenGame] = useState<{ kind: 'sheet' | 'add'; item: BggCollectionItem }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
+  const filterId = useId()
+  const [filter, setFilter] = useState('')
+  const [adding, setAdding] = useState(false)
 
   const name = STATUS_NAMES[status]
   const loaded = collection?.loadedAt && !collection.error ? collection : undefined
-  const items = loaded ? statusList(loaded.items, status) : []
+  const all = loaded ? statusList(loaded.items, status) : []
+  const items = all.filter(item => matchesName(item.name, filter))
   const source = [
     `${bggUser} on BoardGameGeek`,
     !own && 'read-only',
@@ -121,7 +128,7 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
       </div>
     )
   } else if (items.length === 0) {
-    body = <p className="lead">No games on this list.</p>
+    body = <p className="lead">{all.length > 0 ? 'No game on this list matches.' : 'No games on this list.'}</p>
   } else if (status === 'wishlist') {
     body = PRIORITIES.map(priority => {
       const games = items.filter(item => item.status.wishlist === priority)
@@ -170,9 +177,25 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
             </button>
           </p>
         )}
+        {all.length > 0 && (
+          <>
+            <label className="visually-hidden" htmlFor={filterId}>
+              Filter this list
+            </label>
+            <div className="field">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="M16 16l4.5 4.5" />
+              </svg>
+              <input id={filterId} type="search" value={filter} placeholder="Filter by name" autoComplete="off" onChange={e => setFilter(e.target.value)} />
+            </div>
+          </>
+        )}
         <hr className="separator" />
         {body}
       </main>
+      {own && <ActionBar main={<MainButton icon={<IconPlus />} label={`Add a game to ${name}`} onClick={() => setAdding(true)} />} />}
+      {adding && <AddToStatusSheet status={status} onClose={() => setAdding(false)} />}
       {item && openGame.kind === 'sheet' && <GameSheet context="browse" item={item} onClose={closeGame} />}
       {item && openGame.kind === 'add' && <AddToCollectionsSheet item={item} onClose={closeGame} />}
     </>

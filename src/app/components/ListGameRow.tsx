@@ -37,7 +37,8 @@ export function ListGameRow({
   inText?: string
   info?: ReactNode
   onOpen: () => void
-  onAdd: () => void
+  /** Add to shopping lists; without it the row has no action (Buy › Search: one game, its prices). */
+  onAdd?: () => void
 }) {
   const inId = useId()
   const badgesId = useId()
@@ -67,14 +68,16 @@ export function ListGameRow({
           <BggBadges bggId={bggId} max={2} id={badgesId} />
         </span>
       </button>
-      <div className="row-acts">
-        <button type="button" className="row-act add" aria-label={`Add ${name} to shopping lists`} onClick={onAdd}>
-          <span className="row-act-hex" aria-hidden="true">
-            +
-          </span>
-          <span className="row-act-label">Add</span>
-        </button>
-      </div>
+      {onAdd && (
+        <div className="row-acts">
+          <button type="button" className="row-act add" aria-label={`Add ${name} to shopping lists`} onClick={onAdd}>
+            <span className="row-act-hex" aria-hidden="true">
+              +
+            </span>
+            <span className="row-act-label">Add</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

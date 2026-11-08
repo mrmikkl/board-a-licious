@@ -187,6 +187,14 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 
 ---
 
+## Phase 10: Feedback from the walkthrough (2026-11-08)
+
+- [x] T054 Buy › Search is about one game and its prices: no Add in the result rows (`ListGameRow` `onAdd` optional), the game sheet in context `buy` opens with Prices open and without "Add to shopping lists" (`src/app/screens/Buy.tsx`, `GameSheet.tsx`, `PricesSection.tsx`); e2e `buy`, `places`, `search` updated
+- [x] T055 The category in the add to shopping lists sheet and in Add game is the folded Category section (`CategoryChoice`, `CategoryOptions` in `CategorySection.tsx` / `CategorySheet.tsx`); `CategoryPicker.tsx` removed; e2e `add-game-name`, `status-list-actions`
+- [x] T056 Status lists get the name filter "Filter by name" (`src/app/screens/StatusList.tsx`); e2e `status-list-actions`
+- [x] T057 Own status lists get the main button "Add a game to <status>" (`src/app/components/AddToStatusSheet.tsx`): BGG name search, a tap saves that status (other statuses kept, Wishlist priority 3), already-on note, sign-in first when needed; e2e `status-list-actions`
+- The richer list filter the owner asked for (mechanisms, play time in four ranges set in Config, designer, rating and geek rating ranges, best / recommended for n players) is its own feature (009).
+
 ## Dependencies & Execution Order
 
 - **Setup** → **Foundational** → US0 → US1 and US2 (both need US0's places and the Phase 2 loader) → US3 → US4 → US5 → Polish.

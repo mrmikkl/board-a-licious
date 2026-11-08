@@ -33,7 +33,11 @@ test.describe('F006 US3: add a game by name in a collection', () => {
     await expect(sheet.getByRole('heading', { name: `Found game ID ${HARMONIES.bggId}` })).toBeVisible()
     await expect(sheet.getByLabel(/^name$/i)).toHaveValue('Harmonies')
     await expect(sheet.getByRole('button', { name: 'Change' })).toBeVisible()
-    await sheet.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Interested/ }).click()
+    // F008 feedback: the category is a folded section, no hexagon picker
+    await sheet.getByRole('button', { name: /^Category/ }).click()
+    await sheet.getByRole('button', { name: /Interested/ }).click()
+    await expect(sheet.getByRole('button', { name: /^Category/ })).toHaveAttribute('aria-expanded', 'false')
+    await expect(sheet.getByRole('button', { name: /^Category/ })).toContainText('Interested')
     await sheet.getByRole('button', { name: 'Add to shopping list' }).click()
     await expect(sheet).toBeHidden()
     await expect(page.getByRole('status').filter({ hasText: `Added Harmonies to ${name}` })).toBeVisible()
