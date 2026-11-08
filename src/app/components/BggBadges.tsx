@@ -55,9 +55,9 @@ export function Badge({ statusKey, status, colours }: { statusKey: StatusKey; st
 /**
  * F008 (docs/design.md "BGG status badge"): what the person's BGG collection says about a game, as text
  * pills in badge order; rows show `max` (two) plus "+n", the game sheet all (`big`). One accessible name
- * for all: "On BoardGameGeek: Owned, Wishlist 2". Nothing without a username or a status.
+ * for all: "On BoardGameGeek: Owned, Wishlist 2" (none when `decorative`). Nothing without a username or a status.
  */
-export function BggBadges({ bggId, max, big = false, id }: { bggId: number; max?: number; big?: boolean; id?: string }) {
+export function BggBadges({ bggId, max, big = false, id, decorative = false }: { bggId: number; max?: number; big?: boolean; id?: string; decorative?: boolean }) {
   const { statuses, colours } = useBgg()
   const status = statuses.get(bggId)
   if (!status) return null
@@ -65,7 +65,11 @@ export function BggBadges({ bggId, max, big = false, id }: { bggId: number; max?
   if (all.shown.length === 0) return null
   const { shown, rest } = badges(status, max)
   return (
-    <span className={`bgg-badges${big ? ' big' : ''}`} id={id} role="img" aria-label={`On BoardGameGeek: ${all.shown.map(key => label(key, status)).join(', ')}`}>
+    <span
+      className={`bgg-badges${big ? ' big' : ''}`}
+      id={id}
+      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': `On BoardGameGeek: ${all.shown.map(key => label(key, status)).join(', ')}` })}
+    >
       {shown.map(key => (
         <Badge key={key} statusKey={key} status={status} colours={colours} />
       ))}

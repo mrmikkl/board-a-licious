@@ -91,9 +91,10 @@ export function BggStatusSection({
       <button type="button" className="prices-toggle" aria-expanded={state.open} aria-controls={bodyId} onClick={() => onState({ ...state, open: !state.open })}>
         <span aria-hidden="true">📦</span>
         BGG status
-        <span className="st-head">
+        {/* the head of the sheet already names the statuses for screen readers */}
+        <span className="st-head" aria-hidden="true">
           {hasAny(before) ? (
-            <BggBadges bggId={game.bggId} max={2} />
+            <BggBadges bggId={game.bggId} max={2} decorative />
           ) : (
             bgg.known && <small>not in your collection</small>
           )}

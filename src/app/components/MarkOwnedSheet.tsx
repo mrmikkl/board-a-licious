@@ -20,7 +20,7 @@ export type Bought = { game: Omit<BggCollectionItem, 'status'>; paid: Paid | nul
 /** Whether to ask after Got it (FR-021): only for people using BGG, and only when something would change. */
 export function markOwnedMode(usesBgg: boolean, status: Status | undefined, paid: Paid | null) {
   if (!usesBgg) return null
-  return askAfterBought(status, Boolean(paid && BGG_CURRENCIES[paid.currency]))
+  return askAfterBought(status, Boolean(paid && paid.cents > 0 && BGG_CURRENCIES[paid.currency]))
 }
 
 const money = ({ amount, currency }: Money) => formatMoney(Math.round(amount * 100), currency)
@@ -41,7 +41,8 @@ export function MarkOwnedSheet({ bought, mode, onClose }: { bought: Bought; mode
   const [conflict, setConflict] = useState<Money>()
   const [failure, setFailure] = useState('')
   const [info] = useState<PrivateInfo>(() => {
-    const currency = bought.paid ? BGG_CURRENCIES[bought.paid.currency] : undefined
+    // BGG takes only a price above 0 in its own currencies
+    const currency = bought.paid && bought.paid.cents > 0 ? BGG_CURRENCIES[bought.paid.currency] : undefined
     return privateInfoFor(
       {
         pricePaid: bought.paid && currency ? { amount: bought.paid.cents / 100, currency } : undefined,
