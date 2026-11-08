@@ -51,7 +51,7 @@ describe('/api/sync', () => {
     const call = testApp(db)
     await call('/api/sync', json({ collections: [collection], entries: [entry] }))
     const all = await (await call('/api/sync')).json()
-    expect(all).toEqual({ collections: [collection], entries: [entry], lists: [], serverTime: expect.any(String) })
+    expect(all).toEqual({ collections: [collection], entries: [entry], lists: [], settings: [], follows: [], serverTime: expect.any(String) })
     // serverTime is the server's own clock (a few seconds back), not the device's
     expect(Date.parse(all.serverTime)).toBeLessThan(Date.now())
     const later = await (await call(`/api/sync?since=${encodeURIComponent('2999-01-01T00:00:00.000Z')}`)).json()
@@ -84,6 +84,51 @@ describe('/api/sync', () => {
     for (const bad of [{ ...spiel, kind: 'other' }, { ...spiel, id: 0 }, { ...spiel, title: '' }]) {
       expect((await call('/api/sync', json({ lists: [bad] }))).status).toBe(400)
     }
+  })
+
+  it('F008: syncs the BGG username and followed BGG users', async () => {
+    const call = testApp(db)
+    const setting = { bggUsername: 'mrmikkl', updatedAt: T1 }
+    const follow = { bggUser: 'Anna_Meeple', updatedAt: T1, deleted: false }
+    expect(await (await call('/api/sync', json({ settings: [setting], follows: [follow] }))).json()).toEqual({ applied: 2, ignored: 0 })
+    const pulled = await (await call('/api/sync')).json()
+    expect(pulled.settings).toEqual([setting])
+    expect(pulled.follows).toEqual([{ ...follow, bggUser: 'anna_meeple' }])
+    // last write wins: an older change is ignored, a newer one (a tombstone, a cleared name) wins
+    expect(await (await call('/api/sync', json({ settings: [{ bggUsername: 'old', updatedAt: '2026-10-17T08:00:00.000Z' }] }))).json()).toEqual({
+      applied: 0,
+      ignored: 1,
+    })
+    const T2 = '2026-10-17T10:00:00.000Z'
+    await call('/api/sync', json({ settings: [{ bggUsername: null, updatedAt: T2 }], follows: [{ ...follow, deleted: true, updatedAt: T2 }] }))
+    const after = await (await call('/api/sync')).json()
+    expect(after.settings).toEqual([{ bggUsername: null, updatedAt: T2 }])
+    expect(after.follows).toEqual([{ bggUser: 'anna_meeple', updatedAt: T2, deleted: true }])
+  })
+
+  it('F008: older apps that send no settings or follows keep working', async () => {
+    const res = await testApp(db)('/api/sync', json({ collections: [collection], entries: [] }))
+    expect(await res.json()).toEqual({ applied: 1, ignored: 0 })
+  })
+
+  it.each([
+    ['a username that is empty', { settings: [{ bggUsername: '', updatedAt: T1 }] }, /username/i],
+    ['a username over 50 characters', { settings: [{ bggUsername: 'x'.repeat(51), updatedAt: T1 }] }, /username/i],
+    ['a username with odd characters', { settings: [{ bggUsername: 'anna<script>', updatedAt: T1 }] }, /username/i],
+    ['a setting without updatedAt', { settings: [{ bggUsername: 'mrmikkl' }] }, /updatedAt/],
+    ['a setting in the future', { settings: [{ bggUsername: 'mrmikkl', updatedAt: '2026-10-17T12:06:00.000Z' }] }, /future/],
+    ['settings that are not a list', { settings: { bggUsername: 'mrmikkl', updatedAt: T1 } }, /settings/],
+    ['a follow without a name', { follows: [{ bggUser: '', updatedAt: T1, deleted: false }] }, /BGG user/],
+    ['a follow over 50 characters', { follows: [{ bggUser: 'x'.repeat(51), updatedAt: T1, deleted: false }] }, /BGG user/],
+    ['a follow without deleted', { follows: [{ bggUser: 'anna', updatedAt: T1 }] }, /deleted/],
+    ['a follow with a bad time', { follows: [{ bggUser: 'anna', updatedAt: 'soon', deleted: false }] }, /updatedAt/],
+    ['follows that are not a list', { follows: 'anna' }, /follows/],
+  ])('F008: rejects %s with a clear 400', async (_, body, message) => {
+    const res = await testApp(db)('/api/sync', json(body))
+    expect(res.status).toBe(400)
+    const answer = await res.json()
+    expect(answer).toMatchObject({ error: 'bad_request', retryable: false })
+    expect(answer.message).toMatch(message)
   })
 
   it('F005: accepts and returns entries in For later', async () => {

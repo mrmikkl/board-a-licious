@@ -167,4 +167,68 @@ describe('sync', () => {
     const posts = server.calls.filter(c => c.method === 'POST') as { body: { entries: unknown[] } }[]
     expect(posts.map(p => p.body.entries.length)).toEqual([500, 1])
   })
+
+  it('F008: pushes setting and follow changes and merges pulled ones', async () => {
+    store = await openStore('anna@example.com')
+    await store.setBggUsername('mrmikkl', T1)
+    await store.follow('anna_meeple', T1)
+    const server = fakeServer((_, init) =>
+      init?.method === 'POST'
+        ? Response.json({ applied: 2, ignored: 0 })
+        : Response.json({
+            collections: [],
+            entries: [],
+            settings: [{ bggUsername: 'mrmikkl2', updatedAt: T2 }],
+            follows: [{ bggUser: 'ben', updatedAt: T2, deleted: false }],
+            serverTime: T2,
+          }),
+    )
+    await createSync({ store, api: createApi({ fetch: server.fetch }) }).syncNow()
+    expect(server.calls[0]?.body).toEqual({
+      collections: [],
+      entries: [],
+      settings: [{ bggUsername: 'mrmikkl', updatedAt: T1 }],
+      follows: [{ bggUser: 'anna_meeple', updatedAt: T1, deleted: false }],
+    })
+    expect(await store.pending()).toEqual([])
+    expect(await store.bggUsername()).toBe('mrmikkl2')
+    expect(await store.follows()).toEqual(['anna_meeple', 'ben'])
+  })
+
+  it('F008: sends no settings or follows arrays when there are none (older servers)', async () => {
+    store = await openStore('anna@example.com')
+    await store.saveEntry(newEntry('c1', 1, T1))
+    const server = fakeServer((_, init) =>
+      init?.method === 'POST' ? Response.json({ applied: 1, ignored: 0 }) : Response.json({ collections: [], entries: [], serverTime: T2 }),
+    )
+    await createSync({ store, api: createApi({ fetch: server.fetch }) }).syncNow()
+    expect(Object.keys(server.calls[0]?.body as object)).toEqual(['collections', 'entries'])
+  })
 })
+
+describe('bggCollection', () => {
+  const answer = { bggUser: 'mrmikkl', loadedAt: T2, items: [] }
+
+  it('returns the collection, asks for a fresh copy only on refresh', async () => {
+    const server = fakeServer(() => Response.json(answer))
+    const api = createApi({ fetch: server.fetch })
+    expect(await api.bggCollection('MrMikkl')).toEqual({ kind: 'loaded', answer })
+    await api.bggCollection('mrmikkl', true)
+    expect(server.calls.map(c => `${c.url.pathname}${c.url.search}`)).toEqual(['/api/bgg/collection?user=MrMikkl', '/api/bgg/collection?user=mrmikkl&fresh=1'])
+  })
+
+  it('maps 202 to preparing with Retry-After and 404 to not_found', async () => {
+    const preparing = createApi({
+      fetch: async () =>
+        Response.json({ error: 'bgg_preparing', message: 'BGG is preparing', retryable: true }, { status: 202, headers: { 'Retry-After': '7' } }),
+    })
+    expect(await preparing.bggCollection('mrmikkl')).toEqual({ kind: 'preparing', retryAfter: 7 })
+    const noHeader = createApi({ fetch: async () => new Response(null, { status: 202 }) })
+    expect(await noHeader.bggCollection('mrmikkl')).toEqual({ kind: 'preparing', retryAfter: 5 })
+    const missing = createApi({ fetch: async () => Response.json({ error: 'not_found', message: 'No such user', retryable: false }, { status: 404 }) })
+    expect(await missing.bggCollection('nobody')).toEqual({ kind: 'not_found' })
+    const down = createApi({ fetch: async () => Response.json({ error: 'bgg_unavailable', message: 'x', retryable: true }, { status: 502 }) })
+    await expect(down.bggCollection('mrmikkl')).rejects.toMatchObject({ code: 'bgg_unavailable' })
+  })
+})
+
