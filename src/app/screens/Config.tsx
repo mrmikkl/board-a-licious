@@ -1,8 +1,8 @@
-import { type MouseEvent, useRef, useState, useSyncExternalStore } from 'react'
+import { type FormEvent, type MouseEvent, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 
 import { Header } from '../components/Header.tsx'
 import { useToast } from '../components/Toast.tsx'
-import { useServices } from '../context.tsx'
+import { useServices, useStoreData } from '../context.tsx'
 import { showIntro } from '../intro.ts'
 import { href } from '../router.ts'
 
@@ -55,6 +55,8 @@ export function Config() {
       <Header title="Config" onTitleClick={tapTitle} />
       <main className="screen config">
         <ShareHint />
+        <BggSection />
+        <hr className="separator" />
         <SoundSetting />
         <hr className="separator" />
         <h2 className="section-title">Introduction</h2>
@@ -109,6 +111,66 @@ function ShareHint() {
       </section>
       <hr className="separator" />
     </>
+  )
+}
+
+/**
+ * F008 (docs/design.md "Sign in to BoardGameGeek"): the BoardGameGeek section. The username is synced
+ * (FR-001); saving a different one forgets which BGG account this device signed in to. The sign-in card
+ * (US3) goes below the username card.
+ */
+function BggSection() {
+  const services = useServices()
+  const toast = useToast()
+  const fieldId = useId()
+  const hintId = useId()
+  const saved = useStoreData(store => store.bggUsername())
+  const [name, setName] = useState<string>()
+  // the field starts with the saved name once it is read
+  useEffect(() => {
+    if (saved !== undefined) setName(current => current ?? saved ?? '')
+  }, [saved])
+  const value = name ?? ''
+  const changed = saved !== undefined && value.trim().toLowerCase() !== (saved ?? '').toLowerCase()
+  const save = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!changed) return
+    const next = value.trim() || null
+    await services.store.setBggUsername(next)
+    await services.store.setMeta('bggSignedInAs', null)
+    void services.sync.schedule()
+    setName(next ?? '')
+    toast(next ? `Saved your BGG username: ${next}` : 'Removed your BGG username')
+  }
+  return (
+    <section aria-labelledby="bgg-title">
+      <h2 id="bgg-title" className="section-title">
+        BoardGameGeek
+      </h2>
+      <form className="card cfg-card" onSubmit={e => void save(e)}>
+        <label className="label" htmlFor={fieldId}>
+          Your BGG username
+        </label>
+        <div className="field">
+          <input
+            id={fieldId}
+            value={value}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="e.g. mrmikkl"
+            aria-describedby={hintId}
+            onChange={e => setName(e.target.value)}
+          />
+        </div>
+        <p className="hint" id={hintId}>
+          Shows your status lists in Lists and your statuses as badges on games. Reading needs no password.
+        </p>
+        <button type="submit" className="btn" disabled={!changed}>
+          Save username
+        </button>
+      </form>
+    </section>
   )
 }
 
