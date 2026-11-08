@@ -1,6 +1,6 @@
 import { type Page, expect, test } from '@playwright/test'
 
-import { createCollection, expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { chooseCategory, createCollection, expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 /**
  * F003 US3 (FR-015–FR-016): a collection's actions sit in the action bar (Add game · ♥ · Filter),
@@ -21,7 +21,7 @@ async function addGame(page: Page, link: string, game: string) {
   const sheet = page.getByRole('dialog', { name: 'Add game' })
   await sheet.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(sheet.getByLabel(/^name$/i)).toHaveValue(game)
-  await sheet.getByRole('button', { name: 'Add to collection' }).click()
+  await sheet.getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(sheet).toBeHidden()
   await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') })).toBeVisible()
 }
@@ -29,7 +29,7 @@ async function addGame(page: Page, link: string, game: string) {
 /** Opens the game from its group and picks a mark; picking closes the sheet. */
 async function markAs(page: Page, group: RegExp, game: string, mark: RegExp) {
   await page.getByRole('region', { name: group }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
-  await page.getByRole('dialog').getByRole('button', { name: mark }).click()
+  await chooseCategory(page, mark)
   // a tap changes the category in place: the details stay open until closed
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
@@ -48,15 +48,15 @@ test('US3: Add game, ♥ and Filter at the bottom; nothing at the top but the na
   await expect(empty.getByRole('button')).toHaveCount(0)
   const controls = actions(page).locator('a, button')
   await expect(controls).toHaveText(['Add game', '', 'Filter', 'Show-off'])
-  await expect(controls.nth(1)).toHaveAccessibleName('BG-Tinder: swipe a BGG list into this collection')
+  await expect(controls.nth(1)).toHaveAccessibleName('BG-Tinder: swipe a BGG list into this shopping list')
   await expect(controls.nth(1)).toHaveClass(/main-btn/)
   await expect(controls.first()).toHaveAccessibleName('Add game')
   await expect(controls.first().locator('svg')).toBeVisible()
 
-  // the top: no tool row, no options, no back button; the name with the pencil
+  // the top: no tool row, no options; F008: back to Buy › Shopping lists; the name with the pencil
   await expect(page.locator('.collection-tools')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Collection options' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Back', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Back', exact: true })).toHaveAttribute('href', '#/buy/lists')
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await expect(page.getByRole('button', { name: `Edit ${name}` })).toBeVisible()
   await expectAccessible(page)
@@ -87,11 +87,11 @@ test('US3: Add game, ♥ and Filter at the bottom; nothing at the top but the na
   await expectAccessible(page)
 })
 
-test('US3: the pencil opens Edit collection: Save name renames, Delete collection… asks and deletes', async ({ page }) => {
+test('US3: the pencil opens Edit shopping list: Save name renames, Delete shopping list… asks and deletes', async ({ page }) => {
   const name = unique('Pencil')
   await createCollection(page, name)
   await page.getByRole('button', { name: `Edit ${name}` }).click()
-  const edit = page.getByRole('dialog', { name: 'Edit collection' })
+  const edit = page.getByRole('dialog', { name: 'Edit shopping list' })
   await expect(edit).toBeVisible()
   await expect(edit.getByLabel('Name')).toHaveValue(name)
   await expect(edit.getByRole('button', { name: 'Save name' })).toBeDisabled()
@@ -110,18 +110,18 @@ test('US3: the pencil opens Edit collection: Save name renames, Delete collectio
   await expect(edit).toBeHidden()
   await expect(page.getByRole('heading', { level: 1, name: renamed })).toBeVisible()
 
-  // Delete collection… asks first
+  // Delete shopping list… asks first
   await page.getByRole('button', { name: `Edit ${renamed}` }).click()
-  await edit.getByRole('button', { name: 'Delete collection…' }).click()
+  await edit.getByRole('button', { name: 'Delete shopping list…' }).click()
   const ask = page.getByRole('dialog', { name: `Delete ${renamed} and its 0 games?` })
   await expect(ask).toBeVisible()
   await ask.getByRole('button', { name: 'Cancel' }).click()
   await expect(ask).toBeHidden()
   await expect(page.getByRole('heading', { level: 1, name: renamed })).toBeVisible()
   await page.getByRole('button', { name: `Edit ${renamed}` }).click()
-  await edit.getByRole('button', { name: 'Delete collection…' }).click()
-  await ask.getByRole('button', { name: 'Delete collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await edit.getByRole('button', { name: 'Delete shopping list…' }).click()
+  await ask.getByRole('button', { name: 'Delete shopping list' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   await expect(page.getByRole('link', { name: new RegExp(renamed) })).toHaveCount(0)
 })
 
@@ -150,7 +150,7 @@ test('US3: a long name runs as a ticker before the pencil; with reduced motion i
   }
   // a short name stands still
   await page.getByRole('button', { name: `Edit ${name}` }).click()
-  const edit = page.getByRole('dialog', { name: 'Edit collection' })
+  const edit = page.getByRole('dialog', { name: 'Edit shopping list' })
   const short = unique('Short')
   await edit.getByLabel('Name').fill(short)
   await edit.getByRole('button', { name: 'Save name' }).click()
@@ -208,7 +208,7 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   await skipFold.click()
   await expect(skipFold).toHaveAttribute('aria-expanded', 'true')
   // "Interested again" from the details puts the game into Interested: no rest part left, so no line
-  await markAs(page, /not interested/i, 'Wingspan', /interested again/i)
+  await markAs(page, /not interested/i, 'Wingspan', /^(👀 )?interested/i)
   await slow(headings).toHaveText([/must have1/i, /interested1/i, /poop1/i])
   await expect(separators).toHaveCount(0)
 
@@ -230,7 +230,7 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   await page.reload()
   await expect(page.getByRole('region', { name: /interested/i }).getByRole('button', { name: /^👀 interested/i })).toHaveAttribute('aria-expanded', 'true')
 
-  // the order of marks elsewhere is unchanged: the filter's groups and the game's picker
+  // the order of marks elsewhere is unchanged: the filter's groups and the game's Category section
   await filterButton(page).click()
   const filter = page.getByRole('dialog', { name: 'Filter and group' })
   await expect(filter.getByRole('checkbox')).toHaveCount(7)
@@ -239,5 +239,6 @@ test('US4: groups in the collection order, one separator between the parts, Not 
   await page.keyboard.press('Escape')
   await expect(filter).toBeHidden()
   await page.getByRole('region', { name: /interested/i }).getByRole('button', { name: /^wingspan,/i }).click()
-  await expect(page.getByRole('dialog').getByRole('group', { name: 'Category' }).getByRole('button')).toHaveText([/must have/i, /interested/i, /unsure/i, /for later/i, /poop/i])
+  await page.getByRole('dialog').getByRole('button', { name: /^Category/ }).click()
+  await expect(page.getByRole('dialog').locator('.cat-list').getByRole('button')).toHaveText([/must have/i, /interested/i, /unsure/i, /for later/i, /poop/i, /no category yet/i, /not interested/i])
 })

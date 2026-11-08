@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { chooseCategory, expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 const fixture = (name: string) => readFileSync(new URL(`../fixtures/api/${name}`, import.meta.url), 'utf8')
 
@@ -34,7 +34,7 @@ test('US5: share the Must Haves of an Essen collection as text', async ({ page }
   await importFile(page, backupFile(name).file)
   await expect(page.getByRole('status')).toContainText(/imported/i)
 
-  await page.getByLabel('Collection', { exact: true }).selectOption({ label: name })
+  await page.getByLabel('Shopping list', { exact: true }).selectOption({ label: name })
   await expect(page.getByRole('checkbox', { name: /must have/i })).toBeChecked()
   await expect(page.getByRole('checkbox', { name: /^👀 interested/i })).toBeChecked()
   await expect(page.getByRole('checkbox', { name: /unsure/i })).not.toBeChecked()
@@ -76,7 +76,7 @@ test('US5: without a share menu the list is copied to the clipboard', async ({ p
   await page.goto('/#/share')
   const name = unique('Copy me')
   await importFile(page, backupFile(name).file)
-  await page.getByLabel('Collection', { exact: true }).selectOption({ label: name })
+  await page.getByLabel('Shopping list', { exact: true }).selectOption({ label: name })
   await page.getByRole('checkbox', { name: /unsure/i }).check()
   await expect(page.getByRole('region', { name: 'Message preview' })).toContainText('🤔 Unsure (1)')
 
@@ -121,9 +121,9 @@ test('US5: export a backup, import it back over a changed mark, restore a delete
   }
 
   // change a mark, then import: asked once, the backup wins
-  await page.goto(`/#/collections/${id}`)
+  await page.goto(`/#/buy/lists/${id}`)
   await page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i }).click()
-  await page.getByRole('dialog').getByRole('button', { name: /^(👀 )?interested/i }).click()
+  await chooseCategory(page, /^(👀 )?interested/i)
   await page.keyboard.press('Escape')
   await expect(page.getByRole('region', { name: /^👀 interested/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 
@@ -134,20 +134,20 @@ test('US5: export a backup, import it back over a changed mark, restore a delete
   await expectAccessible(page)
   await ask.getByRole('button', { name: 'Use backup' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await page.goto(`/#/collections/${id}`)
+  await page.goto(`/#/buy/lists/${id}`)
   await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 
   // delete the collection (F003: behind the pencil after its name), import: it is back without a question
   await page.getByRole('button', { name: `Edit ${name}` }).click()
-  await page.getByRole('button', { name: 'Delete collection…' }).click()
-  await page.getByRole('button', { name: 'Delete collection' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await page.getByRole('button', { name: 'Delete shopping list…' }).click()
+  await page.getByRole('button', { name: 'Delete shopping list' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   await expect(page.getByRole('link', { name: new RegExp(name) })).toHaveCount(0)
   await page.goto('/#/share')
   await importFile(page, ownBackup)
-  await expect(page.getByRole('status')).toContainText(/1 collection/i)
+  await expect(page.getByRole('status')).toContainText(/1 shopping list/i)
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await page.goto(`/#/collections/${id}`)
+  await page.goto(`/#/buy/lists/${id}`)
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await expect(page.getByRole('region', { name: /must have/i }).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
   await expect(page.getByRole('region', { name: /unsure/i }).getByRole('button', { name: /^fjord fishers,/i })).toBeVisible()

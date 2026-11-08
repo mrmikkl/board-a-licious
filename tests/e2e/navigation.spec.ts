@@ -19,9 +19,9 @@ const menuButton = (page: Page) => page.getByRole('button', { name: 'Menu', exac
 /** A collection to visit; created through the New collection sheet's route. */
 async function newCollection(page: Page) {
   const name = unique('Nav')
-  await page.goto('/#/collections?new')
+  await page.goto('/#/buy/lists?new')
   await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await page.getByRole('button', { name: 'Create shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   return { name, hash: new URL(page.url()).hash }
 }
@@ -39,7 +39,7 @@ async function expectCurrent(page: Page, place: Place) {
   await openMenu(page)
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'true')
   const links = menu(page).getByRole('link')
-  await expect(links).toHaveText(['Buy', 'Collections', 'BGG lists', 'Search', 'Config'])
+  await expect(links).toHaveText(['Buy', 'Lists', 'Config'])
   await expect(menu(page).locator('[aria-current="page"]')).toHaveText(place)
   await page.keyboard.press('Escape')
   await expect(menu(page)).toHaveCount(0)
@@ -53,12 +53,12 @@ test('US1: every screen has the app bar, the menu marks the current place, back 
   const back = page.getByRole('link', { name: 'Back', exact: true })
 
   const screens: { hash: string; heading: string | RegExp; place: Place; back?: string }[] = [
-    { hash: '#/collections', heading: 'Collections', place: 'Collections' },
-    { hash: collection.hash, heading: collection.name, place: 'Collections' },
-    { hash: '#/lists', heading: 'BGG lists', place: 'BGG lists' },
-    { hash: '#/lists/preview/9093', heading: /spiel/i, place: 'BGG lists', back: '#/lists' },
-    { hash: `${collection.hash}/swipe/preview/9093`, heading: `Add to ${collection.name}`, place: 'Collections', back: collection.hash },
-    { hash: '#/search', heading: 'Search', place: 'Search' },
+    { hash: '#/buy', heading: 'Buy', place: 'Buy' },
+    { hash: '#/buy/lists', heading: 'Buy', place: 'Buy' },
+    { hash: collection.hash, heading: collection.name, place: 'Buy', back: '#/buy/lists' },
+    { hash: '#/lists', heading: 'Lists', place: 'Lists' },
+    { hash: '#/lists/preview/9093', heading: /spiel/i, place: 'Lists', back: '#/lists/previews' },
+    { hash: `${collection.hash}/swipe/preview/9093`, heading: `Add to ${collection.name}`, place: 'Buy', back: collection.hash },
     { hash: '#/config', heading: 'Config', place: 'Config' },
     { hash: '#/config/share', heading: 'Share and backup', place: 'Config', back: '#/config' },
   ]
@@ -73,14 +73,14 @@ test('US1: every screen has the app bar, the menu marks the current place, back 
 })
 
 test('US1: choosing a place goes there and closes the menu; Esc and the scrim close it without navigating', async ({ page }) => {
-  await page.goto('/#/collections')
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await page.goto('/#/buy/lists')
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
 
   // focus moves into the menu, onto the current place
   await openMenu(page)
-  await expect(menu(page).getByRole('link', { name: 'Collections' })).toBeFocused()
-  await menu(page).getByRole('link', { name: 'BGG lists' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'BGG lists' })).toBeVisible()
+  await expect(menu(page).getByRole('link', { name: 'Buy' })).toBeFocused()
+  await menu(page).getByRole('link', { name: 'Lists' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Lists' })).toBeVisible()
   await expect(menu(page)).toHaveCount(0)
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'false')
 
@@ -104,54 +104,54 @@ test('US1: choosing a place goes there and closes the menu; Esc and the scrim cl
   // a route change closes it too (browser Back)
   await openMenu(page)
   await page.goBack()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   await expect(menu(page)).toHaveCount(0)
 })
 
 test('US1: every place is two taps away (SC-001)', async ({ page }) => {
   await page.goto('/#/config/share')
-  for (const place of ['Collections', 'BGG lists', 'Search', 'Config', 'Collections'] as const) await goTo(page, place)
+  for (const place of ['Buy', 'Lists', 'Config', 'Buy'] as const) await goTo(page, place)
 })
 
 test.describe('US2', () => {
   const actions = (page: Page) => page.getByRole('navigation', { name: 'Actions' })
   const PREVIEW = 'https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview'
 
-  test('Collections: main ＋ opens New collection; Cancel and Back close it; Create collection opens the new one', async ({ page }) => {
-    await page.goto('/#/collections')
-    await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
-    await expect(mainButton(page)).toHaveAccessibleName('Create a collection')
-    // no "Create a collection" card on the screen: the main button is the one way in
-    await expect(page.locator('main').getByText('Create a collection')).toHaveCount(0)
+  test('Shopping lists: main ＋ opens New shopping list; Cancel and Back close it; Create shopping list opens the new one', async ({ page }) => {
+    await page.goto('/#/buy/lists')
+    await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
+    await expect(mainButton(page)).toHaveAccessibleName('Create a shopping list')
+    // no "Create a shopping list" card on the screen: the main button is the one way in
+    await expect(page.locator('main').getByText('Create a shopping list')).toHaveCount(0)
 
-    const sheet = page.getByRole('dialog', { name: 'New collection' })
+    const sheet = page.getByRole('dialog', { name: 'New shopping list' })
     await mainButton(page).click()
     await expect(sheet).toBeVisible()
-    await expect(page).toHaveURL(/#\/collections\?new$/)
+    await expect(page).toHaveURL(/#\/buy\/lists\?new$/)
     await sheet.getByRole('button', { name: 'Cancel' }).click()
     await expect(sheet).toHaveCount(0)
-    await expect(page).toHaveURL(/#\/collections$/)
+    await expect(page).toHaveURL(/#\/buy\/lists$/)
 
     // Back from the open sheet closes it
     await mainButton(page).click()
     await expect(sheet).toBeVisible()
     await page.goBack()
     await expect(sheet).toHaveCount(0)
-    await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
 
     await mainButton(page).click()
     const name = unique('Main')
     await sheet.getByLabel('Name').fill(name)
-    await sheet.getByRole('button', { name: 'Create collection' }).click()
+    await sheet.getByRole('button', { name: 'Create shopping list' }).click()
     await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-    await expect(page).toHaveURL(/#\/collections\/[^?]+$/)
+    await expect(page).toHaveURL(/#\/buy\/lists\/[^?]+$/)
   })
 
-  test('a collection: main ♥ opens ❤️ BG-Tinder ❤️, which loads a new list or selects a loaded one for Swipe', async ({ page }) => {
+  test('a shopping list: main ♥ opens ❤️ BG-Tinder ❤️, which loads a new list or selects a loaded one for Swipe', async ({ page }) => {
     await fakeBgg(page)
     await fakePreview(page)
     const collection = await newCollection(page)
-    await expect(mainButton(page)).toHaveAccessibleName('BG-Tinder: swipe a BGG list into this collection')
+    await expect(mainButton(page)).toHaveAccessibleName('BG-Tinder: swipe a BGG list into this shopping list')
     // no "Add by list" buttons any more (tool row, empty state)
     await expect(page.getByRole('button', { name: /add by list/i })).toHaveCount(0)
 
@@ -178,17 +178,17 @@ test.describe('US2', () => {
     await expect(page.getByRole('heading', { level: 1, name: `Add to ${collection.name}` })).toBeVisible()
   })
 
-  test('BGG lists: main ＋ opens Load a BGG list; a wrong link shows the hint, a valid one opens the list', async ({ page }) => {
+  test('Lists: main ＋ opens Load a BGG list; a wrong link shows the hint, a valid one opens the list', async ({ page }) => {
     await fakeBgg(page)
     await fakePreview(page)
     await page.goto('/#/lists')
-    await expect(page.getByRole('heading', { level: 1, name: 'BGG lists' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Lists' })).toBeVisible()
     await expect(mainButton(page)).toHaveAccessibleName('Load a BGG list')
     await expect(page.locator('main').getByText('Load a BGG list')).toHaveCount(0)
 
     await mainButton(page).click()
     const sheet = page.getByRole('dialog', { name: 'Load a BGG list' })
-    await expect(page).toHaveURL(/#\/lists\?load$/)
+    await expect(page).toHaveURL(/#\/lists\/\w+\?load$/)
     const link = sheet.getByLabel(/link/i)
     const load = sheet.getByRole('button', { name: 'Load list' })
     await expect(load).toBeDisabled()
@@ -202,11 +202,11 @@ test.describe('US2', () => {
     await expect(page.getByRole('heading', { level: 1, name: /spiel/i })).toBeVisible()
   })
 
-  test('Search (F006), Config, a list, Swipe and Share and backup have no action bar', async ({ page }) => {
+  test('Buy › Search, Config, a list, Swipe and Share and backup have no action bar', async ({ page }) => {
     await fakeBgg(page)
     await fakePreview(page)
-    await page.goto('/#/search')
-    await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+    await page.goto('/#/buy')
+    await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Actions' })).toHaveCount(0)
     await expect(page.locator('main').getByRole('link', { name: /add a game/i })).toHaveCount(0)
 
@@ -225,15 +225,15 @@ test.describe('US2', () => {
 
   test('old add addresses and links open the matching sheet', async ({ page }) => {
     await page.goto('/#/add/list')
-    await expect(page.getByRole('heading', { level: 1, name: 'BGG lists' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Lists' })).toBeVisible()
     await expect(page.getByRole('dialog', { name: 'Load a BGG list' })).toBeVisible()
 
     await page.goto('/#/add')
-    await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
 
     await page.goto('/#/add/collection')
-    await expect(page.getByRole('dialog', { name: 'New collection' })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'New shopping list' })).toBeVisible()
 
     // a list that does not exist offers loading another one through the sheet
     await page.route('**/api/bgg/lists/preview/9094?**', route =>
@@ -249,7 +249,7 @@ test.describe('US2', () => {
     await fakeBgg(page)
     await fakePreview(page)
     const collection = await newCollection(page)
-    for (const hash of ['#/collections', collection.hash, '#/lists', '#/lists/preview/9093', '#/search', '#/config', '#/config/share']) {
+    for (const hash of ['#/buy/lists', collection.hash, '#/lists', '#/lists/preview/9093', '#/buy', '#/config', '#/config/share']) {
       await page.goto(`/${hash}`)
       await expect(page.locator('h1')).toBeVisible()
       await expect(page.locator('.top .btn-primary, .appbar .btn-primary'), hash).toHaveCount(0)
@@ -262,7 +262,7 @@ test.describe('US2', () => {
     await page.goto(`/${collection.hash}?add=game`)
     const sheet = page.getByRole('dialog', { name: 'Add game' })
     await sheet.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
-    await sheet.getByRole('button', { name: 'Add to collection' }).click()
+    await sheet.getByRole('button', { name: 'Add to shopping list' }).click()
     const toast = page.locator('.toast.show')
     await expect(toast).toContainText(`to ${collection.name}`)
     await expect(sheet).toHaveCount(0)

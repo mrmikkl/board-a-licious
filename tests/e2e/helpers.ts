@@ -67,6 +67,15 @@ export async function openTab(page: Page, tab: Tab) {
   await expect(button).toHaveAttribute('aria-selected', 'true')
 }
 
+/** F008: in the open game sheet, unfold the Category section and choose a category (it folds again). */
+export async function chooseCategory(page: Page, category: RegExp) {
+  const sheet = page.getByRole('dialog')
+  const section = sheet.getByRole('button', { name: /^Category/ })
+  if ((await section.getAttribute('aria-expanded')) !== 'true') await section.click()
+  await sheet.locator('.cat-list').getByRole('button', { name: category }).click()
+  await expect(section).toHaveAttribute('aria-expanded', 'false')
+}
+
 /** The big hexagon in the action bar; its accessible name says what it does on the screen. */
 export const mainButton = (page: Page) => page.getByRole('navigation', { name: 'Actions' }).locator('.main-btn')
 

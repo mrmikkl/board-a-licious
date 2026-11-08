@@ -25,7 +25,7 @@ test('game rows show publisher and three infos; the details show all of them (FR
   await createCollection(page, unique('Info'))
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
-  await page.getByRole('button', { name: 'Add to collection' }).click()
+  await page.getByRole('button', { name: 'Add to shopping list' }).click()
 
   // no price, booth or edition: players, designer and the mechanisms as pills
   const row = page.getByRole('button', { name: /cascadia/i }).first()
@@ -52,7 +52,7 @@ async function addCascadia(page: Page, game: object) {
   await createCollection(page, unique('Info'))
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
-  await page.getByRole('button', { name: 'Add to collection' }).click()
+  await page.getByRole('button', { name: 'Add to shopping list' }).click()
 }
 
 test('details show Rating 7.9 and Geek rating 7.7; rows show no ratings (FR-010, R1)', async ({ page }) => {

@@ -34,7 +34,7 @@ test.describe('F006 US3: add a game by name in a collection', () => {
     await expect(sheet.getByLabel(/^name$/i)).toHaveValue('Harmonies')
     await expect(sheet.getByRole('button', { name: 'Change' })).toBeVisible()
     await sheet.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Interested/ }).click()
-    await sheet.getByRole('button', { name: 'Add to collection' }).click()
+    await sheet.getByRole('button', { name: 'Add to shopping list' }).click()
     await expect(sheet).toBeHidden()
     await expect(page.getByRole('status').filter({ hasText: `Added Harmonies to ${name}` })).toBeVisible()
     await expect(page.getByRole('button', { name: /^Harmonies, Interested/ })).toBeVisible()
@@ -57,7 +57,7 @@ test.describe('F006 US3: add a game by name in a collection', () => {
     await field(page).fill('harmon')
     await sheet.getByRole('list', { name: 'Matching games' }).getByRole('button', { name: 'Harmonies, 2024' }).click()
     await expect(sheet.getByText(`This game is already in ${name}.`)).toBeVisible()
-    await expect(sheet.getByRole('button', { name: 'Add to collection' })).toBeDisabled()
+    await expect(sheet.getByRole('button', { name: 'Add to shopping list' })).toBeDisabled()
   })
 
   test('a pasted link works as before', async ({ page }) => {
@@ -66,7 +66,7 @@ test.describe('F006 US3: add a game by name in a collection', () => {
     await field(page).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
     await expect(sheet.getByRole('heading', { name: 'Found game ID 295947' })).toBeVisible()
     await expect(sheet.getByLabel(/^name$/i)).toHaveValue('Cascadia')
-    await expect(sheet.getByRole('button', { name: 'Add to collection' })).toBeEnabled()
+    await expect(sheet.getByRole('button', { name: 'Add to shopping list' })).toBeEnabled()
   })
 
   test('without the token a name asks for the link', async ({ page }) => {

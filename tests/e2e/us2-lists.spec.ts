@@ -53,9 +53,9 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await createCollection(page, essen)
   await createCollection(page, standard)
 
-  // Lists: empty on a new device, with the SPIEL preview link as example
-  await goTo(page, 'BGG lists')
-  await expect(page.getByRole('heading', { level: 1, name: 'BGG lists' })).toBeVisible()
+  // Lists › Previews: empty on a new device, with the SPIEL preview link as example
+  await goTo(page, 'Lists', 'Previews')
+  await expect(page.getByRole('heading', { level: 1, name: 'Lists' })).toBeVisible()
   await expect(page.getByText(/geekpreview\/93/)).toBeVisible()
   await expectAccessible(page)
 
@@ -99,10 +99,17 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await expect(page.getByText(/no game on this list matches/i)).toBeVisible()
   await filter.fill('')
 
-  // List game sheet: ticks change nothing until Done; Cancel discards
-  await page.getByRole('button', { name: 'Add Kalypso to a collection' }).click()
-  const sheet = page.getByRole('dialog', { name: 'Kalypso' })
-  await expect(sheet.getByText(/description is filled in from boardgamegeek later/i)).toBeVisible()
+  // F008: a row opens the game sheet; Add inside the row opens the shopping list choice
+  await kalypso.click()
+  const gameSheet = page.getByRole('dialog', { name: 'Kalypso' })
+  await expect(gameSheet.getByText(/description is filled in from boardgamegeek later/i)).toBeVisible()
+  await expect(gameSheet.getByRole('button', { name: 'Add to shopping lists' })).toBeVisible()
+  await gameSheet.getByRole('button', { name: 'Close' }).click()
+
+  // the shopping list choice: ticks change nothing until Done; Cancel discards
+  const addKalypso = page.getByRole('button', { name: 'Add Kalypso to shopping lists' })
+  await addKalypso.click()
+  const sheet = page.getByRole('dialog', { name: 'Add Kalypso' })
   const essenTick = sheet.getByRole('checkbox', { name: essen })
   const standardTick = sheet.getByRole('checkbox', { name: standard })
   await expect(essenTick).not.toBeChecked()
@@ -115,17 +122,18 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   await expect(sheet).toBeHidden()
 
   // Done adds exactly as ticked (other test runs share the dev database, so only these two collections count)
-  await kalypso.click()
+  await addKalypso.click()
   await expect(essenTick).not.toBeChecked()
   await expect(standardTick).not.toBeChecked()
   await essenTick.check()
   await standardTick.check()
   await sheet.getByRole('button', { name: 'Done' }).click()
   await expect(sheet).toBeHidden()
-  await expect(kalypso).toContainText('in a collection')
+  // other test runs share the dev user, so Kalypso may be in more shopping lists than these two
+  await expect(kalypso).toContainText(/in .+ and .+|in \d+ shopping lists/)
 
   // booth, price and publisher in both collections (FR-010)
-  await goTo(page, 'Collections')
+  await goTo(page, 'Buy', 'Shopping lists')
   for (const name of [essen, standard]) {
     await page.getByRole('link', { name: new RegExp(name) }).click()
     await expect(page.getByRole('button', { name: /^kalypso/i })).toContainText('Inside Up Games')
@@ -134,18 +142,18 @@ test('US2: load the SPIEL preview, browse and filter it, put a game into collect
   }
 
   // the list is remembered on the device; Done also removes what was unticked
-  await goTo(page, 'BGG lists')
+  await goTo(page, 'Lists', 'Previews')
   const card = page.getByRole('link', { name: /spiel essen 2026/i })
   await expect(card).toContainText('5 games')
   await expectAccessible(page)
   await card.click()
-  await kalypso.click()
+  await addKalypso.click()
   await expect(essenTick).toBeChecked()
   await expect(standardTick).toBeChecked()
   await standardTick.uncheck()
   await expect(sheet.getByText(/will be removed, including its mark/i)).toBeVisible()
   await sheet.getByRole('button', { name: 'Done' }).click()
-  await kalypso.click()
+  await addKalypso.click()
   await expect(essenTick).toBeChecked()
   await expect(standardTick).not.toBeChecked()
 })

@@ -63,7 +63,7 @@ const resync = (page: Page) => page.getByRole('button', { name: 'Resync with BGG
 /** The game's booth as its collection row shows it, then back to the list it was checked from. */
 async function expectBoothInCollection(page: Page, { collection, bgg }: { collection: string; bgg: Bgg }, booth: string) {
   const listUrl = page.url()
-  await goTo(page, 'Collections')
+  await goTo(page, 'Buy', 'Shopping lists')
   await page.getByRole('link', { name: new RegExp(collection) }).click()
   await expect(page.getByRole('button', { name: new RegExp(`^${bgg.gameName},`) })).toContainText(`Booth ${booth}`)
   await page.goto(listUrl)

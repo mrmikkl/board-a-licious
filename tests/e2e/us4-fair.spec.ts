@@ -1,12 +1,12 @@
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { chooseCategory, expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 async function createCollection(page: Page, name: string) {
-  await page.goto('/#/collections')
-  await page.goto('/#/collections?new')
+  await page.goto('/#/buy/lists')
+  await page.goto('/#/buy/lists?new')
   await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await page.getByRole('button', { name: 'Create shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 }
 
@@ -14,9 +14,9 @@ async function addMustHave(page: Page, collection: string, link: string, game: s
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(page.getByLabel(/^name$/i)).toHaveValue(game)
-  await page.getByRole('button', { name: 'Add to collection' }).click()
+  await page.getByRole('button', { name: 'Add to shopping list' }).click()
   await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
-  await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
+  await chooseCategory(page, /must have/i)
   // a tap changes the category in place; Escape closes the details, then open the game from its new group
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()

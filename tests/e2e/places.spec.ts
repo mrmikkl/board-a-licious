@@ -151,8 +151,10 @@ test('a Buy › Search result is a list game row with Add inside; it opens the g
 test('in a shopping list the game sheet has the folded Category, Prices and Copy/Move/Remove, no hexagon picker', async ({ page }) => {
   const name = unique('Sheet')
   const other = unique('Other')
-  await seedCollection(page, other, [{ bggId: 295947, name: 'Cascadia' }])
-  await seedCollection(page, name, [{ bggId: 295947, name: 'Cascadia', mark: 'interested' }])
+  // a game id of its own: other tests put Cascadia into many shopping lists of the shared dev user
+  const bggId = 8_000_000 + Math.floor(Math.random() * 900_000)
+  await seedCollection(page, other, [{ bggId, name: 'Cascadia' }])
+  await seedCollection(page, name, [{ bggId, name: 'Cascadia', mark: 'interested' }])
   await page.getByRole('button', { name: /^Cascadia/ }).first().click()
   const sheet = page.getByRole('dialog', { name: 'Cascadia' })
   await expect(sheet.getByRole('group', { name: 'Category' })).toHaveCount(0)
@@ -160,8 +162,8 @@ test('in a shopping list the game sheet has the folded Category, Prices and Copy
   await expect(category).toHaveAttribute('aria-expanded', 'false')
   await expect(category).toContainText('Interested')
   await expect(sheet.getByRole('button', { name: /Prices/ })).toHaveAttribute('aria-expanded', 'false')
-  await expect(sheet.getByRole('button', { name: 'Copy' })).toBeVisible()
-  await expect(sheet.getByRole('button', { name: 'Move' })).toBeVisible()
+  await expect(sheet.getByRole('button', { name: 'Copy', exact: true })).toBeVisible()
+  await expect(sheet.getByRole('button', { name: 'Move', exact: true })).toBeVisible()
   await expect(sheet.getByRole('button', { name: `Remove from ${name}` })).toBeVisible()
   await expect(sheet.getByRole('button', { name: 'Add to shopping lists' })).toHaveCount(0)
   // only the other shopping lists: "also in …"; it opens the shopping list choice
