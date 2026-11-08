@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  NO_STATUS, PRIORITY_NAMES, STATUS_KEYS, STATUS_NAMES, badges, counts, diff, fromBggFlags, hasAny, isSet, label, mergeCopies, statusList,
+  NO_STATUS, PRIORITY_NAMES, STATUS_KEYS, STATUS_NAMES, askAfterBought, badges, privateInfoFor, counts, diff, fromBggFlags, hasAny, isSet, label, mergeCopies, statusList,
 } from '../../src/domain/bgg-status.ts'
 import type { BggCollectionItem, Status } from '../../src/domain/bgg-status.ts'
 
@@ -148,5 +148,50 @@ describe('bgg-status', () => {
       expect(fromBggFlags({ ...BGG_OFF, wishlist: '1', wishlistpriority: undefined }).wishlist).toBe(3)
       expect(fromBggFlags({ ...BGG_OFF, wishlist: '0', wishlistpriority: '1' }).wishlist).toBeNull()
     })
+  })
+})
+
+describe('private info after buying (data-model "PrivateInfo")', () => {
+  const today = new Date(2026, 9, 24, 23, 30) // device date, local time
+  const price = { amount: 42.5, currency: 'EUR' }
+
+  it('sends the price, the day of buying and the SPIEL booth', () => {
+    expect(privateInfoFor({ pricePaid: price, booth: '3-A101', fromSpiel: true, offerShop: 'Spiele-Offensive' }, today)).toEqual({
+      pricePaid: price, acquisitionDate: '2026-10-24', acquiredFrom: 'SPIEL Essen 2026 · booth 3-A101',
+    })
+  })
+
+  it('pads the date', () => {
+    expect(privateInfoFor({}, new Date(2026, 0, 5)).acquisitionDate).toBe('2026-01-05')
+  })
+
+  it('omits an empty price', () => {
+    expect(privateInfoFor({}, today)).toEqual({ acquisitionDate: '2026-10-24' })
+    expect('pricePaid' in privateInfoFor({ pricePaid: undefined }, today)).toBe(false)
+  })
+
+  it('takes the offer\'s shop without a SPIEL booth, else omits it', () => {
+    expect(privateInfoFor({ booth: '3-A101', fromSpiel: false, offerShop: 'Fantasy In' }, today).acquiredFrom).toBe('Fantasy In')
+    expect(privateInfoFor({ booth: null, fromSpiel: true, offerShop: 'Fantasy In' }, today).acquiredFrom).toBe('Fantasy In')
+    expect(privateInfoFor({ booth: '', fromSpiel: true }, today)).toEqual({ acquisitionDate: '2026-10-24' })
+    expect(privateInfoFor({ offerShop: '  ' }, today)).toEqual({ acquisitionDate: '2026-10-24' })
+  })
+
+  it('keeps acquiredFrom to at most 100 characters', () => {
+    expect(privateInfoFor({ offerShop: 'x'.repeat(150) }, today).acquiredFrom).toHaveLength(100)
+    expect(privateInfoFor({ booth: 'B'.repeat(120), fromSpiel: true }, today).acquiredFrom!.length).toBe(100)
+  })
+})
+
+describe('asking after buying (FR-021)', () => {
+  it('offers marking as owned when not owned or unknown', () => {
+    expect(askAfterBought(status(), false)).toBe('markOwned')
+    expect(askAfterBought(status({ wishlist: 1 }), true)).toBe('markOwned')
+    expect(askAfterBought(undefined, false)).toBe('markOwned')
+  })
+
+  it('offers adding the price when owned and a price was entered, else nothing', () => {
+    expect(askAfterBought(status({ own: true }), true)).toBe('addPrice')
+    expect(askAfterBought(status({ own: true }), false)).toBeNull()
   })
 })
