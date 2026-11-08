@@ -21,13 +21,10 @@ export function PlaceTabs<P extends Place>({ place, label, tabs, current }: { pl
   const { store } = useServices()
   const refs = useRef<(HTMLButtonElement | null)[]>([])
   useEffect(() => {
-    let active = true
+    // not cancelled on unmount: leaving the place right after switching tabs must still remember the tab
     void store.metaOrDefault('lastTab').then(last => {
-      if (active && last[place] !== current) void store.setMeta('lastTab', { ...last, [place]: current })
+      if (last[place] !== current) void store.setMeta('lastTab', { ...last, [place]: current })
     })
-    return () => {
-      active = false
-    }
   }, [store, place, current])
 
   const go = (index: number) => {
