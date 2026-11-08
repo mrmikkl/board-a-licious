@@ -1,0 +1,8 @@
+{
+ "note": "NOT recorded (research R2): a plausible answer for a wrong username or password, built for the tests; the adapter treats every answer other than 204 with SessionID as rejected",
+ "response": {
+  "status": 401,
+  "contentType": "application/json",
+  "body": { "errors": { "message": "Invalid username or password" } }
+ }
+}
