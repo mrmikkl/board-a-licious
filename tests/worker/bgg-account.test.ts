@@ -195,3 +195,227 @@ describe('POST /api/bgg/account/signout (US3)', () => {
     expect(calls).toHaveLength(0)
   })
 })
+
+// ---------------------------------------------------------------------------------------------
+// Saving (US4, research R3 "Found in T001")
+
+const GAME = 425029
+const COLLID = '123456789'
+const STATUS_ANSWER = `<table cellspacing=1 cellpadding=1 width='100%' class='collectiontable_status'><tr><td>Owned</td></tr></table>`
+const NONE = { own: false, prevOwned: false, forTrade: false, wantInTrade: false, wantToBuy: false, wantToPlay: false, preordered: false, wishlist: null }
+
+const pairs = (form: string) => [...new URLSearchParams(form.trim())]
+const isRead = (c: Call) => c.url.pathname === '/xmlapi2/collection'
+const isWrite = (c: Call) => c.method === 'POST' && c.url.pathname === '/geekcollection.php'
+const fieldOf = (c: Call) => new URLSearchParams(c.body).get('fieldname')
+
+/**
+ * BGG for one game: the official API's item (`items` before the first status save, `after` from then on),
+ * the status save, the private info form and its save.
+ */
+function site(options: {
+  items?: string
+  after?: string
+  status?: (call: Call) => Response
+  editdata?: string
+  ownership?: (call: Call) => Response
+} = {}) {
+  let saved = false
+  return fakeBgg(call => {
+    if (isRead(call)) return new Response(saved ? (options.after ?? web('collection-item.xml')) : (options.items ?? web('collection-item.xml')), { headers: { 'Content-Type': 'text/xml' } })
+    if (call.url.pathname === '/geekcollection.php' && call.method === 'GET') return new Response(options.editdata ?? web('ownership-editdata.html'))
+    if (isWrite(call) && fieldOf(call) === 'status') {
+      const res = options.status?.(call) ?? new Response(STATUS_ANSWER)
+      if (res.ok) saved = true
+      return res
+    }
+    if (isWrite(call) && fieldOf(call) === 'ownership') return options.ownership?.(call) ?? new Response(web('save-ownership.html'))
+    throw new Error(`unexpected BGG call ${call.method} ${call.url}`)
+  })
+}
+
+/** The item as BGG has it, with some statuses set on the website. */
+const itemWith = (flags: string) => web('collection-item.xml').replace(/<status [^/]*\/>/, `<status ${flags} lastmodified="2026-11-08 05:12:44" />`)
+
+const save = async (body: unknown, over?: Partial<BggSession>) => withCookie(json(body), over)
+const path = `/api/bgg/account/collection/${GAME}`
+
+describe('POST /api/bgg/account/collection/<bggId>: statuses (US4, research R3)', () => {
+  it('reads the item through the official API (token, no cookies), then saves the whole status group as recorded', async () => {
+    const { bgg, calls } = site()
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true, wishlist: 2 } }))
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ bggId: GAME, status: { ...NONE, own: true, wishlist: 2 } })
+
+    expect(calls).toHaveLength(2)
+    const [read, write] = calls as [Call, Call]
+    expect(read.url.href).toBe(`https://boardgamegeek.com/xmlapi2/collection?username=anna&id=${GAME}`)
+    expect(read.headers.get('Authorization')).toBe('Bearer test-token')
+    expect(read.headers.get('Cookie')).toBeNull()
+
+    expect(write.url.href).toBe('https://boardgamegeek.com/geekcollection.php')
+    expect(write.headers.get('Content-Type')).toBe('application/x-www-form-urlencoded; charset=UTF-8')
+    expect(write.headers.get('Cookie')).toBe(`SessionID=${SESSION_ID}; bggusername=anna`)
+    expect(write.headers.get('Authorization')).toBeNull()
+    expect(pairs(write.body)).toEqual(pairs(web('save-status.form')))
+  })
+
+  it('merges only the sent keys: statuses set on the website meanwhile survive', async () => {
+    const { bgg, calls } = site({ items: itemWith('own="0" prevowned="0" fortrade="1" want="0" wanttoplay="1" wanttobuy="0" wishlist="1" wishlistpriority="4" preordered="0"') })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true } }))
+    expect(await res.json()).toEqual({ bggId: GAME, status: { ...NONE, own: true, forTrade: true, wantToPlay: true, wishlist: 4 } })
+    const form = new URLSearchParams(calls.find(isWrite)?.body)
+    expect([...form.keys()].filter(k => form.get(k) === '1' && k !== 'ajax')).toEqual(['own', 'fortrade', 'wanttoplay', 'wishlist'])
+    expect(form.get('wishlistpriority')).toBe('4')
+  })
+
+  it('unticks a status by leaving it out of the group', async () => {
+    const { bgg, calls } = site({ items: itemWith('own="1" prevowned="0" fortrade="0" want="0" wanttoplay="0" wanttobuy="0" wishlist="1" wishlistpriority="2" preordered="0"') })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { wishlist: null } }))
+    expect((await res.json()).status).toEqual({ ...NONE, own: true })
+    const form = new URLSearchParams(calls.find(isWrite)?.body)
+    expect(form.get('own')).toBe('1')
+    expect(form.has('wishlist')).toBe(false)
+  })
+
+  it('maps every key to BGG\'s field names (Want in trade = want)', async () => {
+    const all = { own: true, prevOwned: true, forTrade: true, wantInTrade: true, wantToPlay: true, wantToBuy: true, wishlist: 5, preordered: true }
+    const { bgg, calls } = site()
+    await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: all }))
+    const form = pairs(calls.find(isWrite)?.body ?? '')
+    expect(form.filter(([, v]) => v === '1').map(([k]) => k)).toEqual(['own', 'prevowned', 'fortrade', 'want', 'wanttoplay', 'wanttobuy', 'wishlist', 'preordered', 'ajax'])
+    expect(form).toContainEqual(['wishlistpriority', '5'])
+  })
+
+  it('adds a game not yet in the collection with an empty collid, as recorded', async () => {
+    const { bgg, calls } = site({ items: web('collection-item-none.xml') })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true } }))
+    expect(res.status).toBe(200)
+    expect((await res.json()).status).toEqual({ ...NONE, own: true })
+    // not in the games: also looked for among the expansions
+    expect(calls.filter(isRead).map(c => c.url.search)).toEqual([`?username=anna&id=${GAME}`, `?username=anna&id=${GAME}&subtype=boardgameexpansion`])
+    expect(pairs(calls.find(isWrite)?.body ?? '')).toEqual(pairs(web('save-status-new.form')))
+  })
+
+  it('writes nothing when the change is what BGG already has', async () => {
+    const { bgg, calls } = site({ items: itemWith('own="1" prevowned="0" fortrade="0" want="0" wanttoplay="0" wanttobuy="0" wishlist="0" preordered="0"') })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true } }))
+    expect(res.status).toBe(200)
+    expect(calls.filter(isWrite)).toHaveLength(0)
+  })
+
+  it('never sends a delete and only ever saves (one read, one write per call); nothing is cached', async () => {
+    const { bgg, calls } = site()
+    const app = testApp(db, { bgg, env: ENV, now: NOW })
+    await app(path, await save({ status: { own: true } }))
+    await app(path, await save({ status: { wishlist: 3 } }))
+    expect(calls.filter(isRead)).toHaveLength(2)
+    expect(calls.filter(isWrite)).toHaveLength(2)
+    for (const call of calls.filter(c => c.url.pathname === '/geekcollection.php')) {
+      expect(new URLSearchParams(call.body || call.url.search).get('action')).toMatch(/^(savedata|editdata)$/)
+      expect(`${call.url}${call.body}`).not.toMatch(/delete/i)
+    }
+  })
+
+  it.each([
+    ['no status and no privateInfo', {}],
+    ['an empty status', { status: {} }],
+    ['an unknown key', { status: { owned: true } }],
+    ['an unknown top-level key', { status: { own: true }, user: 'bert' }],
+    ['a non-boolean flag', { status: { own: 'yes' } }],
+    ['priority 0', { status: { wishlist: 0 } }],
+    ['priority 6', { status: { wishlist: 6 } }],
+    ['priority 2.5', { status: { wishlist: 2.5 } }],
+    ['priority as text', { status: { wishlist: '2' } }],
+  ])('answers 400 for %s without asking BGG', async (_, body) => {
+    const { bgg, calls } = site()
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save(body))
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toBe('bad_request')
+    expect(calls).toHaveLength(0)
+  })
+
+  it.each(['0', 'abc', '-1'])('answers 400 for the game id %s', async id => {
+    const { bgg, calls } = site()
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(`/api/bgg/account/collection/${id}`, await save({ status: { own: true } }))
+    expect(res.status).toBe(400)
+    expect(calls).toHaveLength(0)
+  })
+
+  it('answers 401 bgg_signed_out without a cookie, asking nobody', async () => {
+    const { bgg, calls } = site()
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, json({ status: { own: true } }))
+    expect(res.status).toBe(401)
+    expect((await res.json()).error).toBe('bgg_signed_out')
+    expect(calls).toHaveLength(0)
+  })
+
+  it('answers 401 and clears a cookie sealed for another person', async () => {
+    const { bgg, calls } = site()
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true } }, { email: 'bert@example.com' }))
+    expect(res.status).toBe(401)
+    expect(cookieOf(res)).toMatch(/^bal_bgg=; .*Max-Age=0$/)
+    expect(calls).toHaveLength(0)
+  })
+
+  it.each([
+    ['a redirect to the login page', () => new Response(null, { status: 302, headers: { Location: 'https://boardgamegeek.com/login?redirect_server=1' } })],
+    ['401', () => new Response('', { status: 401 })],
+    ['403', () => new Response('', { status: 403 })],
+  ])('answers 401 bgg_signed_out and clears the cookie when BGG answers the save with %s', async (_, status) => {
+    const { bgg } = site({ status })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true } }))
+    expect(res.status).toBe(401)
+    expect((await res.json()).error).toBe('bgg_signed_out')
+    expect(cookieOf(res)).toMatch(/^bal_bgg=; .*Max-Age=0$/)
+  })
+
+  it.each([
+    ['500', () => new Response('oops', { status: 500 })],
+    ['another redirect', () => new Response(null, { status: 302, headers: { Location: 'https://boardgamegeek.com/' } })],
+  ])('answers 502 bgg_refused when BGG answers the save with %s', async (_, status) => {
+    const { bgg } = site({ status })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true } }))
+    expect(res.status).toBe(502)
+    expect(await res.json()).toEqual({ error: 'bgg_refused', message: 'BoardGameGeek did not take the change.', retryable: true })
+    expect(res.headers.get('Set-Cookie')).toBeNull()
+  })
+
+  it('answers 502 bgg_refused when a new game still has no collid after saving', async () => {
+    const { bgg } = site({ items: web('collection-item-none.xml'), after: web('collection-item-none.xml') })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true }, privateInfo: { pricePaid: { amount: 45, currency: 'EUR' } } }))
+    expect(res.status).toBe(502)
+    expect((await res.json()).error).toBe('bgg_refused')
+  })
+
+  it('never logs the session or answers with it', async () => {
+    for (const status of [undefined, () => new Response('oops', { status: 500 }), () => Promise.reject(new Error('down'))] as const) {
+      const { bgg } = site({ status: status as ((call: Call) => Response) | undefined })
+      const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true } }))
+      await noSecrets(res)
+    }
+  })
+})
+
+describe('BGG account writes share the throttle slot (ADR 0009)', () => {
+  it('waits a second between the item read and the save', async () => {
+    const { createBgg } = await import('../../worker/bgg/routing.ts')
+    const { memoryCache } = await import('../../worker/bgg/cache.ts')
+    let t = 0
+    const times: number[] = []
+    const { bgg } = site()
+    const { account } = createBgg({
+      fetch: async (input, init) => {
+        times.push(t)
+        return bgg(new URL(String(input)), init)
+      },
+      cache: memoryCache(() => t),
+      now: () => t,
+      sleep: async ms => void (t += ms),
+      token: 'test-token',
+      log: () => {},
+    })
+    await account.save({ bggUser: 'anna', cookies: `SessionID=${SESSION_ID}` }, GAME, { status: { own: true } })
+    expect(times).toEqual([0, 1000])
+  })
+})
