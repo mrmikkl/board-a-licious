@@ -348,6 +348,9 @@ export async function keepBggSettingsLocal(page: Page) {
         const body = request.postDataJSON() as Record<string, unknown>
         delete body.settings
         delete body.follows
+        // nothing else in it: the server would refuse an empty push, so it is answered here
+        const empty = ['collections', 'entries', 'lists'].every(key => !Array.isArray(body[key]) || (body[key] as unknown[]).length === 0)
+        if (empty) return await route.fulfill({ json: { applied: 0, ignored: 0 } })
         return await route.continue({ postData: JSON.stringify(body) })
       }
       const response = await route.fetch()
