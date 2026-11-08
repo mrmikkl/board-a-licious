@@ -22,7 +22,7 @@
   - **Rating** "BGG average" and **Geek rating**: a **two-handle slider** each (owner, 2026-11-08):
     one track 0–10 in steps of 0.1, the range between the handles filled hot, hexagon handles
     (26×30 px, 44 px tall touch row), the chosen range at the right of the title ("7.5 – 10.0", "any"
-    at full width), a muted scale 0 · 5 · 10 below. Each handle is its own slider for screen readers
+    at full width), a muted scale with every whole number 0 … 10 below, each under its tick. Each handle is its own slider for screen readers
     and keys ("Rating from", "Rating to"); the handles cannot cross. **Whole numbers stick**
     (owner, 2026-11-08): while dragging, a handle within 0.2 of a whole number rests on it (6.85 →
     7.0, 6.6 stays 6.6); arrow keys still step by 0.1. Small tick marks on the track at every whole

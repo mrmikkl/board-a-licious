@@ -2531,7 +2531,8 @@ body:has(.actionbar) .toast {
 .slider input::-moz-range-thumb { pointer-events: auto; width: 26px; height: 30px; border: 0; border-radius: 0; clip-path: var(--hex); background: var(--grad-hot); cursor: grab; }
 .slider input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--orange); outline-offset: 2px; }
 .slider .ticks { position: absolute; left: 0; right: 0; top: 17px; height: 10px; background: repeating-linear-gradient(to right, var(--muted) 0 1px, transparent 1px 10%); background-size: calc(100% + 1px) 100%; opacity: 0.5; pointer-events: none; }
-.slider-scale { display: flex; justify-content: space-between; margin: 0 0 0; font-size: 11px; color: var(--muted); }
+.slider-scale { position: relative; height: 14px; margin: 0 10px; font-size: 11px; color: var(--muted); }
+.slider-scale span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 .f-head .val { margin-left: auto; font: 700 14px var(--font-display, var(--font-body)); color: var(--text); }
 .seg.players { grid-auto-columns: auto; grid-template-columns: 0.7fr 1fr 1.5fr; }
 .sheet-head { display: flex; align-items: center; gap: 8px; }
@@ -2706,7 +2707,7 @@ function slider(title, note, key, from, to) {
     <div class="slider"><span class="track"></span><span class="ticks"></span><span class="fill" style="left:${pct(from)}%;right:${100 - pct(to)}%"></span>
       <input type="range" min="0" max="10" step="0.1" value="${from}" data-rng="${key}From" aria-label="${title} from" aria-valuetext="${fmt(from)}">
       <input type="range" min="0" max="10" step="0.1" value="${to}" data-rng="${key}To" aria-label="${title} to" aria-valuetext="${fmt(to)}"></div>
-    <div class="slider-scale" aria-hidden="true"><span>0</span><span>5</span><span>10</span></div></section>`
+    <div class="slider-scale" aria-hidden="true">${Array.from({ length: 11 }, (_, n) => `<span style="left:${n * 10}%">${n}</span>`).join('')}</div></section>`
 }
 function sheetHTML() {
   const f = filt(), all = games(), kn = all.filter(known)
