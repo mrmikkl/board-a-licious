@@ -419,3 +419,185 @@ describe('BGG account writes share the throttle slot (ADR 0009)', () => {
     expect(times).toEqual([0, 1000])
   })
 })
+
+// ---------------------------------------------------------------------------------------------
+// Private info and price conflict (US5, research R3)
+
+const OWNED = itemWith('own="1" prevowned="0" fortrade="0" want="0" wanttoplay="0" wanttobuy="0" wishlist="0" preordered="0"')
+const isEditRead = (c: Call) => c.method === 'GET' && c.url.pathname === '/geekcollection.php'
+const ownershipWrite = (calls: Call[]) => calls.find(c => isWrite(c) && fieldOf(c) === 'ownership')
+
+/** The recorded private info form (EUR 45) with other values: price, and every field BGG must keep. */
+function editdata(over: { price?: string; currency?: string; keep?: boolean } = {}) {
+  let html = web('ownership-editdata.html')
+  if (over.price !== undefined) html = html.replace("name='pricepaid' id='pricepaid' value='45'", `name='pricepaid' id='pricepaid' value='${over.price}'`)
+  if (over.currency !== undefined) {
+    html = html.replace('<option SELECTED value=\'EUR\'>', "<option  value='EUR'>")
+    if (over.currency) html = html.replace(`<option  value='${over.currency}'>`, `<option SELECTED value='${over.currency}'>`)
+  }
+  if (over.keep) {
+    html = html
+      .replace("<option  value='USD'>USD $</option>\n\t\t\t\t\t\t<option  value='EUR'>EUR &euro;</option>\n\t\t\t\t\t\t<option  value='GBP'>", "<option SELECTED value='USD'>USD $</option>\n\t\t\t\t\t\t<option  value='EUR'>EUR &euro;</option>\n\t\t\t\t\t\t<option  value='GBP'>")
+      .replace("name='currvalue' id='currvalue' value=''", "name='currvalue' id='currvalue' value='50'")
+      .replace("id='quantity123456789' value=''", "id='quantity123456789' value='2'")
+      .replace("<textarea style='width:100%' name='privatecomment' id='privatecomment221'></textarea>", "<textarea style='width:100%' name='privatecomment' id='privatecomment221'>Signed by the author &amp; &quot;co&quot;\nline 2</textarea>")
+      .replace("name='invdate' id='invdate221' value=''", "name='invdate' id='invdate221' value='2026-01-02'")
+      .replace("id='invdateinput221' value=''", "id='invdateinput221' value='2026-01-02'")
+      .replace("name='invlocation' value=''", "name='invlocation' value='Shelf &#39;3&#39;'")
+      .replace("name='acquiredfrom' value=''", "name='acquiredfrom' value='Old shop'")
+  }
+  return html
+}
+
+const PRICE = { amount: 45, currency: 'EUR' }
+const BOOTH = 'SPIEL Essen 2026 · booth 3-A101'
+
+describe('POST /api/bgg/account/collection/<bggId>: private info (US5, research R3)', () => {
+  it('reads the private info form, then sends every field back with price, currency and date as recorded', async () => {
+    const { bgg, calls } = site({ items: OWNED })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE, acquisitionDate: '2026-11-08' } }))
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ bggId: GAME, status: { ...NONE, own: true } })
+
+    // read the item, read the form, write the form: no status write (nothing changed)
+    expect(calls.map(c => (isRead(c) ? 'read' : isEditRead(c) ? 'form' : fieldOf(c)))).toEqual(['read', 'form', 'ownership'])
+    const form = calls.find(isEditRead)!
+    const recorded = new URL(web('ownership-editdata.url').trim())
+    expect(form.url.origin + form.url.pathname).toBe(recorded.origin + recorded.pathname)
+    for (const key of ['collid', 'fieldname', 'objecttype', 'objectid', 'ajax', 'action']) expect(form.url.searchParams.get(key)).toBe(recorded.searchParams.get(key))
+    expect(form.headers.get('Cookie')).toBe(`SessionID=${SESSION_ID}; bggusername=anna`)
+    expect(form.headers.get('Authorization')).toBeNull()
+
+    const write = ownershipWrite(calls)!
+    expect(write.headers.get('Cookie')).toBe(`SessionID=${SESSION_ID}; bggusername=anna`)
+    expect(write.headers.get('Authorization')).toBeNull()
+    expect(pairs(write.body)).toEqual(pairs(web('save-ownership.form')))
+  })
+
+  it('keeps every other field BGG holds (current value, quantity, comment, inventory) and sets acquired from', async () => {
+    const { bgg, calls } = site({ items: OWNED, editdata: editdata({ price: '', currency: '', keep: true }) })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE, acquisitionDate: '2026-11-08', acquiredFrom: BOOTH } }))
+    expect(res.status).toBe(200)
+    expect(pairs(ownershipWrite(calls)!.body)).toEqual([
+      ['fieldname', 'ownership'], ['collid', COLLID], ['objecttype', 'thing'], ['objectid', String(GAME)],
+      ['pricepaid', '45'], ['currvalue', '50'], ['quantity', '2'], ['acquisitiondate', '2026-11-08'], ['dateinput', '2026-11-08'],
+      ['acquiredfrom', BOOTH], ['invdate', '2026-01-02'], ['dateinput', '2026-01-02'], ['invlocation', "Shelf '3'"], ['B1', 'Cancel'],
+      ['pp_currency', 'EUR'], ['cv_currency', 'USD'], ['privatecomment', 'Signed by the author & "co"\nline 2'], ['ajax', '1'], ['action', 'savedata'],
+    ])
+  })
+
+  it('without a price or date in the request keeps BGG\'s price and date', async () => {
+    const { bgg, calls } = site({ items: OWNED, editdata: editdata({ price: '39.99' }) })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { acquiredFrom: 'Spiel booth' } }))
+    expect(res.status).toBe(200)
+    const form = new URLSearchParams(ownershipWrite(calls)!.body)
+    expect(form.get('pricepaid')).toBe('39.99')
+    expect(form.get('pp_currency')).toBe('EUR')
+    expect(form.get('acquiredfrom')).toBe('Spiel booth')
+  })
+
+  it('the same price BGG holds (also written as 45.00) is no conflict', async () => {
+    const { bgg, calls } = site({ items: OWNED, editdata: editdata({ price: '45.00' }) })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE } }))
+    expect(res.status).toBe(200)
+    expect(ownershipWrite(calls)).toBeDefined()
+  })
+
+  it.each([
+    ['another amount', { price: '39.99' }, { amount: 39.99, currency: 'EUR' }],
+    ['another currency', { currency: 'USD' }, { amount: 45, currency: 'USD' }],
+  ])('BGG holding %s without replacePrice: 409 price_conflict with the current price, nothing written', async (_, over, current) => {
+    const { bgg, calls } = site({ items: OWNED, editdata: editdata(over) })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { wishlist: 2 }, privateInfo: { pricePaid: PRICE } }))
+    expect(res.status).toBe(409)
+    expect(await res.json()).toMatchObject({ error: 'price_conflict', retryable: false, current })
+    expect(calls.filter(isWrite)).toHaveLength(0)
+  })
+
+  it('replacePrice false: writes the status but keeps BGG\'s private info', async () => {
+    const { bgg, calls } = site({ items: itemWith('own="0" prevowned="0" fortrade="0" want="0" wanttoplay="0" wanttobuy="0" wishlist="0" preordered="0"'), editdata: editdata({ price: '39.99' }) })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true }, privateInfo: { pricePaid: PRICE, acquisitionDate: '2026-11-08' }, replacePrice: false }))
+    expect(res.status).toBe(200)
+    expect((await res.json()).status.own).toBe(true)
+    expect(calls.filter(isWrite).map(fieldOf)).toEqual(['status'])
+  })
+
+  it('replacePrice true: replaces BGG\'s price', async () => {
+    const { bgg, calls } = site({ items: OWNED, editdata: editdata({ price: '39.99' }) })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE, acquisitionDate: '2026-11-08' }, replacePrice: true }))
+    expect(res.status).toBe(200)
+    expect(pairs(ownershipWrite(calls)!.body)).toEqual(pairs(web('save-ownership.form')))
+  })
+
+  it('marks a game not in the collection as owned: status save with empty collid, collid read back, then the private info', async () => {
+    const { bgg, calls } = site({ items: web('collection-item-none.xml'), after: web('collection-item.xml') })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ status: { own: true }, privateInfo: { pricePaid: PRICE, acquisitionDate: '2026-11-08' } }))
+    expect(res.status).toBe(200)
+    expect((await res.json()).status).toEqual({ ...NONE, own: true })
+    expect(calls.map(c => (isRead(c) ? 'read' : isEditRead(c) ? 'form' : fieldOf(c)))).toEqual(['read', 'read', 'status', 'read', 'ownership'])
+    expect(pairs(calls.find(c => isWrite(c) && fieldOf(c) === 'status')!.body)).toEqual(pairs(web('save-status-new.form')))
+    // a new item has no private info yet: every other field empty
+    expect(pairs(ownershipWrite(calls)!.body)).toEqual(pairs(web('save-ownership.form')))
+  })
+
+  it('answers 502 bgg_refused when BGG\'s answer does not show the price sent', async () => {
+    const { bgg } = site({ items: OWNED, ownership: () => new Response("<table class='collectiontable_ownership'></table>") })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE } }))
+    expect(res.status).toBe(502)
+    expect((await res.json()).error).toBe('bgg_refused')
+  })
+
+  it('accepts the recorded answer for a price alone', async () => {
+    const { bgg } = site({ items: OWNED, ownership: () => new Response(web('save-ownership-price.html')) })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE } }))
+    expect(res.status).toBe(200)
+  })
+
+  it('answers 502 bgg_refused when the private info form is missing from BGG\'s answer', async () => {
+    const { bgg, calls } = site({ items: OWNED, editdata: '<div>Something else</div>' })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE } }))
+    expect(res.status).toBe(502)
+    expect(calls.filter(isWrite)).toHaveLength(0)
+  })
+
+  it('answers 401 and clears the cookie when reading the form meets an expired session', async () => {
+    const { bgg } = fakeBgg(call =>
+      isRead(call) ? new Response(OWNED) : new Response(null, { status: 302, headers: { Location: '/login?redirect_server=1' } }),
+    )
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE } }))
+    expect(res.status).toBe(401)
+    expect(cookieOf(res)).toMatch(/^bal_bgg=; .*Max-Age=0$/)
+  })
+
+  it.each([
+    ['price 0', { pricePaid: { amount: 0, currency: 'EUR' } }],
+    ['a negative price', { pricePaid: { amount: -1, currency: 'EUR' } }],
+    ['a price over 10000', { pricePaid: { amount: 10000.01, currency: 'EUR' } }],
+    ['a price as text', { pricePaid: { amount: '45', currency: 'EUR' } }],
+    ['a currency BGG does not offer', { pricePaid: { amount: 45, currency: 'CHF' } }],
+    ['no currency', { pricePaid: { amount: 45 } }],
+    ['a date not YYYY-MM-DD', { acquisitionDate: '08.11.2026' }],
+    ['an impossible date', { acquisitionDate: '2026-13-01' }],
+    ['acquiredFrom over 100 characters', { acquiredFrom: 'x'.repeat(101) }],
+    ['an unknown key', { comment: 'hi' }],
+    ['no field at all', {}],
+  ])('answers 400 for %s without asking BGG', async (_, privateInfo) => {
+    const { bgg, calls } = site({ items: OWNED })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo }))
+    expect(res.status).toBe(400)
+    expect(calls).toHaveLength(0)
+  })
+
+  it('answers 400 for a replacePrice that is not true or false', async () => {
+    const { bgg, calls } = site({ items: OWNED })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { pricePaid: PRICE }, replacePrice: 'yes' }))
+    expect(res.status).toBe(400)
+    expect(calls).toHaveLength(0)
+  })
+
+  it('accepts acquiredFrom of exactly 100 characters', async () => {
+    const { bgg } = site({ items: OWNED })
+    const res = await testApp(db, { bgg, env: ENV, now: NOW })(path, await save({ privateInfo: { acquiredFrom: 'x'.repeat(100) } }))
+    expect(res.status).toBe(200)
+  })
+})
