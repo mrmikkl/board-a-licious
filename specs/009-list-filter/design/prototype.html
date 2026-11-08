@@ -2524,6 +2524,10 @@ body:has(.actionbar) .toast {
 .len-row .field { margin: 0; }
 .len-row .field input { text-align: right; }
 .actionbar.no-main { grid-template-columns: 1fr 1fr 1fr; }
+/* design rules 3.3.0: the main button carries a short label under it, like the screen's own actions */
+.main-wrap { grid-column: 3; grid-row: 1; justify-self: center; display: grid; justify-items: center; gap: 3px; margin-top: -26px; }
+.main-wrap .main-btn { grid-column: auto; grid-row: auto; margin-top: 0; }
+.main-label { font: 700 11px var(--font-body); color: var(--text); }
 </style>
 </head>
 <body>
@@ -2633,7 +2637,7 @@ function listScreen() {
     ${shown.length ? `<ul class="rows">${shown.map(row).join('')}</ul>` : '<p class="lead">No game on this list matches.</p>'}
     <p class="proto-note">${S.list === 'preview' ? 'Open Filter: the app reads the missing details from BGG in batches (about one request per second for up to 20 games) and fills the sections as they arrive.' : 'Details are on the device already: Filter works at once, also offline.'}</p>
   </main>
-  <nav class="actionbar${L.own ? '' : ' no-main'}" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div>${L.own ? `<button type="button" class="main-btn hex hex-btn" aria-label="Add a game to Owned">${ICON.plus}</button>` : ''}<div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
+  <nav class="actionbar${L.own ? '' : ' no-main'}" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div>${L.own ? `<div class="main-wrap"><button type="button" class="main-btn hex hex-btn" aria-label="Add a game to Owned" aria-describedby="main-l">${ICON.plus}</button><span class="main-label" id="main-l" aria-hidden="true">Add game</span></div>` : ''}<div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
 }
 
 function shopScreen() {
@@ -2644,8 +2648,9 @@ function shopScreen() {
     ${!isDefault(f) ? `<p class="count-line" role="status"><span><b>${shown.length}</b> of ${all.length} games</span><button type="button" class="link-btn" data-act="clear">Clear filters</button></p>` : ''}
     <hr class="separator" />${groups || '<p class="lead">No game matches the filter.</p>'}
     <p class="proto-note">A shopping list as today (rows simplified here). “Filter and group” gains the new sections below the existing ones.</p>
+    <p class="proto-note">New for every main button: a short label under it, like the actions beside it: Tinder (shopping list), New list (Buy › Shopping lists), Load list (Lists), Add game (own status list).</p>
   </main>
-  <nav class="actionbar" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div><button type="button" class="main-btn hex hex-btn" aria-label="BG-Tinder">${ICON.heart}</button><div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
+  <nav class="actionbar" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div><div class="main-wrap"><button type="button" class="main-btn hex hex-btn" aria-label="BG-Tinder: swipe a BGG list into this shopping list">${ICON.heart}</button><span class="main-label" aria-hidden="true">Tinder</span></div><div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
 }
 
 function configScreen() {
