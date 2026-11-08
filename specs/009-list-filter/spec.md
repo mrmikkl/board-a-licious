@@ -29,7 +29,7 @@ category, bought, price and BGG status.
 | **BGG list** | a list in the Lists place: a status list (own or a friend's), a preview or a geeklist |
 | **Game length** | BoardGameGeek's playing time of a game, in minutes |
 | **Length ranges** | four named ranges of game length (Short, Middle, Long, Very long) whose limits the person sets in Config |
-| **Best for n** / **Recommended for n** | BoardGameGeek's player poll: the player count most voters call best, or call recommended (best counts as recommended) |
+| **Best with n** / **Recommended with n** | BoardGameGeek's player poll for n players: most voters call it Best, or (not best) Recommended |
 | **Rating** / **Geek rating** | BoardGameGeek's average rating and its Bayes average, 0–10 |
 
 ## Clarifications
@@ -62,9 +62,9 @@ Length "Middle": only cooperative games of 31–60 minutes remain, the count rea
    **Then** the list at once shows only games with that mechanism and the count "n of N games".
 3. **Given** Length with the defaults, **When** the person ticks Short and Middle, **Then** games of
    0–60 minutes remain; games without a known length do not.
-4. **Given** Players, **When** the person picks "Best for 3", **Then** only games whose player poll
-   names 3 as best remain; **When** they pick "Recommended for 3" instead, games where 3 is best or
-   recommended remain.
+4. **Given** Players, **When** the person picks 4, **Then** games that are best or recommended with
+   4 players remain (both kinds ticked by default); **When** they untick Recommended, only games best
+   with 4 remain; tapping 4 again shows every game.
 5. **Given** several sections set, **Then** a game must match every set section (Length and Players
    and Mechanisms …); inside Length several ticked ranges widen the choice.
 6. **Given** a filter is set, **Then** the Filter action shows it is active, the name filter still
@@ -180,8 +180,9 @@ games remain, together with the existing Category and Bought filters.
 
 - **FR-001**: Every BGG list (own and friends' status lists, previews, geeklists) MUST offer a
   **Filter** action that opens a "Filter" sheet; the name filter stays on the screen.
-- **FR-002**: The sheet MUST offer Length (the four ranges, multi-choice), Players (one choice:
-  any, Best for n, Recommended for n, with n from 1 to the largest count in the list's polls),
+- **FR-002**: The sheet MUST offer Length (the four ranges, multi-choice), Players (a number n
+  from 1 to the largest count in the list's polls, none = any, and the kinds Best and Recommended,
+  both ticked by default: the game must be best or recommended with n players),
   Rating (from–to, 0–10, steps of 0.5), Geek rating (the same), Mechanisms and Designers
   (multi-choice from the values in the list, each with its count).
 - **FR-003**: Sections MUST combine with AND; values inside Length MUST combine with OR; values

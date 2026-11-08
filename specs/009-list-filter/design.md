@@ -16,9 +16,11 @@
   - **Length** "any ticked one": four chips "Short · 0–30 min", "Middle · 31–60 min",
     "Long · 61–120 min", "Very long · 121+ min", each with its count; ticked chips are filled hot.
     A muted line names games without a length.
-  - **Players** "BGG's player poll": segment Any | Best for | Recommended; with Best for or
-    Recommended, number chips 1 … the largest count in the list's polls (at least 6), one chosen
-    (default 3), and a muted line "7 games best for 2" / "… recommended for 3 (best counts too)".
+  - **Players** "BGG's player poll" (owner, 2026-11-08): number chips 1 … the largest count in the
+    list's polls (at least 6), none chosen = any; a tap on the chosen number clears it. With a number,
+    two chips **Best** and **Recommended** (with counts), both ticked by default: the game must be
+    best or recommended with that many players; unticking one narrows to the other (one stays
+    ticked). A muted line "7 games best or recommended with 4 players".
   - **Rating** "BGG average" and **Geek rating**: a **two-handle slider** each (owner, 2026-11-08):
     one track 0–10 in steps of 0.1, the range between the handles filled hot, hexagon handles
     (26×30 px, 44 px tall touch row), the chosen range at the right of the title ("7.5 – 10.0", "any"
