@@ -343,18 +343,22 @@ export async function fakeBggAccount(
 export async function keepBggSettingsLocal(page: Page) {
   await page.route('**/api/sync**', async route => {
     const request = route.request()
-    if (request.method() === 'POST') {
-      const body = request.postDataJSON() as Record<string, unknown>
-      delete body.settings
-      delete body.follows
-      return route.continue({ postData: JSON.stringify(body) })
+    try {
+      if (request.method() === 'POST') {
+        const body = request.postDataJSON() as Record<string, unknown>
+        delete body.settings
+        delete body.follows
+        return await route.continue({ postData: JSON.stringify(body) })
+      }
+      const response = await route.fetch()
+      if (!response.ok()) return await route.fulfill({ response })
+      const json = (await response.json()) as Record<string, unknown>
+      delete json.settings
+      delete json.follows
+      await route.fulfill({ response, json })
+    } catch {
+      // the test ended while the request was on its way
     }
-    const response = await route.fetch()
-    if (!response.ok()) return route.fulfill({ response })
-    const json = (await response.json()) as Record<string, unknown>
-    delete json.settings
-    delete json.follows
-    await route.fulfill({ response, json })
   })
 }
 
