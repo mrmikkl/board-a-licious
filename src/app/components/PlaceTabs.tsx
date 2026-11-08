@@ -31,8 +31,10 @@ export function PlaceTabs<P extends Place>({ place, label, tabs, current }: { pl
   }, [store, place, current])
 
   const go = (index: number) => {
-    const tab = tabs[(index + tabs.length) % tabs.length]
-    refs.current[(index + tabs.length) % tabs.length]?.focus()
+    const to = (index + tabs.length) % tabs.length
+    const tab = tabs[to]
+    if (!tab) return
+    refs.current[to]?.focus()
     navigate(tab.route)
   }
   const onKey = (event: KeyboardEvent, index: number) => {
