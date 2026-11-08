@@ -2534,6 +2534,10 @@ body:has(.actionbar) .toast {
 .slider-scale { position: relative; height: 14px; margin: 0 10px; font-size: 11px; color: var(--muted); }
 .slider-scale span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 .f-head .val { margin-left: auto; font: 700 14px var(--font-display, var(--font-body)); color: var(--text); }
+.chips.counts { flex-wrap: nowrap; gap: 2px; justify-content: space-between; }
+.num-field { width: 52px; min-height: 44px; margin: 0; padding: 0 6px; border-radius: 22px; }
+.num-field input { text-align: center; font-weight: 700; }
+.num-field.is-set { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
 .seg.players { grid-auto-columns: auto; grid-template-columns: 0.7fr 1fr 1.5fr; }
 .sheet-head { display: flex; align-items: center; gap: 8px; }
 .sheet-head .sheet-title { flex: 1; }
@@ -2716,8 +2720,7 @@ function sheetHTML() {
   const missing = k => all.filter(g => known(g) && (k === 'len' ? g.len == null : k === 'r' ? g.r == null : g.best.length === 0)).length
   const reading = S.reading < all.length && S.list === 'preview'
   const lenCount = i => kn.filter(g => lenOf(g) === i).length
-  const maxN = Math.max(6, ...kn.flatMap(g => g.rec))
-  const shop = S.list === 'shop'
+    const shop = S.list === 'shop'
   const shopPart = shop ? `<p class="seg-title">Bought</p><div class="seg" role="group" aria-label="Bought"><button type="button" aria-pressed="true">All</button><button type="button">Not bought</button><button type="button">Bought</button></div>
     <p class="seg-title">Price</p><div class="seg" role="group" aria-label="Price"><button type="button" aria-pressed="true">All</button><button type="button">≤ €30</button><button type="button">€30–60</button><button type="button">&gt; €60</button></div>
     <p class="seg-title">BGG status</p><div class="seg" role="group" aria-label="BGG status"><button type="button" aria-pressed="true">All</button><button type="button">Owned</button><button type="button">Not owned</button><button type="button">Wishlist</button></div>
@@ -2731,9 +2734,9 @@ function sheetHTML() {
     ${missing('len') ? `<p class="missing">${missing('len')} game has no length on BoardGameGeek.</p>` : ''}
   </section>
   <section class="f-sec"><div class="f-head"><h3>Players</h3><small>BGG's player poll</small></div>
-    <div class="chips" role="group" aria-label="Number of players">${Array.from({ length: maxN }, (_, i) => i + 1).map(n => `<button type="button" class="chip num" data-act="pn" data-n="${n}" aria-pressed="${f.pn === n}">${n}</button>`).join('')}</div>
+    <div class="chips counts" role="group" aria-label="Number of players">${[1, 2, 3, 4, 5, 6].map(n => `<button type="button" class="chip num" data-act="pn" data-n="${n}" aria-pressed="${f.pn === n}">${n}</button>`).join('')}<label class="field num-field${f.pn > 6 ? ' is-set' : ''}"><span class="visually-hidden">Other number of players</span><input id="pn-other" inputmode="numeric" maxlength="2" placeholder="7+" value="${f.pn > 6 ? f.pn : ''}"></label></div>
     ${f.pn != null ? `<div class="chips" role="group" aria-label="With ${f.pn} players the game is" style="margin-top:8px">${[['best', 'Best'], ['rec', 'Recommended']].map(([k, l]) => `<button type="button" class="chip" data-act="pkind" data-k="${k}" aria-pressed="${f.pkinds.has(k)}">${l}<small>${kn.filter(g => pollOf(g, f.pn) === k).length}</small></button>`).join('')}</div>
-    <p class="missing">${kn.filter(g => playersMatch(g, f)).length} games ${[...f.pkinds].map(k => k === 'best' ? 'best' : 'recommended').join(' or ') || '…'} with ${f.pn} players. Tap the number again for any.</p>` : '<p class="missing">Pick a number of players.</p>'}
+    <p class="missing">${kn.filter(g => playersMatch(g, f)).length} games ${[...f.pkinds].map(k => k === 'best' ? 'best' : 'recommended').join(' or ') || '…'} with ${f.pn} players. ${f.pn > 6 ? 'Clear the field' : 'Tap the number again'} for any.</p>` : '<p class="missing">Pick a number of players.</p>'}
   </section>
   ${slider('Rating', 'BGG average', 'r', f.rFrom, f.rTo)}
   ${slider('Geek rating', '', 'g', f.gFrom, f.gTo)}
@@ -2796,6 +2799,14 @@ document.addEventListener('pointerup', () => { S.dragging = false })
 document.addEventListener('input', e => {
   const t = e.target
   if (t.id === 'q') { S.q = t.value; return render() }
+  if (t.id === 'pn-other') {
+    // a typed number replaces the chips; 1–6 lights up its chip, empty means any
+    const n = parseInt(t.value, 10), f = filt()
+    f.pn = n >= 1 && n <= 99 ? n : null
+    refreshSheet(); render()
+    const i = $('#pn-other'); if (i) { if (n >= 1 && n <= 6) i.value = ''; i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
+    return
+  }
   if (t.dataset.rng) {
     const f = filt(), k = t.dataset.rng, raw = Math.round(+t.value * 10) / 10
     // dragging: whole numbers hold the handle a little (±0.2), so 7.0 is easy to hit; keys step 0.1 freely

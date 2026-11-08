@@ -16,8 +16,9 @@
   - **Length** "any ticked one": four chips "Short · 0–30 min", "Middle · 31–60 min",
     "Long · 61–120 min", "Very long · 121+ min", each with its count; ticked chips are filled hot.
     A muted line names games without a length.
-  - **Players** "BGG's player poll" (owner, 2026-11-08): number chips 1 … the largest count in the
-    list's polls (at least 6), none chosen = any; a tap on the chosen number clears it. With a number,
+  - **Players** "BGG's player poll" (owner, 2026-11-08): number chips 1–6 and, in the same
+    row, a small field "7+" for any other number (typed value is used; 1–6 typed lights up its chip;
+    empty = any); none chosen = any; a tap on the chosen chip clears it. With a number,
     two chips **Best** and **Recommended** (with counts), both ticked by default: the game must be
     best or recommended with that many players; unticking one narrows to the other (one stays
     ticked). A muted line "7 games best or recommended with 4 players".

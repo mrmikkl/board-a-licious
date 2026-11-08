@@ -180,8 +180,8 @@ games remain, together with the existing Category and Bought filters.
 
 - **FR-001**: Every BGG list (own and friends' status lists, previews, geeklists) MUST offer a
   **Filter** action that opens a "Filter" sheet; the name filter stays on the screen.
-- **FR-002**: The sheet MUST offer Length (the four ranges, multi-choice), Players (a number n
-  from 1 to the largest count in the list's polls, none = any, and the kinds Best and Recommended,
+- **FR-002**: The sheet MUST offer Length (the four ranges, multi-choice), Players (a number n:
+  1–6 by a tap, any other number typed in, none = any, and the kinds Best and Recommended,
   both ticked by default: the game must be best or recommended with n players),
   Rating (from–to, 0–10, steps of 0.5), Geek rating (the same), Mechanisms and Designers
   (multi-choice from the values in the list, each with its count).
