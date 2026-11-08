@@ -1,0 +1,3044 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>F008 BGG statuses – prototype</title>
+<!-- Prototype for feature 008 (Spec Kit extended, Ext 2). Styles: the F007 prototype CSS (the app theme), plus F008 additions at the end. Games and statuses are stand-ins; no network, no real BGG sign-in. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ---- src/app/theme/tokens.css ---- */
+/* Design tokens: docs/design.md §3–§6, one-to-one */
+:root {
+  --ink: #0d0f1f;
+  --deck: #151831;
+  --deck-2: #1d2142;
+  --rim: #2c3160;
+  --border: #3a4078;
+  --border-2: #4a5196;
+  --raised: #232852;
+  --text: #eceeff;
+  --muted: #9aa0c8;
+  --placeholder: #6e74a0;
+  --orange: #ff7a1a;
+  --orange-2: #ffb020;
+  --indigo: #4c5bff;
+  --teal: #14c8c8;
+  --violet: #8b5cf6;
+  --danger: #ff4d5e;
+  --got: #0fb98f;
+
+  --grad-hot: linear-gradient(135deg, #ff7a1a 0%, #ffb020 100%);
+  --grad-cool: linear-gradient(135deg, #4c5bff 0%, #14c8c8 100%);
+  --grad-violet: linear-gradient(135deg, #6d4ae0 0%, #a78bfa 100%);
+  --grad-mud: linear-gradient(135deg, #7a6046 0%, #b0916e 100%);
+  --grad-red: linear-gradient(135deg, #c2183a 0%, #ff4d5e 100%);
+  --grad-got: linear-gradient(135deg, #0fb98f 0%, #7cf0c5 100%);
+  --grad-dusk: linear-gradient(135deg, #8b5cf6 0%, #4c5bff 55%, #14c8c8 100%);
+  --grad-white: linear-gradient(135deg, #ffffff 0%, #c9cdf0 100%);
+  --grad-separator: linear-gradient(90deg, #ff7a1a 0%, #8b5cf6 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --lift: 0 8px 22px rgba(3, 4, 12, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glow: 0 0 0 1px var(--orange), 0 0 18px rgba(255, 122, 26, 0.45);
+
+  --font-display: 'Chakra Petch', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --tap: 44px;
+  --gutter: 16px;
+  --column: 440px;
+  --gap: 8px;
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- src/app/theme/base.css ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--ink);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+a {
+  color: var(--orange-2);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Layout: the phone column (docs/design.md §6) */
+.app {
+  position: relative;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.screen {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--gutter);
+}
+.lead {
+  color: var(--muted);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.hex {
+  clip-path: var(--hex);
+}
+.separator {
+  height: 2px;
+  border: 0;
+  margin: 16px 0;
+  background: var(--grad-separator);
+  border-radius: 2px;
+}
+
+/* Surfaces */
+.card {
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift);
+  padding: 16px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  padding: 0 14px;
+  min-height: 50px;
+}
+.field:focus-within {
+  border-color: var(--orange);
+}
+.field input,
+.field select {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  padding: 12px 0;
+}
+.field input::placeholder {
+  color: var(--placeholder);
+}
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+/* Buttons (docs/design.md §7): text on gradients follows the contrast rule of §3 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  font-weight: 700;
+  box-shadow: var(--lift);
+  text-decoration: none;
+  color: var(--text);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--grad-hot);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-bought {
+  background: var(--grad-got);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-danger {
+  /* --danger itself reaches only 4.4:1 on the raised surface; text needs 4.5:1 (docs/design.md §3) */
+  color: #ff6b78;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Badges and pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Empty state */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 8px;
+}
+.empty .hex {
+  width: 72px;
+  height: 82px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.empty h2 {
+  font-size: 18px;
+}
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+.empty .actions {
+  display: grid;
+  gap: var(--gap);
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---- src/app/theme/shell.css ---- */
+/* App shell: app bar, menu, screen heading, sheet, toast (docs/design.md §6, §7) */
+
+/* App bar: its own sticky band on every screen; above the menu's scrim, so ☰ closes it again */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 28;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 2px var(--gutter);
+  background: var(--grad-hot);
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(255, 122, 26, 0.25);
+}
+.appbar-logo {
+  width: 34px;
+  height: auto;
+}
+.appbar-name {
+  grid-column: 2;
+  text-align: center;
+  font: 700 19px/1 var(--font-display);
+  letter-spacing: 0.02em;
+}
+/* a 38px translucent circle inside a 44px touch area */
+.menu-btn {
+  grid-column: 3;
+  justify-self: end;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(13, 15, 31, 0.14);
+  border: 1px solid rgba(13, 15, 31, 0.25);
+  transition: background 0.2s;
+}
+.menu-btn svg {
+  position: relative;
+}
+.menu-btn[aria-expanded='true']::before {
+  background: rgba(13, 15, 31, 0.28);
+}
+.menu-btn:focus-visible {
+  outline-color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu-btn:hover::before {
+    background: rgba(13, 15, 31, 0.24);
+  }
+}
+
+/* Menu: a solid panel just below the app bar at the right; between the action bar and sheets */
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  background: rgba(5, 6, 14, 0.5);
+  animation: fade-in 0.18s ease-out;
+}
+.menu {
+  position: fixed;
+  z-index: 27;
+  right: max(var(--gutter), calc(50% - var(--column) / 2 + var(--gutter)));
+  width: min(260px, calc(100% - 2 * var(--gutter)));
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  transform-origin: top right;
+  animation: menu-in 0.18s ease-out;
+}
+.menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.menu a svg {
+  color: var(--muted);
+}
+.menu a[aria-current='page'] {
+  background: var(--raised);
+}
+.menu a[aria-current='page'] svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu a:hover {
+    background: var(--raised);
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menu-scrim {
+    animation: none;
+  }
+}
+
+/* Screen heading: back (only where it belongs), title, an element right after it */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--gutter) 10px;
+}
+.top-title {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.top h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  /* at most two lines, then "…" */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.top-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .top h1 {
+    font-size: 26px;
+  }
+}
+.back {
+  font-size: 26px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* the light passing over the main button every 5 s */
+@keyframes shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 6, 14, 0.6);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 31;
+  width: 100%;
+  max-width: var(--column);
+  max-height: 88dvh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1e3e 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-grip {
+  /* a 5px bar with a 44px tall touch area around it */
+  width: 88px;
+  height: 25px;
+  margin: -10px auto 2px;
+  background: linear-gradient(var(--rim), var(--rim)) center / 44px 5px no-repeat;
+  border-radius: 3px;
+}
+.sheet-title {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+@keyframes sheet-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+/* above the action bar, near the bottom where there is none (research R7) */
+body:has(.actionbar) .toast {
+  bottom: calc(100px + env(safe-area-inset-bottom));
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast i {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: var(--orange);
+}
+
+/* Expired sign-in: above the screen, solid like every interactive surface */
+.signin-banner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  margin: 12px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--deck-2);
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+}
+.signin-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* Tablets and laptops use more of the screen (docs/design.md §6): a wider column, cards and game
+   rows in a grid; sheets and the swipe card keep a readable width. */
+@media (min-width: 768px) {
+  :root {
+    --column: 1040px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .rows {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .sheet {
+    max-width: 560px;
+  }
+  .hexboard {
+    max-width: none;
+  }
+  .swipe-screen,
+  .intro {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .form,
+  .share {
+    max-width: 640px;
+  }
+}
+
+/* Dragging a sheet down to close it follows the finger; it springs back if let go early */
+.sheet.is-dragging {
+  transition: none;
+  animation: none;
+}
+.sheet.is-settling {
+  transition: transform 0.2s ease-out;
+}
+.sheet-grip {
+  touch-action: none;
+}
+/* a heading that reacts to taps (Config: five taps show the developer section): no text selection,
+   no double-tap zoom swallowing taps, and the whole title width as target */
+.top h1.tappable {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  justify-self: stretch;
+}
+
+/* the page keeps room at the bottom only while an action bar is shown (research R7) */
+.app:not(:has(.actionbar)) {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+/* Collection heading (docs/design.md v2.0.0 "Collection screen", "Ticker"): the name runs as a
+   ticker before the pencil instead of wrapping to two lines; the pencil keeps its place after it */
+.top h1.ticker {
+  flex: 0 1 auto;
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow-wrap: normal;
+}
+.edit-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- src/app/theme/actionbar.css ---- */
+/* Action bar and main button (docs/design.md v2.0.0 "Action bar", "Main button"); F003 tasks T016 */
+
+/* Dock position, padding and safe area of the old tab bar (research R7) */
+.actionbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--column);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.actionbar-left,
+.actionbar-right,
+.actionbar-outer {
+  display: contents;
+}
+.actionbar-left > .act {
+  grid-column: 2;
+  grid-row: 1;
+}
+.actionbar-right > .act {
+  grid-column: 4;
+  grid-row: 1;
+}
+/* F004: the fourth action at the outer right (docs/design.md "Action bar") */
+.actionbar-outer > .act {
+  grid-column: 5;
+  grid-row: 1;
+}
+
+.act {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 600 11px var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+}
+.act svg {
+  transition:
+    transform 0.25s var(--spring),
+    color 0.2s;
+}
+.act:active svg {
+  transform: scale(0.85);
+}
+.act.is-active svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .act:hover {
+    color: var(--text);
+  }
+  .act:hover svg {
+    color: var(--orange-2);
+  }
+}
+
+.main-btn {
+  position: relative;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  background: var(--grad-hot);
+  color: var(--ink);
+  cursor: pointer;
+}
+.main-btn svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+/* a light shimmer passes over it every 5 s */
+.main-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: main-shimmer 5s ease-in-out infinite;
+}
+@keyframes main-shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+/* not available yet: raised grey, no shimmer, no hover or press */
+.main-btn.hex-btn:disabled {
+  background: var(--raised);
+  color: var(--placeholder);
+  cursor: not-allowed;
+  scale: none;
+  filter: none;
+}
+.main-btn:disabled::after {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-btn::after {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .actionbar {
+    max-width: 560px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+}
+
+/* ---- src/app/theme/components.css ---- */
+/* Feature components: docs/design.md §7 (collection card, game row, group heading, hexagon picker, forms) */
+
+/* Mark gradients (docs/design.md §4), used by pickers, pills and group dots */
+[data-mark='new'],
+[data-tone='new'] {
+  --tone: var(--grad-white);
+  --tone-text: var(--ink);
+}
+[data-mark='must_have'],
+[data-tone='must_have'],
+[data-tone='hot'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='interested'],
+[data-tone='interested'] {
+  --tone: var(--grad-cool);
+  --tone-text: var(--ink);
+}
+[data-mark='unsure'],
+[data-tone='unsure'] {
+  --tone: var(--grad-violet);
+  --tone-text: #fff;
+}
+[data-mark='poop'],
+[data-tone='poop'] {
+  --tone: var(--grad-mud);
+  --tone-text: #fff;
+}
+[data-mark='skip'],
+[data-tone='skip'] {
+  --tone: var(--grad-red);
+  --tone-text: #fff;
+}
+[data-mark='bought'] {
+  --tone: var(--grad-got);
+  --tone-text: var(--ink);
+}
+/* hall groups (group by booth): halls in the hot gradient, "No booth yet" muted */
+[data-mark='hall'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='none'] {
+  --tone: linear-gradient(135deg, #6e74a0, #9aa0c8);
+  --tone-text: var(--ink);
+}
+
+.section-title {
+  font-size: 18px;
+  margin: 20px 0 10px;
+}
+.section-title small {
+  font: 600 13px var(--font-body);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hint.error {
+  color: #ff8a95;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field.is-disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.field svg {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Dropdown: field look with an orange hexagon as arrow */
+.field.select {
+  position: relative;
+}
+.field.select select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.field.select select option {
+  background: var(--deck);
+}
+.field.select::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  pointer-events: none;
+}
+
+/* Switch ("Essen collection") */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.toggle-text {
+  flex: 1;
+  font-weight: 600;
+}
+.toggle-text small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 6px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  clip-path: var(--hex);
+  background: var(--muted);
+  transition: transform 0.25s var(--spring);
+}
+.switch:checked {
+  background: var(--grad-hot);
+  border-color: transparent;
+}
+.switch:checked::after {
+  background: var(--ink);
+  transform: translateX(20px);
+}
+
+/* Hexagon picker: honeycomb, every second hexagon offset down */
+/* one straight, centred row of equal hexagons, whatever their labels and the phone's text scaling */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 84px));
+  justify-content: center;
+  align-items: start;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+.picker-btn {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+.picker-hex {
+  display: block;
+  aspect-ratio: 0.88;
+  padding: 2px;
+  background: var(--border-2);
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.picker-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.picker-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.picker-btn[aria-pressed='true'] .picker-hex {
+  background: var(--orange);
+}
+.picker-btn[aria-pressed='true'] .picker-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.picker-btn:is([data-tone='unsure'], [data-tone='poop'])[aria-pressed='true'] .picker-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Collection cards with the hexagon cluster in the top-right corner */
+.cards {
+  display: grid;
+  gap: var(--gap);
+}
+/* off-screen cards skip layout, paint and their cluster animation (long lists stay fast) */
+.cards > .card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  padding-right: 64px;
+}
+.card-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+/* the six counts always in one row; the text shrinks on narrow phones instead of wrapping */
+.counts {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 10px 0 0;
+  font: 700 clamp(12px, 3.7vw, 15px) var(--font-display);
+  white-space: nowrap;
+}
+.cluster {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 58px;
+  height: 52px;
+  animation: sway 6s ease-in-out infinite;
+}
+.cluster i {
+  position: absolute;
+  width: 22px;
+  height: 25px;
+  background: var(--grad-dusk);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+.cluster i:nth-child(1) {
+  top: 0;
+  right: 0;
+}
+.cluster i:nth-child(2) {
+  top: 0;
+  right: 24px;
+  opacity: 0.7;
+}
+.cluster i:nth-child(3) {
+  top: 20px;
+  right: 12px;
+  opacity: 0.85;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.soon-card {
+  margin-bottom: 16px;
+}
+.soon-card .card-title {
+  padding-right: 0;
+}
+/* F002 Share hint at the top of Config */
+.hint-card .card-title {
+  padding-right: 0;
+}
+
+.row-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.row-actions .btn {
+  padding-inline: 10px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.group-title i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  background: var(--tone);
+}
+.group-count {
+  color: var(--muted);
+  font-weight: 700;
+}
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.chev {
+  margin-left: auto;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.fold[aria-expanded='true'] .chev {
+  transform: rotate(90deg);
+}
+
+.rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows[hidden] {
+  display: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+.row-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-sub {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* F002 "Just added": the hover highlight, kept until the user scrolls or taps (not an animation) */
+.row.is-just-added {
+  border-color: var(--orange);
+  box-shadow: var(--lift), var(--glow);
+}
+.row.skip .row-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.row.skip .cover {
+  opacity: 0.5;
+}
+.row .pill,
+.detail-head .pill {
+  flex: none;
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.mark-pill {
+  padding: 4px 8px;
+}
+
+/* Hexagon covers */
+.cover {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.cover-hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--grad-dusk);
+}
+.cover-hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-initials {
+  font: 700 17px var(--font-display);
+  color: var(--ink);
+}
+.cover-got {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Game details sheet */
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.detail-sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+.sheet-actions {
+  display: grid;
+  gap: var(--gap);
+  margin-top: 12px;
+}
+
+/* "Group by" under the filter in a collection */
+.group-by {
+  margin-top: 12px;
+}
+
+/* Config → Developer: plain links, each a full-width 44px target */
+.dev-links {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dev-links a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Cancel and the main action side by side, the main action on the right */
+.sheet-actions-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Game info (docs/design.md §7 "Game info"): year beside the name, publisher, then three infos */
+.row-year {
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row-info > span:first-child {
+  flex: none;
+}
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.row-info .info-pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.info-pill {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.info-list > div {
+  display: contents;
+}
+.info-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.info-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* F003: the SPIEL preview suggestion above a BGG list link field */
+.list-suggestion {
+  margin-bottom: 10px;
+}
+
+/* ---- src/app/theme/fair.css ---- */
+/* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
+
+/* Filter: one full-width button, a panel below it */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--raised);
+  box-shadow: var(--glow);
+}
+.seg-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg {
+  /* one column per option, all in one row */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.seg button {
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0 4px;
+  overflow-wrap: anywhere;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  border-top: 1px solid var(--rim);
+  cursor: pointer;
+}
+.filter-row:first-child {
+  border-top: 0;
+}
+.filter-row input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+}
+.filter-row span {
+  flex: 1;
+}
+.filter-row small {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+.chip:active,
+.seg button:active {
+  scale: 0.96;
+}
+
+/* "✅ 1 game bought, €52 spent" under the filter */
+.bought-line {
+  margin: 10px 2px 0;
+  font-weight: 700;
+  color: #7cf0c5;
+}
+
+/* Game details: description, facts, price question */
+.detail-head .pill {
+  margin-top: 4px;
+}
+.desc {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+.muted {
+  color: var(--muted);
+}
+.facts-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.facts-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.facts-by {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.link-btn {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-2);
+  font-weight: 700;
+  text-align: left;
+}
+.facts-add {
+  margin-bottom: 8px;
+}
+.facts-form {
+  margin-bottom: 12px;
+}
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: var(--gap);
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.currency {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* "Groups" with Select all / Select none on the same line */
+.seg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.seg-actions {
+  display: flex;
+  gap: 4px;
+}
+.seg-actions .link-btn {
+  min-height: var(--tap);
+  padding: 0 8px;
+}
+
+/* filter icon in the collection header; a dot while a filter or the hall grouping is active */
+.filter-icon {
+  position: relative;
+}
+.filter-icon.is-active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 11px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+}
+/* what is shown while narrowed; a tap opens "Filter and group" */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* ---- src/app/theme/lists.css ---- */
+/* BGG lists: list cards, list rows with +, progress, list game sheet (docs/design.md §7) */
+
+.example {
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Loading progress: pages loaded so far */
+.progress {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: var(--r-pill);
+  background: var(--rim);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-hot);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .progress span {
+    transition: width 0.4s ease-out;
+  }
+}
+.list-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.list-status p {
+  margin: 0;
+}
+.list-status.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #ff8a95;
+}
+
+/* List rows: the row opens the game, the hexagon + next to it does the same */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-item .row {
+  flex: 1;
+  min-width: 0;
+}
+.in-mark {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.add-mini {
+  flex: none;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.add-mini .hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 26px var(--font-display);
+}
+
+/* List game sheet */
+.description {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Multi-choice list: a hexagon tick per collection; the ticks always show the current truth */
+.picks {
+  display: grid;
+  gap: var(--gap);
+}
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  cursor: pointer;
+}
+.pick:has(.pick-input:focus-visible) {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.pick-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.tick {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  background: var(--border-2);
+}
+.tick::before {
+  content: '';
+  width: 24px;
+  height: 28px;
+  clip-path: var(--hex);
+  background: var(--raised);
+}
+.pick-input:checked + .tick {
+  background: var(--orange);
+}
+.pick-input:checked + .tick::before {
+  background: var(--grad-hot);
+}
+.pick-input:checked + .tick::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 800;
+}
+.pick-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.pick-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.pick-text small {
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+
+/* ---- src/app/theme/interaction.css ---- */
+/* Interaction states: docs/design.md §8. Nothing moves on hover; press squishes; focus is orange. */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn,
+.icon-btn,
+.card,
+.row,
+.tile {
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    scale 0.25s var(--spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not([aria-disabled='true']):hover,
+  .row:hover,
+  .tile:hover,
+  .field:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .btn:not(:disabled):not(.btn-primary):not(.btn-bought):hover,
+  .icon-btn:hover {
+    background: var(--grad-hot);
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--grad-red);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover,
+  .btn-bought:not(:disabled):hover {
+    box-shadow: var(--lift), 0 0 22px rgba(255, 176, 32, 0.55);
+  }
+  .hex-btn:hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Press: a short squish that springs back (touch and pointer) */
+.card:active,
+.row:active,
+.tile:active {
+  scale: 0.98;
+  transition-duration: 0.08s;
+}
+.btn:not(:disabled):active,
+.icon-btn:active {
+  scale: 0.96;
+  transition-duration: 0.08s;
+}
+.hex-btn {
+  transition:
+    scale 0.25s var(--spring),
+    filter 0.2s;
+}
+.hex-btn:active {
+  scale: 0.9;
+  transition-duration: 0.08s;
+}
+
+/* Tap pulse: an orange hexagon expanding from the tap point */
+.tap-pulse {
+  position: fixed;
+  z-index: 60;
+  width: 56px;
+  height: 64px;
+  margin: -32px 0 0 -28px;
+  clip-path: var(--hex);
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.55), rgba(255, 122, 26, 0) 70%);
+  pointer-events: none;
+  animation: tap-pulse 0.5s ease-out forwards;
+}
+@keyframes tap-pulse {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion (docs/design.md §9): every animation and press squish off */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .card:active,
+  .row:active,
+  .tile:active,
+  .btn:active,
+  .icon-btn:active,
+  .hex-btn:active,
+  .hex-btn:hover {
+    scale: none;
+  }
+  .tap-pulse {
+    display: none;
+  }
+}
+
+/* ---- src/app/theme/ticker.css ---- */
+/* Ticker for headings too long for their row (docs/design.md v2.0.0 "Ticker"); F003 tasks T024 */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.ticker > span {
+  display: inline-block;
+}
+/* soft fades at both edges; the left padding keeps the first letter clear of the fade */
+.ticker.is-long {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  padding-left: 10px;
+  margin-left: -10px;
+}
+.ticker.is-long > span {
+  animation: ticker var(--ticker-time, 8s) linear infinite;
+}
+@keyframes ticker {
+  /* read the start */
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  /* the end is visible, then start over */
+  82%,
+  100% {
+    transform: translateX(calc(-1 * var(--ticker-shift)));
+  }
+}
+/* reduced motion: the text stands still and ends in "…" */
+@media (prefers-reduced-motion: reduce) {
+  .ticker {
+    text-overflow: ellipsis;
+  }
+  .ticker.is-long {
+    -webkit-mask-image: none;
+    mask-image: none;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  .ticker.is-long > span {
+    display: inline;
+    animation: none;
+  }
+}
+
+/* ---- src/app/theme/swipe.css ---- */
+/* Swipe screen and list picker: docs/design.md §7 (swipe card), §9 (swipe motion) */
+
+/* A card dragged or flung past the edge never scrolls the page sideways */
+.swipe-screen {
+  overflow-x: clip;
+}
+
+/* Source note: which list, whether facts are kept */
+.swipe-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.swipe-note b {
+  color: var(--text);
+}
+.swipe-note > .hex {
+  flex: none;
+  width: 14px;
+  height: 16px;
+  margin-top: 2px;
+  background: var(--grad-dusk);
+}
+
+/* Card stack */
+.deck {
+  position: relative;
+  height: min(400px, 54vh);
+  min-height: 340px;
+  margin: 0 0 14px;
+}
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #1f2350 0%, var(--deck) 70%);
+  box-shadow: var(--lift);
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-card > * {
+  flex-shrink: 0;
+}
+.swipe-card.behind {
+  transform: scale(0.95) translateY(14px);
+  opacity: 0.6;
+}
+.swipe-card.top {
+  touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.5s var(--spring);
+}
+.swipe-card.top.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.swipe-card.enter {
+  animation: swipe-card-in 0.45s var(--spring);
+}
+@keyframes swipe-card-in {
+  from {
+    transform: scale(0.94) translateY(16px);
+    opacity: 0.6;
+  }
+}
+.swipe-card.leaving {
+  pointer-events: none;
+  animation: swipe-fling 0.38s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes swipe-fling {
+  from {
+    transform: translateX(var(--from-x)) rotate(calc(var(--from-x) / 14px * 1deg));
+  }
+  to {
+    transform: translate(calc(var(--dir) * 520px), -40px) rotate(calc(var(--dir) * 30deg));
+    opacity: 0;
+  }
+}
+.swipe-card .cover {
+  margin-bottom: 12px;
+}
+.swipe-name {
+  margin: 0;
+  font: 700 24px/1.15 var(--font-display);
+}
+.swipe-year {
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+.swipe-desc {
+  display: -webkit-box;
+  margin: 0 0 10px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.swipe-wait {
+  justify-content: center;
+  gap: 12px;
+  cursor: default;
+}
+.swipe-wait .hex {
+  width: 56px;
+  height: 64px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.swipe-wait p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ADD / NOPE stamps grow while dragging; the leaving card shows its stamp in full */
+.swipe-stamp {
+  position: absolute;
+  top: 20px;
+  padding: 4px 10px;
+  border: 2px solid;
+  border-radius: 10px;
+  font: 700 18px var(--font-display);
+  opacity: 0;
+  scale: 0.7;
+}
+.swipe-stamp.add {
+  left: 16px;
+  color: var(--teal);
+  rotate: -12deg;
+}
+.swipe-stamp.nope {
+  right: 16px;
+  color: var(--danger);
+  rotate: 12deg;
+}
+.leaving-right .swipe-stamp.add,
+.leaving-left .swipe-stamp.nope {
+  opacity: 1;
+  scale: 1.2;
+}
+
+/* ✕ / ✓ hexagon buttons */
+.swipe-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+.swipe-btn {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 80px;
+  border: 0;
+  clip-path: var(--hex);
+  font: 700 28px var(--font-display);
+  cursor: pointer;
+}
+.swipe-btn.no {
+  background: var(--grad-red);
+  color: #fff;
+}
+.swipe-btn.yes {
+  background: var(--grad-cool);
+  color: #04161a;
+}
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.swipe-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* List picker */
+.pick-list {
+  display: grid;
+  gap: var(--gap);
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.pick {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pick-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.pick small {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not(:disabled):hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .swipe-btn:not(:disabled):hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Reduced motion: no tilt, fling or pop-in; the card just changes */
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card.leaving {
+    display: none;
+  }
+}
+
+/* "Add by list": the chosen list is clearly marked (orange edge, glow and a tick) */
+.pick[aria-pressed='true'] {
+  position: relative;
+  border: 2px solid var(--orange);
+  box-shadow: var(--lift), var(--glow);
+  padding-right: 44px;
+}
+.pick[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 27px;
+  transform: translateY(-50%);
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  color: var(--ink);
+  font-weight: 700;
+}
+.pick-list,
+.pick-new,
+.pick-empty {
+  margin-top: 16px;
+}
+.pick-intro {
+  margin: 0 0 14px;
+}
+
+/* All game info on the card (FR-010): compact, left-aligned; a long card scrolls up and down
+   (pan-y), sideways stays the swipe */
+.swipe-card.top {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.swipe-card .info-list {
+  width: 100%;
+  margin: 4px 0 0;
+  gap: 4px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+.swipe-card .info-list dt {
+  font-size: 13px;
+}
+.swipe-card .info-list dd {
+  font-weight: 600;
+}
+
+/* ---- F005 prototype additions ---- */
+[data-mark='later'], [data-tone='later'] { --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%); --tone-text: var(--ink); }
+.proto-later-teal [data-mark='later'], .proto-later-teal [data-tone='later'] { --tone: linear-gradient(135deg, #0ea5e9 0%, #a5f3fc 100%); }
+
+.proto-bar { position: relative; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 12px; background: #05060e; border-bottom: 1px solid var(--rim); font-size: 12px; color: var(--muted); }
+.proto-bar select { background: var(--deck-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; font: inherit; }
+.proto-note { margin: 8px 0; font-size: 12px; color: var(--placeholder); }
+
+/* Game row: category as the border colour, actions on the right */
+.crow { position: relative; display: flex; align-items: stretch; min-height: 68px; border-radius: var(--r-md); box-shadow: var(--lift);
+  border: 1px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone, linear-gradient(var(--border), var(--border))) border-box; }
+.crow[data-mark='new'] { --tone: linear-gradient(var(--border), var(--border)); }
+.crow[data-mark='skip'] { opacity: 0.75; }
+.crow[data-mark='skip'] .row-name { text-decoration: line-through; color: var(--muted); }
+.crow[data-mark='skip'] .cover { opacity: 0.5; }
+/* B: a coloured edge at the left instead of the whole border */
+.proto-edge .crow { border: 1px solid var(--border); background: var(--deck); padding-left: 6px; }
+.proto-edge .crow::before { content: ''; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 7px; border-radius: var(--r-md) 0 0 var(--r-md); background: var(--tone); }
+.proto-edge .crow[data-mark='new']::before { background: var(--border); }
+.crow-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px 4px 8px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: var(--r-md) 0 0 var(--r-md); }
+.crow-acts { flex: none; display: flex; align-items: center; gap: 2px; padding-right: 6px; }
+.ract { width: 46px; min-height: 52px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--muted); font: 600 10px var(--font-body); cursor: pointer; }
+.ract .rhex { width: 32px; height: 36px; display: grid; place-items: center; clip-path: var(--hex); background: var(--raised); color: var(--text); transition: background 0.2s, color 0.2s, scale 0.25s var(--spring); }
+.ract:active .rhex { scale: 0.85; }
+.ract.buy[aria-pressed='true'] { color: #7cf0c5; }
+.ract.buy[aria-pressed='true'] .rhex { background: var(--grad-got); color: var(--ink); }
+.ract.cat .rhex { background: var(--raised); }
+.proto-catemoji .ract.cat .rhex { background: var(--tone); color: var(--tone-text); font-size: 16px; }
+@media (hover: hover) and (pointer: fine) { .ract:hover .rhex { background: var(--grad-hot); color: var(--ink); } }
+.row-price { color: #7cf0c5; font-weight: 700; }
+
+/* Quick filters between the two lines */
+.quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qtoggle { display: inline-grid; grid-auto-flow: column; padding: 3px; min-height: var(--tap); border: 1px solid var(--border); border-radius: var(--r-pill); background: var(--deck); cursor: pointer; font: 700 14px var(--font-body); }
+.qtoggle span { display: grid; place-items: center; padding: 0 14px; border-radius: var(--r-pill); color: var(--muted); transition: background 0.2s, color 0.2s; }
+.qtoggle span.on { background: var(--grad-hot); color: var(--ink); }
+.quick .chip { gap: 6px; cursor: pointer; }
+.quick .chip[aria-pressed='true'] { background: var(--grad-hot); color: var(--ink); border-color: transparent; }
+.quick-count { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; }
+.search { margin-top: 10px; }
+.search svg { color: var(--muted); flex: none; }
+.no-match { text-align: center; color: var(--muted); padding: 24px 0; }
+
+/* filter action highlighted while not default: orange icon and label, hexagon dot */
+.act.is-active { color: var(--text); }
+.act.is-active svg { color: var(--orange); }
+.act { position: relative; }
+.act.is-active::after { content: ''; position: absolute; top: 4px; left: calc(50% + 8px); width: 10px; height: 11px; clip-path: var(--hex); background: var(--grad-hot); }
+
+/* hall-only booths */
+.hall-only { color: var(--orange-2); font-weight: 700; }
+
+/* Category sheet (list) */
+.cat-list { display: grid; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+.cat-list button { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--deck-2); color: var(--text); font: 600 16px var(--font-body); text-align: left; cursor: pointer; }
+.cat-list .chex { width: 22px; height: 25px; flex: none; clip-path: var(--hex); background: var(--tone); }
+.cat-list button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.cat-list button[aria-pressed='true']::after { content: 'current'; margin-left: auto; font-size: 12px; color: var(--muted); }
+.cat-list .sep { height: 1px; background: var(--rim); margin: 4px 0; }
+
+/* Zigzag category picker */
+.zz { position: relative; margin: 6px auto 4px; }
+.zz .picker-btn { position: absolute; padding: 0; }
+.zz.flat .picker-hex, .zz.flat .picker-face { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.zz .picker-hex { aspect-ratio: auto; width: 100%; height: 100%; }
+.zz .picker-face { font-size: 11px; }
+.zz .picker-face b { font-size: 20px; line-height: 1; font-weight: 400; }
+.not-int { display: flex; justify-content: center; margin: 0 0 6px; }
+
+/* Ratings in the info box */
+.rating { display: inline-flex; align-items: center; gap: 6px; }
+.rating i { font-style: normal; display: inline-grid; place-items: center; width: 26px; height: 29px; clip-path: var(--hex); background: var(--grad-cool); color: var(--ink); font: 700 11px var(--font-display); }
+.rating i.geek { background: var(--grad-dusk); color: #fff; }
+.rating small { color: var(--muted); font-weight: 600; }
+
+/* BGG list with resync */
+.lrow { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.lrow .in { margin-left: auto; font-size: 12px; color: var(--muted); }
+.resync-btn svg { display: block; }
+.resync-btn.spin svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .resync-btn.spin svg { animation: none; } }
+
+/* Conflicts sheet */
+.conflict { padding: 12px 0; border-top: 1px solid var(--rim); }
+.conflict:first-of-type { border-top: 0; }
+.conflict h3 { margin: 0 0 2px; font-size: 16px; }
+.conflict p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice button { min-height: 56px; padding: 6px 10px; display: grid; align-content: center; gap: 2px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck-2); color: var(--text); font: 700 15px var(--font-body); text-align: left; cursor: pointer; }
+.choice button small { font-size: 11px; font-weight: 700; color: var(--muted); }
+.choice button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.choice button[aria-pressed='true'] small { color: var(--orange-2); }
+.all-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 8px; }
+.sheet-lead-row { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* BG-Tinder card: the same info box as the details; full description */
+.swipe-card .facts-box { width: 100%; text-align: left; margin-top: 4px; }
+.swipe-card .desc { text-align: left; margin-top: 10px; }
+
+
+/* ---------- F006: search ---------- */
+.search-hint { margin: 6px 0 12px; font-size: 13px; color: var(--muted); }
+.result-status { display: flex; align-items: center; gap: 8px; min-height: 24px; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.result-status b { color: var(--text); }
+.srow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.srow:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.srow .in-mark { margin-left: auto; flex: none; max-width: 38%; text-align: right; }
+.srow .row-meta .in-mark { margin: 0; max-width: none; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sitem { display: flex; align-items: center; gap: 8px; }
+.sitem .srow { flex: 1; min-width: 0; }
+.sitem .add-mini { cursor: pointer; }
+.sitem .add-mini:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.srow.compact { min-height: 52px; padding: 6px 10px; box-shadow: none; background: var(--deck-2); }
+.kind { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid var(--violet); color: #c4b5fd; font-size: 11px; font-weight: 700; line-height: 18px; }
+.rows.is-stale { opacity: 0.45; }
+.skel { height: 64px; border-radius: var(--r-md); border: 1px solid var(--rim); background: linear-gradient(90deg, var(--deck) 0%, var(--deck-2) 50%, var(--deck) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.spin-hex { flex: none; width: 16px; height: 18px; clip-path: var(--hex); background: var(--grad-hot); animation: spin 1.2s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .skel, .spin-hex { animation: none; } }
+.notice { display: grid; gap: 10px; justify-items: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.notice p { margin: 0; }
+.notice.warn { border-color: var(--danger); }
+.notice small { color: var(--muted); }
+.more-note { margin: 12px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+.matches { display: grid; gap: 6px; margin: 8px 0 4px; padding: 0; list-style: none; }
+.found { display: flex; align-items: center; gap: 12px; margin: 4px 0 8px; padding: 10px 12px; border: 1px solid var(--orange); border-radius: var(--r-md); background: var(--deck); }
+.found .row-meta { flex: 1; }
+.picks { display: grid; gap: 8px; margin: 0 0 12px; }
+.picks .pick { position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); cursor: pointer; }
+.cover-zoom { padding: 0; border: 0; background: none; cursor: zoom-in; }
+.cover-zoom:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.viewer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(5, 6, 14, 0.94); }
+.viewer .big { width: min(78vw, 340px); aspect-ratio: 120 / 134; clip-path: var(--hex); }
+.viewer .big img { width: 100%; height: 100%; display: block; }
+.viewer .icon-btn { position: absolute; top: 16px; right: 16px; }
+.viewer p { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 13px; }
+.proto-bar { flex-wrap: wrap; }
+
+/* ---------- F007: Buy ---------- */
+.proto-bar { flex-wrap: wrap; }
+.game-head { display: flex; align-items: center; gap: 14px; margin: 4px 0 12px; }
+.game-head .row-name { font: 700 20px/1.2 var(--font-display); white-space: normal; }
+.fair-line { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--got); border-radius: var(--r-md); background: var(--deck); font-weight: 700; }
+.fair-line small { color: var(--muted); font-weight: 600; }
+.lang-seg { margin: 0 0 8px; }
+.offer-group { margin: 14px 0 8px; }
+.offer-group h3 { margin: 0; }
+.group-fold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.group-fold small { margin-left: auto; color: var(--muted); font: 600 12px var(--font-body); }
+.group-fold .chev { color: var(--orange); transition: transform 0.2s; transform: rotate(90deg); }
+.group-fold[aria-expanded='false'] .chev { transform: none; }
+.offers[hidden] { display: none; }
+.offers { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.offer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); text-decoration: none; }
+.offer:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.offer.out { opacity: 0.6; }
+.offer-shop { font-weight: 700; overflow-wrap: anywhere; }
+.offer-shop .ext { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.offer-total { font: 700 18px var(--font-display); text-align: right; white-space: nowrap; }
+.offer-total small { display: block; font: 600 11px var(--font-body); color: var(--muted); }
+.offer-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.offer-note { grid-column: 1 / -1; margin: 2px 0 0; font-size: 12px; color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lang { display: inline-block; padding: 0 6px; border-radius: 6px; font-weight: 800; font-size: 11px; line-height: 18px; color: var(--ink); background: var(--grad-cool); }
+.lang.de { background: var(--grad-hot); }
+.lang.unknown { background: var(--raised); color: var(--muted); border: 1px solid var(--border-2); }
+.stock { display: inline-flex; align-items: center; gap: 4px; }
+.stock::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--got); }
+.stock.no::before { background: var(--danger); }
+.cond { display: inline-block; padding: 0 7px; border: 1px solid var(--violet); border-radius: var(--r-pill); color: #c4b5fd; font-weight: 700; font-size: 11px; line-height: 18px; }
+.unknown-switch { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; font-size: 14px; color: var(--muted); min-height: 44px; }
+.unknown-switch input { width: 20px; height: 20px; accent-color: var(--orange); }
+.sources-line { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+.fail-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; padding: 8px 12px; border: 1px solid var(--danger); border-radius: var(--r-md); font-size: 13px; }
+.result-status { display: flex; align-items: center; gap: 8px; min-height: 24px; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.spin-hex { flex: none; width: 16px; height: 18px; clip-path: var(--hex); background: var(--grad-hot); animation: spin 1.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.skel { height: 72px; border-radius: var(--r-md); border: 1px solid var(--rim); background: linear-gradient(90deg, var(--deck) 0%, var(--deck-2) 50%, var(--deck) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel, .spin-hex { animation: none; } }
+.srow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 68px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.kind { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid var(--violet); color: #c4b5fd; font-size: 11px; font-weight: 700; line-height: 18px; }
+.search-hint { margin: 6px 0 12px; font-size: 13px; color: var(--muted); }
+/* folded Prices section in a game's details */
+.prices-sec { margin: 12px 0; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.prices-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 14px; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.prices-toggle small { margin-left: auto; color: var(--muted); font: 600 12px var(--font-body); }
+.prices-toggle .chev { color: var(--orange); transition: transform 0.2s; }
+.prices-toggle[aria-expanded='true'] .chev { transform: rotate(90deg); }
+.prices-body { padding: 0 12px 12px; }
+.prices-body .offer { box-shadow: none; background: var(--deck-2); }
+.menu { top: 96px; } /* below the proto bar and the app bar */
+/* ---------- F008: Buy and Lists with tabs, BGG statuses ---------- */
+.menu { top: 96px; }
+/* Place tabs: directly under the screen heading, equal columns, active underlined orange */
+.tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 0 0 4px; border-bottom: 1px solid var(--rim); }
+.tab { position: relative; min-height: 48px; padding: 0 6px; border: 0; background: none; color: var(--muted); font: 700 15px var(--font-body); cursor: pointer; }
+.tab[aria-selected='true'] { color: var(--text); }
+.tab[aria-selected='true']::after { content: ''; position: absolute; left: 12%; right: 12%; bottom: -1px; height: 3px; border-radius: 3px; background: var(--grad-hot); }
+.tab:focus-visible { outline: 2px solid var(--orange); outline-offset: -2px; }
+.tab .n { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); background: var(--raised); color: var(--muted); font-size: 11px; line-height: 18px; }
+.tab[aria-selected='true'] .n { background: var(--grad-hot); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .tab:hover { color: var(--text); } }
+
+/* BGG status badges: text pills; Owned filled (cool), the rest teal outline; a small hexagon bullet */
+.bgg-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.bb { display: inline-flex; align-items: center; gap: 4px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid #14c8c8; color: #7de8e8; font-size: 11px; font-weight: 700; line-height: 18px; white-space: nowrap; }
+.bb::before { content: ''; width: 7px; height: 8px; clip-path: var(--hex); background: currentColor; }
+.bb.own { border-color: transparent; background: var(--grad-cool); color: var(--ink); }
+.bb.more { border-color: var(--border-2); color: var(--muted); }
+.bb.more::before { display: none; }
+.badges-big { margin: 2px 0 8px; }
+.badges-big .bb { font-size: 12px; line-height: 22px; padding: 0 9px; }
+
+/* Status list cards in Lists › Status lists */
+.slist { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.slist button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: 700 16px var(--font-body); text-align: left; cursor: pointer; }
+.slist .shex { flex: none; width: 30px; height: 34px; display: grid; place-items: center; clip-path: var(--hex); background: var(--grad-dusk); font-size: 15px; }
+.slist .shex.own { background: var(--grad-cool); }
+.slist small { display: block; font: 500 12px var(--font-body); color: var(--muted); }
+.slist .label-t { flex: 1; min-width: 0; }
+.slist .count { font: 700 18px var(--font-display); color: var(--text); }
+.slist .chev { color: var(--orange); font-size: 20px; }
+@media (hover: hover) and (pointer: fine) { .slist button:hover { border-color: var(--orange); box-shadow: var(--glow); } }
+.person { display: flex; align-items: baseline; gap: 8px; margin: 18px 0 8px; font: 700 16px var(--font-display); }
+.person small { color: var(--muted); font: 600 12px var(--font-body); }
+.list-sub { margin: -4px 0 8px; font-size: 13px; color: var(--muted); }
+
+/* BGG status section in a game's sheet */
+.status-sec { margin: 12px 0; padding: 4px 14px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.status-sec h3 { display: flex; align-items: center; gap: 8px; margin: 10px 0 2px; font: 700 16px var(--font-display); }
+.status-sec h3 small { margin-left: auto; font: 600 12px var(--font-body); color: var(--muted); }
+.status-sec .lead { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+.status-sec .toggle { border-top: 1px solid var(--rim); }
+.status-sec .toggle:first-of-type { border-top: 0; }
+.status-sec .toggle.changed .toggle-text::after { content: ' · changed'; color: var(--orange-2); font-size: 12px; font-weight: 700; }
+.status-sec .switch:disabled { opacity: 0.45; cursor: not-allowed; }
+.prio { margin: 2px 0 8px; }
+.prio .seg button { font-size: 13px; }
+.prio p { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.status-sec .sheet-actions { margin-top: 8px; }
+.status-sec .fail-line { margin-top: 10px; }
+
+/* What will be written to BGG (private info) */
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 8px 0 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.kv .old { color: var(--muted); text-decoration: line-through; font-weight: 600; margin-right: 6px; }
+.private-note { margin: -4px 0 8px; font-size: 12px; color: var(--muted); }
+
+/* Config: BoardGameGeek section */
+.cfg-sec { margin: 0 0 18px; }
+.cfg-sec .section-title { margin: 6px 0 6px; }
+.cfg-card { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.cfg-card p { margin: 0; font-size: 14px; }
+.cfg-card .muted { color: var(--muted); font-size: 13px; }
+.signed-in { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.signed-in::before { content: ''; flex: none; width: 14px; height: 16px; clip-path: var(--hex); background: var(--grad-got); }
+.form-row { display: grid; gap: 4px; }
+.field input[type='password'] { letter-spacing: 0.1em; }
+
+/* Prices screen: Bought action */
+.buy-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0 0 12px; }
+
+/* Swipe card (short) */
+.mini-swipe { margin: 8px auto; max-width: 340px; padding: 18px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--deck-2); box-shadow: var(--lift); text-align: center; }
+.mini-swipe .cover { margin: 0 auto 10px; }
+.mini-swipe h2 { margin: 0; font: 700 22px var(--font-display); }
+.mini-swipe .bgg-badges { justify-content: center; margin: 8px 0; }
+.mini-swipe .swipe-buttons { display: flex; justify-content: center; gap: 40px; margin-top: 14px; }
+.mini-swipe .swipe-buttons button { width: 60px; height: 68px; clip-path: var(--hex); border: 0; font-size: 24px; font-weight: 800; cursor: pointer; }
+.mini-swipe .nope { background: var(--grad-red); color: #fff; }
+.mini-swipe .yes { background: var(--grad-cool); color: var(--ink); }
+.proto-bar .chk { display: inline-flex; align-items: center; gap: 4px; }
+/* round 2: badges filled with the status colour (Config) */
+.bb { border: 0; background: var(--bg); color: var(--fg); }
+.bb.own { background: var(--bg); color: var(--fg); }
+.bb.more { border: 1px solid var(--border-2); background: none; color: var(--muted); }
+.slist .shex { background: var(--bg); }
+/* row action Add inside the row (lists and search) */
+.ract.add .rhex { background: var(--grad-hot); color: var(--ink); font: 700 20px var(--font-display); }
+.ract.add { color: var(--text); }
+.crow .row-sub .kind { margin-left: 6px; }
+.crow .in-mark { font-size: 12px; color: #5ee0e0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* colour sheet */
+.colour-rows { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.colour-rows button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck-2); color: var(--text); font: 600 15px var(--font-body); text-align: left; cursor: pointer; }
+.colour-rows .bb { font-size: 12px; line-height: 22px; padding: 0 9px; }
+.colour-rows .chg { margin-left: auto; color: var(--orange-2); font-size: 13px; font-weight: 700; }
+.swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 8px 0 14px; }
+.swatches button { aspect-ratio: 52 / 58; width: 100%; max-width: 60px; justify-self: center; clip-path: var(--hex); border: 0; background: var(--bg); color: var(--fg); font-weight: 800; cursor: pointer; }
+.swatches button[aria-pressed='true'] { outline: 3px solid var(--orange); outline-offset: -3px; }
+.swatches button[aria-pressed='true']::after { content: '✓'; }
+.swatch-names { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: -8px 0 12px; font-size: 11px; color: var(--muted); text-align: center; }
+/* full game sheet */
+.gs-head { display: flex; gap: 14px; align-items: center; margin: 4px 0 8px; }
+.gs-head .detail-sub { margin: 0 0 2px; }
+.gs-facts { display: grid; gap: 6px; min-width: 0; }
+.gs-facts .bgg-badges { margin: 0; }
+.gs-facts .detail-sub { margin: 0; }
+.gs-in { justify-self: start; min-height: 32px; padding: 0; border: 0; background: none; color: #5ee0e0; font: 600 13px var(--font-body); text-align: left; cursor: pointer; }
+.gs-none { margin: 0; font-size: 12px; color: var(--muted); }
+.gs-bgg { margin: 0 0 6px; }
+.cpick { display: grid; grid-template-columns: repeat(6, 1fr); width: min(100%, 300px); margin: 6px auto 0; row-gap: 0; }
+.cpick button { grid-column: span 2; aspect-ratio: 88 / 98; margin: 0 2px; clip-path: var(--hex); border: 0; background: var(--raised); color: var(--text); font: 700 11px var(--font-body); display: grid; place-content: center; gap: 2px; cursor: pointer; }
+.cpick button b { font-size: 20px; font-weight: 400; line-height: 1; }
+.cpick button:nth-child(4) { grid-column: 2 / span 2; margin-top: -14%; }
+.cpick button:nth-child(5) { grid-column: 4 / span 2; margin-top: -14%; }
+.cpick button[aria-pressed='true'] { background: var(--tone); color: var(--tone-text, var(--ink)); }
+.not-int-link { display: flex; justify-content: center; margin: 4px 0 8px; }
+.ibox { margin: 10px 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); display: grid; gap: 6px; font-size: 14px; }
+.ibox .ln { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ibox .k { color: var(--muted); }
+.ibox .mech { display: inline-block; padding: 0 8px; border: 1px solid var(--border-2); border-radius: var(--r-pill); font-size: 12px; line-height: 20px; color: var(--muted); }
+.ibox .src { font-size: 12px; color: var(--muted); }
+.gs-desc { margin: 12px 0 0; font-size: 14px; color: var(--text); }
+.gs-desc h3 { margin: 0 0 4px; font: 700 16px var(--font-display); }
+.status-sec.folded { padding: 0; }
+.status-sec .st-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 14px; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.status-sec .st-toggle .bgg-badges { margin: 0 0 0 auto; justify-content: flex-end; }
+.status-sec .st-toggle .chev { color: var(--orange); transition: transform 0.2s; }
+.status-sec .st-toggle[aria-expanded='true'] .chev { transform: rotate(90deg); }
+.status-sec .st-body { padding: 0 14px 12px; }
+.cat-sec { margin-top: 8px; }
+.cat-now { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font: 700 14px var(--font-body); color: var(--text); }
+.cat-now i { width: 12px; height: 14px; background: var(--tone); }
+.cat-sec .cat-list { margin-top: 4px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.prices-body .offer { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <label for="start">Start</label>
+  <select id="start">
+    <option value="menu">Menu: Buy · Lists · Config</option>
+    <option value="buy-search">Buy › Search</option>
+    <option value="buy-lists">Buy › Shopping lists</option>
+    <option value="shop">Shopping list “Essen 2026” (badges)</option>
+    <option value="sheet-search">Buy › Search › game sheet (Forest Shuffle)</option>
+    <option value="lists-status">Lists › Status lists</option>
+    <option value="lists-nouser">Lists › Status lists, no username</option>
+    <option value="lists-previews">Lists › Previews</option>
+    <option value="status-wish">Status list: Wishlist</option>
+    <option value="status-wait">Status list: BGG preparing</option>
+    <option value="swipe">Swipe the SPIEL preview (badges)</option>
+    <option value="sheet">Game sheet in a shopping list (Arcs)</option>
+    <option value="sheet-list">Game sheet from a status list (Brass)</option>
+    <option value="config">Config: BoardGameGeek, badge colours</option>
+  </select>
+    <label class="chk"><input type="checkbox" id="signed"> Signed in to BGG</label>
+  <label class="chk"><input type="checkbox" id="offline"> Offline</label>
+  <label class="chk"><input type="checkbox" id="refuse"> BGG refuses saves</label>
+</div>
+<div id="root"></div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const svgI = (body, w = 2, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`
+const ICON = {
+  buy: svgI('<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M10 15.5c.4.6 1.1 1 2 1 1.2 0 2-.6 2-1.5 0-2-4-1-4-3 0-.9.8-1.5 2-1.5.9 0 1.6.4 2 1"/>', 2),
+  bag: svgI('<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>', 2, 18),
+  lists: svgI('<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>'),
+  search18: svgI('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>', 2, 18),
+  config: svgI('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
+  menu: svgI('<path d="M4 7h16M4 12h16M4 17h16"/>', 2.4),
+  plus: svgI('<path d="M12 5v14M5 12h14"/>'),
+  heart: svgI('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>', 2.6),
+  filter: svgI('<path d="M3 5h18l-7 8v5l-4 2v-7z"/>'),
+  honey: svgI('<path d="M7 3.5 10.5 5.5v4L7 11.5 3.5 9.5v-4z"/><path d="M17 3.5 20.5 5.5v4L17 11.5 13.5 9.5v-4z"/><path d="M12 12.5 15.5 14.5v4L12 20.5 8.5 18.5v-4z"/>', 1.8),
+  cat: svgI('<path d="M8 3.5 12 5.8v4.6L8 12.7 4 10.4V5.8z"/><path d="M16 11.3l4 2.3v4.6l-4 2.3-4-2.3v-4.6z"/>', 1.8, 18),
+  resync: svgI('<path d="M20 11a8 8 0 0 0-14.5-4.5L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.5L20 16"/><path d="M20 20v-4h-4"/>', 2, 20),
+}
+const $ = s => document.querySelector(s)
+const root = $('#root'), layer = $('#layer')
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const eur = c => '€' + (c / 100).toFixed(2).replace('.', ',')
+const initials = n => n.split(/\s+/).filter(w => /\w/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+const cover = (name, size, got) => `<span class="cover" style="width:${size}px;height:${Math.round(size * 1.12)}px" aria-hidden="true"><span class="cover-hex hex"><span class="cover-initials" style="font-size:${Math.round(size / 3.2)}px">${esc(initials(name))}</span></span>${got ? '<span class="cover-got">✓</span>' : ''}</span>`
+function toast(t) { const el = $('#toast'); el.innerHTML = '<i class="hex"></i>' + esc(t); el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600) }
+
+/* ---------- data ---------- */
+// statuses in badge order (FR-009)
+const ST = [
+  ['own', 'Owned', 'Owned', '📦'], ['pre', 'Preordered', 'Preordered', '⏱️'], ['wish', 'Wishlist', 'Wishlist', '🎁'], ['play', 'Want to play', 'Want to play', '🎲'],
+  ['trade', 'For trade', 'For trade', '🔁'], ['want', 'Want in trade', 'Want in trade', '🤝'], ['wtb', 'Want to buy', 'Want to buy', '🛒'], ['prev', 'Previously owned', 'Previously owned', '📤'],
+]
+const PRIO = ['', 'Must have', 'Love to have', 'Like to have', 'Thinking about it', "Don't buy this"]
+const CAT = { must_have: ['⭐', 'Must Have'], interested: ['👀', 'Interested'], unsure: ['🤔', 'Unsure'], later: ['⏳', 'For later'], poop: ['💩', 'Poop'], new: ['⬡', 'No category yet'], skip: ['🛑', 'Not interested'] }
+const G = [
+  { id: 1, name: 'Cascadia', year: 2021, pub: 'Flatout Games', st: { own: 1, play: 0 }, cat: 'must_have', booth: '3-A101', price: 3800, bought: false, bggPrice: 3999 },
+  { id: 2, name: 'Arcs', year: 2024, pub: 'Leder Games', st: { wish: 1, play: 1 }, cat: 'must_have', booth: '2-C110', price: 9500, bought: false },
+  { id: 3, name: 'SETI: Search for Extraterrestrial Intelligence', year: 2024, pub: 'Czech Games Edition', st: { own: 1, trade: 1 }, cat: 'interested', booth: '3-D104', bought: true, paid: 6500 },
+  { id: 4, name: 'Faraway', year: 2023, pub: 'Catch Up Games', st: { wish: 3 }, cat: 'interested', booth: '5-B112', price: 1800, bought: false },
+  { id: 5, name: 'Harmonies', year: 2024, pub: 'Libellud', st: { play: 1 }, cat: 'unsure', booth: '1-C120', price: 3200, bought: false },
+  { id: 6, name: 'Bitoku', year: 2021, pub: 'Devir', st: { prev: 1 }, cat: 'poop', booth: '6-F107', bought: false },
+  { id: 7, name: 'Forest Shuffle', year: 2023, pub: 'Lookout Games', st: { own: 1, pre: 0 }, cat: 'new', booth: '3-L106', bought: false },
+  { id: 8, name: 'The Gang', year: 2024, pub: 'Kosmos', st: {}, cat: 'later', booth: '1-B101', price: 1500, bought: false },
+  { id: 9, name: 'Lacuna', year: 2025, pub: 'Lookout Games', st: { pre: 1 }, cat: 'new', bought: false },
+  { id: 10, name: 'Ark Nova', year: 2021, pub: 'Feuerland', st: { own: 1, play: 1 }, cat: 'new', bought: false },
+  { id: 11, name: 'Brass: Birmingham', year: 2018, pub: 'Roxley', st: { wish: 1 }, cat: 'new', bought: false },
+  { id: 12, name: 'Bohnanza', year: 1997, pub: 'Amigo', st: { own: 1, trade: 1 }, cat: 'new', bought: false },
+  { id: 13, name: 'Azul', year: 2017, pub: 'Plan B Games', st: { want: 1 }, cat: 'new', bought: false },
+  { id: 14, name: 'Daybreak', year: 2023, pub: 'CMYK', st: { wtb: 1, wish: 2 }, cat: 'new', bought: false },
+]
+const G0 = JSON.stringify(G)
+// badge colours: the app's gradients (dark or white text as docs/design.md §3 says)
+const PAL = {
+  cool: ['Cool', 'var(--grad-cool)', 'var(--ink)'], hot: ['Hot', 'var(--grad-hot)', 'var(--ink)'], got: ['Mint', 'var(--grad-got)', 'var(--ink)'], pink: ['Pink', 'linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%)', 'var(--ink)'], white: ['White', 'var(--grad-white)', 'var(--ink)'],
+  violet: ['Violet', 'var(--grad-violet)', '#fff'], dusk: ['Dusk', 'var(--grad-dusk)', '#fff'], red: ['Red', 'var(--grad-red)', '#fff'], mud: ['Mud', 'var(--grad-mud)', '#fff'], grey: ['Grey', '#3a4078', 'var(--text)'],
+}
+const COL0 = { own: 'cool', pre: 'dusk', wish: 'pink', play: 'violet', trade: 'hot', want: 'white', wtb: 'got', prev: 'grey' }
+const bstyle = k => { const c = PAL[S.colors[k]]; return `--bg:${c[1]};--fg:${c[2]}` }
+const byId = id => G.find(g => g.id === +id)
+// shopping lists a game is in (stand-in data)
+const IN = { 1: ['Essen 2026', 'Christmas wishes', 'Kids games'], 2: ['Essen 2026'], 3: ['Essen 2026'], 4: ['Essen 2026', 'Christmas wishes'], 5: ['Essen 2026'], 6: ['Essen 2026'], 7: ['Essen 2026'], 8: ['Essen 2026'], 10: ['Christmas wishes', 'Kids games'] }
+// "in Essen 2026" · "in Essen 2026 and Christmas wishes" · "in 3 shopping lists"; in a shopping list the others: "also in …"
+function inText(g, here) {
+  const l = (IN[g.id] || []).filter(n => n !== here)
+  if (!l.length) return ''
+  const pre = here ? 'also in ' : 'in '
+  return l.length === 1 ? pre + l[0] : l.length === 2 ? `${pre}${l[0]} and ${l[1]}` : `${pre}${l.length} shopping lists`
+}
+const SHOP = [1, 2, 3, 4, 5, 6, 7, 8]
+const RESULTS = [1, 7, 10]
+const FRIENDS = [{ who: 'anna_meeple', lists: [['wish', 23], ['trade', 4]] }]
+
+/* ---------- state ---------- */
+let S
+const has = (g, k) => !!g.st[k]
+const badges = (g, max) => {
+  if (!S.username) return ''
+  const on = ST.filter(([k]) => has(g, k))
+  if (!on.length) return ''
+  const label = k => k === 'wish' ? `Wishlist ${g.st.wish}` : ST.find(s => s[0] === k)[2]
+  const shown = max ? on.slice(0, max) : on
+  const rest = on.length - shown.length
+  return `<span class="bgg-badges" aria-label="On BoardGameGeek: ${on.map(([k]) => label(k)).join(', ')}">${shown.map(([k]) => `<span class="bb" style="${bstyle(k)}" aria-hidden="true">${label(k)}</span>`).join('')}${rest ? `<span class="bb more" aria-hidden="true">+${rest}</span>` : ''}</span>`
+}
+const count = k => G.filter(g => has(g, k)).length
+// a game in a BGG list, status list or search result: the whole left part opens the game sheet, Add sits inside the row
+const listRow = (g, ctx) => `<li><div class="crow" data-mark="new">
+  <button type="button" class="crow-open" data-act="sheet" data-ctx="${ctx}" data-id="${g.id}" aria-label="${esc(g.name)}, ${g.year}">${cover(g.name, 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${g.year}${g.exp ? '<span class="kind">Expansion</span>' : ''}</span>${inText(g) ? `<span class="in-mark">${inText(g)}</span>` : ''}${badges(g, 2)}</span></button>
+  <div class="crow-acts"><button type="button" class="ract add" data-act="add" data-id="${g.id}" aria-label="Add ${esc(g.name)} to shopping lists"><span class="rhex" aria-hidden="true">+</span><span>Add</span></button></div></div></li>`
+
+/* ---------- shell ---------- */
+const appbar = () => `<header class="appbar"><span class="appbar-name">Board-a-licious</span><button type="button" class="menu-btn" data-act="menu" aria-label="Menu" aria-expanded="${S.menu}">${ICON.menu}</button></header>`
+function menuHTML() {
+  if (!S.menu) return ''
+  const items = [['buy', 'Buy', ICON.buy], ['lists', 'Lists', ICON.lists], ['config', 'Config', ICON.config]]
+  return `<div class="menu-scrim" data-act="menu"></div><nav class="menu" aria-label="Places"><ul>${items.map(([k, l, i]) => `<li><a href="#" data-act="place" data-k="${k}" ${S.place === k ? 'aria-current="page"' : ''}>${i}<span>${l}</span></a></li>`).join('')}</ul></nav>`
+}
+const tabs = (name, list, cur) => `<div class="tabs" role="tablist" aria-label="${name}">${list.map(([k, l, n]) => `<button type="button" role="tab" class="tab" data-act="tab" data-place="${name}" data-k="${k}" aria-selected="${cur === k}">${l}${n != null ? `<span class="n">${n}</span>` : ''}</button>`).join('')}</div>`
+const heading = (title, back, extra = '') => `<div class="top">${back ? `<a class="icon-btn back" href="#" data-act="back" aria-label="Back">‹</a>` : ''}<div class="top-title"><h1>${esc(title)}</h1></div>${extra}</div>`
+const actionbar = (left, main, mainLabel, right, outer) => `<nav class="actionbar" aria-label="Actions"><div class="actionbar-left">${left || ''}</div><button type="button" class="main-btn hex hex-btn" data-act="${main}" aria-label="${mainLabel}">${main === 'tinder' ? ICON.heart : ICON.plus}</button><div class="actionbar-right">${right || ''}</div><div class="actionbar-outer">${outer || ''}</div></nav>`
+
+/* ---------- Buy ---------- */
+function buyScreen() {
+  const body = S.buyTab === 'search' ? buySearch() : buyShopping()
+  return `${heading('Buy')}${tabs('Buy', [['search', 'Search'], ['shopping', 'Shopping lists']], S.buyTab)}<main class="screen" role="tabpanel">${body}</main>${S.buyTab === 'shopping' ? actionbar('', 'new-list', 'Create a shopping list') : ''}`
+}
+function buySearch() {
+  const rows = S.q.trim().length >= 2 && S.searched ? RESULTS.map(byId) : []
+  return `<label class="label" for="bq">Find a game</label>
+    <div class="field search">${ICON.search18}<input id="bq" type="search" placeholder="Game name, e.g. Cascadia" autocomplete="off" value="${esc(S.q)}"></div>
+    <p class="search-hint">Type at least 2 letters.</p>
+    <hr class="separator" />
+    <p class="result-status" role="status">${rows.length ? `${rows.length} games · exact matches first` : ''}</p>
+    <ul class="rows">${rows.map(g => listRow(g, 'search')).join('')}</ul>
+    ${rows.length ? '<p class="proto-note">Today\'s Buy and Search in one: tap a game for its sheet (game info, Prices, Bought it, BGG status); Add puts it into shopping lists. The Search place and the separate price screen are gone.</p>' : '<p class="proto-note">Type “cas”.</p>'}`
+}
+function buyShopping() {
+  const cards = [['Essen 2026', 'Essen · 8 games · 1 bought · €65 spent'], ['Christmas wishes', '12 games · 0 bought'], ['Kids games', '5 games · 2 bought']]
+  return `<div class="cards">${cards.map(([n, sub], i) => `<a class="card" href="#" data-act="open-shop" data-i="${i}"><h2 class="card-title"><span class="card-name">${n}</span></h2><p class="card-sub">${sub}</p></a>`).join('')}</div>
+  <p class="proto-note">Today's Collections, unchanged inside; on screen they are called “shopping lists” (New shopping list, Add to shopping lists, …).</p>`
+}
+const CATORDER = ['must_have', 'interested', 'unsure', 'later', 'poop', 'new', 'skip']
+const F0 = () => ({ bought: 'all', price: 'all', cats: new Set(CATORDER), group: 'cat', bgg: 'all' })
+const isDefault = f => f.bought === 'all' && f.price === 'all' && f.cats.size === CATORDER.length && f.group === 'cat' && f.bgg === 'all'
+function shopGames() {
+  const f = S.f
+  return SHOP.map(byId).filter(g => {
+    if (S.buyChip) return ['must_have', 'interested', 'unsure'].includes(g.cat) && !g.bought
+    if (!f.cats.has(g.cat)) return false
+    if (f.bought === 'no' && g.bought) return false
+    if (f.bought === 'yes' && !g.bought) return false
+    const pr = g.price || 0
+    if (f.price === 'low' && !(pr && pr <= 3000)) return false
+    if (f.price === 'mid' && !(pr > 3000 && pr <= 6000)) return false
+    if (f.price === 'high' && !(pr > 6000)) return false
+    if (f.bgg === 'own' && !has(g, 'own')) return false
+    if (f.bgg === 'notown' && has(g, 'own')) return false
+    if (f.bgg === 'wish' && !has(g, 'wish')) return false
+    return true
+  })
+}
+function shopScreen() {
+  const games = shopGames()
+  const row = g => `<li><div class="crow" data-mark="${g.cat}">
+    <button type="button" class="crow-open" data-act="sheet" data-id="${g.id}">${cover(g.name, 52, g.bought)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${esc(g.pub)}</span><span class="row-info"><span>${[g.price ? eur(g.price) : '', g.booth ? 'Booth ' + g.booth : ''].filter(Boolean).join(' · ')}</span></span>${badges(g, 2)}<span class="visually-hidden">, ${CAT[g.cat][1]}${g.bought ? ', bought' : ''}</span></span></button>
+    <div class="crow-acts"><button type="button" class="ract buy" data-act="buy" data-id="${g.id}" aria-pressed="${g.bought}" aria-label="${g.bought ? 'Not bought' : 'Buy'} ${esc(g.name)}"><span class="rhex">${ICON.bag}</span><span>${g.bought ? (g.paid ? eur(g.paid) : 'Bought') : 'Buy'}</span></button><button type="button" class="ract cat" data-act="cat-sheet" data-id="${g.id}" aria-label="Category of ${esc(g.name)}"><span class="rhex">${ICON.cat}</span><span>Category</span></button></div></div></li>`
+  let groups = ''
+  if (S.f.group === 'cat') {
+    groups = CATORDER.map(k => { const gs = games.filter(g => g.cat === k); return gs.length ? `${k === 'new' ? '<hr class="separator" />' : ''}<section class="group" data-mark="${k}"><h3 class="group-title"><i class="hex" aria-hidden="true"></i>${CAT[k][0]} ${CAT[k][1]} <span class="group-count">${gs.length}</span></h3><ul class="rows">${gs.map(row).join('')}</ul></section>` : '' }).join('')
+  } else {
+    const hall = g => g.booth ? 'Hall ' + g.booth.split('-')[0] : 'No booth yet'
+    const halls = [...new Set(games.map(hall))].sort((a, b) => (a === 'No booth yet') - (b === 'No booth yet') || a.localeCompare(b))
+    groups = halls.map(h => { const gs = games.filter(g => hall(g) === h).sort((a, b) => CATORDER.indexOf(a.cat) - CATORDER.indexOf(b.cat) || (a.booth || '').localeCompare(b.booth || '')); return `<section class="group"><h3 class="group-title">${h} <span class="group-count">${gs.length}</span></h3><ul class="rows">${gs.map(row).join('')}</ul></section>` }).join('')
+  }
+  const active = !isDefault(S.f) || S.buyChip
+  return `${heading('Essen 2026', true)}<main class="screen">
+    <p class="list-sub">1 of 8 bought · €65,00 spent</p>
+    <hr class="separator" />
+    <div class="quick"><button type="button" class="qtoggle" data-act="group-toggle" aria-label="Group by ${S.f.group === 'cat' ? 'booth' : 'category'}"><span class="${S.f.group === 'cat' ? 'on' : ''}">Cat</span><span class="${S.f.group === 'booth' ? 'on' : ''}">Booth</span></button><button type="button" class="chip" data-act="buy-chip" aria-pressed="${S.buyChip}">🛒 Buy</button><span class="quick-count">${games.length} games</span></div>
+    <hr class="separator" />
+    ${groups || '<p class="no-match">No game matches the filter.</p>'}
+    <p class="proto-note">Grouped by category as today (Cat | Booth switches to halls and booths); Filter adds “BGG status”. Badges sit under the game infos. Tap Buy on a game you don't own yet (Arcs, Faraway): after “Got it” the app offers to mark it as owned on BGG.</p>
+  </main>${actionbar(`<button type="button" class="act">${ICON.plus}<span>Add game</span></button>`, 'tinder', 'BG-Tinder: swipe a BGG list into this shopping list', `<button type="button" class="act${active ? ' is-active' : ''}" data-act="filter">${ICON.filter}<span>Filter</span></button>`, `<button type="button" class="act">${ICON.honey}<span>Show-off</span></button>`)}`
+}
+function pricesScreen() {
+  const g = byId(S.gameId)
+  return `${heading('Prices', true)}<main class="screen">
+    <div class="game-head">${cover(g.name, 64, g.bought)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${g.year} · ${esc(g.pub)}</span>${badges(g)}</span></div>
+    <div class="buy-row"><button type="button" class="btn btn-bought btn-block" data-act="buy" data-id="${g.id}">✅ Bought it</button></div>
+    <hr class="separator" />
+    <p class="proto-note">… the offers block of feature 007 (Both | English | German, New / Used, …) …</p>
+    <p class="proto-note">“Bought it” needs no shopping list: it asks what you paid, then offers to mark the game as owned on BoardGameGeek with the price paid in its private info. Try Ark Nova (already owned) or Forest Shuffle.</p>
+  </main>`
+}
+
+/* ---------- Lists ---------- */
+function listsScreen() {
+  const body = S.listsTab === 'status' ? statusTab() : S.listsTab === 'previews' ? previewsTab() : geeklistsTab()
+  return `${heading('Lists')}${tabs('Lists', [['status', 'Status lists'], ['previews', 'Previews'], ['geeklists', 'Geeklists']], S.listsTab)}<main class="screen" role="tabpanel">${body}</main>${actionbar('', 'load', 'Load a BGG list')}`
+}
+function statusTab() {
+  if (!S.username) return `<div class="empty"><div class="hex"></div><h2>What you own, wish for and want to play</h2><p>Add your BoardGameGeek username in Config to see your BGG collection here. A friend's list: paste the link to their BGG collection with the plus.</p><div class="actions"><button class="btn btn-primary" data-act="place" data-k="config">Add username in Config</button></div></div>`
+  const mine = ST.filter(([k]) => count(k) > 0)
+  return `<h2 class="person">Mine <small>${esc(S.username)} on BoardGameGeek · loaded 12 min ago</small></h2>
+    <ul class="slist">${mine.map(([k, l, , e]) => `<li><button type="button" data-act="status" data-k="${k}" data-who="me"><span class="shex" style="${bstyle(k)}" aria-hidden="true">${e}</span><span class="label-t">${l}${k === 'wish' ? '<small>by priority, 1 Must have first</small>' : ''}</span><span class="count">${count(k)}</span><span class="chev" aria-hidden="true">›</span></button></li>`).join('')}</ul>
+    ${FRIENDS.map(f => `<h2 class="person">${esc(f.who)} <small>loaded by link · read-only</small></h2><ul class="slist">${f.lists.map(([k, n]) => { const s = ST.find(x => x[0] === k); return `<li><button type="button" data-act="status" data-k="${k}" data-who="${esc(f.who)}"><span class="shex" style="${bstyle(k)}" aria-hidden="true">${s[3]}</span><span class="label-t">${s[1]}</span><span class="count">${n}</span><span class="chev" aria-hidden="true">›</span></button></li>` }).join('')}</ul>`).join('')}
+    <p class="proto-note">Your own come from the username in Config (statuses without games are left out); re-read when opened and older than 1 hour. A friend's: paste their BGG collection link (e.g. …/collection/user/anna_meeple?wishlist=1) with the plus.</p>`
+}
+function previewsTab() {
+  return `<div class="cards"><a class="card" href="#" data-act="toast" data-t="Opens the preview as today"><h2 class="card-title"><span class="card-name">SPIEL Essen 2026 preview</span></h2><p class="card-sub">1,204 games · loaded 2 days ago</p></a></div>
+  <p class="proto-note">Today's BGG lists, previews only. The plus loads a list by link; it lands in the tab of its kind.</p>`
+}
+function geeklistsTab() {
+  const l = [['Essen 2026: the hot list', '312 games'], ['Best 2-player games 2025', '58 games']]
+  return `<div class="cards">${l.map(([n, s]) => `<a class="card" href="#" data-act="toast" data-t="Opens the geeklist as today"><h2 class="card-title"><span class="card-name">${n}</span></h2><p class="card-sub">${s}</p></a>`).join('')}</div>`
+}
+function statusListScreen() {
+  const s = ST.find(x => x[0] === S.status)
+  const friend = S.who !== 'me'
+  const title = friend ? `${S.who}: ${s[1]}` : s[1]
+  const resync = `<button type="button" class="icon-btn resync-btn${S.waiting ? ' spin' : ''}" data-act="refresh" aria-label="Read again from BGG">${ICON.resync}</button>`
+  if (S.waiting) return `${heading(title, true, resync)}<main class="screen"><p class="result-status" role="status"><span class="spin-hex"></span>BoardGameGeek is preparing your collection… it loads by itself when ready.</p><div class="rows">${'<div class="skel"></div>'.repeat(4)}</div><p class="proto-note">BGG answers “try again later” for collections nobody asked for recently. The app retries on its own with growing pauses; after about a minute: a note with Try again.</p></main>`
+  const games = friend ? [2, 4, 11, 14, 8].map(byId) : G.filter(g => has(g, S.status))
+  const row = g => listRow(g, friend ? 'friend' : 'list')
+  let list
+  if (S.status === 'wish' && !friend) {
+    list = [1, 2, 3, 4, 5].map(p => { const gs = games.filter(g => g.st.wish === p); return gs.length ? `<section class="group"><h3 class="group-title">${p} ${PRIO[p]} <span class="group-count">${gs.length}</span></h3><ul class="rows">${gs.map(row).join('')}</ul></section>` : '' }).join('')
+  } else list = `<ul class="rows">${games.map(row).join('')}</ul>`
+  return `${heading(title, true, resync)}<main class="screen">
+    <p class="list-sub">${friend ? `${esc(S.who)} on BoardGameGeek · read-only` : `${esc(S.username)} on BoardGameGeek`} · loaded 12 min ago${S.offline ? ' · offline' : ''}</p>
+    <hr class="separator" />
+    ${list}
+    <p class="proto-note">Works like any BGG list: tap a game for its sheet (add to shopping lists, BGG status); BG-Tinder can swipe it into a shopping list. ${friend ? 'A friend\'s list never creates badges and is never written to.' : ''}</p>
+  </main>`
+}
+function swipeScreen() {
+  const g = byId(S.swipeIds[S.swipeAt % S.swipeIds.length])
+  return `${heading('❤️ BG-Tinder ❤️', true)}<main class="screen">
+    <p class="list-sub">SPIEL Essen 2026 preview → Essen 2026</p>
+    <div class="mini-swipe">${cover(g.name, 120)}<h2>${esc(g.name)}</h2><p class="detail-sub">${esc(g.pub)} · ${g.year}</p>${badges(g)}<p class="proto-note">… info box and description as today …</p>
+    <div class="swipe-buttons"><button type="button" class="nope" data-act="swipe" aria-label="Pass">✕</button><button type="button" class="yes" data-act="swipe" aria-label="Add">✓</button></div></div>
+    <p class="proto-note">At the fair: the card says at once that you own Cascadia, or have Arcs on your wishlist. Swiping never changes BGG.</p>
+  </main>`
+}
+
+/* ---------- Config ---------- */
+function configScreen() {
+  const signed = S.signedIn
+  return `${heading('Config')}<main class="screen">
+    <section class="cfg-sec"><h2 class="section-title">BoardGameGeek</h2>
+      <div class="cfg-card">
+        <div class="form-row"><label class="label" for="uname">Your BGG username</label><div class="field"><input id="uname" autocomplete="username" value="${esc(S.username)}" placeholder="e.g. mrmikkl"></div></div>
+        <p class="muted">Shows your status lists in Lists and your statuses as badges on games. Reading needs no password.</p>
+        <button type="button" class="btn" data-act="save-user">Save username</button>
+      </div>
+      <h2 class="section-title" style="margin-top:16px">Change statuses on BGG</h2>
+      <div class="cfg-card">
+        ${signed ? `<p class="signed-in">Signed in to BoardGameGeek as ${esc(S.username || 'mrmikkl')} on this device</p>
+          <p class="muted">Changes you save in a game's BGG status, and “mark as owned” after buying, go to your BGG collection. Only this device; your password is not kept.</p>
+          <button type="button" class="btn btn-danger" data-act="sign-out">Sign out of BoardGameGeek</button>`
+        : `<p>Sign in to change statuses and add what you paid on BoardGameGeek.</p>
+          <p class="muted">The app uses your password once to sign in and does not keep it. The sign-in stays on this device only; other devices sign in on their own.</p>
+          <button type="button" class="btn btn-primary" data-act="signin">Sign in to BoardGameGeek</button>`}
+      </div>
+    </section>
+    <section class="cfg-sec"><h2 class="section-title">Badge colours</h2>
+      <p class="hint" style="margin:0 0 8px">How your BGG statuses look on games. Tap one to change its colour.</p>
+      <ul class="colour-rows">${ST.map(([k, l]) => `<li><button type="button" data-act="colour" data-k="${k}"><span class="bb" style="${bstyle(k)}">${k === 'wish' ? 'Wishlist 1' : l}</span><span class="chg">Change</span></button></li>`).join('')}</ul>
+      <div class="sheet-actions"><button type="button" class="btn" data-act="reset-colours" ${ST.every(([k]) => S.colors[k] === COL0[k]) ? 'disabled' : ''}>Reset colours</button></div>
+    </section>
+    <p class="proto-note">… Sound and vibration, Share and backup, Intro, … as today …</p>
+  </main>`
+}
+
+/* ---------- sheets ---------- */
+const openSheet = (label, html) => { layer.innerHTML = `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1"><div class="sheet-grip"></div><div id="sheet-body">${html}</div></div>`; $('.sheet').focus() }
+const setSheet = html => { const b = $('#sheet-body'); if (b) b.innerHTML = html }
+const closeSheet = () => { layer.innerHTML = '' }
+
+function statusBody(g, d) {
+  const changed = k => (k === 'wish' ? (g.st.wish || 0) !== (d.wish || 0) : !!g.st[k] !== !!d[k])
+  const anyChange = ST.some(([k]) => changed(k))
+  const dis = S.offline || S.saving ? 'disabled' : ''
+  return `<p class="lead">${S.offline ? 'Changing statuses needs a connection.' : S.signedIn ? `Signed in as ${esc(S.username)}. Only what you change is written.` : 'Sign in to BoardGameGeek to change them.'}</p>
+    ${ST.map(([k, l]) => `<label class="toggle${changed(k) ? ' changed' : ''}"><span class="toggle-text"><span class="bb" style="${bstyle(k)}">${k === 'wish' && d.wish ? 'Wishlist ' + d.wish : l}</span></span><input type="checkbox" class="switch" data-act="st" data-k="${k}" aria-label="${l}" ${d[k] ? 'checked' : ''} ${dis}></label>
+      ${k === 'wish' && d.wish ? `<div class="prio"><div class="seg" role="group" aria-label="Wishlist priority">${[1, 2, 3, 4, 5].map(p => `<button type="button" data-act="prio" data-p="${p}" aria-pressed="${d.wish === p}" ${dis}>${p}</button>`).join('')}</div><p>${d.wish} · ${PRIO[d.wish]}</p></div>` : ''}`).join('')}
+    ${S.saveError ? `<div class="fail-line"><span>BoardGameGeek did not take the change. Nothing was changed.</span><button class="link-btn" data-act="save-status">Try again</button></div>` : ''}
+    <div class="sheet-actions">${S.signedIn
+      ? `<button type="button" class="btn btn-primary btn-block" data-act="save-status" ${anyChange && !S.offline && !S.saving ? '' : 'disabled'}>${S.saving ? 'Saving on BoardGameGeek…' : 'Save on BoardGameGeek'}</button>`
+      : `<button type="button" class="btn btn-primary btn-block" data-act="signin" ${anyChange && !S.offline ? '' : 'disabled'}>Sign in to save on BoardGameGeek</button>`}</div>`
+}
+function statusSection(g, d) {
+  if (!S.username) return ''
+  if (false) return `<section class="status-sec" aria-labelledby="bgg-h"><h3 id="bgg-h">On BoardGameGeek</h3>${statusBody(g, d)}</section>`
+  return `<section class="status-sec folded"><button type="button" class="st-toggle" data-act="fold-st" aria-expanded="${S.stOpen}" aria-controls="st-body"><span aria-hidden="true">📦</span>BGG status${S.stOpen ? '' : badges(g, 2) || '<small style="margin-left:auto;color:var(--muted);font:600 12px var(--font-body)">not in your collection</small>'}<span class="chev" aria-hidden="true">›</span></button>
+    <div class="st-body" id="st-body" ${S.stOpen ? '' : 'hidden'}>${S.stOpen ? statusBody(g, d) : ''}</div></section>`
+}
+function gameSheetHTML() {
+  const g = byId(S.gameId), d = S.draft, ctx = S.ctx, shop = ctx === 'shop', top = false
+  const cats = [['must_have', '⭐', 'Must Have'], ['interested', '👀', 'Interested'], ['unsure', '🤔', 'Unsure'], ['later', '⏳', 'For later'], ['poop', '💩', 'Poop']]
+  const offer = (n, t, sub) => `<a class="offer" href="#" data-act="toast" data-t="Opens ${n}"><span class="offer-shop">${n}<span class="ext">↗</span></span><span class="offer-total">${t}<small>${sub}</small></span></a>`
+  return `<h2 class="sheet-title">${esc(g.name)}</h2>
+  <div class="gs-head">${cover(g.name, 96, g.bought)}<div class="gs-facts">
+    <p class="detail-sub">${g.year} · ${esc(g.pub)}</p>
+    ${badges(g) || (S.username ? '<p class="gs-none">Not in your BGG collection</p>' : '')}
+    ${inText(g, shop ? 'Essen 2026' : '') ? `<button type="button" class="gs-in" data-act="${shop ? 'toast' : 'add'}" data-t="Opens the shopping list choice: ticks show where ${esc(g.name)} is" data-id="${g.id}">${inText(g, shop ? 'Essen 2026' : '')}<span aria-hidden="true"> ›</span></button>` : ''}
+  </div></div>
+  <a class="link-out gs-bgg" href="#" data-act="toast" data-t="Opens the game on boardgamegeek.com">Open on BoardGameGeek ↗</a>
+  ${top ? statusSection(g, d) : ''}
+  <div class="ibox">
+    <div class="ln"><span>1–4 players</span><span class="k">·</span><span>Best with 3</span><span class="k">·</span><span>30–45 min</span></div>
+    <div class="ln"><span class="rating"><i>7.9</i><small>Rating</small></span><span class="rating"><i class="geek">7.6</i><small>Geek rating</small></span></div>
+    ${shop && g.booth ? `<div class="ln"><span class="k">Booth</span><b>${g.booth}</b>${g.price ? `<span class="k">· fair price</span><b>${eur(g.price)}</b>` : ''}</div>` : ''}
+    <div class="ln"><span class="k">Designer</span><span>Randy Flynn</span></div>
+    <div class="ln"><span class="mech">Tile placement</span><span class="mech">Drafting</span><span class="mech">Pattern building</span></div>
+    <div class="src">From BoardGameGeek</div>
+  </div>
+  ${shop ? `<section class="status-sec folded cat-sec"><button type="button" class="st-toggle" data-act="fold-cat" aria-expanded="${S.catOpen}" aria-controls="cat-body"><span aria-hidden="true">🏷️</span>Category<span class="cat-now" data-mark="${g.cat}"><i class="hex" aria-hidden="true"></i>${CAT[g.cat][0]} ${CAT[g.cat][1]}</span><span class="chev" aria-hidden="true">›</span></button>
+    <div class="st-body" id="cat-body" ${S.catOpen ? '' : 'hidden'}>${S.catOpen ? `<ul class="cat-list">${CATORDER.map(k => `${k === 'new' ? '<li class="sep" aria-hidden="true"></li>' : ''}<li><button type="button" data-mark="${k}" data-act="cat" data-k="${k}" aria-pressed="${g.cat === k}"><span class="chex" aria-hidden="true"></span>${CAT[k][0]} ${CAT[k][1]}</button></li>`).join('')}</ul>` : ''}</div></section>` : ''}
+  ${top ? '' : statusSection(g, d)}
+  <section class="prices-sec"><button type="button" class="prices-toggle" data-act="fold-prices" aria-expanded="${S.pricesOpen}" aria-controls="pr-body"><span aria-hidden="true">💶</span>Prices<small>${S.pricesOpen ? '' : 'from €29,49'}</small><span class="chev" aria-hidden="true">›</span></button>
+    <div class="prices-body" id="pr-body" ${S.pricesOpen ? '' : 'hidden'}>${S.pricesOpen ? offer('Milan-Spiele', '€35,39', '€29,49 + €5,90 shipping') + offer('Amazon.de', '€34,99', 'free shipping') + offer('BGG marketplace', '€22,00', 'used · like new') + '<p class="proto-note">… the full offers block of feature 007 …</p>' : ''}</div></section>
+  <div class="sheet-actions">
+    ${shop ? '' : `<button type="button" class="btn btn-primary btn-block" data-act="add" data-id="${g.id}">Add to shopping lists</button>`}
+    <button type="button" class="btn btn-bought btn-block" data-act="buy" data-id="${g.id}">${g.bought ? '✅ Bought' + (g.paid ? ' for ' + eur(g.paid) : '') : '✅ Bought it'}</button>
+    ${shop ? `<div class="two"><button type="button" class="btn">Copy</button><button type="button" class="btn">Move</button></div><button type="button" class="btn btn-danger btn-block">Remove from Essen 2026</button>` : ''}
+  </div>
+  <div class="gs-desc"><h3>Description</h3><p>Cascadia is a puzzly tile-laying and token-drafting game featuring the habitats and wildlife of the Pacific Northwest. Build the most diverse environment while creating wildlife patterns…</p></div>
+  <div class="sheet-actions"><button type="button" class="btn btn-block" data-act="close">Close</button></div>
+  <p class="proto-note">${shop ? 'In a shopping list: category picker, Bought it, Copy / Move / Remove.' : 'From Search or a list: no category picker; Add to shopping lists and Bought it.'} Switch “BGG status in the sheet” in the top bar to compare A (folded, badges on its header) and B (open under the cover).</p>`
+}
+function openGame(id, ctx = 'shop') {
+  S.gameId = +id; S.ctx = ctx; S.stOpen = false; S.pricesOpen = false; S.catOpen = false; const g = byId(id)
+  S.draft = { ...Object.fromEntries(ST.map(([k]) => [k, k === 'wish' ? (g.st.wish || 0) : !!g.st[k]])) }
+  S.saveError = false; S.saving = false
+  S.sheet = 'game'; openSheet(g.name, gameSheetHTML())
+}
+function signInHTML() {
+  return `<h2 class="sheet-title">Sign in to BoardGameGeek</h2>
+  <p class="hint">Your password is used once to sign in and is not kept. The sign-in stays on this device.</p>
+  <form class="form" data-form="signin">
+    <div class="form-row"><label class="label" for="bu">BGG username</label><div class="field"><input id="bu" autocomplete="username" value="${esc(S.username || 'mrmikkl')}"></div></div>
+    <div class="form-row"><label class="label" for="bp">Password</label><div class="field"><input id="bp" type="password" autocomplete="current-password" placeholder="(type “wrong” to see the error)"></div></div>
+    ${S.signError ? '<p class="hint error">BoardGameGeek did not accept this username or password.</p>' : ''}
+    <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="close-or-back">Cancel</button><button type="submit" class="btn btn-primary">Sign in</button></div>
+  </form>`
+}
+function buySheetHTML() {
+  const g = byId(S.gameId)
+  return `<h2 class="sheet-title">Bought ${esc(g.name)}?</h2>
+  <p class="hint">What did you pay? Leave it empty to just tick it off.</p>
+  <form class="form" data-form="buy"><div class="price-row"><div class="field"><input id="paid" inputmode="decimal" value="${g.price ? (g.price / 100).toFixed(2).replace('.', ',') : ''}" placeholder="0,00"></div><div class="field currency"><select aria-label="Currency"><option>EUR</option><option>USD</option><option>GBP</option></select></div></div>
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn btn-bought">Got it</button></div></form>`
+}
+function ownSheetHTML() {
+  const g = byId(S.gameId), owned = has(g, 'own'), p = S.paid
+  const from = g.booth && S.fromShop !== true ? `SPIEL Essen 2026 · booth ${g.booth}` : ''
+  const rows = [...(owned ? [] : [['Status', 'Owned']]), ...(p ? [['Price paid', `${(p / 100).toFixed(2).replace('.', ',')} EUR`]] : []), ['Acquisition date', '8 Nov 2026'], ...(from ? [['Acquired from', from]] : [])]
+  return `<h2 class="sheet-title">${owned ? 'Add the price paid on BoardGameGeek?' : 'Also mark as owned on BoardGameGeek?'}</h2>
+  <p class="hint">${owned ? `${esc(g.name)} is already owned on BoardGameGeek.` : `${esc(g.name)} is not in your owned games on BoardGameGeek yet.`}</p>
+  <dl class="kv">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+  <p class="private-note">Price, date and where from go into the game's private info on BGG, which only you see.</p>
+  ${S.signedIn ? '' : '<p class="hint">You\'ll sign in to BoardGameGeek first (once on this device).</p>'}
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="close">Not now</button><button type="button" class="btn btn-primary" data-act="own-yes">${owned ? 'Add price' : 'Mark as owned'}</button></div>`
+}
+function replaceSheetHTML() {
+  const g = byId(S.gameId)
+  return `<h2 class="sheet-title">Replace the price paid on BoardGameGeek?</h2>
+  <p class="hint">BoardGameGeek already has a price paid for ${esc(g.name)}.</p>
+  <dl class="kv"><dt>Price paid</dt><dd><span class="old">${(g.bggPrice / 100).toFixed(2).replace('.', ',')} EUR</span>${(S.paid / 100).toFixed(2).replace('.', ',')} EUR</dd></dl>
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="keep-price">Keep ${(g.bggPrice / 100).toFixed(2).replace('.', ',')}</button><button type="button" class="btn btn-primary" data-act="replace-price">Replace</button></div>`
+}
+function colourHTML(k) {
+  const l = ST.find(s => s[0] === k)[1]
+  return `<h2 class="sheet-title">Colour of “${l}”</h2>
+  <p style="margin:0 0 6px"><span class="bb" style="${bstyle(k)};font-size:13px;line-height:24px;padding:0 10px">${k === 'wish' ? 'Wishlist 1' : l}</span></p>
+  <div class="swatches" role="group" aria-label="Colour">${Object.entries(PAL).map(([c, [n, bg, fg]]) => `<button type="button" data-act="pick-colour" data-k="${k}" data-c="${c}" style="--bg:${bg};--fg:${fg}" aria-label="${n}" aria-pressed="${S.colors[k] === c}"></button>`).join('')}</div>
+  <div class="swatch-names" aria-hidden="true">${Object.values(PAL).map(([n]) => `<span>${n}</span>`).join('')}</div>
+  <div class="sheet-actions"><button type="button" class="btn btn-primary btn-block" data-act="close">Done</button></div>`
+}
+function filterHTML() {
+  const f = S.f, all = SHOP.map(byId)
+  const seg = (label, key, opts) => `<p class="seg-title">${label}</p><div class="seg" role="group" aria-label="${label}">${opts.map(([v, l]) => `<button type="button" data-act="f" data-key="${key}" data-v="${v}" aria-pressed="${f[key] === v}">${l}</button>`).join('')}</div>`
+  return `<h2 class="sheet-title">Filter and group</h2>
+  ${seg('Bought', 'bought', [['all', 'All'], ['no', 'Not bought'], ['yes', 'Bought']])}
+  ${seg('Price', 'price', [['all', 'All'], ['low', '≤ €30'], ['mid', '€30–60'], ['high', '> €60']])}
+  ${seg('BGG status', 'bgg', [['all', 'All'], ['own', 'Owned'], ['notown', 'Not owned'], ['wish', 'Wishlist']])}
+  <div class="seg-head"><p class="seg-title">Categories</p><div class="seg-actions"><button type="button" class="link-btn" data-act="cats-all">Select all</button><button type="button" class="link-btn" data-act="cats-none">Select none</button></div></div>
+  <div role="group" aria-label="Categories">${CATORDER.map(k => `<label class="filter-row"><input type="checkbox" data-catf="${k}" ${f.cats.has(k) ? 'checked' : ''}><span>${CAT[k][0]} ${CAT[k][1]}</span><small>${all.filter(g => g.cat === k).length}</small></label>`).join('')}</div>
+  ${seg('Group by', 'group', [['cat', 'Categories'], ['booth', 'Booths']])}
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="f-clear" ${isDefault(f) ? 'disabled' : ''}>Clear filters</button><button type="button" class="btn btn-primary" data-act="close">Done</button></div>
+  <p class="proto-note">As today, plus the new “BGG status” segment.</p>`
+}
+function catSheetHTML() {
+  const g = byId(S.gameId)
+  return `<h2 class="sheet-title">Category of ${esc(g.name)}</h2><ul class="cat-list">${CATORDER.map(k => `${k === 'new' ? '<li class="sep" aria-hidden="true"></li>' : ''}<li><button type="button" data-mark="${k}" data-act="set-cat" data-k="${k}" aria-pressed="${g.cat === k}"><span class="chex" aria-hidden="true"></span>${CAT[k][0]} ${CAT[k][1]}</button></li>`).join('')}</ul>`
+}
+
+/* ---------- writing to BGG (simulated) ---------- */
+function writeBgg(done) {
+  if (S.offline) return toast("You're offline. Saving on BoardGameGeek needs a connection.")
+  S.saving = true
+  setTimeout(() => { S.saving = false; if ($('#refuse').checked) return done(false); done(true) }, 900)
+}
+function afterOwn(writePrice) {
+  const g = byId(S.gameId)
+  setSheet('<p class="result-status" role="status"><span class="spin-hex"></span>Saving on BoardGameGeek…</p>')
+  writeBgg(ok => {
+    if (!ok) { setSheet(`<h2 class="sheet-title">Not saved on BoardGameGeek</h2><div class="fail-line"><span>BoardGameGeek did not take the change. Nothing was changed there.</span><button class="link-btn" data-act="own-yes">Try again</button></div><div class="sheet-actions"><button class="btn btn-block" data-act="close">Close</button></div>`); return }
+    g.st.own = 1; if (writePrice && S.paid) g.bggPrice = S.paid
+    closeSheet(); render(); toast(`Saved on BoardGameGeek: ${g.name} owned${writePrice && S.paid ? ', price paid added' : ''}`)
+  })
+}
+function ownYes() {
+  const g = byId(S.gameId)
+  if (!S.signedIn) { S.after = 'own'; S.sheet = 'signin'; S.signError = false; return setSheet(signInHTML()) }
+  if (S.paid && g.bggPrice && g.bggPrice !== S.paid) return setSheet(replaceSheetHTML())
+  afterOwn(true)
+}
+
+/* ---------- render and events ---------- */
+function render() {
+  const body = S.screen === 'shop' ? shopScreen() : S.screen === 'prices' ? pricesScreen() : S.screen === 'status' ? statusListScreen() : S.screen === 'swipe' ? swipeScreen()
+    : S.place === 'buy' ? buyScreen() : S.place === 'lists' ? listsScreen() : configScreen()
+  root.innerHTML = `<div class="app">${appbar()}${body}</div>${menuHTML()}`
+  // the menu opens just below the app bar, wherever the prototype bar pushed it
+  const m = $('.menu'); if (m) m.style.top = $('.appbar').getBoundingClientRect().bottom + 'px'
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return
+  const a = t.dataset.act
+  if (a !== 'st') e.preventDefault()
+  if (a === 'menu') { S.menu = !S.menu; return render() }
+  if (a === 'place') { S.menu = false; S.place = t.dataset.k; S.screen = 'main'; closeSheet(); return render() }
+  if (a === 'tab') { if (t.dataset.place === 'Buy') S.buyTab = t.dataset.k; else S.listsTab = t.dataset.k; return render() }
+  if (a === 'back') { S.screen = 'main'; return render() }
+  if (a === 'toast') return toast(t.dataset.t)
+  if (a === 'open-shop') { S.screen = 'shop'; return render() }
+  if (a === 'new-list') return toast('Opens “New shopping list”')
+  if (a === 'load') return toast('Opens “Load a BGG list”: preview, geeklist or BGG collection link')
+  if (a === 'tinder') return toast('Opens BG-Tinder: choose a status list, preview or geeklist')
+  if (a === 'add') return toast('Opens “Add to shopping lists”: tick shopping lists, optional category (as in feature 006)')
+  if (a === 'fold-st') { S.stOpen = !S.stOpen; return setSheet(gameSheetHTML()) }
+  if (a === 'fold-prices') { S.pricesOpen = !S.pricesOpen; return setSheet(gameSheetHTML()) }
+  if (a === 'fold-cat') { S.catOpen = !S.catOpen; return setSheet(gameSheetHTML()) }
+  if (a === 'cat') { const g = byId(S.gameId); g.cat = t.dataset.k; S.catOpen = false; render(); setSheet(gameSheetHTML()); return toast(`${g.name} → ${CAT[g.cat].join(' ')}`) }
+  if (a === 'colour') { S.sheet = 'colour'; return openSheet('Badge colour', colourHTML(t.dataset.k)) }
+  if (a === 'pick-colour') { S.colors[t.dataset.k] = t.dataset.c; render(); return setSheet(colourHTML(t.dataset.k)) }
+  if (a === 'reset-colours') { S.colors = { ...COL0 }; render(); return toast('Badge colours reset') }
+  if (a === 'status') { S.status = t.dataset.k; S.who = t.dataset.who; S.screen = 'status'; S.waiting = false; return render() }
+  if (a === 'refresh') { S.waiting = true; render(); return setTimeout(() => { S.waiting = false; if (S.screen === 'status') render(); toast('Read again from BoardGameGeek') }, 1800) }
+  if (a === 'swipe') { S.swipeAt++; return render() }
+  if (a === 'sheet') return openGame(t.dataset.id, t.dataset.ctx || 'shop')
+  if (a === 'filter') { S.sheet = 'filter'; return openSheet('Filter and group', filterHTML()) }
+  if (a === 'f') { S.f[t.dataset.key] = t.dataset.v; S.buyChip = false; render(); return setSheet(filterHTML()) }
+  if (a === 'f-clear') { S.f = F0(); S.buyChip = false; render(); return setSheet(filterHTML()) }
+  if (a === 'cats-all' || a === 'cats-none') { S.f.cats = a === 'cats-all' ? new Set(CATORDER) : new Set(); S.buyChip = false; render(); return setSheet(filterHTML()) }
+  if (a === 'group-toggle') { S.f.group = S.f.group === 'cat' ? 'booth' : 'cat'; return render() }
+  if (a === 'buy-chip') { S.buyChip = !S.buyChip; return render() }
+  if (a === 'cat-sheet') { S.gameId = +t.dataset.id; S.sheet = 'cat'; return openSheet('Category', catSheetHTML()) }
+  if (a === 'set-cat') { const g = byId(S.gameId); g.cat = t.dataset.k; closeSheet(); render(); return toast(`${g.name} → ${CAT[g.cat].join(' ')}`) }
+  if (a === 'buy') {
+    const g = byId(t.dataset.id); S.gameId = g.id
+    if (g.bought) { g.bought = false; g.paid = 0; render(); return toast(`${g.name}: not bought any more`) }
+    S.sheet = 'buy'; return openSheet(`Bought ${g.name}?`, buySheetHTML())
+  }
+  if (a === 'own-yes') return ownYes()
+  if (a === 'replace-price') return afterOwn(true)
+  if (a === 'keep-price') return afterOwn(false)
+  if (a === 'prio') { S.draft.wish = +t.dataset.p; return setSheet(gameSheetHTML()) }
+  if (a === 'save-status') {
+    S.saveError = false; setSheet(gameSheetHTML())
+    writeBgg(ok => {
+      if (!ok) { S.saveError = true; return setSheet(gameSheetHTML()) }
+      const g = byId(S.gameId); ST.forEach(([k]) => { if (k === 'wish') g.st.wish = S.draft.wish; else g.st[k] = S.draft[k] ? 1 : 0 })
+      closeSheet(); render(); toast('Saved on BoardGameGeek')
+    })
+    return setSheet(gameSheetHTML())
+  }
+  if (a === 'signin') { S.after = S.sheet === 'game' ? 'game' : null; S.sheet = 'signin'; S.signError = false; return layer.innerHTML ? setSheet(signInHTML()) : openSheet('Sign in to BoardGameGeek', signInHTML()) }
+  if (a === 'close-or-back') { if (S.after === 'game') { S.sheet = 'game'; return setSheet(gameSheetHTML()) } if (S.after === 'own') return setSheet(ownSheetHTML()); return closeSheet() }
+  if (a === 'sign-out') { S.signedIn = false; $('#signed').checked = false; render(); return toast('Signed out of BoardGameGeek on this device') }
+  if (a === 'save-user') { S.username = $('#uname').value.trim(); render(); return toast(S.username ? `BGG username: ${S.username}` : 'BGG username removed') }
+  if (a === 'close') { S.sheet = null; return closeSheet() }
+})
+document.addEventListener('change', e => {
+  if (e.target.dataset.catf) { const k = e.target.dataset.catf; S.f.cats.has(k) ? S.f.cats.delete(k) : S.f.cats.add(k); S.buyChip = false; render(); return setSheet(filterHTML()) }
+  if (e.target.dataset.act === 'st') { const k = e.target.dataset.k; S.draft[k] = k === 'wish' ? (e.target.checked ? 3 : 0) : e.target.checked; setSheet(gameSheetHTML()) }
+})
+document.addEventListener('submit', e => {
+  e.preventDefault()
+  const f = e.target.dataset.form
+  if (f === 'signin') {
+    if ($('#bp').value === 'wrong' || !$('#bp').value) { S.signError = true; return setSheet(signInHTML()) }
+    S.signedIn = true; $('#signed').checked = true; if (!S.username) S.username = $('#bu').value.trim()
+    toast(`Signed in to BoardGameGeek as ${$('#bu').value.trim()}`)
+    if (S.after === 'game') { S.sheet = 'game'; render(); return setSheet(gameSheetHTML()) }
+    if (S.after === 'own') { render(); return ownYes() }
+    closeSheet(); return render()
+  }
+  if (f === 'buy') {
+    const g = byId(S.gameId), v = parseFloat(($('#paid').value || '').replace(',', '.'))
+    S.paid = isNaN(v) ? 0 : Math.round(v * 100)
+    g.bought = true; g.paid = S.paid
+    render(); toast(`${g.name}: got it${S.paid ? ' for ' + eur(S.paid) : ''}!`)
+    if (!has(g, 'own') || S.paid) { S.sheet = 'own'; return setSheet(ownSheetHTML()) }
+    return closeSheet()
+  }
+})
+document.addEventListener('input', e => {
+  if (e.target.id !== 'bq') return
+  S.q = e.target.value; S.searched = false
+  clearTimeout(S.timer)
+  S.timer = setTimeout(() => { S.searched = true; const pos = e.target.selectionStart; render(); const f = $('#bq'); f.focus(); f.setSelectionRange(pos, pos) }, 750)
+})
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); if (S.menu) { S.menu = false; render() } } })
+$('#signed').onchange = e => { S.signedIn = e.target.checked; render(); if (S.sheet === 'game') setSheet(gameSheetHTML()) }
+$('#offline').onchange = e => { S.offline = e.target.checked; render(); if (S.sheet === 'game') setSheet(gameSheetHTML()) }
+
+function start() {
+  const s = $('#start').value
+  S = { place: 'buy', screen: 'main', menu: s === 'menu', buyTab: 'search', listsTab: 'status', q: '', searched: false, username: 'mrmikkl', signedIn: $('#signed').checked, offline: $('#offline').checked,
+    bggFilter: 'all', f: F0(), buyChip: false, colors: S?.colors || { ...COL0 }, ctx: 'shop', stOpen: false, pricesOpen: false, status: 'own', who: 'me', waiting: false, swipeIds: [1, 2, 5, 3, 8], swipeAt: 0, sheet: null, draft: {}, paid: 0 }
+  G.splice(0, G.length, ...JSON.parse(G0))
+  closeSheet()
+  if (s === 'buy-lists') S.buyTab = 'shopping'
+  if (s === 'shop') S.screen = 'shop'
+  if (s.startsWith('lists')) S.place = 'lists'
+  if (s === 'lists-nouser') S.username = ''
+  if (s === 'lists-previews') S.listsTab = 'previews'
+  if (s.startsWith('status')) { S.place = 'lists'; S.screen = 'status'; S.status = s === 'status-wish' ? 'wish' : 'own'; S.waiting = s === 'status-wait' }
+  if (s === 'swipe') S.screen = 'swipe'
+  if (s === 'config') S.place = 'config'
+  if (s === 'buy-search') { S.q = 'cas'; S.searched = true }
+  render()
+  if (s === 'sheet') { S.screen = 'shop'; render(); openGame(2, 'shop') }
+  if (s === 'sheet-search') { S.q = 'cas'; S.searched = true; render(); openGame(7, 'search') }
+  if (s === 'sheet-list') { S.place = 'lists'; S.screen = 'status'; S.status = 'wish'; render(); openGame(11, 'list') }
+}
+$('#start').onchange = start
+
+start()
+</script>
+</body>
+</html>
