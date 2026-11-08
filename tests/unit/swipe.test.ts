@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { newEntry, removeEntry, validateEntry } from '../../src/domain/collection.ts'
-import { swipeDecision, swipeQueue } from '../../src/domain/swipe.ts'
+import { NO_STATUS } from '../../src/domain/bgg-status.ts'
+import { statusSwipeList, swipeDecision, swipeQueue } from '../../src/domain/swipe.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
@@ -84,5 +85,28 @@ describe('swipe decision (FR-015)', () => {
   it('marks the details as pending when the device has none yet', () => {
     const entry = swipeDecision({ collection: essen, game: game(1, 10), direction: 'right', now: T1, detailsPending: true })
     expect(entry.detailsPending).toBe(true)
+  })
+})
+
+describe('status lists as a swipe source (F008 FR-003)', () => {
+  const item = (bggId: number, name: string, status: Partial<typeof NO_STATUS>) => ({
+    bggId, name, year: 2020, thumbnailUrl: `https://cf.geekdo-images.com/${bggId}.jpg`, kind: 'boardgame' as const, status: { ...NO_STATUS, ...status },
+  })
+  const items = [item(1, 'Zoo', { wishlist: 3 }), item(2, 'Arcs', { own: true }), item(3, 'Brass', { wishlist: 1 }), item(4, 'Azul', { wishlist: 1 })]
+
+  it('offers the games of the status in list order (the Wishlist by priority, then by name), fully loaded', () => {
+    const list = statusSwipeList(items, 'wishlist')
+    expect(list.loadedPages).toBe(1)
+    expect(list.pageCount).toBe(1)
+    expect(list.entries).toEqual([
+      { position: 0, bggId: 4, name: 'Azul', thumbnailUrl: 'https://cf.geekdo-images.com/4.jpg' },
+      { position: 1, bggId: 3, name: 'Brass', thumbnailUrl: 'https://cf.geekdo-images.com/3.jpg' },
+      { position: 2, bggId: 1, name: 'Zoo', thumbnailUrl: 'https://cf.geekdo-images.com/1.jpg' },
+    ])
+  })
+
+  it('swipes like any list: games already in the collection are left out, an empty status is all decided', () => {
+    expect(ids(swipeQueue(statusSwipeList(items, 'wishlist'), [{ bggId: 3, deleted: false }]))).toEqual([4, 1])
+    expect(swipeQueue(statusSwipeList(items, 'forTrade'), [])).toEqual({ games: [], loadingMore: false, allDecided: true })
   })
 })

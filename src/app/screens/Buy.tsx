@@ -144,6 +144,7 @@ function Search({ game: openId }: { game?: number }) {
             return (
               <li key={result.bggId}>
                 <ListGameRow
+                  bggId={result.bggId}
                   // the details bring BGG's primary name where the search matched another one (F006 research R5)
                   name={game?.name || result.name}
                   year={result.year}

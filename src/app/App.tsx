@@ -1,5 +1,6 @@
 import { AppProvider, SIGN_IN_URL, useServices, useSignedOut } from './context.tsx'
 import { AppBar } from './components/AppBar.tsx'
+import { BggProvider } from './components/BggBadges.tsx'
 import { Celebrate } from './components/Celebrate.tsx'
 import { HexBoard } from './components/HexBoard.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
@@ -29,7 +30,7 @@ function Screen({ route }: { route: Route }) {
     case 'showoff':
       return <ShowOff key={route.id} id={route.id} groups={route.groups} />
     case 'swipe':
-      return <Swipe key={`${route.id}:${route.list?.kind}:${route.list?.id}`} id={route.id} list={route.list} />
+      return <Swipe key={href(route)} id={route.id} list={route.list} />
     case 'lists':
       return <Lists tab={route.tab} load={route.load} />
     case 'list':
@@ -61,11 +62,13 @@ function SignInBanner() {
 function Shell() {
   const route = useRoute()
   return (
-    <div className="app">
-      <SignInBanner />
-      <AppBar route={route} />
-      <Screen route={route} />
-    </div>
+    <BggProvider>
+      <div className="app">
+        <SignInBanner />
+        <AppBar route={route} />
+        <Screen route={route} />
+      </div>
+    </BggProvider>
   )
 }
 

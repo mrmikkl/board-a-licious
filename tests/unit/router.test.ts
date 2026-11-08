@@ -23,7 +23,15 @@ describe('Buy (F008 contracts/ui.md "Routes")', () => {
     ['#/buy/lists/c1/swipe', { name: 'swipe', id: 'c1' }],
     ['#/buy/lists/c1/swipe/preview/93', { name: 'swipe', id: 'c1', list: { kind: 'preview', id: 93 } }],
     ['#/buy/lists/c1/swipe/geeklist/12', { name: 'swipe', id: 'c1', list: { kind: 'geeklist', id: 12 } }],
+    // F008: swiping a status list
+    ['#/buy/lists/c1/swipe/status/mrmikkl/wishlist', { name: 'swipe', id: 'c1', list: { kind: 'status', bggUser: 'mrmikkl', status: 'wishlist' } }],
+    ['#/buy/lists/c1/swipe/status/anna_meeple/wanttoplay', { name: 'swipe', id: 'c1', list: { kind: 'status', bggUser: 'anna_meeple', status: 'wantToPlay' } }],
   ])('%s', both)
+
+  it('a status swipe without a known status is the swipe without a list', () => {
+    expect(parseRoute('#/buy/lists/c1/swipe/status/mrmikkl/bogus')).toEqual({ name: 'swipe', id: 'c1' })
+    expect(parseRoute('#/buy/lists/c1/swipe/status')).toEqual({ name: 'swipe', id: 'c1' })
+  })
 
   it('leaves out flags that are not set, and an invalid game', () => {
     expect(parseRoute('#/buy/lists/c1?add=other')).toEqual({ name: 'collection', id: 'c1' })

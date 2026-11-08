@@ -7,6 +7,7 @@ import { matchesName } from '../../domain/search.ts'
 import { deleteCollection, renameCollection, saveFilter, saveGroupBy, unbuyGame } from '../actions.ts'
 import { Action, ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { AddGameSheet } from '../components/AddGameSheet.tsx'
+import { useBgg } from '../components/BggBadges.tsx'
 import { BuySheet } from '../components/BuySheet.tsx'
 import { CategorySheet } from '../components/CategorySheet.tsx'
 import { Counter } from '../components/Counter.tsx'
@@ -62,6 +63,8 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
   const closeRowSheet = useCallback(() => setRowSheet(undefined), [])
   const closeEdit = useCallback(() => setEditing(false), [])
   const justAdded = useJustAdded(id)
+  // F008: the own BGG statuses for the BGG status filter
+  const bgg = useBgg()
   const data = useStoreData(
     async store => {
       const collection = (await store.collections()).find(c => c.id === id && !c.deleted)
@@ -102,7 +105,8 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
     setChosen({ id, filter: next })
     void saveFilter(services, id, next)
   }
-  const filtered = applyFilter(entries, filter)
+  const statusOf = (bggId: number) => bgg.statuses.get(bggId)
+  const filtered = applyFilter(entries, filter, statusOf)
   const query = search?.id === id ? search.query : ''
   const nameOf = (e: { bggId: number }) => games.get(e.bggId)?.name ?? ''
   const displayName = (bggId: number) => games.get(bggId)?.name ?? `Game ${bggId}`
@@ -246,7 +250,8 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
       <FilterSheet
         open={viewOpen}
         filter={filter}
-        counts={groupCounts(entries, filter.bought, filter.price)}
+        counts={groupCounts(entries, filter.bought, filter.price, filter.bgg, statusOf)}
+        bgg={Boolean(bgg.username)}
         groupBy={groupBy}
         onChange={changeFilter}
         onGroupBy={sheetGroupBy}

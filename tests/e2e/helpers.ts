@@ -334,3 +334,47 @@ export async function fakeBggAccount(
     await route.fulfill({ json: { bggId, status: next } })
   })
 }
+
+/**
+ * F008: keeps the BGG username and followed friends on this test's device. All tests share one dev
+ * user, so a synced username would reach every other test running at the same time: pushes drop
+ * `settings` and `follows`, pulls leave them out.
+ */
+export async function keepBggSettingsLocal(page: Page) {
+  await page.route('**/api/sync**', async route => {
+    const request = route.request()
+    try {
+      if (request.method() === 'POST') {
+        const body = request.postDataJSON() as Record<string, unknown>
+        delete body.settings
+        delete body.follows
+        // nothing else in it: the server would refuse an empty push, so it is answered here
+        const empty = ['collections', 'entries', 'lists'].every(key => !Array.isArray(body[key]) || (body[key] as unknown[]).length === 0)
+        if (empty) return await route.fulfill({ json: { applied: 0, ignored: 0 } })
+        return await route.continue({ postData: JSON.stringify(body) })
+      }
+      const response = await route.fetch()
+      if (!response.ok()) return await route.fulfill({ response })
+      const json = (await response.json()) as Record<string, unknown>
+      delete json.settings
+      delete json.follows
+      await route.fulfill({ response, json })
+    } catch {
+      // the test ended while the request was on its way
+    }
+  })
+}
+
+/** F008: Config › BoardGameGeek › "Your BGG username" and Save username (call `keepBggSettingsLocal` first). */
+export async function setBggUsername(page: Page, name: string) {
+  await page.goto('/#/config')
+  const field = page.getByLabel('Your BGG username')
+  await field.fill(name)
+  await page.getByRole('button', { name: 'Save username' }).click()
+  await expect(page.getByRole('status').filter({ hasText: name ? 'Saved your BGG username' : 'Removed your BGG username' })).toBeVisible()
+}
+
+/** F008: `/api/bgg/games` without BGG for games the test does not know: an empty answer. */
+export async function fakeNoGameDetails(page: Page) {
+  await page.route('**/api/bgg/games?**', route => route.fulfill({ json: { games: [] } }))
+}

@@ -14,6 +14,7 @@ import {
 import { removeGame, saveFacts, unbuyGame } from "../actions.ts";
 import { useServices, useStoreData } from "../context.tsx";
 import { type AddItem, AddToCollectionsSheet } from "./AddToCollectionsSheet.tsx";
+import { BggBadges, useBgg } from "./BggBadges.tsx";
 import { BuySheet } from "./BuySheet.tsx";
 import { CategorySection } from "./CategorySection.tsx";
 import { CopyMoveSheet } from "./CopyMoveSheet.tsx";
@@ -34,7 +35,7 @@ export type GameSheetContext =
 
 /**
  * F008 (docs/design.md "Game sheet"): the one sheet for a game, wherever it is opened. Name; cover
- * (image viewer) with year · publisher, the `badges` and the teal "in …" button (the shopping list
+ * (image viewer) with year · publisher, all BGG status badges (or "Not in your BGG collection") and the teal "in …" button (the shopping list
  * choice) beside it; Open on BoardGameGeek; the info box; the Category section (shopping lists only);
  * the `bggStatus` section; the Prices section; the actions (shopping list: Bought it, Copy · Move,
  * Remove; elsewhere: Add to shopping lists, Bought it); the description; Close.
@@ -42,12 +43,12 @@ export type GameSheetContext =
 export function GameSheet(
   props: GameSheetContext & {
     game?: Game;
-    badges?: ReactNode;
     bggStatus?: ReactNode;
     onClose: () => void;
   },
 ) {
-  const { game, badges, bggStatus, onClose } = props;
+  const { game, bggStatus, onClose } = props;
+  const bgg = useBgg();
   const services = useServices();
   const toast = useToast();
   const [step, setStep] = useState<
@@ -166,7 +167,10 @@ export function GameSheet(
         </button>
         <div className="gs-facts">
           {sub && <p className="detail-sub">{sub}</p>}
-          {badges}
+          <BggBadges bggId={bggId} big />
+          {bgg.known && !bgg.statuses.has(bggId) && (
+            <p className="detail-sub muted">Not in your BGG collection</p>
+          )}
           {where && (
             <button
               type="button"

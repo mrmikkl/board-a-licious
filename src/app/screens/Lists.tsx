@@ -1,12 +1,16 @@
 import { useCallback } from 'react'
 
 import type { StoredList } from '../../client/types.ts'
+import { STATUS_KEYS, counts } from '../../domain/bgg-status.ts'
 import { ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { Header } from '../components/Header.tsx'
 import { IconPlus } from '../components/icons.tsx'
 import { LoadListSheet } from '../components/LoadListSheet.tsx'
 import { PlaceTabs, tabId } from '../components/PlaceTabs.tsx'
-import { useStoreData } from '../context.tsx'
+import { StatusListCard } from '../components/StatusListCard.tsx'
+import { useServices, useStoreData } from '../context.tsx'
+import { useBggCollection } from '../hooks/useBggCollection.ts'
+import { loadedAgo } from '../loaded-ago.ts'
 import { type ListsTab, href, navigate } from '../router.ts'
 
 const EXAMPLE = 'boardgamegeek.com/geekpreview/93'
@@ -54,19 +58,102 @@ export function Lists({ tab, load }: { tab?: ListsTab; load?: boolean }) {
   )
 }
 
-/** Lists › Status lists: the person's BGG statuses (filled in by US1); for now the empty state. */
+/**
+ * Lists › Status lists (FR-002, docs/design.md "Status list card"): the person's own status lists first,
+ * then per friend loaded by link their read-only ones. Without a username: the empty state.
+ */
 function StatusLists() {
+  const data = useStoreData(async store => {
+    const username = await store.bggUsername()
+    const own = username?.toLowerCase()
+    return { username, friends: (await store.follows()).filter(f => f !== own) }
+  })
+  if (!data) return null
+  const { username, friends } = data
   return (
-    <div className="empty">
-      <div className="hex" />
-      <h2>What you own, wish for and want to play</h2>
-      <p>Add your BoardGameGeek username in Config to see your BGG collection here.</p>
-      <div className="actions">
-        <a className="btn btn-primary" href={href({ name: 'config' })}>
-          Add username in Config
-        </a>
-      </div>
-    </div>
+    <>
+      {username ? (
+        <StatusGroup bggUser={username} own />
+      ) : (
+        <div className="empty">
+          <div className="hex" />
+          <h2>What you own, wish for and want to play</h2>
+          <p>Add your BoardGameGeek username in Config to see your BGG collection here. A friend&apos;s list: paste the link to their BGG collection with the plus.</p>
+          <div className="actions">
+            <a className="btn btn-primary" href={href({ name: 'config' })}>
+              Add username in Config
+            </a>
+          </div>
+        </div>
+      )}
+      {friends.map(friend => (
+        <StatusGroup key={friend} bggUser={friend} />
+      ))}
+    </>
+  )
+}
+
+/** One person's status lists: a heading, then a card per status with games, or what keeps them from showing. */
+function StatusGroup({ bggUser, own = false }: { bggUser: string; own?: boolean }) {
+  const { store, sync } = useServices()
+  const { collection, loading, preparing, problem, refresh } = useBggCollection(bggUser)
+  const loaded = collection?.loadedAt && !collection.error ? collection : undefined
+  const found = loaded ? counts(loaded.items) : undefined
+  const shown = STATUS_KEYS.filter(key => (found?.[key] ?? 0) > 0)
+  const offline = problem === 'offline' ? ' · offline' : ''
+  const unfollow = async () => {
+    await store.unfollow(bggUser)
+    void sync.schedule()
+  }
+  return (
+    <section aria-label={own ? 'Mine' : bggUser}>
+      <h2 className="person">
+        {own ? 'Mine' : bggUser}{' '}
+        <small>
+          {own ? `· ${bggUser} on BoardGameGeek · ${loaded ? loadedAgo(loaded.loadedAt, Date.now()) : 'not loaded yet'}${offline}` : `· loaded by link · read-only${offline}`}
+        </small>
+      </h2>
+      {preparing ? (
+        <p className="result-status" role="status">
+          <span className="spin-hex" aria-hidden="true" />
+          BoardGameGeek is preparing {own ? 'your' : 'this'} collection… it loads by itself when ready
+        </p>
+      ) : collection?.error ? (
+        <p className="fail-line">
+          <span>{collection.error === 'not_found' ? `No BoardGameGeek user called “${bggUser}”.` : `The BGG collection of ${bggUser} is private.`}</span>
+          {own ? (
+            <a className="btn" href={href({ name: 'config' })}>
+              Change it in Config
+            </a>
+          ) : (
+            <button type="button" className="btn" onClick={() => void unfollow()}>
+              Remove
+            </button>
+          )}
+        </p>
+      ) : problem === 'unavailable' ? (
+        <p className="fail-line">
+          <span>BoardGameGeek is not reachable right now.</span>
+          <button type="button" className="btn" onClick={refresh}>
+            Try again
+          </button>
+        </p>
+      ) : !loaded ? (
+        <p className="result-status" role="status">
+          {problem === 'offline' ? 'You’re offline. The lists load once you’re back online.' : loading ? 'Loading from BoardGameGeek…' : '\u00a0'}
+        </p>
+      ) : null}
+      {loaded && shown.length === 0 && !preparing && <p className="lead">No games in this BGG collection yet.</p>}
+      {shown.length > 0 && (
+        <ul className="status-cards">
+          {shown.map(key => (
+            <li key={key}>
+              <StatusListCard bggUser={bggUser} status={key} count={found![key]} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 
