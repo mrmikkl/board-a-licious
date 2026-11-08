@@ -62,3 +62,15 @@ export function membershipChanges(input: {
   }
   return { adds, removals }
 }
+
+/**
+ * F008 (docs/design.md "List game row", "Game sheet"): where the person already has a game, from the
+ * names of its shopping lists: "in X", "in X and Y", "in 3 shopping lists"; inside the shopping list
+ * `here`, only the others, as "also in …". Empty when there is none.
+ */
+export function inText(listNames: string[], here?: string): string {
+  const others = here === undefined ? listNames : listNames.filter(name => name !== here)
+  if (others.length === 0) return ''
+  const where = others.length === 1 ? others[0] : others.length === 2 ? `${others[0]} and ${others[1]}` : `${others.length} shopping lists`
+  return `${here === undefined ? 'in' : 'also in'} ${where}`
+}
