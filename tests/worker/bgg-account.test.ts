@@ -163,10 +163,10 @@ describe('GET /api/bgg/account (US3)', () => {
   it('reads only the cookie: signed in as the sealed BGG user', async () => {
     const { bgg, calls } = fakeBgg(() => signedIn())
     const res = await testApp(db, { bgg, env: ENV, now: NOW })('/api/bgg/account', await withCookie())
+    await noSecrets(res)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ signedIn: true, bggUser: 'anna' })
     expect(calls).toHaveLength(0)
-    await noSecrets(res)
   })
 
   it('without a cookie: { signedIn: false }', async () => {

@@ -1,10 +1,12 @@
 import { type AuthEnv, type Authenticate, createAuthenticator } from './auth.ts'
 import { BggError, edgeCache, memoryCache } from './bgg/cache.ts'
-import { createBggSource } from './bgg/routing.ts'
+import type { BggAccount } from './bgg/account.ts'
+import { createBgg } from './bgg/routing.ts'
 import type { BggSource } from './bgg/source.ts'
 import { type Db, connect } from './db/db.ts'
 import { HttpError, errorResponse } from './http.ts'
 import { type PriceHttp, createPriceHttp } from './prices/http.ts'
+import { type AccountContext, accountRoute, signInRoute, signOutRoute } from './routes/account.ts'
 import { collectionRoute } from './routes/collection.ts'
 import { companiesRoute } from './routes/companies.ts'
 import type { RouteContext } from './routes/context.ts'
@@ -34,6 +36,8 @@ export type Deps = {
   now: () => Date
   /** BGG data source; one per isolate in production so the 1 request/s throttle holds. */
   bgg: (env: Env) => BggSource
+  /** F008 (ADR 0009): writes to the signed-in person's own BGG collection; shares the BGG throttle. */
+  bggAccount: (env: Env) => BggAccount
   /** F007: fetch for the price sources; one per isolate so the per-host throttle holds. */
   prices: (env: Env) => PriceHttp
 }
@@ -50,6 +54,8 @@ export function createApp(deps: Deps) {
       let db: Db | undefined
       const database = () => (db ??= deps.db(env))
       const ctx: RouteContext = { request, url, email, db: database, bgg: deps.bgg(env), prices: deps.prices(env), now: deps.now() }
+      // F008: never log bodies or cookies of these routes (research R4)
+      const account = (): AccountContext => ({ ...ctx, account: deps.bggAccount(env), key: env.BGG_SESSION_KEY })
       try {
         const listMatch = /^\/api\/bgg\/lists\/([^/]+)\/([^/]+)$/.exec(url.pathname)
         if (request.method === 'GET' && listMatch) return await listsRoute(ctx, listMatch[1] ?? '', listMatch[2] ?? '')
@@ -65,6 +71,12 @@ export function createApp(deps: Deps) {
             return await imagesRoute(ctx)
           case 'GET /api/bgg/collection':
             return await collectionRoute(ctx)
+          case 'GET /api/bgg/account':
+            return await accountRoute(account())
+          case 'POST /api/bgg/account/signin':
+            return await signInRoute(account())
+          case 'POST /api/bgg/account/signout':
+            return await signOutRoute()
           case 'GET /api/bgg/companies':
             return await companiesRoute(ctx)
           case 'GET /api/signin':
@@ -95,7 +107,7 @@ export function createApp(deps: Deps) {
 }
 
 let authenticator: Authenticate | undefined
-let bggSource: BggSource | undefined
+let bgg: { source: BggSource; account: BggAccount } | undefined
 let priceHttp: PriceHttp | undefined
 
 /** The Workers edge cache when available (not in every local runtime), else memory. */
@@ -103,6 +115,10 @@ function bggCache() {
   const edge = (globalThis as { caches?: { default?: Cache } }).caches?.default
   return edge ? edgeCache(edge) : memoryCache()
 }
+
+/** One BGG client per isolate for data and account writes, so the 1 request/s throttle holds for both. */
+const bggOf = (env: Env) =>
+  (bgg ??= createBgg({ fetch: (input, init) => fetch(input, init), cache: bggCache(), token: env.BGG_TOKEN || undefined }))
 
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext) {
@@ -113,7 +129,8 @@ export default {
       now: () => new Date(),
       // one source (and one throttled client) per isolate; the token is a deployment secret, the same for every request
       prices: () => (priceHttp ??= createPriceHttp({ fetch: (input, init) => fetch(input, init), cache: bggCache() })),
-      bgg: e => (bggSource ??= createBggSource({ fetch: (input, init) => fetch(input, init), cache: bggCache(), token: e.BGG_TOKEN || undefined })),
+      bgg: e => bggOf(e).source,
+      bggAccount: e => bggOf(e).account,
     })
     void ctx
     return app.fetch(request, env)
