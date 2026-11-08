@@ -181,7 +181,7 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 ## Phase 9: Polish & Cross-Cutting Concerns
 
 - [x] T050 [P] Update `CLAUDE.md` (code layout: `worker/bgg/account.ts`, `session.ts`, `src/domain/bgg-status.ts`; the places Buy/Lists/Config; ADR 0009 rule: website writes only in `account.ts`, session only in the HttpOnly cookie, never logged; `BGG_SESSION_KEY` secret) and `docs/hosting/setup.md` (new secret, migration 0007)
-- [ ] T051 Security check of SC-004 with `/security-review` on the branch: passwords and sessions absent from database, logs, backups (`src/domain/backup.ts`), shared texts, IndexedDB and other devices; record the result here
+- [x] T051 Security check of SC-004 with `/security-review` on the branch: passwords and sessions absent from database, logs, backups (`src/domain/backup.ts`), shared texts, IndexedDB and other devices; record the result here — done 2026-11-08: no high-confidence finding (sealed cookie with random IV, email binding and expiry, HttpOnly/Secure/SameSite=Strict/Path; writer only from the cookie; fixed BGG host, redirects not followed; token only on `/xmlapi*`; no per-person caching; SQL parameterised and scoped by email; no raw HTML in the app). Watch: the generic `console.error(error)` in `worker/index.ts` must never get an error that carries cookies.
 - [ ] T052 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here (compare flakes with `main`, see memory "E2E on own port")
 - [ ] T053 Apply migration 0007 (`npm run db:migrate:neon`), set `BGG_SESSION_KEY` (`npx wrangler secret put BGG_SESSION_KEY`), deploy (`npm run deploy`) and walk through `specs/008-bgg-collection-status/quickstart.md` with the user on the phone
 
