@@ -1,5 +1,5 @@
 import { type PrivateInfo, STATUS_KEYS, type StatusChange } from '../../src/domain/bgg-status.ts'
-import type { BggAccount, SaveRequest } from '../bgg/account.ts'
+import { BGG_CURRENCIES, type BggAccount, type SaveRequest } from '../bgg/account.ts'
 import { BggError } from '../bgg/cache.ts'
 import { type BggSession, clearCookie, open, readCookie, seal, setCookie } from '../bgg/session.ts'
 import { HttpError, errorResponse } from '../http.ts'
@@ -83,12 +83,46 @@ function statusChangeOf(value: unknown): StatusChange {
   return value as StatusChange
 }
 
+const PRICE_MAX = 10000
+const ACQUIRED_FROM_MAX = 100
+const isObject = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+function isDate(text: unknown): text is string {
+  if (typeof text !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return false
+  const date = new Date(`${text}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === text
+}
+
+/** Price 0 < amount ≤ 10000 in a currency BGG offers, a YYYY-MM-DD date, acquiredFrom ≤ 100 characters. */
+function privateInfoOf(value: unknown): PrivateInfo {
+  if (!isObject(value)) throw bad('privateInfo must be an object.')
+  const keys = Object.keys(value)
+  if (!keys.length) throw bad('privateInfo needs at least one field.')
+  if (keys.some(key => !['pricePaid', 'acquisitionDate', 'acquiredFrom'].includes(key))) throw bad('Unknown field in privateInfo.')
+  const { pricePaid, acquisitionDate, acquiredFrom } = value
+  if (pricePaid !== undefined) {
+    if (!isObject(pricePaid) || Object.keys(pricePaid).some(key => key !== 'amount' && key !== 'currency')) throw bad('pricePaid must be { amount, currency }.')
+    const { amount, currency } = pricePaid
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0 || amount > PRICE_MAX) throw bad('The price paid must be more than 0 and at most 10000.')
+    if (typeof currency !== 'string' || !(BGG_CURRENCIES as readonly string[]).includes(currency)) throw bad(`BoardGameGeek takes prices in ${BGG_CURRENCIES.join(', ')} only.`)
+  }
+  if (acquisitionDate !== undefined && !isDate(acquisitionDate)) throw bad('acquisitionDate must be a date YYYY-MM-DD.')
+  if (acquiredFrom !== undefined && (typeof acquiredFrom !== 'string' || acquiredFrom.length > ACQUIRED_FROM_MAX)) throw bad('acquiredFrom must be text of at most 100 characters.')
+  return value as PrivateInfo
+}
+
+function replacePriceOf(value: unknown): boolean {
+  if (typeof value !== 'boolean') throw bad('replacePrice must be true or false.')
+  return value
+}
+
 function saveRequestOf(body: Record<string, unknown>): SaveRequest {
   for (const key of Object.keys(body)) if (!['status', 'privateInfo', 'replacePrice'].includes(key)) throw bad('Unknown field in the body.')
   if (body.status === undefined && body.privateInfo === undefined) throw bad('Send status or privateInfo.')
   return {
     ...(body.status !== undefined ? { status: statusChangeOf(body.status) } : {}),
-    ...(body.privateInfo !== undefined ? { privateInfo: body.privateInfo as PrivateInfo } : {}),
+    ...(body.privateInfo !== undefined ? { privateInfo: privateInfoOf(body.privateInfo) } : {}),
+    ...(body.replacePrice !== undefined ? { replacePrice: replacePriceOf(body.replacePrice) } : {}),
   }
 }
 
@@ -103,6 +137,9 @@ export async function saveRoute(ctx: AccountContext, id: string): Promise<Respon
   }
   try {
     const saved = await ctx.account.save({ bggUser: session.bggUser, cookies: session.cookies }, bggId, request)
+    if ('conflict' in saved) {
+      return errorResponse('price_conflict', 'BoardGameGeek already holds another price paid.', undefined, { current: saved.conflict })
+    }
     return Response.json({ bggId, status: saved.status })
   } catch (error) {
     if (error instanceof BggError && error.code === 'bgg_signed_out') return errorResponse(error.code, error.message, { 'Set-Cookie': clearCookie() })

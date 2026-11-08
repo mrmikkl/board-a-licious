@@ -6,7 +6,7 @@
  */
 import { NO_STATUS, type PrivateInfo, type Status, type StatusChange, fromBggFlags } from '../../src/domain/bgg-status.ts'
 import { BggError, type BggClient } from './cache.ts'
-import { asArray, parseXml } from './xml.ts'
+import { asArray, decodeText, parseXml } from './xml.ts'
 
 const SITE = 'https://boardgamegeek.com'
 const MAX_SESSION_SECONDS = 30 * 24 * 3600
@@ -25,7 +25,13 @@ export type Writer = { bggUser: string; cookies: string }
 /** POST /api/bgg/account/collection/<bggId> after validation (contracts/api.md). */
 export type SaveRequest = { status?: StatusChange; privateInfo?: PrivateInfo; replacePrice?: boolean }
 
-export type SaveResult = { status: Status }
+export type Price = { amount: number; currency: string }
+
+/** The item's statuses after the save, or BGG's other price paid (nothing written; FR-031). */
+export type SaveResult = { status: Status } | { conflict: Price }
+
+/** The currencies BGG's private info form offers (ownership-editdata.html). */
+export const BGG_CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'YEN'] as const
 
 export type BggAccount = {
   /** Forwards the credentials once to BGG's login; keeps every cookie BGG sets. */
@@ -75,6 +81,41 @@ const FLAGS: [keyof Status, string][] = [
 const DEFAULT_PRIORITY = 1
 
 type Item = { collid: string | null; status: Status }
+
+/** Every field of BGG's private info form; a save sends them all, or BGG wipes the missing ones. */
+const OWNERSHIP_FIELDS = ['pricepaid', 'pp_currency', 'currvalue', 'cv_currency', 'quantity', 'acquisitiondate', 'acquiredfrom', 'invdate', 'invlocation', 'privatecomment'] as const
+type Ownership = Record<(typeof OWNERSHIP_FIELDS)[number], string>
+const EMPTY_OWNERSHIP = Object.fromEntries(OWNERSHIP_FIELDS.map(field => [field, ''])) as Ownership
+
+const attribute = (tag: string, name: string) => {
+  const match = new RegExp(`\\s${name}\\s*=\\s*(?:'([^']*)'|"([^"]*)"|([^\\s>]+))`, 'i').exec(tag)
+  return match ? decodeText(match[1] ?? match[2] ?? match[3]) : undefined
+}
+
+/** The values of BGG's private info form (inputs, selected currencies, the comment), or null when it is not there. */
+function parseOwnership(html: string): Ownership | null {
+  const values: Record<string, string> = {}
+  for (const tag of html.match(/<input\b[^>]*>/gi) ?? []) {
+    const name = attribute(tag, 'name')
+    if (name && !(name in values)) values[name] = attribute(tag, 'value') ?? ''
+  }
+  if (values.fieldname !== 'ownership' || !('pricepaid' in values)) return null
+  for (const [, name = '', options = ''] of html.matchAll(/<select\b[^>]*\bname=['"]([^'"]+)['"][^>]*>([\s\S]*?)<\/select>/gi)) {
+    const selected = /<option\b[^>]*\sselected\b[^>]*>/i.exec(options)?.[0]
+    values[name] = selected ? (attribute(selected, 'value') ?? '') : ''
+  }
+  const comment = /<textarea\b[^>]*\bname=['"]privatecomment['"][^>]*>([\s\S]*?)<\/textarea>/i.exec(html)?.[1]
+  values.privatecomment = decodeText(comment ?? '')
+  return Object.fromEntries(OWNERSHIP_FIELDS.map(field => [field, values[field] ?? ''])) as Ownership
+}
+
+/** BGG's price paid, when it holds one. */
+function priceOf(form: Ownership): Price | null {
+  const text = form.pricepaid.trim().replace(',', '.')
+  const amount = Number(text)
+  return text && Number.isFinite(amount) && amount > 0 ? { amount, currency: form.pp_currency } : null
+}
+const samePrice = (a: Price, b: Price) => Math.abs(a.amount - b.amount) < 0.005 && a.currency === b.currency
 type CollectionItem = { objecttype?: string; objectid?: string; collid?: string; status?: Record<string, string> }
 
 const sameStatus = (a: Status, b: Status) => FLAGS.every(([key]) => a[key] === b[key])
@@ -119,6 +160,18 @@ export function createBggAccount(client: BggClient, now: () => number = Date.now
     async save(writer, bggId, request) {
       let item = await readItem(writer.bggUser, bggId)
       const status: Status = { ...item.status, ...request.status }
+      const { privateInfo } = request
+      // decide a price conflict before writing anything
+      let form: Ownership | null = null
+      let keepPrivateInfo = false
+      if (privateInfo && item.collid) {
+        form = await readOwnership(writer, bggId, item.collid)
+        const current = priceOf(form)
+        if (privateInfo.pricePaid && current && !samePrice(current, privateInfo.pricePaid)) {
+          if (request.replacePrice === undefined) return { conflict: current }
+          keepPrivateInfo = !request.replacePrice
+        }
+      }
       if (!item.collid || !sameStatus(item.status, status)) {
         await saveStatus(writer, bggId, item.collid, status)
         // a new game: BGG gives it a collid, read back for the private info save
@@ -127,6 +180,7 @@ export function createBggAccount(client: BggClient, now: () => number = Date.now
           if (!item.collid) throw new BggError('bgg_refused', REFUSED)
         }
       }
+      if (privateInfo && !keepPrivateInfo && item.collid) await saveOwnership(writer, bggId, item.collid, form ?? EMPTY_OWNERSHIP, privateInfo)
       return { status }
     },
   }
@@ -175,5 +229,37 @@ export function createBggAccount(client: BggClient, now: () => number = Date.now
       ['wishlistpriority', String(status.wishlist ?? DEFAULT_PRIORITY)],
       ['ajax', '1'], ['action', 'savedata'],
     ])
+  }
+
+  /** BGG's private info form for the item (ownership-editdata.url), with the person's cookies. */
+  async function readOwnership(writer: Writer, bggId: number, collid: string): Promise<Ownership> {
+    const query = new URLSearchParams({ cellid: '1', collid, fieldname: 'ownership', objecttype: 'thing', objectid: String(bggId), ajax: '1', action: 'editdata' })
+    const res = await client.website(`${SITE}/geekcollection.php?${query}`, { method: 'GET', headers: { Accept: 'text/html, */*', Cookie: writer.cookies } })
+    const form = parseOwnership(await answerOf(res))
+    if (!form) throw new BggError('bgg_refused', REFUSED)
+    return form
+  }
+
+  /**
+   * The whole private info group (save-ownership.form): every value BGG holds, with only price paid,
+   * currency, acquisition date and acquired from changed. The answer must show the price sent.
+   */
+  async function saveOwnership(writer: Writer, bggId: number, collid: string, form: Ownership, info: PrivateInfo): Promise<void> {
+    const next: Ownership = {
+      ...form,
+      ...(info.pricePaid ? { pricepaid: String(info.pricePaid.amount), pp_currency: info.pricePaid.currency } : {}),
+      ...(info.acquisitionDate ? { acquisitiondate: info.acquisitionDate } : {}),
+      ...(info.acquiredFrom !== undefined ? { acquiredfrom: info.acquiredFrom } : {}),
+    }
+    const answer = await post(writer, [
+      ['fieldname', 'ownership'], ['collid', collid], ['objecttype', 'thing'], ['objectid', String(bggId)],
+      ['pricepaid', next.pricepaid], ['currvalue', next.currvalue], ['quantity', next.quantity],
+      ['acquisitiondate', next.acquisitiondate], ['dateinput', next.acquisitiondate], ['acquiredfrom', next.acquiredfrom],
+      ['invdate', next.invdate], ['dateinput', next.invdate], ['invlocation', next.invlocation], ['B1', 'Cancel'],
+      ['pp_currency', next.pp_currency], ['cv_currency', next.cv_currency], ['privatecomment', next.privatecomment],
+      ['ajax', '1'], ['action', 'savedata'],
+    ])
+    const shown = info.pricePaid ? answer.includes(info.pricePaid.amount.toFixed(2)) : /collectiontable_ownership/.test(answer)
+    if (!shown) throw new BggError('bgg_refused', REFUSED)
   }
 }
