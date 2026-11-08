@@ -80,14 +80,14 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 ### Tests for User Story 1
 
 - [X] T023 [P] [US1] Write failing unit tests in `tests/unit/bgg-link.test.ts` for `parseBggCollectionLink(text)`: `https://boardgamegeek.com/collection/user/<name>?…&wishlist=1&…` → `{ bggUser, status: 'wishlist' }` for each status parameter (own, wishlist, wanttoplay, trade → forTrade, want → wantInTrade, wanttobuy, preordered, prevowned), no status → `{ bggUser }`, names URL-decoded and lower-cased, other hosts or paths → null
-- [ ] T024 [P] [US1] Write failing Playwright tests in `tests/e2e/status-lists.spec.ts` with `fakeBggCollection`: no username → empty state with "Add username in Config"; Config "Your BGG username" + Save username; Status lists "Mine · mrmikkl on BoardGameGeek · loaded …", one card per non-empty status named "<status>, <n> games", none for empty ones; a status list shows list game rows, the Wishlist grouped "1 Must have" …; preparing for 12 s shows "BoardGameGeek is preparing your collection…" then the list by itself; unknown user → "No BoardGameGeek user called “…”" with a link to Config; Refresh reads again with `fresh=1`; loading a friend's collection link via the plus adds "<friend> · loaded by link · read-only" cards; BG-Tinder's list choice offers status lists; offline shows the stored copy with its time; axe
+- [x] T024 [P] [US1] Write failing Playwright tests in `tests/e2e/status-lists.spec.ts` with `fakeBggCollection`: no username → empty state with "Add username in Config"; Config "Your BGG username" + Save username; Status lists "Mine · mrmikkl on BoardGameGeek · loaded …", one card per non-empty status named "<status>, <n> games", none for empty ones; a status list shows list game rows, the Wishlist grouped "1 Must have" …; preparing for 12 s shows "BoardGameGeek is preparing your collection…" then the list by itself; unknown user → "No BoardGameGeek user called “…”" with a link to Config; Refresh reads again with `fresh=1`; loading a friend's collection link via the plus adds "<friend> · loaded by link · read-only" cards; BG-Tinder's list choice offers status lists; offline shows the stored copy with its time; axe
 
 ### Implementation for User Story 1
 
-- [ ] T025 [US1] (`parseBggCollectionLink` itself is done with T023) Accept the link in `src/app/components/LoadListSheet.tsx` (writes a `follow` row; never the person's own username)
-- [ ] T026 [US1] Add the BoardGameGeek section to `src/app/screens/Config.tsx` (username field, hint, Save username → `setting` row; changing it clears the BGG sign-in hint)
-- [ ] T027 [P] [US1] Create `src/app/components/StatusListCard.tsx` (design.md "Status list card") and fill Lists › Status lists in `src/app/screens/Lists.tsx` (own group, friends' groups, empty state, error lines)
-- [ ] T028 [US1] Create `src/app/screens/StatusList.tsx` (`#/lists/status/<bggUser>/<status>`: heading, resync icon "Read again from BGG", source line, list game rows, Wishlist priority groups, preparing and failure states) and offer status lists in `src/app/components/ListPicker.tsx` (BG-Tinder) so swiping works as for geeklists (`src/domain/swipe.ts` needs a list source for status lists)
+- [x] T025 [US1] (`parseBggCollectionLink` itself is done with T023) Accept the link in `src/app/components/LoadListSheet.tsx` (writes a `follow` row; never the person's own username)
+- [x] T026 [US1] Add the BoardGameGeek section to `src/app/screens/Config.tsx` (username field, hint, Save username → `setting` row; changing it clears the BGG sign-in hint)
+- [x] T027 [P] [US1] Create `src/app/components/StatusListCard.tsx` (design.md "Status list card") and fill Lists › Status lists in `src/app/screens/Lists.tsx` (own group, friends' groups, empty state, error lines)
+- [x] T028 [US1] Create `src/app/screens/StatusList.tsx` (`#/lists/status/<bggUser>/<status>`: heading, resync icon "Read again from BGG", source line, list game rows, Wishlist priority groups, preparing and failure states) and offer status lists in `src/app/components/ListPicker.tsx` (BG-Tinder) so swiping works as for geeklists (`src/domain/swipe.ts` needs a list source for status lists)
 
 **Checkpoint**: US1 works with US0; deployable.
 
@@ -102,14 +102,14 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 ### Tests for User Story 2
 
 - [X] T029 [P] [US2] Write failing unit tests in `tests/unit/filter.test.ts` for the new filter field `bgg: 'all' | 'own' | 'notOwn' | 'wishlist'` in `src/domain/filter.ts` (default all, counts as non-default, games without a known status count as not owned)
-- [ ] T030 [P] [US2] Write failing Playwright tests in `tests/e2e/badges.spec.ts`: badges in game rows (≤ 2 + "+n"), list game rows, the swipe card and the game sheet (all), one accessible name "On BoardGameGeek: …" per game; no badges without username; a friend's list creates none; Config › Badge colours: rows per status, Change opens "Colour of “Owned”" with ten swatches, a pick applies at once, Reset colours (disabled at default); Filter › BGG status; axe and contrast at 360 px
+- [x] T030 [P] [US2] Write failing Playwright tests in `tests/e2e/badges.spec.ts`: badges in game rows (≤ 2 + "+n"), list game rows, the swipe card and the game sheet (all), one accessible name "On BoardGameGeek: …" per game; no badges without username; a friend's list creates none; Config › Badge colours: rows per status, Change opens "Colour of “Owned”" with ten swatches, a pick applies at once, Reset colours (disabled at default); Filter › BGG status; axe and contrast at 360 px
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] (the `bgg` filter in `src/domain/filter.ts` is done with T029) Add its segment in `src/app/components/FilterPanel.tsx` (after Price)
-- [ ] T032 [P] [US2] Create `src/app/components/BggBadges.tsx` and `src/app/theme/badges.css` (design.md "BGG status badge", palette with the text colours of "Badge colours"; reads meta `badgeColours`)
-- [ ] T033 [US2] Show `BggBadges` in `src/app/components/GameRow.tsx` (after price · booth), `ListGameRow.tsx`, `SwipeCard.tsx` (under publisher · year) and the head of `GameSheet.tsx` ("Not in your BGG collection" when a username is set and the game has none)
-- [ ] T034 [US2] Add Badge colours to `src/app/screens/Config.tsx` with `src/app/components/ColourSheet.tsx` (design.md "Badge colours")
+- [x] T031 [US2] (the `bgg` filter in `src/domain/filter.ts` is done with T029) Add its segment in `src/app/components/FilterPanel.tsx` (after Price)
+- [x] T032 [P] [US2] Create `src/app/components/BggBadges.tsx` and `src/app/theme/badges.css` (design.md "BGG status badge", palette with the text colours of "Badge colours"; reads meta `badgeColours`)
+- [x] T033 [US2] Show `BggBadges` in `src/app/components/GameRow.tsx` (after price · booth), `ListGameRow.tsx`, `SwipeCard.tsx` (under publisher · year) and the head of `GameSheet.tsx` ("Not in your BGG collection" when a username is set and the game has none)
+- [x] T034 [US2] Add Badge colours to `src/app/screens/Config.tsx` with `src/app/components/ColourSheet.tsx` (design.md "Badge colours")
 
 **Checkpoint**: P1 complete (US0–US2): reading only; deployable without the session key.
 
