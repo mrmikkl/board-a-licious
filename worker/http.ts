@@ -5,6 +5,7 @@ export type ErrorCode =
   | 'bgg_unavailable'
   | 'bgg_rate_limited'
   | 'bgg_search_unavailable'
+  | 'bgg_preparing'
 
 const STATUS: Record<ErrorCode, number> = {
   unauthenticated: 401,
@@ -13,6 +14,8 @@ const STATUS: Record<ErrorCode, number> = {
   bgg_unavailable: 502,
   bgg_rate_limited: 503,
   bgg_search_unavailable: 503,
+  /** F008: BGG still prepares a collection; the app retries after Retry-After. */
+  bgg_preparing: 202,
 }
 const RETRYABLE: Record<ErrorCode, boolean> = {
   unauthenticated: false,
@@ -21,6 +24,7 @@ const RETRYABLE: Record<ErrorCode, boolean> = {
   bgg_unavailable: true,
   bgg_rate_limited: true,
   bgg_search_unavailable: false,
+  bgg_preparing: true,
 }
 
 /** The error format of contracts/api.md. */
