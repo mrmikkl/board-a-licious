@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { type Collection, type Entry, newEntry } from '../../src/domain/collection.ts'
-import { copyEntry, memberships, membershipChanges, moveEntry } from '../../src/domain/membership.ts'
+import { copyEntry, inText, memberships, membershipChanges, moveEntry } from '../../src/domain/membership.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
@@ -119,5 +119,27 @@ describe('copy and move to another collection (F005 R11)', () => {
     const tombstone = { ...newEntry('home', GAME, T1), deleted: true }
     expect(copyEntry(source, 'home', T2, tombstone).deleted).toBe(false)
     expect(moveEntry(source, 'home', T2, tombstone)[0].deleted).toBe(false)
+  })
+})
+
+describe('inText: where the person already has a game (F008 docs/design.md "List game row", "Game sheet")', () => {
+  it('names one or two shopping lists', () => {
+    expect(inText(['Essen 2026'])).toBe('in Essen 2026')
+    expect(inText(['Essen 2026', 'Home'])).toBe('in Essen 2026 and Home')
+  })
+
+  it('counts three or more', () => {
+    expect(inText(['Essen 2026', 'Home', 'Later'])).toBe('in 3 shopping lists')
+  })
+
+  it('inside a shopping list names only the others', () => {
+    expect(inText(['Essen 2026', 'Home'], 'Essen 2026')).toBe('also in Home')
+    expect(inText(['Essen 2026', 'Home', 'Later'], 'Home')).toBe('also in Essen 2026 and Later')
+    expect(inText(['Essen 2026', 'Home', 'Later', 'Gifts'], 'Home')).toBe('also in 3 shopping lists')
+  })
+
+  it('is empty when there is none (or only the one it is in)', () => {
+    expect(inText([])).toBe('')
+    expect(inText(['Essen 2026'], 'Essen 2026')).toBe('')
   })
 })
