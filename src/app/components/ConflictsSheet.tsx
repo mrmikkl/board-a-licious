@@ -59,7 +59,7 @@ export function ConflictsSheet({
         return (
           <div key={key} className="conflict" role="group" aria-label={`${FIELD_LABEL[conflict.field].toLowerCase()} of ${name}`}>
             <p className="conflict-game">{name}</p>
-            <p className="conflict-where">{`${FIELD_LABEL[conflict.field]} · in ${collections.get(conflict.collectionId) ?? 'a collection'}`}</p>
+            <p className="conflict-where">{`${FIELD_LABEL[conflict.field]} · in ${collections.get(conflict.collectionId) ?? 'a shopping list'}`}</p>
             <div className="conflict-choices">
               <button type="button" className="choice" aria-pressed={choices[key] === 'own'} onClick={() => setChoices({ ...choices, [key]: 'own' })}>
                 Own {conflict.own}

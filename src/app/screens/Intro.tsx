@@ -8,8 +8,8 @@ const THRESHOLD = 60
 
 const CARDS = [
   {
-    title: 'Collections',
-    text: 'Keep a collection for SPIEL Essen and more for anything else. Give every game a category: Must Have, Interested, Unsure, For later or Poop.',
+    title: 'Shopping lists',
+    text: 'Keep a shopping list for SPIEL Essen and more for anything else. Give every game a category: Must Have, Interested, Unsure, For later or Poop.',
     art: ['⭐', '👀', '🤔', '💩'],
   },
   {

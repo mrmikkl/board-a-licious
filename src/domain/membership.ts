@@ -26,7 +26,7 @@ export function moveEntry(entry: Entry, targetCollectionId: string, now: string,
 }
 
 function refuseIfLive(target?: Entry) {
-  if (target && !target.deleted) throw new Error('The game is already in that collection.')
+  if (target && !target.deleted) throw new Error('The game is already in that shopping list.')
 }
 
 /** IDs of the collections a game is in (removed entries do not count). */

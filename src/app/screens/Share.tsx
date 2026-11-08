@@ -67,7 +67,7 @@ export function Share() {
     toast(
       added.collections + added.games === 0
         ? 'Nothing to import: everything in the backup is already here.'
-        : `Imported ${plural(added.collections, 'collection', 'collections')} and ${plural(added.games, 'game', 'games')}`,
+        : `Imported ${plural(added.collections, 'shopping list', 'shopping lists')} and ${plural(added.games, 'game', 'games')}`,
     )
   }
 
@@ -94,7 +94,7 @@ export function Share() {
         {collection ? (
           <>
             <label className="label" htmlFor={selectId}>
-              Collection
+              Shopping list
             </label>
             <div className="field select">
               <select id={selectId} value={collection.id} onChange={e => setChosen(e.target.value)}>
@@ -134,14 +134,14 @@ export function Share() {
           <>
             <p className="lead">No collections to share yet. Create one, or import a backup below.</p>
             <a className="btn btn-primary btn-block" href={href({ name: 'collections', create: true })}>
-              Create a collection
+              Create a shopping list
             </a>
           </>
         )}
 
         <hr className="separator" />
         <h2 className="section-title">Backup</h2>
-        <p className="lead">Your collections are saved to your account. A backup file is your own extra copy of all of them.</p>
+        <p className="lead">Your shopping lists are saved to your account. A backup file is your own extra copy of all of them.</p>
         <div className="share-split">
           <button type="button" className="btn" onClick={() => void exportBackup()} disabled={!collection}>
             Export backup
@@ -166,12 +166,12 @@ export function Share() {
 function ImportQuestion({ question, onAnswer, onClose }: { question: Question; onAnswer: (r: Resolution) => void; onClose: () => void }) {
   const parts = [
     question.games > 0 && plural(question.games, 'game', 'games'),
-    question.collections > 0 && plural(question.collections, 'collection name', 'collection names'),
+    question.collections > 0 && plural(question.collections, 'shopping list name', 'shopping list names'),
   ].filter(Boolean)
   const verb = question.games + question.collections === 1 ? 'differs' : 'differ'
   return (
     <Sheet open title={`${parts.join(' and ')} ${verb} from the backup`} onClose={onClose}>
-      <p className="lead">Missing collections and games are added either way. Which version do you want for the ones that differ?</p>
+      <p className="lead">Missing shopping lists and games are added either way. Which version do you want for the ones that differ?</p>
       <div className="sheet-actions">
         <button type="button" className="btn btn-primary btn-block" onClick={() => onAnswer('keep')}>
           Keep current

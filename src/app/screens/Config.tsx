@@ -64,7 +64,7 @@ export function Config() {
         </button>
         <hr className="separator" />
         <h2 className="section-title">Share and backup</h2>
-        <p className="lead">Send a collection to a chat, or save all collections to a file and load them back.</p>
+        <p className="lead">Send a shopping list to a chat, or save all shopping lists to a file and load them back.</p>
         <a className="btn btn-primary btn-block" href={href({ name: 'share' })}>
           Share and backup
         </a>
@@ -102,7 +102,7 @@ function ShareHint() {
         <h2 id="share-hint-title" className="card-title">
           📲 Share from BoardGameGeek
         </h2>
-        <p className="card-sub">Once board-a-licious is on your home screen, you can share any game from the BGG app or website straight into a collection.</p>
+        <p className="card-sub">Once board-a-licious is on your home screen, you can share any game from the BGG app or website straight into a shopping list.</p>
         <p className="card-sub">
           In Chrome: menu ⋮ → <b>Add to Home screen</b>. Afterwards, open board-a-licious from its icon.
         </p>
