@@ -79,12 +79,12 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 
 ### Tests for User Story 1
 
-- [ ] T023 [P] [US1] Write failing unit tests in `tests/unit/bgg-link.test.ts` for `parseBggCollectionLink(text)`: `https://boardgamegeek.com/collection/user/<name>?…&wishlist=1&…` → `{ bggUser, status: 'wishlist' }` for each status parameter (own, wishlist, wanttoplay, trade → forTrade, want → wantInTrade, wanttobuy, preordered, prevowned), no status → `{ bggUser }`, names URL-decoded and lower-cased, other hosts or paths → null
+- [X] T023 [P] [US1] Write failing unit tests in `tests/unit/bgg-link.test.ts` for `parseBggCollectionLink(text)`: `https://boardgamegeek.com/collection/user/<name>?…&wishlist=1&…` → `{ bggUser, status: 'wishlist' }` for each status parameter (own, wishlist, wanttoplay, trade → forTrade, want → wantInTrade, wanttobuy, preordered, prevowned), no status → `{ bggUser }`, names URL-decoded and lower-cased, other hosts or paths → null
 - [ ] T024 [P] [US1] Write failing Playwright tests in `tests/e2e/status-lists.spec.ts` with `fakeBggCollection`: no username → empty state with "Add username in Config"; Config "Your BGG username" + Save username; Status lists "Mine · mrmikkl on BoardGameGeek · loaded …", one card per non-empty status named "<status>, <n> games", none for empty ones; a status list shows list game rows, the Wishlist grouped "1 Must have" …; preparing for 12 s shows "BoardGameGeek is preparing your collection…" then the list by itself; unknown user → "No BoardGameGeek user called “…”" with a link to Config; Refresh reads again with `fresh=1`; loading a friend's collection link via the plus adds "<friend> · loaded by link · read-only" cards; BG-Tinder's list choice offers status lists; offline shows the stored copy with its time; axe
 
 ### Implementation for User Story 1
 
-- [ ] T025 [US1] Implement `parseBggCollectionLink` in `src/domain/bgg-link.ts` and accept it in `src/app/components/LoadListSheet.tsx` (writes a `follow` row; never the person's own username)
+- [ ] T025 [US1] (`parseBggCollectionLink` itself is done with T023) Accept the link in `src/app/components/LoadListSheet.tsx` (writes a `follow` row; never the person's own username)
 - [ ] T026 [US1] Add the BoardGameGeek section to `src/app/screens/Config.tsx` (username field, hint, Save username → `setting` row; changing it clears the BGG sign-in hint)
 - [ ] T027 [P] [US1] Create `src/app/components/StatusListCard.tsx` (design.md "Status list card") and fill Lists › Status lists in `src/app/screens/Lists.tsx` (own group, friends' groups, empty state, error lines)
 - [ ] T028 [US1] Create `src/app/screens/StatusList.tsx` (`#/lists/status/<bggUser>/<status>`: heading, resync icon "Read again from BGG", source line, list game rows, Wishlist priority groups, preparing and failure states) and offer status lists in `src/app/components/ListPicker.tsx` (BG-Tinder) so swiping works as for geeklists (`src/domain/swipe.ts` needs a list source for status lists)
@@ -101,12 +101,12 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 
 ### Tests for User Story 2
 
-- [ ] T029 [P] [US2] Write failing unit tests in `tests/unit/filter.test.ts` for the new filter field `bgg: 'all' | 'own' | 'notOwn' | 'wishlist'` in `src/domain/filter.ts` (default all, counts as non-default, games without a known status count as not owned)
+- [X] T029 [P] [US2] Write failing unit tests in `tests/unit/filter.test.ts` for the new filter field `bgg: 'all' | 'own' | 'notOwn' | 'wishlist'` in `src/domain/filter.ts` (default all, counts as non-default, games without a known status count as not owned)
 - [ ] T030 [P] [US2] Write failing Playwright tests in `tests/e2e/badges.spec.ts`: badges in game rows (≤ 2 + "+n"), list game rows, the swipe card and the game sheet (all), one accessible name "On BoardGameGeek: …" per game; no badges without username; a friend's list creates none; Config › Badge colours: rows per status, Change opens "Colour of “Owned”" with ten swatches, a pick applies at once, Reset colours (disabled at default); Filter › BGG status; axe and contrast at 360 px
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Implement the `bgg` filter in `src/domain/filter.ts` and its segment in `src/app/components/FilterPanel.tsx` (after Price)
+- [ ] T031 [US2] (the `bgg` filter in `src/domain/filter.ts` is done with T029) Add its segment in `src/app/components/FilterPanel.tsx` (after Price)
 - [ ] T032 [P] [US2] Create `src/app/components/BggBadges.tsx` and `src/app/theme/badges.css` (design.md "BGG status badge", palette with the text colours of "Badge colours"; reads meta `badgeColours`)
 - [ ] T033 [US2] Show `BggBadges` in `src/app/components/GameRow.tsx` (after price · booth), `ListGameRow.tsx`, `SwipeCard.tsx` (under publisher · year) and the head of `GameSheet.tsx` ("Not in your BGG collection" when a username is set and the game has none)
 - [ ] T034 [US2] Add Badge colours to `src/app/screens/Config.tsx` with `src/app/components/ColourSheet.tsx` (design.md "Badge colours")
@@ -123,13 +123,13 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 
 ### Tests for User Story 3
 
-- [ ] T035 [P] [US3] Write failing worker tests in `tests/worker/bgg-session.test.ts` for `worker/bgg/session.ts`: `seal({ email, bggUser, cookies, expiresAt }, key)` / `open(value, key, email, now)` with AES-GCM (random IV; tampered, wrong key, other email or expired → null); `setCookie(value, maxAge)` gives `bal_bgg=…; Path=/api/bgg/account; HttpOnly; Secure; SameSite=Strict; Max-Age=…` with Max-Age ≤ 2592000; `clearCookie()` Max-Age=0
+- [X] T035 [P] [US3] Write failing worker tests in `tests/worker/bgg-session.test.ts` for `worker/bgg/session.ts`: `seal({ email, bggUser, cookies, expiresAt }, key)` / `open(value, key, email, now)` with AES-GCM (random IV; tampered, wrong key, other email or expired → null); `setCookie(value, maxAge)` gives `bal_bgg=…; Path=/api/bgg/account; HttpOnly; Secure; SameSite=Strict; Max-Age=…` with Max-Age ≤ 2592000; `clearCookie()` Max-Age=0
 - [ ] T036 [P] [US3] Write failing worker tests in `tests/worker/bgg-account.test.ts` (sign-in part) against the T001 fixtures: `POST /api/bgg/account/signin` forwards the credentials once to BGG's login (no `Authorization` header), answers 200 with the sealed cookie and `{ signedIn, bggUser }`, 401 `bgg_signed_out` "BoardGameGeek did not accept this username or password." without a cookie, 502 when BGG is unreachable; `GET /api/bgg/account` reads only the cookie; `POST …/signout` clears it; a cookie sealed for another email → `{ signedIn: false }` and cleared; no log line and no error message contains the password, a cookie value or the `Cookie` header (capture `console.*`)
 - [ ] T037 [P] [US3] Write failing Playwright tests in `tests/e2e/bgg-signin.spec.ts` with `fakeBggAccount`: Config "Change statuses on BGG" text and Sign in to BoardGameGeek; the sign-in sheet (hint, fields, error, Cancel / Sign in); signed-in line "Signed in to BoardGameGeek as mrmikkl on this device" and Sign out of BoardGameGeek; nothing about the session in `localStorage` or IndexedDB after sign-in; axe
 
 ### Implementation for User Story 3
 
-- [ ] T038 [US3] Implement `worker/bgg/session.ts` (Web Crypto AES-GCM with `BGG_SESSION_KEY`)
+- [X] T038 [US3] Implement `worker/bgg/session.ts` (Web Crypto AES-GCM with `BGG_SESSION_KEY`)
 - [ ] T039 [US3] Implement the sign-in part of `worker/bgg/account.ts` (endpoints and cookie names from T001; shares the BGG throttle slot; no cache; no token) and `worker/routes/account.ts` for `GET /api/bgg/account`, `POST …/signin`, `POST …/signout`; wire in `worker/index.ts` without logging bodies or cookies
 - [ ] T040 [US3] Add `account`, `signIn`, `signOut` to `src/client/api.ts`; create `src/app/components/SignInSheet.tsx`; add the sign-in card to `src/app/screens/Config.tsx`; keep meta `bggSignedInAs` as a hint refreshed from `GET /api/bgg/account`; call sign-out before the app's own sign-out in `src/app/context.tsx`
 
@@ -165,13 +165,13 @@ Phase 2; US4 needs US3; US5 needs US4's write route.
 
 ### Tests for User Story 5
 
-- [ ] T045 [P] [US5] Write failing unit tests in `tests/unit/bgg-status.test.ts` for `privateInfoFor(entry, offer?, today)` in `src/domain/bgg-status.ts` (data-model "PrivateInfo": price omitted when empty; date `YYYY-MM-DD`; acquiredFrom "SPIEL Essen 2026 · booth 3-A101" when the entry has a booth from a SPIEL preview, else the offer's shop, else omitted; ≤ 100 chars) and `askAfterBought(status, pricePaid)` (not owned → mark as owned; owned with a price → add price; owned without → nothing)
+- [X] T045 [P] [US5] Write failing unit tests in `tests/unit/bgg-status.test.ts` for `privateInfoFor(entry, offer?, today)` in `src/domain/bgg-status.ts` (data-model "PrivateInfo": price omitted when empty; date `YYYY-MM-DD`; acquiredFrom "SPIEL Essen 2026 · booth 3-A101" when the entry has a booth from a SPIEL preview, else the offer's shop, else omitted; ≤ 100 chars) and `askAfterBought(status, pricePaid)` (not owned → mark as owned; owned with a price → add price; owned without → nothing)
 - [ ] T046 [P] [US5] Extend `tests/worker/bgg-account.test.ts`: `privateInfo` saved with the T001 private-info fields; existing other price and `replacePrice` missing → `409 price_conflict { current }` and nothing written; `replacePrice: false` writes Own but keeps BGG's private info; `replacePrice: true` replaces; 400 for price ≤ 0 or > 10000, a bad date, acquiredFrom > 100 chars
 - [ ] T047 [P] [US5] Write failing Playwright tests in `tests/e2e/buy-owned.spec.ts`: after Got it in a shopping list on a game not owned, the sheet "Also mark as owned on BoardGameGeek?" lists Status Owned, Price paid, Acquisition date, Acquired from; Not now writes nothing; Mark as owned (signed out: sign-in first, then saving) → toast "Saved on BoardGameGeek: <game> owned, price paid added" and the Owned badge; owned game with a price → "Add the price paid on BoardGameGeek?"; conflict → "Replace the price paid on BoardGameGeek?" with Keep <old> / Replace; Bought it from Buy › Search's game sheet (no shopping list) asks the price and then the same question, and creates no shopping list; axe
 
 ### Implementation for User Story 5
 
-- [ ] T048 [US5] Implement `privateInfoFor` and `askAfterBought` in `src/domain/bgg-status.ts` (T045) and the private info save and conflict in `worker/bgg/account.ts` / `worker/routes/account.ts` (T046)
+- [ ] T048 [US5] (`privateInfoFor` and `askAfterBought` are done with T045) Implement the private info save and conflict in `worker/bgg/account.ts` / `worker/routes/account.ts` (T046)
 - [ ] T049 [US5] Create `src/app/components/MarkOwnedSheet.tsx` (design.md "Mark as owned sheet", including the replace step) and open it from `src/app/components/BuySheet.tsx` after Got it, both in shopping lists and from the browse game sheet's "Bought it" (a Buy sheet without an entry: price only, nothing stored in the app)
 
 **Checkpoint**: all stories work.
