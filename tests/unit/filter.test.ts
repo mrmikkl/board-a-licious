@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { type Entry, newEntry } from '../../src/domain/collection.ts'
+import { NO_STATUS, type Status } from '../../src/domain/bgg-status.ts'
 import {
+  type BggFilter,
   type Filter,
   PRESETS,
   applyFilter,
   buyOff,
   buyOn,
+  dropBuy,
   filterLabel,
   fromStored,
   groupCounts,
@@ -186,5 +189,58 @@ describe('the default view (F005 R5)', () => {
     expect(isDefaultView(filter([...PRESETS.all.groups], 'all', 'cheap'), 'mark')).toBe(false)
     expect(isDefaultView(buyOn(PRESETS.all), 'mark')).toBe(false)
     expect(isDefaultView(PRESETS.all, 'booth')).toBe(false)
+  })
+})
+
+describe('filter by BGG status (F008 FR-010)', () => {
+  const all = [...PRESETS.all.groups]
+  const statuses = new Map<number, Status>([
+    [1, { ...NO_STATUS, own: true }],
+    [2, { ...NO_STATUS, wishlist: 2 }],
+    [3, { ...NO_STATUS, prevOwned: true }],
+  ])
+  const statusOf = (bggId: number) => statuses.get(bggId)
+  const live = [entry(1, 'new'), entry(2, 'must_have'), entry(3, 'later'), entry(4, 'skip')]
+  const withBgg = (bgg: BggFilter): Filter => ({ ...filter(all, 'all'), bgg })
+
+  it('defaults to all and shows every game, with or without statuses', () => {
+    expect(fromStored(undefined).bgg ?? 'all').toBe('all')
+    expect(ids(applyFilter(live, withBgg('all'), statusOf))).toEqual([1, 2, 3, 4])
+    expect(ids(applyFilter(live, filter(all, 'all')))).toEqual([1, 2, 3, 4])
+  })
+
+  it('owned shows only games owned on BGG', () => {
+    expect(ids(applyFilter(live, withBgg('own'), statusOf))).toEqual([1])
+  })
+
+  it('not owned includes games without a known status', () => {
+    expect(ids(applyFilter(live, withBgg('notOwn'), statusOf))).toEqual([2, 3, 4])
+    expect(ids(applyFilter(live, withBgg('notOwn')))).toEqual([1, 2, 3, 4])
+    expect(ids(applyFilter(live, withBgg('own')))).toEqual([])
+  })
+
+  it('wishlist shows games on the BGG wishlist', () => {
+    expect(ids(applyFilter(live, withBgg('wishlist'), statusOf))).toEqual([2])
+  })
+
+  it('counts groups within the BGG selection', () => {
+    expect(groupCounts(live, 'all', 'all', 'notOwn', statusOf)).toMatchObject({ new: 0, must_have: 1, later: 1, skip: 1 })
+  })
+
+  it('is not the default view and not a preset when set', () => {
+    expect(isDefaultView(withBgg('all'), 'mark')).toBe(true)
+    expect(isDefaultView(withBgg('own'), 'mark')).toBe(false)
+    expect(presetOf(withBgg('wishlist'))).toBeNull()
+    expect(presetOf({ ...PRESETS.hunt, bgg: 'notOwn' })).toBeNull()
+  })
+
+  it('is kept when stored, labelled, and kept when the Buy filter is dropped', () => {
+    expect(fromStored(toStored(withBgg('notOwn'))).bgg).toBe('notOwn')
+    expect(fromStored({ groups: all, bought: 'all', bgg: 'bogus' }).bgg ?? 'all').toBe('all')
+    expect(filterLabel(withBgg('own'))).toBe('All categories, owned on BGG')
+    expect(filterLabel(withBgg('notOwn'))).toBe('All categories, not owned on BGG')
+    expect(filterLabel(withBgg('wishlist'))).toBe('All categories, on BGG wishlist')
+    expect(dropBuy(buyOn(withBgg('own'))).bgg ?? 'all').toBe('all')
+    expect(dropBuy(withBgg('own')).bgg).toBe('own')
   })
 })
