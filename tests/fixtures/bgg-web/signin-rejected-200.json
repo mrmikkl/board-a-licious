@@ -1,0 +1,8 @@
+{
+ "note": "NOT recorded (research R2): a plausible 200 that carries an error and no session cookie, built for the tests",
+ "response": {
+  "status": 200,
+  "contentType": "application/json",
+  "body": { "errors": { "message": "Invalid username or password" } }
+ }
+}
