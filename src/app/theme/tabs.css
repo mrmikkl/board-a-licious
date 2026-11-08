@@ -1,0 +1,40 @@
+/* F008 Place tabs (docs/design.md 3.0.0 "Place tabs"): one row of equal tabs under a place's heading */
+.tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin: 0 var(--gutter) 12px;
+  border-bottom: 1px solid var(--rim);
+}
+.tab {
+  position: relative;
+  min-height: 48px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 700 15px var(--font-body);
+  cursor: pointer;
+}
+.tab[aria-selected='true'] {
+  color: var(--text);
+}
+.tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--grad-hot);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover {
+    color: var(--text);
+  }
+}

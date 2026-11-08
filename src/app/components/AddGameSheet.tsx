@@ -10,7 +10,8 @@ import { useBggSearch } from '../hooks/useBggSearch.ts'
 import { CategoryPicker } from './CategoryPicker.tsx'
 import { HexCover } from './HexCover.tsx'
 import { IconSearch } from './icons.tsx'
-import { SearchResultRow, yearText } from './SearchResultRow.tsx'
+import { yearText } from './ListGameRow.tsx'
+import { SearchResultRow } from './SearchResultRow.tsx'
 import { Sheet } from './Sheet.tsx'
 import { useToast } from './Toast.tsx'
 
@@ -157,7 +158,7 @@ export function AddGameSheet({ collection, inside, onClose }: { collection: Coll
               <ul className="matches" aria-label="Matching games">
                 {s.results.map(result => (
                   <li key={result.bggId}>
-                    <SearchResultRow compact result={result} game={search.games.get(result.bggId)} onOpen={() => pick(result)} />
+                    <SearchResultRow result={result} game={search.games.get(result.bggId)} onOpen={() => pick(result)} />
                   </li>
                 ))}
               </ul>
@@ -171,7 +172,7 @@ export function AddGameSheet({ collection, inside, onClose }: { collection: Coll
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={!ready}>
-            Add to collection
+            Add to shopping list
           </button>
         </div>
       </form>

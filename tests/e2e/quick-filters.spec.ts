@@ -20,7 +20,7 @@ const buyChip = (page: import('@playwright/test').Page) => page.getByRole('butto
 test('the quick filters sit between the two separators, with no filter summary line', async ({ page }) => {
   await expect(page.getByRole('group', { name: 'Quick filters' })).toBeVisible()
   await expect(page.locator('.filter-summary')).toHaveCount(0)
-  await expect(page.getByRole('searchbox', { name: /^Search / })).toHaveAttribute('placeholder', 'Search this collection')
+  await expect(page.getByRole('searchbox', { name: /^Search / })).toHaveAttribute('placeholder', 'Search this shopping list')
 })
 
 test('the Cat | Booth toggle switches the grouping and its name', async ({ page }) => {

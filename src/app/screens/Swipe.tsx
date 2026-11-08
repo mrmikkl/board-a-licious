@@ -138,11 +138,11 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
         <main className="screen">
           <div className="empty">
             <div className="hex" />
-            <h2>This collection does not exist anymore</h2>
+            <h2>This shopping list does not exist anymore</h2>
             <p>It may have been deleted on another device.</p>
             <div className="actions">
               <a className="btn btn-primary" href={href({ name: 'collections' })}>
-                Go to your collections
+                Go to your shopping lists
               </a>
             </div>
           </div>
@@ -198,7 +198,7 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
               <div className="empty">
                 <div className="hex" />
                 <h2>You&apos;ve seen every game on this list</h2>
-                <p>Back to the collection to give them a category.</p>
+                <p>Back to the shopping list to give them a category.</p>
                 <div className="actions">
                   <a className="btn btn-primary" href={back}>
                     Open {collection.name}
@@ -252,7 +252,7 @@ export function Swipe({ id, list: chosen }: { id: string; list?: ListRef }) {
                   <button type="button" className="swipe-btn no hex-btn" aria-label="Not interested" disabled={!top} onClick={() => decide('left')}>
                     ✕
                   </button>
-                  <button type="button" className="swipe-btn yes hex-btn" aria-label="Add to collection" disabled={!top} onClick={() => decide('right')}>
+                  <button type="button" className="swipe-btn yes hex-btn" aria-label="Add to shopping list" disabled={!top} onClick={() => decide('right')}>
                     ✓
                   </button>
                 </div>

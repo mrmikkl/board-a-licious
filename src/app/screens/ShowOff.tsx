@@ -50,11 +50,11 @@ export function ShowOff({ id, groups }: { id: string; groups: Mark[] }) {
         <main className="screen">
           <div className="empty">
             <div className="hex" />
-            <h2>This collection does not exist anymore</h2>
+            <h2>This shopping list does not exist anymore</h2>
             <p>It may have been deleted on another device.</p>
             <div className="actions">
               <a className="btn btn-primary" href={href({ name: 'collections' })}>
-                Go to your collections
+                Go to your shopping lists
               </a>
             </div>
           </div>

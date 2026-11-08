@@ -29,7 +29,7 @@ async function fakeImages(page: Page) {
 async function addGame(page: Page, id: number) {
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill(`https://boardgamegeek.com/boardgame/${id}/game`)
-  await page.getByRole('button', { name: 'Add to collection' }).click()
+  await page.getByRole('button', { name: 'Add to shopping list' }).click()
 }
 
 const viewer = (page: Page, name: string) => page.getByRole('dialog', { name: `Images of ${name}` })
@@ -140,7 +140,7 @@ test("US1: a BGG list's game sheet opens the same viewer (FR-001)", async ({ pag
     route.fulfill({ json: fixture('api', `preview-9093-page-${new URL(route.request().url()).searchParams.get('page')}.json`) }),
   )
   await loadList(page, 'https://boardgamegeek.com/geekpreview/9093/spiel-essen-2026-preview')
-  await page.getByRole('button', { name: 'Add Cascadia to a collection' }).click()
+  await page.getByRole('button', { name: /^Cascadia(,|$)/ }).click()
   await expect(page.getByRole('dialog', { name: 'Cascadia', exact: true })).toBeVisible()
   await open(page, 'Cascadia')
   const dialog = viewer(page, 'Cascadia')

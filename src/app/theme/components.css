@@ -664,3 +664,31 @@
   color: var(--muted);
   font-size: 13px;
 }
+
+/* F008 game sheet head (docs/design.md "Game sheet"): year · publisher, badges and "in …" right of the cover */
+.gs-facts {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  justify-items: start;
+}
+.gs-facts .detail-sub {
+  margin: 0;
+}
+.gs-in {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--teal);
+  font: 600 13px var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+.gs-in:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.gs-bgg {
+  margin: 0 0 6px;
+}

@@ -1,45 +1,47 @@
 import { type ReactNode, useEffect, useRef } from 'react'
 
+import { useStoreData } from '../context.tsx'
 import { type Route, href } from '../router.ts'
-import { IconBuy, IconCollections, IconConfig, IconLists, IconSearch } from './icons.tsx'
+import { IconBuy, IconConfig, IconLists } from './icons.tsx'
 
-type Place = 'buy' | 'collections' | 'lists' | 'search' | 'config'
+type Place = 'buy' | 'lists' | 'config'
 
 const PLACES: { name: Place; label: string; icon: ReactNode }[] = [
   // F007: Buy is the first place
   { name: 'buy', label: 'Buy', icon: <IconBuy /> },
-  { name: 'collections', label: 'Collections', icon: <IconCollections /> },
-  { name: 'lists', label: 'BGG lists', icon: <IconLists /> },
-  { name: 'search', label: 'Search', icon: <IconSearch /> },
+  { name: 'lists', label: 'Lists', icon: <IconLists /> },
   { name: 'config', label: 'Config', icon: <IconConfig /> },
 ]
 
-/** The menu place a route belongs to (contracts/navigation.md "Menu"). */
+/** The menu place a route belongs to (F008 contracts/ui.md). */
 function place(route: Route): Place {
   switch (route.name) {
+    case 'buy':
+    case 'collections':
     case 'collection':
     case 'showoff':
     case 'swipe':
     case 'shared':
-      return 'collections'
-    case 'list':
-      return 'lists'
-    case 'prices':
       return 'buy'
+    case 'lists':
+    case 'list':
+    case 'status-list':
+      return 'lists'
+    case 'config':
     case 'share':
       return 'config'
-    default:
-      return route.name
   }
 }
 
 /**
  * The app bar's menu (research R2): a disclosure with links, not an ARIA menu. Focus moves to the
- * current place on open; Esc, a scrim tap and choosing a place close it.
+ * current place on open; Esc, a scrim tap and choosing a place close it. F008: each place opens on its
+ * last used tab (Lists finds it itself).
  */
 export function Menu({ id, route, top, onClose }: { id: string; route: Route; top: number; onClose: (refocus: boolean) => void }) {
   const current = place(route)
   const currentLink = useRef<HTMLAnchorElement>(null)
+  const lastTab = useStoreData(store => store.metaOrDefault('lastTab'))
   useEffect(() => currentLink.current?.focus(), [])
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -48,6 +50,7 @@ export function Menu({ id, route, top, onClose }: { id: string; route: Route; to
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+  const target = (p: Place): Route => (p === 'buy' ? (lastTab?.buy === 'shopping' ? { name: 'collections' } : { name: 'buy' }) : { name: p })
 
   return (
     <>
@@ -58,7 +61,7 @@ export function Menu({ id, route, top, onClose }: { id: string; route: Route; to
             <li key={p.name}>
               <a
                 ref={p.name === current ? currentLink : undefined}
-                href={href({ name: p.name })}
+                href={href(target(p.name))}
                 aria-current={p.name === current ? 'page' : undefined}
                 onClick={() => onClose(false)}
               >

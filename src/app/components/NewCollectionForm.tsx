@@ -4,7 +4,7 @@ import { type Collection, NAME_MAX } from '../../domain/collection.ts'
 import { createCollection } from '../actions.ts'
 import { useServices } from '../context.tsx'
 
-/** The New collection sheet's form: Name, Cancel / "Create collection", enabled once a name is typed. */
+/** The New shopping list sheet's form: Name, Cancel / "Create shopping list", enabled once a name is typed. */
 export function NewCollectionForm({ onCreated, onCancel }: { onCreated: (collection: Collection) => void; onCancel: () => void }) {
   const services = useServices()
   const [name, setName] = useState('')
@@ -36,7 +36,7 @@ export function NewCollectionForm({ onCreated, onCancel }: { onCreated: (collect
           Cancel
         </button>
         <button type="submit" className="btn btn-primary" disabled={!valid || busy}>
-          Create collection
+          Create shopping list
         </button>
       </div>
     </form>

@@ -1,6 +1,6 @@
 import { type Page, expect, test } from '@playwright/test'
 
-import { createCollection, expectAccessible, fakeBgg, fakeGallery, unique } from './helpers.ts'
+import { chooseCategory, createCollection, expectAccessible, fakeBgg, fakeGallery, unique } from './helpers.ts'
 
 /**
  * F004 US2 (FR-007–FR-014, contracts/images-api.md "Show-off"): the Show-off action at the outer
@@ -28,7 +28,7 @@ async function addGame(page: Page, link: string, game: string) {
   const add = page.getByRole('dialog', { name: 'Add game' })
   await add.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(add.getByLabel(/^name$/i)).toHaveValue(game)
-  await add.getByRole('button', { name: 'Add to collection' }).click()
+  await add.getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(add).toBeHidden()
   await expect(page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') })).toBeVisible()
 }
@@ -36,7 +36,7 @@ async function addGame(page: Page, link: string, game: string) {
 /** Opens the game from "No category yet" and picks a category; a tap changes it in place, Escape closes the details. */
 async function markAs(page: Page, game: string, mark: RegExp) {
   await page.getByRole('region', { name: /no category yet/i }).getByRole('button', { name: new RegExp(`^${game},`, 'i') }).click()
-  await page.getByRole('dialog').getByRole('button', { name: mark }).click()
+  await chooseCategory(page, mark)
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
 }
@@ -67,7 +67,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   await markAs(page, 'Cascadia', /must have/i)
   await markAs(page, 'Ark Nova', /must have/i)
   await markAs(page, 'Wingspan', /must have/i)
-  await markAs(page, 'Brass Birmingham', /^interested$/i)
+  await markAs(page, 'Brass Birmingham', /^(👀 )?interested$/i)
   await buy(page, /must have/i, 'Cascadia')
 
   // FR-008, FR-009: seven toggles with counts, Must Have pressed the first time, Show off disabled with none pressed

@@ -26,7 +26,7 @@ test('BG-Tinder and Add game open as sheets over the collection', async ({ page 
   await page.getByRole('button', { name: /^add game$/i }).click()
   const addGame = page.getByRole('dialog', { name: 'Add game' })
   await expect(addGame).toContainText("Type a game's name, or paste its link")
-  await expect(addGame.getByRole('button', { name: 'Add to collection' })).toBeDisabled()
+  await expect(addGame.getByRole('button', { name: 'Add to shopping list' })).toBeDisabled()
   await expectAccessible(page)
   await addGame.getByRole('button', { name: 'Cancel' }).click()
   await expect(addGame).toHaveCount(0)

@@ -54,7 +54,7 @@ export function CopyMoveSheet({
       <form className="form" onSubmit={submit}>
         <div>
           <label className="label" htmlFor={selectId}>
-            To collection
+            To shopping list
           </label>
           <div className="field select">
             <select

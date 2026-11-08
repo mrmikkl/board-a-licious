@@ -85,3 +85,27 @@
 .catpick-btn:focus-visible .catpick-face {
   box-shadow: inset 0 0 0 3px var(--orange);
 }
+
+/* F008 Category section of the game sheet (docs/design.md "Category section"): the current category at the right */
+.cat-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  min-width: 0;
+  color: var(--muted);
+  font: 600 13px var(--font-body);
+  white-space: nowrap;
+}
+.cat-sec .prices-toggle .chev {
+  margin-left: 0;
+}
+.cat-now-hex {
+  width: 14px;
+  height: 16px;
+  clip-path: var(--hex);
+  background: var(--tone);
+}
+.cat-sec .cat-list {
+  padding-top: 4px;
+}

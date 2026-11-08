@@ -13,16 +13,17 @@ const MARKED = MARKS.filter(m => m.key !== 'new' && m.key !== 'skip')
 const REST = MARKS.filter(m => m.key === 'new' || m.key === 'skip')
 
 /**
- * "Category of <game>" (docs/design.md v2.2.0 "Category sheet", F005 R4): the categories as a list; a tap
- * sets it, closes the sheet and toasts "<game> → <emoji> <label>". Opened from a row's Category action.
+ * The categories as a list (docs/design.md "Category sheet"): the marked ones, a thin line, then No
+ * category yet and Not interested; the current one is marked. A tap sets it and toasts
+ * "<game> → <emoji> <label>"; `onChosen` follows (the sheet closes, the Category section folds).
  */
-export function CategorySheet({ entry, name, onClose }: { entry: Entry; name: string; onClose: () => void }) {
+export function CategoryList({ entry, name, onChosen }: { entry: Entry; name: string; onChosen: () => void }) {
   const services = useServices()
   const toast = useToast()
   const choose = async (event: MouseEvent<HTMLButtonElement>, mark: Mark) => {
     const from = centreOf(event.currentTarget)
     await setMark(services, entry, mark, from)
-    onClose()
+    onChosen()
     const { emoji, label } = markInfo(mark)
     toast(`${name} → ${emoji} ${label}`)
   }
@@ -40,12 +41,19 @@ export function CategorySheet({ entry, name, onClose }: { entry: Entry; name: st
     )
   }
   return (
+    <div className="cat-list">
+      {MARKED.map(m => option(m.key))}
+      <hr className="cat-rule" />
+      {REST.map(m => option(m.key))}
+    </div>
+  )
+}
+
+/** "Category of <game>" (F005 R4), opened from a row's Category action: the list; a tap closes the sheet. */
+export function CategorySheet({ entry, name, onClose }: { entry: Entry; name: string; onClose: () => void }) {
+  return (
     <Sheet open title={`Category of ${name}`} onClose={onClose}>
-      <div className="cat-list">
-        {MARKED.map(m => option(m.key))}
-        <hr className="cat-rule" />
-        {REST.map(m => option(m.key))}
-      </div>
+      <CategoryList entry={entry} name={name} onChosen={onClose} />
     </Sheet>
   )
 }

@@ -8,7 +8,7 @@ import {
   priceInput,
 } from "../../domain/money.ts";
 import { buyGame } from "../actions.ts";
-import { centreOf } from "../celebrate.ts";
+import { celebrate, centreOf } from "../celebrate.ts";
 import { useServices } from "../context.tsx";
 import { Sheet } from "./Sheet.tsx";
 import { useToast } from "./Toast.tsx";
@@ -20,6 +20,8 @@ const PRICE_ERROR = "Type a price from 0 to 9,999, like 12,50.";
  * price (empty = bought without a price), currency, Cancel / Got it. Opened from a game row's Buy
  * action and from "✅ Bought it" in the details; saving celebrates, toasts and calls `onClose`;
  * Cancel, Esc and the scrim call `onCancel` (default `onClose`) (FR-006, FR-007).
+ * F008: without an `entry` (Bought it in a game sheet outside shopping lists) it asks the price only
+ * and stores nothing in the app.
  */
 export function BuySheet({
   entry,
@@ -27,7 +29,7 @@ export function BuySheet({
   onClose,
   onCancel = onClose,
 }: {
-  entry: Entry;
+  entry?: Entry;
   name: string;
   onClose: () => void;
   onCancel?: () => void;
@@ -36,7 +38,7 @@ export function BuySheet({
   const toast = useToast();
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const suggestion = suggestPaid(entry);
+  const suggestion = entry ? suggestPaid(entry) : { cents: null, currency: "EUR" };
   const [text, setText] = useState(priceInput(suggestion.cents));
   const [currency, setCurrency] = useState(suggestion.currency);
   useEffect(() => {
@@ -52,7 +54,8 @@ export function BuySheet({
     const paid: Paid | null = cents === null ? null : { cents, currency };
     const submitter =
       (event.nativeEvent as SubmitEvent).submitter ?? inputRef.current;
-    await buyGame(services, entry, paid, centreOf(submitter));
+    if (entry) await buyGame(services, entry, paid, centreOf(submitter));
+    else celebrate({ kind: "bought", from: centreOf(submitter) });
     onClose();
     toast(
       paid

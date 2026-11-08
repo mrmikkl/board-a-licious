@@ -38,7 +38,7 @@ test('the manifest and the page carry the PNG app icons (F003 T006)', async ({ r
 })
 
 test('a share opens the app on #/shared, also offline (T004)', async ({ page, context }) => {
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await page.evaluate(() => navigator.serviceWorker.ready)
   await page.reload()
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
@@ -54,7 +54,7 @@ test('a share opens the app on #/shared, also offline (T004)', async ({ page, co
 test('offline share: framed note, added on the phone at once, synced once back online (T015)', async ({ page, context }) => {
   await fakeBgg(page)
   const name = unique('Shared Offline')
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await page.evaluate(() => navigator.serviceWorker.ready)
   await page.reload()
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
@@ -69,9 +69,9 @@ test('offline share: framed note, added on the phone at once, synced once back o
   await expect(sheet).toContainText(
     'You are offline: the game is added on this phone now; its cover and details follow once you are back online.',
   )
-  const select = sheet.getByLabel('Collection', { exact: true })
+  const select = sheet.getByLabel('Shopping list', { exact: true })
   await select.selectOption(await select.locator('option').filter({ hasText: name }).getAttribute('value'))
-  await sheet.getByRole('button', { name: 'Add to collection' }).click()
+  await sheet.getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await expect(page.getByRole('button', { name: /^offline fair game,/i })).toContainText('Details follow from BoardGameGeek')
 
@@ -99,7 +99,7 @@ test('share while signed out (API 401): the game is added on the phone and "Sign
   await expect(sheet).toBeVisible()
   // a fresh browser that cannot sync has no collection yet
   const created = unique('Shared Signed Out')
-  await sheet.getByLabel('Collection name').fill(created)
+  await sheet.getByLabel('Shopping list name').fill(created)
   await sheet.getByRole('button', { name: 'Create and add' }).click()
   await expect(page.getByRole('heading', { level: 1, name: created })).toBeVisible()
   await expect(page.getByRole('button', { name: /^cascadia,/i })).toBeVisible()

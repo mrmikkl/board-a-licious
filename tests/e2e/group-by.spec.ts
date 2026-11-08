@@ -28,7 +28,7 @@ test('a collection grouped by booth shows the fair halls, and remembers the choi
     await page.keyboard.press('ArrowRight')
     await page.waitForTimeout(150)
   }
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await page.getByRole('link', { name: new RegExp(name) }).click()
 
   await page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: /^filter/i }).click()

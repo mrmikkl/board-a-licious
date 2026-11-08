@@ -52,7 +52,7 @@ export function QuickFilters({
         <input
           type="search"
           aria-label={`Search ${collection}`}
-          placeholder="Search this collection"
+          placeholder="Search this shopping list"
           autoComplete="off"
           value={query}
           onChange={e => onQuery(e.target.value)}
