@@ -1,3 +1,4 @@
+import type { BggCollectionItem } from '../domain/bgg-status.ts'
 import type { Facts } from '../domain/collection.ts'
 import type { GameDetails } from '../domain/game-info.ts'
 
@@ -43,4 +44,19 @@ export type StoredList = {
   /** When the pages were last fetched completely; a reload after 1 h refreshes them. */
   loadedAt?: string
   error?: string
+}
+
+/** F008: the person's BGG username, synced (data-model.md "UserSetting"); null = none. */
+export type UserSetting = { bggUsername: string | null; updatedAt: string }
+
+/** F008: a friend's BGG user whose lists were loaded by link, synced; lower-cased, `deleted` = tombstone. */
+export type FollowedBggUser = { bggUser: string; updatedAt: string; deleted: boolean }
+
+/** F008: a person's BGG collection on this device (data-model.md "BggCollection"), keyed by lower-cased `bggUser`. */
+export type StoredBggCollection = {
+  bggUser: string
+  items: BggCollectionItem[]
+  /** When it was last read from BGG (or found missing); null before the first answer. */
+  loadedAt: string | null
+  error: 'not_found' | 'private' | null
 }

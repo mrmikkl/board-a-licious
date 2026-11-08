@@ -86,7 +86,7 @@ describe('repository', () => {
 
   it('limits every query to the caller', async () => {
     await applyChanges(db, ANNA, { collections: [collection()], entries: [entry()] })
-    expect(await listChanges(db, BEN)).toEqual({ collections: [], entries: [], lists: [] })
+    expect(await listChanges(db, BEN)).toEqual({ collections: [], entries: [], lists: [], settings: [], follows: [] })
     // Ben cannot overwrite Anna's collection or add entries to it
     const attempt = await applyChanges(db, BEN, { collections: [collection({ name: 'Mine', updatedAt: T2 })], entries: [] })
     expect(attempt).toEqual({ applied: 0, ignored: 1 })
@@ -122,6 +122,55 @@ describe('repository', () => {
     // Ben's copy of the same list is his own row
     await applyChanges(db, BEN, { collections: [], entries: [], lists: [spiel] })
     expect((await listChanges(db, BEN)).lists).toHaveLength(1)
+  })
+
+  it('F008: migration 0007 has user_setting and followed_bgg_user with their CHECKs and synced_at indexes', async () => {
+    const bad = (sql: string, params: unknown[]) => expect(db.query(sql, params)).rejects.toThrow()
+    const settingSql = `INSERT INTO user_setting (user_email, bgg_username, updated_at) VALUES ($1, $2, now())`
+    await bad(settingSql, [ANNA, ''])
+    await bad(settingSql, [ANNA, 'x'.repeat(51)])
+    await db.query(settingSql, [ANNA, null])
+    await bad(settingSql, [ANNA, 'mrmikkl']) // one row per person
+    const followSql = `INSERT INTO followed_bgg_user (user_email, bgg_user, updated_at) VALUES ($1, $2, now())`
+    await bad(followSql, [ANNA, ''])
+    await bad(followSql, [ANNA, 'x'.repeat(51)])
+    await db.query(followSql, [ANNA, 'anna_meeple'])
+    await bad(followSql, [ANNA, 'anna_meeple'])
+    const [row] = await db.query<{ deleted: boolean; synced_at: Date | null }>('SELECT deleted, synced_at FROM followed_bgg_user')
+    expect(row).toMatchObject({ deleted: false })
+    expect(row?.synced_at).not.toBeNull()
+    const indexes = await db.query<{ indexdef: string }>(
+      `SELECT indexdef FROM pg_indexes WHERE tablename IN ('user_setting', 'followed_bgg_user') AND indexdef LIKE '%synced_at%'`,
+    )
+    expect(indexes.map(i => i.indexdef.replace(/.* ON (?:public\.)?(\w+) .*\((.*)\)/, '$1($2)')).sort()).toEqual([
+      'followed_bgg_user(user_email, synced_at)',
+      'user_setting(user_email, synced_at)',
+    ])
+  })
+
+  it('F008: keeps the BGG username per person, last write wins, null clears it', async () => {
+    const empty = { collections: [], entries: [] }
+    expect(await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: 'mrmikkl', updatedAt: T1 }] })).toEqual({ applied: 1, ignored: 0 })
+    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: 'mrmikkl', updatedAt: T1 }])
+    expect((await listChanges(db, BEN)).settings).toEqual([])
+    expect(await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: 'old', updatedAt: T1 }] })).toEqual({ applied: 0, ignored: 1 })
+    await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: null, updatedAt: T2 }] })
+    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: null, updatedAt: T2 }])
+  })
+
+  it('F008: keeps followed BGG users lower-cased, with tombstones and the synced_at cursor', async () => {
+    const empty = { collections: [], entries: [] }
+    const anna = { bggUser: 'Anna_Meeple', updatedAt: T1, deleted: false }
+    expect(await applyChanges(db, ANNA, { ...empty, follows: [anna] })).toEqual({ applied: 1, ignored: 0 })
+    expect((await listChanges(db, ANNA)).follows).toEqual([{ ...anna, bggUser: 'anna_meeple' }])
+    expect((await listChanges(db, BEN)).follows).toEqual([])
+    expect(await applyChanges(db, ANNA, { ...empty, follows: [{ ...anna, deleted: true }] })).toEqual({ applied: 0, ignored: 1 })
+    await pause()
+    const cursor = await syncCursor(db, 0)
+    await pause()
+    expect((await listChanges(db, ANNA, cursor)).follows).toEqual([])
+    await applyChanges(db, ANNA, { ...empty, follows: [{ bggUser: 'anna_meeple', updatedAt: T2, deleted: true }] })
+    expect((await listChanges(db, ANNA, cursor)).follows).toEqual([{ bggUser: 'anna_meeple', updatedAt: T2, deleted: true }])
   })
 
   it('caches games and returns only fresh ones', async () => {

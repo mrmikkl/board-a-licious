@@ -1,12 +1,18 @@
 import { type DBSchema, type IDBPDatabase, deleteDB, openDB } from 'idb'
 
+import { DEFAULT_BADGE_COLOURS, type PaletteName, type StatusKey } from '../domain/bgg-status.ts'
 import { type Collection, type Entry, entryKey, merge } from '../domain/collection.ts'
 import type { LoadedList } from '../domain/lists.ts'
 import type { Mark } from '../domain/marks.ts'
 import type { PriceLanguage } from '../domain/offers.ts'
-import type { Game, ListKind, StoredList } from './types.ts'
+import type { FollowedBggUser, Game, ListKind, StoredBggCollection, StoredList, UserSetting } from './types.ts'
 
-export type Change = { kind: 'collection'; row: Collection } | { kind: 'entry'; row: Entry } | { kind: 'list'; row: LoadedList }
+export type Change =
+  | { kind: 'collection'; row: Collection }
+  | { kind: 'entry'; row: Entry }
+  | { kind: 'list'; row: LoadedList }
+  | { kind: 'setting'; row: UserSetting }
+  | { kind: 'follow'; row: FollowedBggUser }
 export type PendingChange = Change & { key: number }
 
 export type MetaValues = {
@@ -24,7 +30,26 @@ export type MetaValues = {
   declinedFacts: Record<string, string>
   /** F007: the editions the price lists show (Both, English, German); missing → both. */
   priceLanguage: PriceLanguage
+  /** F008: the person's BGG username with its time, synced through the outbox (use `bggUsername()`). */
+  bggSetting: UserSetting
+  /** F008: badge colour per BGG status. */
+  badgeColours: Record<StatusKey, PaletteName>
+  /** F008: the tab last open in Buy and in Lists. */
+  lastTab: { buy: 'search' | 'shopping'; lists: 'status' | 'previews' | 'geeklists' }
+  /** F008: who is signed in to BGG, a hint for the UI only (the cookie decides). */
+  bggSignedInAs: string | null
 }
+
+/** F008: device meta that has a default (data-model.md "Device meta"). */
+const META_DEFAULTS = {
+  badgeColours: DEFAULT_BADGE_COLOURS,
+  lastTab: { buy: 'search', lists: 'status' },
+  bggSignedInAs: null,
+} satisfies Partial<MetaValues>
+type MetaWithDefault = keyof typeof META_DEFAULTS
+
+/** Later wins; equal times keep what is there (as the server does). */
+const newer = (local: { updatedAt: string } | undefined, remote: { updatedAt: string }) => !local || Date.parse(remote.updatedAt) > Date.parse(local.updatedAt)
 
 interface Schema extends DBSchema {
   collections: { key: string; value: Collection }
@@ -34,6 +59,9 @@ interface Schema extends DBSchema {
   lists: { key: [ListKind, number]; value: StoredList }
   publishers: { key: number; value: { companyId: number; name: string } }
   meta: { key: string; value: unknown }
+  /** F008 (version 2) */
+  bggCollections: { key: string; value: StoredBggCollection }
+  follows: { key: string; value: FollowedBggUser }
 }
 
 const dbName = (email: string) => `board-a-licious-${email.toLowerCase()}`
@@ -45,20 +73,33 @@ export async function deleteStore(email: string) {
 /** One IndexedDB database per signed-in person (data-model.md), so people sharing a phone stay apart. */
 export async function openStore(rawEmail: string) {
   const email = rawEmail.toLowerCase()
-  const db: IDBPDatabase<Schema> = await openDB<Schema>(dbName(email), 1, {
-    upgrade(db) {
-      db.createObjectStore('collections', { keyPath: 'id' })
-      db.createObjectStore('entries', { keyPath: ['collectionId', 'bggId'] }).createIndex('byCollection', 'collectionId')
-      db.createObjectStore('outbox', { autoIncrement: true })
-      db.createObjectStore('games', { keyPath: 'bggId' })
-      db.createObjectStore('lists', { keyPath: ['kind', 'id'] })
-      db.createObjectStore('publishers', { keyPath: 'companyId' })
-      db.createObjectStore('meta')
+  const db: IDBPDatabase<Schema> = await openDB<Schema>(dbName(email), 2, {
+    // each version only adds stores, so the data of older versions stays
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) {
+        db.createObjectStore('collections', { keyPath: 'id' })
+        db.createObjectStore('entries', { keyPath: ['collectionId', 'bggId'] }).createIndex('byCollection', 'collectionId')
+        db.createObjectStore('outbox', { autoIncrement: true })
+        db.createObjectStore('games', { keyPath: 'bggId' })
+        db.createObjectStore('lists', { keyPath: ['kind', 'id'] })
+        db.createObjectStore('publishers', { keyPath: 'companyId' })
+        db.createObjectStore('meta')
+      }
+      if (oldVersion < 2) {
+        db.createObjectStore('bggCollections', { keyPath: 'bggUser' })
+        db.createObjectStore('follows', { keyPath: 'bggUser' })
+      }
     },
   })
 
   const listeners = new Set<() => void>()
   const changed = () => listeners.forEach(listener => listener())
+
+  async function saveFollow(row: FollowedBggUser) {
+    const tx = db.transaction(['follows', 'outbox'], 'readwrite')
+    await Promise.all([tx.objectStore('follows').put(row), tx.objectStore('outbox').add({ kind: 'follow', row }), tx.done])
+    changed()
+  }
 
   return {
     email,
@@ -137,9 +178,49 @@ export async function openStore(rawEmail: string) {
       await tx.done
     },
 
+    /** F008: the person's BGG username, or null. */
+    async bggUsername(): Promise<string | null> {
+      return ((await db.get('meta', 'bggSetting')) as UserSetting | undefined)?.bggUsername ?? null
+    },
+    /** F008: sets (or with null or blanks clears) the BGG username and queues it for the other devices. */
+    async setBggUsername(name: string | null, updatedAt = new Date().toISOString()) {
+      const row: UserSetting = { bggUsername: name?.trim() || null, updatedAt }
+      const tx = db.transaction(['meta', 'outbox'], 'readwrite')
+      await Promise.all([tx.objectStore('meta').put(row, 'bggSetting'), tx.objectStore('outbox').add({ kind: 'setting', row }), tx.done])
+      changed()
+    },
+    /** F008: the followed BGG users (lower-cased, sorted), without the removed ones. */
+    async follows(): Promise<string[]> {
+      return (await db.getAll('follows')).filter(f => !f.deleted).map(f => f.bggUser).sort()
+    },
+    async follow(bggUser: string, updatedAt = new Date().toISOString()) {
+      await saveFollow({ bggUser: bggUser.trim().toLowerCase(), updatedAt, deleted: false })
+    },
+    async unfollow(bggUser: string, updatedAt = new Date().toISOString()) {
+      await saveFollow({ bggUser: bggUser.trim().toLowerCase(), updatedAt, deleted: true })
+    },
+
+    /** F008: a BGG collection read on this device (never synced), by BGG user in any case. */
+    async bggCollection(bggUser: string) {
+      return db.get('bggCollections', bggUser.toLowerCase())
+    },
+    async bggCollections() {
+      return db.getAll('bggCollections')
+    },
+    async putBggCollection(collection: StoredBggCollection) {
+      await db.put('bggCollections', { ...collection, bggUser: collection.bggUser.toLowerCase() })
+      changed()
+    },
+
     /** Rows from the server, merged last-write-wins; not queued again. */
-    async applyRemote(changes: { collections: Collection[]; entries: Entry[]; lists?: LoadedList[] }) {
-      const tx = db.transaction(['collections', 'entries', 'lists'], 'readwrite')
+    async applyRemote(changes: {
+      collections: Collection[]
+      entries: Entry[]
+      lists?: LoadedList[]
+      settings?: UserSetting[]
+      follows?: FollowedBggUser[]
+    }) {
+      const tx = db.transaction(['collections', 'entries', 'lists', 'meta', 'follows'], 'readwrite')
       const collections = tx.objectStore('collections')
       const entries = tx.objectStore('entries')
       for (const remote of changes.collections) void collections.put(merge(await collections.get(remote.id), remote))
@@ -151,6 +232,16 @@ export async function openStore(rawEmail: string) {
       for (const ref of changes.lists ?? []) {
         if (ref.deleted || (await lists.get([ref.kind, ref.id]))) continue
         void lists.put({ kind: ref.kind, id: ref.id, title: ref.title, pageCount: 0, loadedPages: 0, entries: [], openedAt: ref.updatedAt, shared: true })
+      }
+      // F008: the username and the followed BGG users, tombstones kept so an older follow cannot revive them
+      const meta = tx.objectStore('meta')
+      for (const remote of changes.settings ?? []) {
+        if (newer((await meta.get('bggSetting')) as UserSetting | undefined, remote)) void meta.put(remote, 'bggSetting')
+      }
+      const follows = tx.objectStore('follows')
+      for (const remote of changes.follows ?? []) {
+        const row = { ...remote, bggUser: remote.bggUser.toLowerCase() }
+        if (newer(await follows.get(row.bggUser), row)) void follows.put(row)
       }
       await tx.done
       changed()
@@ -202,6 +293,10 @@ export async function openStore(rawEmail: string) {
 
     async meta<K extends keyof MetaValues>(key: K): Promise<MetaValues[K] | undefined> {
       return (await db.get('meta', key)) as MetaValues[K] | undefined
+    },
+    /** F008: a device meta value, or its default when never set. */
+    async metaOrDefault<K extends MetaWithDefault>(key: K): Promise<MetaValues[K]> {
+      return ((await db.get('meta', key)) as MetaValues[K] | undefined) ?? (META_DEFAULTS[key] as MetaValues[K])
     },
     async setMeta<K extends keyof MetaValues>(key: K, value: MetaValues[K]) {
       await db.put('meta', value, key)
