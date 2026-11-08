@@ -2,6 +2,7 @@ import { type SearchResult, rankResults } from '../../src/domain/bgg-search.ts'
 import type { GameGallery } from '../../src/domain/gallery.ts'
 import type { Offer } from '../../src/domain/offers.ts'
 import type { PlayerVotes } from '../../src/domain/player-poll.ts'
+import type { BggCollectionItem, Status, WishlistPriority } from '../../src/domain/bgg-status.ts'
 import { getMarketOffers } from '../prices/bgg-market.ts'
 import { BggError, type BggClient, TTL } from './cache.ts'
 import type { BggSource, Game, ListEntry, ListKind, ListPage } from './source.ts'
@@ -35,6 +36,15 @@ type PollResults = { numplayers?: string; result?: { value?: string; numvotes?: 
 type PollSummary = { name?: string; result?: { name?: string; value?: string } | { name?: string; value?: string }[] }
 type SearchItem = { type?: string; id?: string; name?: Name[]; yearpublished?: Value }
 type GeeklistItem = { objecttype?: string; subtype?: string; objectid?: string; objectname?: string }
+type CollectionStatus = Record<'own' | 'prevowned' | 'fortrade' | 'want' | 'wanttoplay' | 'wanttobuy' | 'preordered' | 'wishlist' | 'wishlistpriority', string | undefined>
+type CollectionItem = {
+  objecttype?: string
+  objectid?: string
+  name?: ({ '#text'?: string | number } | string | number)[]
+  yearpublished?: string | number
+  thumbnail?: string
+  status?: Partial<CollectionStatus>
+}
 
 const KINDS: Record<string, Game['kind']> = { boardgame: 'boardgame', boardgameexpansion: 'expansion' }
 
@@ -95,6 +105,42 @@ function toGame(item: ThingItem, kind: Game['kind']): Game {
     geekRating: rating(ratings?.bayesaverage?.value),
     ...pollSummary(item),
     ...playerPoll(item),
+  }
+}
+
+const collectionName = (names: CollectionItem['name']) => {
+  const name = names?.[0]
+  return decodeText(typeof name === 'object' ? name['#text'] : name)
+}
+
+/** BGG's flags of one copy as a Status; a wishlist priority outside 1–5 counts as 3 ("Like to have"). */
+function toStatus(flags: Partial<CollectionStatus> = {}): Status {
+  const on = (key: keyof CollectionStatus) => flags[key] === '1'
+  const priority = Number(flags.wishlistpriority)
+  return {
+    own: on('own'),
+    prevOwned: on('prevowned'),
+    forTrade: on('fortrade'),
+    wantInTrade: on('want'),
+    wantToBuy: on('wanttobuy'),
+    wantToPlay: on('wanttoplay'),
+    preordered: on('preordered'),
+    wishlist: on('wishlist') ? ((Number.isInteger(priority) && priority >= 1 && priority <= 5 ? priority : 3) as WishlistPriority) : null,
+  }
+}
+
+/** Two copies of one game: a status counts if any copy has it; the wishlist keeps the lowest (most wanted) priority. */
+function mergeStatus(a: Status, b: Status): Status {
+  const wishlist = a.wishlist === null ? b.wishlist : b.wishlist === null ? a.wishlist : (Math.min(a.wishlist, b.wishlist) as WishlistPriority)
+  return {
+    own: a.own || b.own,
+    prevOwned: a.prevOwned || b.prevOwned,
+    forTrade: a.forTrade || b.forTrade,
+    wantInTrade: a.wantInTrade || b.wantInTrade,
+    wantToBuy: a.wantToBuy || b.wantToBuy,
+    wantToPlay: a.wantToPlay || b.wantToPlay,
+    preordered: a.preordered || b.preordered,
+    wishlist,
   }
 }
 
@@ -163,6 +209,47 @@ export class OfficialSource implements BggSource {
       entries.push({ position: (page - 1) * PER_PAGE + i + 1, bggId, name: decodeText(item.objectname), thumbnailUrl: null })
     })
     return { kind: 'geeklist', id, title: decodeText(list.title), page, pageCount, entries }
+  }
+
+  /**
+   * F008 (research R1): the collection in two requests, games and expansions (BGG reports expansions as
+   * board games otherwise), cached 15 minutes per lower-cased username.
+   */
+  async getCollection(bggUser: string, options: { fresh?: boolean } = {}): Promise<BggCollectionItem[]> {
+    const user = encodeURIComponent(bggUser.toLowerCase())
+    const requests: [string, BggCollectionItem['kind']][] = [
+      ['subtype=boardgame&excludesubtype=boardgameexpansion', 'boardgame'],
+      ['subtype=boardgameexpansion', 'expansion'],
+    ]
+    const byId = new Map<number, BggCollectionItem>()
+    for (const [query, kind] of requests) {
+      const url = `${BASE}/xmlapi2/collection?username=${user}&${query}`
+      const doc = read(await this.client.getXml(url, TTL.collection, { fresh: options.fresh, preparing: true }))
+      if (doc.errors) {
+        const text = JSON.stringify(doc.errors)
+        if (/invalid username/i.test(text)) throw new BggError('not_found', 'BoardGameGeek has no such user.')
+        throw new BggError('bgg_unavailable', 'BoardGameGeek could not send this collection.')
+      }
+      for (const item of asArray((doc.items as { item?: CollectionItem[] } | undefined)?.item)) {
+        const bggId = positive(item.objectid)
+        if (item.objecttype !== 'thing' || !bggId) continue
+        const status = toStatus(item.status)
+        const known = byId.get(bggId)
+        if (known) {
+          known.status = mergeStatus(known.status, status)
+          continue
+        }
+        byId.set(bggId, {
+          bggId,
+          name: collectionName(item.name),
+          year: positive(item.yearpublished),
+          thumbnailUrl: decodeText(item.thumbnail) || null,
+          kind,
+          status,
+        })
+      }
+    }
+    return [...byId.values()]
   }
 
   getMarketOffers(bggId: number, rates: Record<string, number>): Promise<Offer[]> {

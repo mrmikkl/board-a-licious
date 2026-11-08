@@ -1,10 +1,11 @@
 import type { SearchResult } from '../../src/domain/bgg-search.ts'
+import type { BggCollectionItem } from '../../src/domain/bgg-status.ts'
 import type { Offer } from '../../src/domain/offers.ts'
 import type { GameDetails } from '../../src/domain/game-info.ts'
 import type { GameGallery } from '../../src/domain/gallery.ts'
 import type { Game } from '../db/repository.ts'
 
-export type { Game, SearchResult }
+export type { BggCollectionItem, Game, SearchResult }
 
 export type ListKind = 'preview' | 'geeklist'
 
@@ -52,4 +53,9 @@ export interface BggSource {
   search(query: string, limit: number): Promise<SearchResult[]>
   /** F007: the game's marketplace offers from Europe; the website data has none (official API only). */
   getMarketOffers(bggId: number, rates: Record<string, number>): Promise<Offer[]>
+  /**
+   * F008: a person's public BGG collection, copies merged (official API only, research R1). `fresh` skips
+   * the 15-minute cache (a person's Refresh).
+   */
+  getCollection(bggUser: string, options?: { fresh?: boolean }): Promise<BggCollectionItem[]>
 }

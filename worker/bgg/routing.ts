@@ -6,7 +6,7 @@ import type { BggSource } from './source.ts'
 /**
  * ADR 0007: with the token, game details, search and geeklists come from the official XML API; previews,
  * company names and galleries (not offered there) from the website JSON. Without it, the website JSON
- * serves everything and search is unavailable. Both share one client, so the 1 request/s limit holds.
+ * serves everything; search and collections (F008) are unavailable. Both share one client, so the 1 request/s limit holds.
  */
 export function createBggSource(deps: {
   fetch: typeof fetch
@@ -28,5 +28,6 @@ export function createBggSource(deps: {
     getCompanies: ids => web.getCompanies(ids),
     getGallery: bggId => web.getGallery(bggId),
     getMarketOffers: (bggId, rates) => official.getMarketOffers(bggId, rates),
+    getCollection: (bggUser, options) => official.getCollection(bggUser, options),
   }
 }

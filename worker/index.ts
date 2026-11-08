@@ -5,6 +5,7 @@ import type { BggSource } from './bgg/source.ts'
 import { type Db, connect } from './db/db.ts'
 import { HttpError, errorResponse } from './http.ts'
 import { type PriceHttp, createPriceHttp } from './prices/http.ts'
+import { collectionRoute } from './routes/collection.ts'
 import { companiesRoute } from './routes/companies.ts'
 import type { RouteContext } from './routes/context.ts'
 import { gamesRoute } from './routes/games.ts'
@@ -62,6 +63,8 @@ export function createApp(deps: Deps) {
             return await searchRoute(ctx)
           case 'GET /api/bgg/images':
             return await imagesRoute(ctx)
+          case 'GET /api/bgg/collection':
+            return await collectionRoute(ctx)
           case 'GET /api/bgg/companies':
             return await companiesRoute(ctx)
           case 'GET /api/signin':

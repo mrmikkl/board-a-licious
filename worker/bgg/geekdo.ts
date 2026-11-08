@@ -4,7 +4,7 @@ import { getGames } from './geekdo-games.ts'
 import { getGallery } from './geekdo-images.ts'
 import { getCompanies, getListPage } from './geekdo-lists.ts'
 import type { Offer } from '../../src/domain/offers.ts'
-import type { BggSource, Game, ListKind, ListPage, SearchResult } from './source.ts'
+import type { BggCollectionItem, BggSource, Game, ListKind, ListPage, SearchResult } from './source.ts'
 
 /**
  * Release 0.5 source: BGG's public website JSON on api.geekdo.com (constitution V exception, ADR 0005).
@@ -38,6 +38,11 @@ export class GeekdoSource implements BggSource {
   /** The marketplace needs the official API: no website fallback (constitution V). */
   async getMarketOffers(): Promise<Offer[]> {
     return []
+  }
+
+  /** Collections need the official API: the website JSON is not used for them (constitution V, ADR 0007). */
+  async getCollection(_bggUser: string): Promise<BggCollectionItem[]> {
+    throw new BggError('bgg_unavailable', 'Reading BoardGameGeek collections needs the official API token.')
   }
 
   async search(): Promise<SearchResult[]> {
