@@ -236,3 +236,19 @@
 .row-open {
   padding-top: 18px;
 }
+
+/* F008 list game row (docs/design.md "List game row"): default border, no category tag, Add inside the row */
+.row-act.add .row-act-hex {
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 20px var(--font-display);
+}
+.row-act.add .row-act-label {
+  color: var(--text);
+}
+.list-row .in-mark {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
