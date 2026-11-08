@@ -42,8 +42,11 @@ before code depends on them.
 - **Not recorded**: the answer for wrong credentials. The adapter treats any answer other than 204,
   or a 204 without `SessionID`, as "BoardGameGeek did not accept this username and password"
   (`bgg_signin_failed`); 429/5xx stay "BoardGameGeek is busy". Checked by hand in the T053
-  walkthrough. Session lifetime: unknown; the app cookie expires after 30 days at most and an
+  walkthrough (the tests use two built answers, `signin-rejected-401.json` and `-200.json`, both
+  `bgg_signed_out`, the code the contract names). Session lifetime: unknown; the app cookie expires after 30 days at most and an
   expired BGG session shows as "sign in again" on the next save.
+- **Built in T039**: the session cookie's own `Max-Age`/`expires`, when BGG sends one, caps the app
+  cookie (still at most 30 days); a 204 whose session has already expired counts as rejected.
 - **Alternatives**: OAuth (BGG offers none); the official API token (identifies the app, not a
   person; read-only); storing the password to sign in again later (rejected: FR-011).
 
@@ -92,6 +95,17 @@ before code depends on them.
   - **Mark as owned on a game not yet in the collection**: status save with empty `collid`, then
     the new `collid` is read through the official API as above, then the private info save. That
     is the one case with two writes per tap (FR-018 allows one tap = one decision).
+- **Built in T043/T048** (assumptions where the recording is silent, all in `worker/bgg/account.ts`):
+  - The status save's answer was not recorded: any 2xx counts as saved unless its text asks to log
+    in; the route answers the merged statuses it sent (no second read).
+  - An expired session: a 401/403, or a redirect whose `Location` contains `/login`, on any website
+    request → `bgg_signed_out` and the app cookie cleared; any other non-2xx or redirect → `bgg_refused`.
+  - The item read asks `&id=<bggId>` first and, when the game is not there, the
+    `&subtype=boardgameexpansion` variant; of several copies the first one's `collid` is written.
+  - The private info form is read with a fixed `cellid=1`; a game added by the same tap has no
+    private info yet, so its form is not read (all other fields empty).
+  - The private info save's answer must show the price sent as `<amount with two decimals>`; without
+    a price, the answer must be the ownership table.
 - **Only changed fields** (FR-017, US4 #6): the Worker reads the current item right before saving
   and merges the person's changes into it, so a status changed meanwhile on the website survives.
 - **Price conflict** (FR-031): if BGG already holds another price paid and the request does not say
