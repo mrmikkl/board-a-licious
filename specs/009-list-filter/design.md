@@ -39,8 +39,9 @@
   options with counts do not fit one segment row at 360 px.
 - The sheet's Done names the result count, so the person sees the effect without closing it.
 - No new main button: Filter is a screen action like in shopping lists.
-- **Main button label** (owner, 2026-11-08): every main button gets a short label under it, like the
-  screen's own actions (Manrope 11px bold, text colour): **Tinder** (shopping list ♥), **New list**
+- **Main button label** (owner, 2026-11-08): every main button carries a short label **inside the
+  hexagon**, under its icon (Manrope 10px extra bold, dark text; the hexagon grows to 68×76 px and the
+  icon shrinks to 24 px): **Tinder** (shopping list ♥), **New list**
   (Buy › Shopping lists ＋), **Load list** (Lists ＋), **Add game** (own status list ＋). The
   accessible name stays the full sentence ("BG-Tinder: swipe a BGG list into this shopping list").
   Applies app-wide (docs/design.md "Main button").
