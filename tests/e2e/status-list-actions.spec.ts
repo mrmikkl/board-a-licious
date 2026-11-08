@@ -109,7 +109,7 @@ test("a row's Add picks the category in a folded section, not a hexagon picker",
 })
 
 test('the game sheet shows the description short in the info box, with Show more / Show less', async ({ page }) => {
-  const long = 'A long description. '.repeat(10).trim()
+  const long = 'A long description. '.repeat(20).trim()
   await keepBggSettingsLocal(page)
   await fakeBggCollection(page, { mrmikkl: MINE })
   await page.route('**/api/bgg/games?**', route =>

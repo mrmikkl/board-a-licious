@@ -128,8 +128,8 @@ export function PlayerPoll({ poll, voters, shown = false }: { poll?: PlayerVotes
   )
 }
 
-/** F008 feedback: the first 100 characters of BGG's description, cut at a word, with "…". */
-export function shortText(text: string, max = 100): string {
+/** F008 feedback: the first 200 characters of BGG's description, cut at a word, with "…". */
+export function shortText(text: string, max = 200): string {
   if (text.length <= max) return text
   const cut = text.slice(0, max)
   const space = cut.lastIndexOf(' ')
@@ -138,13 +138,13 @@ export function shortText(text: string, max = 100): string {
 
 /**
  * F008 feedback (docs/design.md "Game sheet"): the game's description at the end of the info box, in
- * small text: the first 100 characters with "…" and Show more / Show less for the full text.
+ * small text: the first 200 characters with "…" and Show more / Show less for the full text.
  */
 export function Description({ text, note }: { text?: string | null; note?: string }) {
   const [open, setOpen] = useState(false)
   const id = useId()
   if (!text) return note ? <p className="info-desc muted">{note}</p> : null
-  const long = text.length > 100
+  const long = text.length > 200
   return (
     <div className="info-desc">
       <p id={id}>{open || !long ? text : shortText(text)}</p>
