@@ -4,3 +4,6 @@ DEV_USER_EMAIL=you@example.com
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/boardalicious
 # Release 1.0: official BGG XML API token
 # BGG_TOKEN=
+# F008 (ADR 0009): key for the BGG session cookie, 32 bytes base64 (e.g. `openssl rand -base64 32`);
+# production: npx wrangler secret put BGG_SESSION_KEY
+# BGG_SESSION_KEY=

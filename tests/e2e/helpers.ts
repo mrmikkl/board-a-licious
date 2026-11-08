@@ -241,3 +241,77 @@ export async function fakePrices(page: Page, answer: Partial<typeof CASCADIA_PRI
     await route.fulfill({ json: { ...CASCADIA_PRICES, ...answer } })
   })
 }
+
+/** F008: a status in the shape of `/api/bgg/collection` (contracts/api.md), all off unless given. */
+export const bggStatus = (s: Record<string, unknown> = {}) => ({
+  own: false, prevOwned: false, forTrade: false, wantInTrade: false, wantToBuy: false, wantToPlay: false, preordered: false, wishlist: null, ...s,
+})
+
+export type FakeCollectionItem = { bggId: number; name: string; year?: number | null; kind?: 'boardgame' | 'expansion'; status?: Record<string, unknown> }
+
+/**
+ * F008: `GET /api/bgg/collection?user=` without BGG: `collections[user]` answers, unknown users 404;
+ * `preparingFor` answers `202 bgg_preparing` until that many ms passed since the first request.
+ * `asked` collects the requested URLs (to check `fresh=1`).
+ */
+export async function fakeBggCollection(
+  page: Page,
+  collections: Record<string, FakeCollectionItem[]>,
+  options: { preparingFor?: number; asked?: string[]; loadedAt?: string } = {},
+) {
+  let first: number | undefined
+  await page.route('**/api/bgg/collection?**', async route => {
+    const url = new URL(route.request().url())
+    options.asked?.push(url.toString())
+    const user = (url.searchParams.get('user') ?? '').toLowerCase()
+    first ??= Date.now()
+    if (options.preparingFor && Date.now() - first < options.preparingFor)
+      return route.fulfill({ status: 202, headers: { 'Retry-After': '5' }, json: { error: 'bgg_preparing', message: 'BoardGameGeek is preparing this collection.', retryable: true } })
+    const items = collections[user]
+    if (!items) return route.fulfill({ status: 404, json: { error: 'not_found', message: 'BoardGameGeek has no such user.', retryable: false } })
+    await route.fulfill({
+      json: {
+        bggUser: user,
+        loadedAt: options.loadedAt ?? new Date().toISOString(),
+        items: items.map(i => ({ year: null, thumbnailUrl: null, kind: 'boardgame', ...i, status: bggStatus(i.status) })),
+      },
+    })
+  })
+}
+
+/**
+ * F008: the BGG account routes without BGG (contracts/api.md): sign-in state, sign-in (password
+ * "wrong" fails), sign-out and saves. `saves` collects the bodies of `POST …/collection/<bggId>`;
+ * `saveStatus` makes saves fail; `priceConflict` answers 409 until `replacePrice` is sent.
+ */
+export async function fakeBggAccount(
+  page: Page,
+  options: { signedIn?: boolean; bggUser?: string; saves?: unknown[]; saveStatus?: number; priceConflict?: { amount: number; currency: string } } = {},
+) {
+  const state = { signedIn: options.signedIn ?? false, bggUser: options.bggUser ?? 'mrmikkl' }
+  const statuses = new Map<number, Record<string, unknown>>()
+  await page.route('**/api/bgg/account', route => route.fulfill({ json: state.signedIn ? state : { signedIn: false } }))
+  await page.route('**/api/bgg/account/signin', async route => {
+    const body = route.request().postDataJSON() as { username: string; password: string }
+    if (body.password === 'wrong')
+      return route.fulfill({ status: 401, json: { error: 'bgg_signed_out', message: 'BoardGameGeek did not accept this username or password.', retryable: false } })
+    Object.assign(state, { signedIn: true, bggUser: body.username.toLowerCase() })
+    await route.fulfill({ json: state })
+  })
+  await page.route('**/api/bgg/account/signout', async route => {
+    state.signedIn = false
+    await route.fulfill({ json: { signedIn: false } })
+  })
+  await page.route('**/api/bgg/account/collection/*', async route => {
+    const bggId = Number(new URL(route.request().url()).pathname.split('/').pop())
+    const body = route.request().postDataJSON() as { status?: Record<string, unknown>; replacePrice?: boolean }
+    options.saves?.push(body)
+    if (!state.signedIn) return route.fulfill({ status: 401, json: { error: 'bgg_signed_out', message: 'Sign in to BoardGameGeek.', retryable: false } })
+    if (options.saveStatus) return route.fulfill({ status: options.saveStatus, json: { error: 'bgg_refused', message: 'BoardGameGeek did not take the change.', retryable: true } })
+    if (options.priceConflict && body.replacePrice === undefined && 'privateInfo' in body)
+      return route.fulfill({ status: 409, json: { error: 'price_conflict', message: 'BoardGameGeek already has a price paid.', retryable: false, current: options.priceConflict } })
+    const next = { ...bggStatus(statuses.get(bggId)), ...body.status }
+    statuses.set(bggId, next)
+    await route.fulfill({ json: { bggId, status: next } })
+  })
+}

@@ -22,6 +22,8 @@ export type Env = AuthEnv & {
   HYPERDRIVE?: HyperdriveBinding
   DATABASE_URL?: string
   BGG_TOKEN?: string
+  /** F008 (ADR 0009): 32 bytes, base64; encrypts the person's BGG session cookie. */
+  BGG_SESSION_KEY?: string
 }
 
 export type Deps = {
