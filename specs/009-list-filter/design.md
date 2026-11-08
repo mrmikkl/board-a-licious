@@ -1,7 +1,7 @@
 # Design: List Filter
 
-**Status**: Draft for review (2026-11-08) | **Prototype**: [design/prototype.html](design/prototype.html)
-| **Rules**: [docs/design.md](../../docs/design.md) v3.2.0 (binding)
+**Status**: Agreed 2026-11-08 | **Prototype**: [design/prototype.html](design/prototype.html)
+| **Rules**: [docs/design.md](../../docs/design.md) v3.3.0 (binding)
 
 ## Screens
 
