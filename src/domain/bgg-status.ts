@@ -131,3 +131,31 @@ export function fromBggFlags(flags: BggFlags): Status {
     wishlist: on(flags.wishlist) ? (Number.isInteger(priority) && priority >= 1 && priority <= 5 ? priority as WishlistPriority : 3) : null,
   }
 }
+
+/** What the app knows when a game is ticked off as bought (data-model.md "PrivateInfo"). */
+export type BoughtInfo = {
+  pricePaid?: { amount: number; currency: string }
+  /** The entry's booth; counts only when it comes from a SPIEL preview. */
+  booth?: string | null
+  fromSpiel?: boolean
+  /** The shop of the offer chosen on the game's prices. */
+  offerShop?: string
+}
+
+const ACQUIRED_FROM_MAX = 100
+const pad = (n: number) => String(n).padStart(2, '0')
+
+/** The private info sent once after buying: price when entered, the device's date, where it was bought. */
+export function privateInfoFor(bought: BoughtInfo, today: Date): PrivateInfo {
+  const booth = bought.fromSpiel ? bought.booth?.trim() : ''
+  const from = booth ? `SPIEL Essen 2026 · booth ${booth}` : bought.offerShop?.trim()
+  return {
+    ...(bought.pricePaid ? { pricePaid: bought.pricePaid } : {}),
+    acquisitionDate: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
+    ...(from ? { acquiredFrom: from.slice(0, ACQUIRED_FROM_MAX) } : {}),
+  }
+}
+
+/** After ticking a game as bought (FR-021): offer marking it as owned, adding the price, or nothing. */
+export const askAfterBought = (status: Status | undefined, hasPrice: boolean): 'markOwned' | 'addPrice' | null =>
+  !status?.own ? 'markOwned' : hasPrice ? 'addPrice' : null
