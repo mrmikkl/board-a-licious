@@ -4,7 +4,9 @@
  * never the app token; they share the BGG client's 1 request/s slot and are never cached. Passwords,
  * cookies and answers are never logged; errors carry no secrets.
  */
+import { NO_STATUS, type PrivateInfo, type Status, type StatusChange, fromBggFlags } from '../../src/domain/bgg-status.ts'
 import { BggError, type BggClient } from './cache.ts'
+import { asArray, parseXml } from './xml.ts'
 
 const SITE = 'https://boardgamegeek.com'
 const MAX_SESSION_SECONDS = 30 * 24 * 3600
@@ -17,9 +19,22 @@ export type SignedIn = {
   maxAgeSeconds: number
 }
 
+/** Who writes: from the sealed cookie, never from the request body. */
+export type Writer = { bggUser: string; cookies: string }
+
+/** POST /api/bgg/account/collection/<bggId> after validation (contracts/api.md). */
+export type SaveRequest = { status?: StatusChange; privateInfo?: PrivateInfo; replacePrice?: boolean }
+
+export type SaveResult = { status: Status }
+
 export type BggAccount = {
   /** Forwards the credentials once to BGG's login; keeps every cookie BGG sets. */
   signIn(username: string, password: string): Promise<SignedIn>
+  /**
+   * Reads the person's item for the game, merges the sent keys into it and saves the whole group
+   * (research R3). Never deletes; only on an explicit tap.
+   */
+  save(writer: Writer, bggId: number, request: SaveRequest): Promise<SaveResult>
 }
 
 const REJECTED = 'BoardGameGeek did not accept this username or password.'
@@ -48,6 +63,43 @@ function cookiesOf(res: Response, now: number): { cookies: string; sessionSecond
   return session ? { cookies: pairs.join('; '), sessionSeconds } : null
 }
 
+const SIGNED_OUT = 'Your BoardGameGeek sign-in has expired. Sign in again.'
+const REFUSED = 'BoardGameGeek did not take the change.'
+
+/** BGG's form fields for the statuses, in the order of BGG's dialog (save-status.form). */
+const FLAGS: [keyof Status, string][] = [
+  ['own', 'own'], ['prevOwned', 'prevowned'], ['forTrade', 'fortrade'], ['wantInTrade', 'want'],
+  ['wantToPlay', 'wanttoplay'], ['wantToBuy', 'wanttobuy'], ['wishlist', 'wishlist'], ['preordered', 'preordered'],
+]
+/** BGG's dialog sends a priority even when the wishlist is unticked (1, as recorded for a new game). */
+const DEFAULT_PRIORITY = 1
+
+type Item = { collid: string | null; status: Status }
+type CollectionItem = { objecttype?: string; objectid?: string; collid?: string; status?: Record<string, string> }
+
+const sameStatus = (a: Status, b: Status) => FLAGS.every(([key]) => a[key] === b[key])
+
+function readXml(text: string): Record<string, unknown> {
+  try {
+    return parseXml(text)
+  } catch {
+    throw new BggError('bgg_unavailable', 'BoardGameGeek sent something unexpected.')
+  }
+}
+
+/** A website answer: an expired session (login redirect, 401/403) or any other error is thrown. */
+async function answerOf(res: Response): Promise<string> {
+  const location = res.headers.get('Location') ?? ''
+  if (res.status === 401 || res.status === 403 || (res.status >= 300 && res.status < 400 && /\/login/i.test(location))) {
+    throw new BggError('bgg_signed_out', SIGNED_OUT)
+  }
+  if (res.status === 429) throw new BggError('bgg_unavailable', 'BoardGameGeek asks to slow down.')
+  if (!res.ok) throw new BggError('bgg_refused', REFUSED)
+  const text = await res.text()
+  if (/must (be )?log(ged)? ?in|please (log|sign) ?in|not (logged|signed) in/i.test(text)) throw new BggError('bgg_signed_out', SIGNED_OUT)
+  return text
+}
+
 export function createBggAccount(client: BggClient, now: () => number = Date.now): BggAccount {
   return {
     async signIn(username, password) {
@@ -63,5 +115,65 @@ export function createBggAccount(client: BggClient, now: () => number = Date.now
       if (seconds <= 0) throw new BggError('bgg_signed_out', REJECTED)
       return { bggUser: username.trim().toLowerCase(), cookies: found.cookies, maxAgeSeconds: seconds }
     },
+
+    async save(writer, bggId, request) {
+      let item = await readItem(writer.bggUser, bggId)
+      const status: Status = { ...item.status, ...request.status }
+      if (!item.collid || !sameStatus(item.status, status)) {
+        await saveStatus(writer, bggId, item.collid, status)
+        // a new game: BGG gives it a collid, read back for the private info save
+        if (!item.collid && request.privateInfo) {
+          item = await readItem(writer.bggUser, bggId)
+          if (!item.collid) throw new BggError('bgg_refused', REFUSED)
+        }
+      }
+      return { status }
+    },
+  }
+
+  /**
+   * The person's item through the official API (token, no cookies, never cached): its first copy's collid
+   * and statuses, or none. Not among the games → also asked among the expansions.
+   */
+  async function readItem(bggUser: string, bggId: number): Promise<Item> {
+    const base = `${SITE}/xmlapi2/collection?username=${encodeURIComponent(bggUser.toLowerCase())}&id=${bggId}`
+    for (const url of [base, `${base}&subtype=boardgameexpansion`]) {
+      const doc = readXml(await client.getXml(url, 0, { fresh: true, noStore: true, preparing: true }))
+      if (doc.errors) throw new BggError('bgg_unavailable', 'BoardGameGeek could not send this collection.')
+      const items = asArray((doc.items as { item?: CollectionItem[] } | undefined)?.item)
+      const found = items.find(i => i.objecttype === 'thing' && Number(i.objectid) === bggId)
+      if (found) {
+        const flags = found.status ?? {}
+        return {
+          collid: found.collid || null,
+          status: fromBggFlags({
+            own: flags.own, prevowned: flags.prevowned, fortrade: flags.fortrade, want: flags.want, wanttoplay: flags.wanttoplay,
+            wanttobuy: flags.wanttobuy, wishlist: flags.wishlist, wishlistpriority: flags.wishlistpriority, preordered: flags.preordered,
+          }),
+        }
+      }
+    }
+    return { collid: null, status: NO_STATUS }
+  }
+
+  /** One POST to BGG's collection save with the person's cookies (never the token). */
+  async function post(writer: Writer, form: [string, string][]): Promise<string> {
+    const res = await client.website(`${SITE}/geekcollection.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', Accept: 'text/html, */*', Cookie: writer.cookies },
+      body: new URLSearchParams(form).toString(),
+    })
+    return answerOf(res)
+  }
+
+  /** The whole status group: only ticked statuses, plus the priority (save-status.form). */
+  async function saveStatus(writer: Writer, bggId: number, collid: string | null, status: Status): Promise<void> {
+    await post(writer, [
+      ['fieldname', 'status'], ['collid', collid ?? ''], ['objecttype', 'thing'], ['objectid', String(bggId)],
+      ...FLAGS.filter(([key]) => (key === 'wishlist' ? status.wishlist !== null : status[key])).map(([, field]): [string, string] => [field, '1']),
+      ['B1', 'Cancel'],
+      ['wishlistpriority', String(status.wishlist ?? DEFAULT_PRIORITY)],
+      ['ajax', '1'], ['action', 'savedata'],
+    ])
   }
 }

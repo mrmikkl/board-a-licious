@@ -1,4 +1,5 @@
-import type { BggAccount } from '../bgg/account.ts'
+import { type PrivateInfo, STATUS_KEYS, type StatusChange } from '../../src/domain/bgg-status.ts'
+import type { BggAccount, SaveRequest } from '../bgg/account.ts'
 import { BggError } from '../bgg/cache.ts'
 import { type BggSession, clearCookie, open, readCookie, seal, setCookie } from '../bgg/session.ts'
 import { HttpError, errorResponse } from '../http.ts'
@@ -64,4 +65,47 @@ export async function signInRoute(ctx: AccountContext): Promise<Response> {
 /** POST /api/bgg/account/signout: clears the cookie (BGG is not asked). */
 export async function signOutRoute(): Promise<Response> {
   return signedOut(true)
+}
+
+const bad = (message: string) => new HttpError('bad_request', message)
+
+/** Only known keys; flags true/false, the wishlist a priority 1–5 or null. */
+function statusChangeOf(value: unknown): StatusChange {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw bad('status must be an object.')
+  const entries = Object.entries(value)
+  if (!entries.length) throw bad('status needs at least one change.')
+  for (const [key, flag] of entries) {
+    if (!(STATUS_KEYS as readonly string[]).includes(key)) throw bad(`Unknown status ${JSON.stringify(key).slice(0, 40)}.`)
+    if (key === 'wishlist' ? !(flag === null || (Number.isInteger(flag) && (flag as number) >= 1 && (flag as number) <= 5)) : typeof flag !== 'boolean') {
+      throw bad(key === 'wishlist' ? 'wishlist must be a priority from 1 to 5, or null.' : `${key} must be true or false.`)
+    }
+  }
+  return value as StatusChange
+}
+
+function saveRequestOf(body: Record<string, unknown>): SaveRequest {
+  for (const key of Object.keys(body)) if (!['status', 'privateInfo', 'replacePrice'].includes(key)) throw bad('Unknown field in the body.')
+  if (body.status === undefined && body.privateInfo === undefined) throw bad('Send status or privateInfo.')
+  return {
+    ...(body.status !== undefined ? { status: statusChangeOf(body.status) } : {}),
+    ...(body.privateInfo !== undefined ? { privateInfo: body.privateInfo as PrivateInfo } : {}),
+  }
+}
+
+/** POST /api/bgg/account/collection/<bggId>: the signed-in person's own collection; the cookie decides who. */
+export async function saveRoute(ctx: AccountContext, id: string): Promise<Response> {
+  const bggId = Number(id)
+  if (!/^\d+$/.test(id) || !Number.isSafeInteger(bggId) || bggId <= 0) throw bad('The game id must be a positive number.')
+  const request = saveRequestOf(await bodyOf(ctx.request))
+  const session = await sessionOf(ctx)
+  if (!session || session === 'invalid') {
+    return errorResponse('bgg_signed_out', 'Sign in to BoardGameGeek to save there.', session ? { 'Set-Cookie': clearCookie() } : undefined)
+  }
+  try {
+    const saved = await ctx.account.save({ bggUser: session.bggUser, cookies: session.cookies }, bggId, request)
+    return Response.json({ bggId, status: saved.status })
+  } catch (error) {
+    if (error instanceof BggError && error.code === 'bgg_signed_out') return errorResponse(error.code, error.message, { 'Set-Cookie': clearCookie() })
+    throw error
+  }
 }

@@ -6,7 +6,7 @@ import type { BggSource } from './bgg/source.ts'
 import { type Db, connect } from './db/db.ts'
 import { HttpError, errorResponse } from './http.ts'
 import { type PriceHttp, createPriceHttp } from './prices/http.ts'
-import { type AccountContext, accountRoute, signInRoute, signOutRoute } from './routes/account.ts'
+import { type AccountContext, accountRoute, saveRoute, signInRoute, signOutRoute } from './routes/account.ts'
 import { collectionRoute } from './routes/collection.ts'
 import { companiesRoute } from './routes/companies.ts'
 import type { RouteContext } from './routes/context.ts'
@@ -59,6 +59,8 @@ export function createApp(deps: Deps) {
       try {
         const listMatch = /^\/api\/bgg\/lists\/([^/]+)\/([^/]+)$/.exec(url.pathname)
         if (request.method === 'GET' && listMatch) return await listsRoute(ctx, listMatch[1] ?? '', listMatch[2] ?? '')
+        const saveMatch = /^\/api\/bgg\/account\/collection\/([^/]+)$/.exec(url.pathname)
+        if (request.method === 'POST' && saveMatch) return await saveRoute(account(), saveMatch[1] ?? '')
         const route = `${request.method} ${url.pathname}`
         switch (route) {
           case 'GET /api/bgg/games':
