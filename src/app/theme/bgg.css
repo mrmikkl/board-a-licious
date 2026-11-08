@@ -214,3 +214,100 @@
 .swatches .ring.on {
   background: var(--orange);
 }
+
+/* Config › Change statuses on BGG: signed-in line with a mint hexagon */
+.cfg-card p {
+  margin: 0;
+}
+.signed-in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.signed-in::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 16px;
+  clip-path: var(--hex);
+  background: var(--grad-got);
+}
+
+/* Game sheet › BGG status section (folded like Prices) */
+.st-sec .st-head {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.st-sec .st-head small {
+  color: var(--muted);
+  font: 600 12px var(--font-body);
+}
+.st-sec .st-head + .chev {
+  margin-left: 0;
+}
+.st-body {
+  padding: 0 14px 12px;
+}
+.st-body .lead {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.st-item + .st-item {
+  border-top: 1px solid var(--rim);
+}
+.st-line .changed {
+  margin-left: 6px;
+  color: var(--orange-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+.st-body .switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.prio {
+  margin: 2px 0 8px;
+}
+.prio p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.st-body .sheet-actions {
+  margin-top: 8px;
+}
+
+/* Mark as owned sheet: what is written to BGG */
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 8px 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  font-size: 14px;
+}
+.kv dt {
+  color: var(--muted);
+}
+.kv dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.kv .old {
+  margin-right: 6px;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: line-through;
+}
+.private-note {
+  margin: -4px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}

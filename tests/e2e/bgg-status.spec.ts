@@ -23,7 +23,7 @@ async function open(page: Page, game: string, account: Parameters<typeof fakeBgg
   await keepBggSettingsLocal(page)
   await fakeNoGameDetails(page)
   await fakeBggCollection(page, { mrmikkl: MINE })
-  await fakeBggAccount(page, account)
+  await fakeBggAccount(page, { statuses: { 7201: MINE[0]!.status! }, ...account })
   await setBggUsername(page, 'mrmikkl')
   await seedCollection(page, unique('Statuses'), SHOPPING)
   await page.getByRole('button', { name: new RegExp(`^${game},`) }).click()

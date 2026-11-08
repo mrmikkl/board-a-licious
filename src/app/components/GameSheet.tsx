@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
 import type { Game } from "../../client/types.ts";
 import { gameUrl } from "../../domain/bgg-link.ts";
@@ -15,6 +15,7 @@ import { removeGame, saveFacts, unbuyGame } from "../actions.ts";
 import { useServices, useStoreData } from "../context.tsx";
 import { type AddItem, AddToCollectionsSheet } from "./AddToCollectionsSheet.tsx";
 import { BggBadges, useBgg } from "./BggBadges.tsx";
+import { BggStatusSection, type BggStatusState } from "./BggStatusSection.tsx";
 import { BuySheet } from "./BuySheet.tsx";
 import { CategorySection } from "./CategorySection.tsx";
 import { CopyMoveSheet } from "./CopyMoveSheet.tsx";
@@ -24,6 +25,7 @@ import { ImageViewer } from "./ImageViewer.tsx";
 import { yearText } from "./ListGameRow.tsx";
 import { PricesSection } from "./PricesSection.tsx";
 import { Sheet } from "./Sheet.tsx";
+import { SignInSheet } from "./SignInSheet.tsx";
 import { useToast } from "./Toast.tsx";
 
 const PRICE_ERROR = "Type a price from 0 to 9,999, like 12,50.";
@@ -37,23 +39,24 @@ export type GameSheetContext =
  * F008 (docs/design.md "Game sheet"): the one sheet for a game, wherever it is opened. Name; cover
  * (image viewer) with year · publisher, all BGG status badges (or "Not in your BGG collection") and the teal "in …" button (the shopping list
  * choice) beside it; Open on BoardGameGeek; the info box; the Category section (shopping lists only);
- * the `bggStatus` section; the Prices section; the actions (shopping list: Bought it, Copy · Move,
+ * the BGG status section; the Prices section; the actions (shopping list: Bought it, Copy · Move,
  * Remove; elsewhere: Add to shopping lists, Bought it); the description; Close.
  */
 export function GameSheet(
   props: GameSheetContext & {
     game?: Game;
-    bggStatus?: ReactNode;
     onClose: () => void;
   },
 ) {
-  const { game, bggStatus, onClose } = props;
+  const { game, onClose } = props;
   const bgg = useBgg();
   const services = useServices();
   const toast = useToast();
   const [step, setStep] = useState<
-    "details" | "paid" | "facts" | "copy" | "move" | "lists"
+    "details" | "paid" | "facts" | "copy" | "move" | "lists" | "signin"
   >("details");
+  // F008: the BGG status section's fold and draft live here, so they survive the sign-in sheet
+  const [bggState, setBggState] = useState<BggStatusState>({ open: false });
   const [viewer, setViewer] = useState(false);
   const shopping = props.context === "shopping" ? props : undefined;
   const browse = props.context === "browse" ? props.item : undefined;
@@ -89,6 +92,8 @@ export function GameSheet(
   };
   const close = () => setStep("details");
 
+  if (step === "signin")
+    return <SignInSheet onSignedIn={close} onCancel={close} />;
   if (step === "lists")
     return <AddToCollectionsSheet item={item} game={game} onClose={close} />;
   // F005: the price paid is asked in the Buy sheet, shared with the game row's Buy action
@@ -220,7 +225,19 @@ export function GameSheet(
         )
       )}
       {entry && <CategorySection entry={entry} name={name} />}
-      {bggStatus}
+      <BggStatusSection
+        game={{
+          bggId,
+          name,
+          year: year ?? null,
+          thumbnailUrl: game?.thumbnailUrl ?? browse?.thumbnailUrl ?? null,
+          kind: expansion ? "expansion" : "boardgame",
+        }}
+        state={bggState}
+        onState={setBggState}
+        onSignIn={() => setStep("signin")}
+        onSaved={onClose}
+      />
       <PricesSection
         bggId={bggId}
         name={name}

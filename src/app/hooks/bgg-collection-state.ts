@@ -1,5 +1,5 @@
 import type { StoredBggCollection } from '../../client/types.ts'
-import type { BggCollectionAnswer, Status } from '../../domain/bgg-status.ts'
+import type { BggCollectionAnswer, BggCollectionItem, Status } from '../../domain/bgg-status.ts'
 
 /** FR-004: a collection read less than an hour ago is not read again on open. */
 export const FRESH_MS = 60 * 60 * 1000
@@ -31,4 +31,15 @@ export function nextCollection(user: string, stored: StoredBggCollection | undef
 /** The statuses of a collection by BGG id; empty without one (no badges, never a wrong one). */
 export function statusMap(collection: StoredBggCollection | undefined): Map<number, Status> {
   return new Map((collection?.items ?? []).map(item => [item.bggId, item.status]))
+}
+
+/**
+ * F008 (FR-017): the stored copy after a save on BGG, so badges and status lists show it at once: the
+ * game's status replaced (or the game added); without a copy yet, one that is read from BGG on next use.
+ */
+export function withSavedStatus(user: string, stored: StoredBggCollection | undefined, game: Omit<BggCollectionItem, 'status'>, status: Status): StoredBggCollection {
+  const item: BggCollectionItem = { ...game, status }
+  const items = stored?.items ?? []
+  const next = items.some(i => i.bggId === game.bggId) ? items.map(i => (i.bggId === game.bggId ? { ...i, status } : i)) : [...items, item]
+  return { bggUser: user.toLowerCase(), loadedAt: null, error: null, ...stored, items: next }
 }

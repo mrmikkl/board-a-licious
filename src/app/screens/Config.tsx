@@ -4,8 +4,10 @@ import { DEFAULT_BADGE_COLOURS, STATUS_KEYS, STATUS_NAMES, type StatusKey } from
 import { Badge, useBgg } from '../components/BggBadges.tsx'
 import { ColourSheet, SAMPLE } from '../components/ColourSheet.tsx'
 import { Header } from '../components/Header.tsx'
+import { SignInSheet } from '../components/SignInSheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
+import { useBggAccount } from '../hooks/useBggAccount.ts'
 import { showIntro } from '../intro.ts'
 import { href } from '../router.ts'
 
@@ -121,8 +123,7 @@ function ShareHint() {
 
 /**
  * F008 (docs/design.md "Sign in to BoardGameGeek"): the BoardGameGeek section. The username is synced
- * (FR-001); saving a different one forgets which BGG account this device signed in to. The sign-in card
- * (US3) goes below the username card.
+ * (FR-001); the sign-in card (US3) below it shows who the BGG cookie of this device signs in as.
  */
 function BggSection() {
   const services = useServices()
@@ -142,7 +143,6 @@ function BggSection() {
     if (!changed) return
     const next = value.trim() || null
     await services.store.setBggUsername(next)
-    await services.store.setMeta('bggSignedInAs', null)
     void services.sync.schedule()
     setName(next ?? '')
     toast(next ? `Saved your BGG username: ${next}` : 'Removed your BGG username')
@@ -175,7 +175,53 @@ function BggSection() {
           Save username
         </button>
       </form>
+      <BggSignIn />
     </section>
+  )
+}
+
+/**
+ * F008 (US3, docs/design.md "Sign in to BoardGameGeek"): the card "Change statuses on BGG": not signed
+ * in, what it allows and Sign in to BoardGameGeek; signed in, who on this device and Sign out.
+ */
+function BggSignIn() {
+  const { signedInAs, signOut } = useBggAccount()
+  const toast = useToast()
+  const [signingIn, setSigningIn] = useState(false)
+  const out = async () => {
+    try {
+      await signOut()
+      toast('Signed out of BoardGameGeek on this device')
+    } catch {
+      toast('Signing out needs a connection. Try again.')
+    }
+  }
+  return (
+    <>
+      <h2 className="section-title">Change statuses on BGG</h2>
+      <div className="card cfg-card">
+        {signedInAs ? (
+          <>
+            <p className="signed-in">Signed in to BoardGameGeek as {signedInAs} on this device</p>
+            <p className="hint">
+              Changes you save in a game's BGG status, and “mark as owned” after buying, go to your BGG collection. Only this device; your password is not kept.
+            </p>
+            <button type="button" className="btn btn-danger" onClick={() => void out()}>
+              Sign out of BoardGameGeek
+            </button>
+          </>
+        ) : (
+          <>
+            <p>Sign in to change statuses and add what you paid on BoardGameGeek.</p>
+            <p className="hint">The app uses your password once to sign in and does not keep it. The sign-in stays on this device only; other devices sign in on their own.</p>
+            <button type="button" className="btn btn-primary" disabled={signedInAs === undefined} onClick={() => setSigningIn(true)}>
+              Sign in to BoardGameGeek
+            </button>
+          </>
+        )}
+      </div>
+      {signingIn && <SignInSheet onSignedIn={() => setSigningIn(false)} onCancel={() => setSigningIn(false)} />}
+    </>
   )
 }
 
