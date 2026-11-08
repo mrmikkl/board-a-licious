@@ -154,10 +154,14 @@ export function useRoute(): Route {
       if (isOldAddress(window.location.hash)) window.history.replaceState(window.history.state, '', href(parseRoute(window.location.hash)))
     }
     rewrite()
+    // a new screen starts at the top; a sheet opened by the query (`?game=`, `?add=`) keeps the scroll position
+    let path = window.location.hash.split('?')[0]
     const onChange = () => {
       rewrite()
       setRoute(parseRoute(window.location.hash))
-      window.scrollTo(0, 0)
+      const next = window.location.hash.split('?')[0]
+      if (next !== path) window.scrollTo(0, 0)
+      path = next
     }
     window.addEventListener('hashchange', onChange)
     return () => window.removeEventListener('hashchange', onChange)
