@@ -1,0 +1,20 @@
+{
+ "request": {
+  "method": "POST",
+  "url": "https://boardgamegeek.com/login/api/v1",
+  "contentType": "application/json",
+  "body": {
+   "credentials": {
+    "username": "<USER>",
+    "password": "<PASSWORD>"
+   }
+  }
+ },
+ "response": {
+  "status": 204,
+  "cookies": [
+   "SessionID"
+  ],
+  "note": "recorded 2026-11-08; body empty; the session comes as Set-Cookie SessionID (values removed)"
+ }
+}

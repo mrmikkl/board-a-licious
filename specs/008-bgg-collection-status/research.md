@@ -35,8 +35,15 @@ before code depends on them.
   (the request BGG's login form sends; a published store-sync script uses the same,
   [gist](https://gist.github.com/karptonite/408f7b5597a21af08a7a68f23f512deb)), and keeps the session cookies BGG sets (`SessionID`, `bggusername`,
   `bggpassword`). The password is not stored anywhere; the Worker forwards it once and forgets it.
-- **Verify in T001**: the exact cookie names and lifetime, the answer for wrong credentials (401
-  vs 200 with an error), and whether a session survives weeks.
+- **Found in T001** (recorded 2026-11-08, `tests/fixtures/bgg-web/signin.json`): JSON body
+  `{"credentials":{"username","password"}}`, answer **204** with an empty body and the session in
+  `Set-Cookie: SessionID=…` (plus `bggusername`/`bggpassword` cookies on some accounts; the adapter
+  keeps every cookie BGG sets and sends them back unchanged).
+- **Not recorded**: the answer for wrong credentials. The adapter treats any answer other than 204,
+  or a 204 without `SessionID`, as "BoardGameGeek did not accept this username and password"
+  (`bgg_signin_failed`); 429/5xx stay "BoardGameGeek is busy". Checked by hand in the T053
+  walkthrough. Session lifetime: unknown; the app cookie expires after 30 days at most and an
+  expired BGG session shows as "sign in again" on the next save.
 - **Alternatives**: OAuth (BGG offers none); the official API token (identifies the app, not a
   person; read-only); storing the password to sign in again later (rejected: FR-011).
 
@@ -58,6 +65,33 @@ before code depends on them.
   answers as fixtures in `tests/fixtures/bgg-web/` with cookies and the username removed. The
   adapter `worker/bgg/account.ts` is written against those fixtures; nothing else knows the
   endpoint (FR-018, ADR 0009).
+- **Found in T001** (fixtures in `tests/fixtures/bgg-web/`, the collid replaced by 123456789):
+  - All saves are `POST https://boardgamegeek.com/geekcollection.php` as
+    `application/x-www-form-urlencoded` with `ajax=1&action=savedata&objecttype=thing&objectid=<bggId>&collid=<collid or empty>`
+    and the session cookies; answers are 200.
+  - **Statuses** (`save-status.form`, `save-status-new.form`): `fieldname=status` and one field per
+    **ticked** status (`own=1`, `prevowned=1`, `fortrade=1`, `want=1`, `wanttoplay=1`, `wanttobuy=1`,
+    `wishlist=1`, `preordered=1`; unticked ones are left out) plus `wishlistpriority=1..5` always.
+    The form is the whole status group: a save **replaces all statuses**, so the Worker sends the
+    current statuses merged with the person's change, never only the changed one. An empty
+    `collid` adds the game. The dialog's read (`action=editdata&fieldname=status`) came back
+    empty in the recording, so the current statuses and the `collid` come from the official
+    collection API for that one game (`/xmlapi2/collection?username=<u>&id=<bggId>`, fresh, with
+    the app token and **without** the person's cookies; ADR 0009).
+  - **Private info** (`ownership-editdata.url/.html`, `save-ownership*.form/.html`):
+    `fieldname=ownership` with `pricepaid`, `pp_currency` (USD, EUR, GBP, CAD, AUD, YEN only),
+    `currvalue`, `cv_currency`, `quantity`, `acquisitiondate` + `dateinput` (YYYY-MM-DD),
+    `acquiredfrom`, `invdate`, `invlocation`, `privatecomment`. This form is also the whole group:
+    the Worker first reads it with `GET geekcollection.php?action=editdata&fieldname=ownership&collid=…&objectid=…&ajax=1`
+    (HTML form, `ownership-editdata.html`), takes every current value, changes only price paid,
+    currency, acquisition date and acquired from, and sends all fields back, so a comment,
+    quantity or current value is never wiped. The answer is an HTML table of the saved values
+    (`save-ownership.html`), which the adapter checks for the price it sent. A price in a
+    currency BGG does not offer is converted to EUR by the app before saving (ECB rates of F007).
+  - `cellid` is only an id for BGG's page and is sent as a fixed value.
+  - **Mark as owned on a game not yet in the collection**: status save with empty `collid`, then
+    the new `collid` is read through the official API as above, then the private info save. That
+    is the one case with two writes per tap (FR-018 allows one tap = one decision).
 - **Only changed fields** (FR-017, US4 #6): the Worker reads the current item right before saving
   and merges the person's changes into it, so a status changed meanwhile on the website survives.
 - **Price conflict** (FR-031): if BGG already holds another price paid and the request does not say
