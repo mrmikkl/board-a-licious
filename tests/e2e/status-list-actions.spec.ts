@@ -107,3 +107,24 @@ test("a row's Add picks the category in a folded section, not a hexagon picker",
   await sheet.getByRole('button', { name: 'Done' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Added Ark Nova to 1 shopping list' })).toBeVisible()
 })
+
+test('the game sheet shows the description short in the info box, with Show more / Show less', async ({ page }) => {
+  const long = 'A long description. '.repeat(10).trim()
+  await keepBggSettingsLocal(page)
+  await fakeBggCollection(page, { mrmikkl: MINE })
+  await page.route('**/api/bgg/games?**', route =>
+    route.fulfill({ json: { games: [{ bggId: 342942, name: 'Ark Nova', year: 2021, thumbnailUrl: null, description: long, kind: 'boardgame', publisher: 'Feuerland' }] } }),
+  )
+  await page.goto('/#/config')
+  await setBggUsername(page, 'mrmikkl')
+  await page.goto('/#/lists/status/mrmikkl/own')
+  await page.getByRole('button', { name: 'Ark Nova, 2021' }).click()
+  const box = page.getByRole('dialog', { name: 'Ark Nova' }).locator('.facts-box')
+  await expect(box.locator('.info-desc p')).toHaveText(/…$/)
+  await expect(box.locator('.info-desc p')).not.toHaveText(long)
+  await box.getByRole('button', { name: 'Show more' }).click()
+  await expect(box.locator('.info-desc p')).toHaveText(long)
+  await box.getByRole('button', { name: 'Show less' }).click()
+  await expect(box.locator('.info-desc p')).toHaveText(/…$/)
+  await expectAccessible(page)
+})

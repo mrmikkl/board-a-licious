@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useId, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import type { Game } from "../../client/types.ts";
 import { gameUrl } from "../../domain/bgg-link.ts";
@@ -19,7 +19,7 @@ import { BggStatusSection, type BggStatusState } from "./BggStatusSection.tsx";
 import { BuySheet } from "./BuySheet.tsx";
 import { CategorySection } from "./CategorySection.tsx";
 import { CopyMoveSheet } from "./CopyMoveSheet.tsx";
-import { InfoList } from "./GameInfo.tsx";
+import { Description, InfoList, PlayersSection } from "./GameInfo.tsx";
 import { HexCover } from "./HexCover.tsx";
 import { ImageViewer } from "./ImageViewer.tsx";
 import { yearText } from "./ListGameRow.tsx";
@@ -158,6 +158,19 @@ export function GameSheet(
         .join(" · ");
   const fair = entry?.facts ?? browse?.facts;
 
+  // F008 feedback: the description sits in the info box, short with Show more (docs/design.md "Game sheet")
+  const description = (
+    <Description
+      text={game?.description}
+      note={
+        !entry && game && game.year !== null
+          ? "BoardGameGeek has no description for this game."
+          : game || entry || browse?.info
+            ? "The description is filled in from BoardGameGeek later."
+            : "Loading the details from BoardGameGeek…"
+      }
+    />
+  );
   return (
     <Sheet open title={name} onClose={onClose}>
       <div className="detail-head">
@@ -217,12 +230,13 @@ export function GameSheet(
             onCancel={close}
           />
         ) : (
-          <FactsBox entry={entry} game={game} onEdit={() => setStep("facts")} />
+          <FactsBox entry={entry} game={game} description={description} onEdit={() => setStep("facts")} />
         )
       ) : (
-        (publisher || gameInfos(browse?.facts, details).length > 0) && (
+        (publisher || gameInfos(browse?.facts, details).length > 0 || description) && (
           <div className="facts-box">
-            <InfoList facts={browse?.facts} details={details} publisher={publisher} />
+            <InfoList facts={browse?.facts} details={details} publisher={publisher} players={false} />
+            {description}
             <div className="facts-foot">
               <span className="facts-by">From BoardGameGeek</span>
             </div>
@@ -230,6 +244,7 @@ export function GameSheet(
         )
       )}
       {entry && <CategorySection entry={entry} name={name} />}
+      <PlayersSection details={details} />
       <BggStatusSection
         game={{
           bggId,
@@ -296,18 +311,6 @@ export function GameSheet(
           </>
         )}
       </div>
-      <p className="desc">
-        {game?.description ||
-          (!entry && game && game.year !== null ? (
-            "BoardGameGeek has no description for this game."
-          ) : (
-            <span className="muted">
-              {game || entry || browse?.info
-                ? "The description is filled in from BoardGameGeek later."
-                : "Loading the details from BoardGameGeek…"}
-            </span>
-          ))}
-      </p>
       <div className="sheet-actions">
         <button type="button" className="btn btn-block" onClick={onClose}>
           Close
@@ -329,21 +332,26 @@ export function GameSheet(
 function FactsBox({
   entry,
   game,
+  description,
   onEdit,
 }: {
   entry: Entry;
   game?: Game;
+  description: ReactNode;
   onEdit: () => void;
 }) {
   const facts = entry.facts;
   const publisher = publisherOf(facts, game);
-  const info = <InfoList facts={facts} details={game} publisher={publisher} />;
+  const info = (
+    <>
+      <InfoList facts={facts} details={game} publisher={publisher} players={false} />
+      {description}
+    </>
+  );
   if (!facts) {
     return (
       <>
-        {(publisher || gameInfos(facts, game).length > 0) && (
-          <div className="facts-box">{info}</div>
-        )}
+        <div className="facts-box">{info}</div>
         <button
           type="button"
           className="btn btn-block facts-add"

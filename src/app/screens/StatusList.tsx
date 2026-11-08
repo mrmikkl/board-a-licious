@@ -1,4 +1,6 @@
-import { useCallback, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
+
+import type { Game } from '../../client/types.ts'
 
 import { type BggCollectionItem, PRIORITY_NAMES, STATUS_NAMES, type StatusKey, type WishlistPriority, statusList } from '../../domain/bgg-status.ts'
 import { inText } from '../../domain/membership.ts'
@@ -11,7 +13,7 @@ import { GameSheet } from '../components/GameSheet.tsx'
 import { Header } from '../components/Header.tsx'
 import { IconPlus, IconResync } from '../components/icons.tsx'
 import { ListGameRow } from '../components/ListGameRow.tsx'
-import { useStoreData } from '../context.tsx'
+import { useServices, useStoreData } from '../context.tsx'
 import { useBggCollection } from '../hooks/useBggCollection.ts'
 import { loadedAgo } from '../loaded-ago.ts'
 import { href } from '../router.ts'
@@ -49,6 +51,25 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
   const filterId = useId()
   const [filter, setFilter] = useState('')
   const [adding, setAdding] = useState(false)
+  const services = useServices()
+  // the opened game's details: from the device, else from BGG (a failure leaves "Loading the details…")
+  const [details, setDetails] = useState<Game>()
+  const openedId = openGame?.kind === 'sheet' ? openGame.item.bggId : undefined
+  useEffect(() => {
+    if (openedId === undefined) return
+    let live = true
+    setDetails(undefined)
+    void (async () => {
+      const stored = await services.store.game(openedId)
+      const game = stored ?? (await services.api.games([openedId]).catch(() => []))[0]
+      if (!live || !game) return
+      setDetails(game)
+      if (!stored) await services.store.putGames([game])
+    })()
+    return () => {
+      live = false
+    }
+  }, [openedId, services])
 
   const name = STATUS_NAMES[status]
   const loaded = collection?.loadedAt && !collection.error ? collection : undefined
@@ -196,7 +217,7 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
       </main>
       {own && <ActionBar main={<MainButton icon={<IconPlus />} label={`Add a game to ${name}`} onClick={() => setAdding(true)} />} />}
       {adding && <AddToStatusSheet status={status} onClose={() => setAdding(false)} />}
-      {item && openGame.kind === 'sheet' && <GameSheet context="browse" item={item} onClose={closeGame} />}
+      {item && openGame.kind === 'sheet' && <GameSheet context="browse" item={item} game={details?.bggId === item.bggId ? details : undefined} onClose={closeGame} />}
       {item && openGame.kind === 'add' && <AddToCollectionsSheet item={item} onClose={closeGame} />}
     </>
   )

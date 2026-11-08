@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef } from 'react'
 
-import { useStoreData } from '../context.tsx'
-import { type Route, href } from '../router.ts'
+import { useServices, useStoreData } from '../context.tsx'
+import { type Route, href, navigate } from '../router.ts'
 import { IconBuy, IconConfig, IconLists } from './icons.tsx'
 
 type Place = 'buy' | 'lists' | 'config'
@@ -41,7 +41,8 @@ function place(route: Route): Place {
 export function Menu({ id, route, top, onClose }: { id: string; route: Route; top: number; onClose: (refocus: boolean) => void }) {
   const current = place(route)
   const currentLink = useRef<HTMLAnchorElement>(null)
-  const lastTab = useStoreData(store => store.metaOrDefault('lastTab'))
+  const { store } = useServices()
+  const lastTab = useStoreData(s => s.metaOrDefault('lastTab'))
   useEffect(() => currentLink.current?.focus(), [])
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -50,7 +51,7 @@ export function Menu({ id, route, top, onClose }: { id: string; route: Route; to
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
-  const target = (p: Place): Route => (p === 'buy' ? (lastTab?.buy === 'shopping' ? { name: 'collections' } : { name: 'buy' }) : { name: p })
+  const target = (p: Place, last = lastTab): Route => (p === 'buy' ? (last?.buy === 'shopping' ? { name: 'collections' } : { name: 'buy' }) : { name: p })
 
   return (
     <>
@@ -63,7 +64,13 @@ export function Menu({ id, route, top, onClose }: { id: string; route: Route; to
                 ref={p.name === current ? currentLink : undefined}
                 href={href(target(p.name))}
                 aria-current={p.name === current ? 'page' : undefined}
-                onClick={() => onClose(false)}
+                onClick={event => {
+                  onClose(false)
+                  // tapped before the last tab was read from the device: read it first (Buy opens on it)
+                  if (p.name !== 'buy' || lastTab) return
+                  event.preventDefault()
+                  void store.metaOrDefault('lastTab').then(last => navigate(target('buy', last)))
+                }}
               >
                 {p.icon}
                 <span>{p.label}</span>
