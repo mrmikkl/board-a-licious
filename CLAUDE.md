@@ -73,6 +73,16 @@ node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigati
   (Access JWT), `db/` (repository, SQL last-write-wins), `bgg/` (cached, throttled BGG client; `routing.ts` picks
   the source per kind of data, ADR 0007: with `BGG_TOKEN` the official XML API in `official.ts` for game
   details, geeklists and search, else and for previews/galleries the website JSON in `geekdo*.ts`).
+- BGG statuses (F008, ADR 0009): reading a person's collection goes through the official API
+  (`official.ts` `getCollection`, route `routes/collection.ts`); writing their own collection goes
+  through BGG's website **only** in `worker/bgg/account.ts` (sign-in, status and private info
+  saves, routes in `routes/account.ts`), with the person's BGG session sealed by `worker/bgg/session.ts`
+  (AES-GCM, secret `BGG_SESSION_KEY`) into the HttpOnly cookie `bal_bgg`. Never store, cache or log
+  passwords, sessions or cookie values; the app token goes only to `/xmlapi*`, never with a person's
+  cookies. Statuses, badges, diffs and private info rules are in `src/domain/bgg-status.ts`.
+- UI places (F008): menu Buy (tabs Search, Shopping lists), Lists (tabs Status lists, Previews,
+  Geeklists) and Config; one `GameSheet` everywhere. On screen collections are "shopping lists";
+  in code and the database they stay collections.
 - `worker/prices/` (F007, ADR 0008): price sources read only through official APIs or published feeds
   (brettspielpreise.de, the BGG marketplace through the official client, unknowns.de's feed, ECB rates);
   sites that forbid automated access are search links (`links.ts`). No scraping, also not "one request".
