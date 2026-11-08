@@ -26,11 +26,12 @@ const today = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-async function setUp(page: Page, account: Parameters<typeof fakeBggAccount>[1]) {
+async function setUp(page: Page, account: Parameters<typeof fakeBggAccount>[1], more?: () => Promise<void>) {
   await keepBggSettingsLocal(page)
   await fakeNoGameDetails(page)
   await fakeBggCollection(page, { mrmikkl: MINE })
-  await fakeBggAccount(page, account)
+  await fakeBggAccount(page, { statuses: { 7301: MINE[0]!.status! }, ...account })
+  await more?.()
   await setBggUsername(page, 'mrmikkl')
 }
 
@@ -116,8 +117,10 @@ test('Bought it in a Buy › Search game sheet asks the price, then the same que
   page.on('request', request => {
     if (request.url().includes('/api/sync') && request.method() === 'POST') pushed.push(request.postData() ?? '')
   })
-  await setUp(page, { signedIn: true, saves })
-  await fakeSearch(page, { results: { copper: [{ bggId: 7302, name: 'Copper Valley', year: 2023, kind: 'boardgame' }] } })
+  // the search is answered from the app's start (`/api/me` says the server can search)
+  await setUp(page, { signedIn: true, saves }, () =>
+    fakeSearch(page, { results: { copper: [{ bggId: 7302, name: 'Copper Valley', year: 2023, kind: 'boardgame' }] } }),
+  )
   await page.goto('/#/buy')
   await page.getByRole('searchbox', { name: 'Find a game' }).fill('copper')
   await page.getByRole('button', { name: 'Copper Valley, 2023', exact: true }).click()

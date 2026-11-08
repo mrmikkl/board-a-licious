@@ -101,7 +101,9 @@ export function GameSheet(
     return (
       <BuySheet
         entry={entry}
+        bggId={bggId}
         name={name}
+        game={{ ...browse, ...game, kind: game?.kind ?? browse?.kind }}
         onClose={entry ? onClose : close}
         onCancel={close}
       />

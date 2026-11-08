@@ -245,7 +245,7 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
         outer={<Action icon={<IconShowOff />} label="Show-off" onClick={showOff} />}
       />
       {current && <GameSheet context="shopping" entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
-      {rowEntry && rowSheet?.kind === 'buy' && <BuySheet entry={rowEntry} name={displayName(rowEntry.bggId)} onClose={closeRowSheet} />}
+      {rowEntry && rowSheet?.kind === 'buy' && <BuySheet entry={rowEntry} bggId={rowEntry.bggId} name={displayName(rowEntry.bggId)} game={games.get(rowEntry.bggId)} onClose={closeRowSheet} />}
       {rowEntry && rowSheet?.kind === 'category' && <CategorySheet entry={rowEntry} name={displayName(rowEntry.bggId)} onClose={closeRowSheet} />}
       <FilterSheet
         open={viewOpen}
