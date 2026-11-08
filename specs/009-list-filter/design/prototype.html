@@ -2734,9 +2734,9 @@ function sheetHTML() {
     ${missing('len') ? `<p class="missing">${missing('len')} game has no length on BoardGameGeek.</p>` : ''}
   </section>
   <section class="f-sec"><div class="f-head"><h3>Players</h3><small>BGG's player poll</small></div>
-    <div class="chips counts" role="group" aria-label="Number of players">${[1, 2, 3, 4, 5, 6].map(n => `<button type="button" class="chip num" data-act="pn" data-n="${n}" aria-pressed="${f.pn === n}">${n}</button>`).join('')}<label class="field num-field${f.pn > 6 ? ' is-set' : ''}"><span class="visually-hidden">Other number of players</span><input id="pn-other" inputmode="numeric" maxlength="2" placeholder="7+" value="${f.pn > 6 ? f.pn : ''}"></label></div>
+    <div class="chips counts" role="group" aria-label="Number of players">${[1, 2, 3, 4, 5, 6].map(n => `<button type="button" class="chip num" data-act="pn" data-n="${n}" aria-pressed="${f.pn === n && !S.pnText}">${n}</button>`).join('')}<label class="field num-field${S.pnText ? ' is-set' : ''}"><span class="visually-hidden">Other number of players</span><input id="pn-other" inputmode="numeric" maxlength="2" placeholder="7+" value="${esc(S.pnText)}"></label></div>
     ${f.pn != null ? `<div class="chips" role="group" aria-label="With ${f.pn} players the game is" style="margin-top:8px">${[['best', 'Best'], ['rec', 'Recommended']].map(([k, l]) => `<button type="button" class="chip" data-act="pkind" data-k="${k}" aria-pressed="${f.pkinds.has(k)}">${l}<small>${kn.filter(g => pollOf(g, f.pn) === k).length}</small></button>`).join('')}</div>
-    <p class="missing">${kn.filter(g => playersMatch(g, f)).length} games ${[...f.pkinds].map(k => k === 'best' ? 'best' : 'recommended').join(' or ') || '…'} with ${f.pn} players. ${f.pn > 6 ? 'Clear the field' : 'Tap the number again'} for any.</p>` : '<p class="missing">Pick a number of players.</p>'}
+    <p class="missing">${kn.filter(g => playersMatch(g, f)).length} games ${[...f.pkinds].map(k => k === 'best' ? 'best' : 'recommended').join(' or ') || '…'} with ${f.pn} players. ${S.pnText ? 'Clear the field' : 'Tap the number again'} for any.</p>` : '<p class="missing">Pick a number of players.</p>'}
   </section>
   ${slider('Rating', 'BGG average', 'r', f.rFrom, f.rTo)}
   ${slider('Geek rating', '', 'g', f.gFrom, f.gTo)}
@@ -2776,9 +2776,9 @@ document.addEventListener('click', e => {
   const a = t.dataset.act, f = S.screen === 'config' ? null : filt()
   if (a === 'filter') { openSheet(); if (S.list === 'preview') readDetails(); return }
   if (a === 'close') return closeSheet()
-  if (a === 'clear') { S.filters[S.list] = F0(); refreshSheet(); return render() }
+  if (a === 'clear') { S.filters[S.list] = F0(); S.pnText = ''; refreshSheet(); return render() }
   if (a === 'len') { const i = +t.dataset.i; f.len.has(i) ? f.len.delete(i) : f.len.add(i) }
-  if (a === 'pn') f.pn = f.pn === +t.dataset.n ? null : +t.dataset.n
+  if (a === 'pn') { f.pn = f.pn === +t.dataset.n && !S.pnText ? null : +t.dataset.n; S.pnText = '' }
   if (a === 'pkind') { const k = t.dataset.k; f.pkinds.has(k) ? f.pkinds.delete(k) : f.pkinds.add(k); if (!f.pkinds.size) f.pkinds.add(k === 'best' ? 'rec' : 'best') }
   if (a === 'showall') S.showAll[t.dataset.k] = !S.showAll[t.dataset.k]
   if (a === 'lim-reset') { S.draftLimits = [30, 60, 120]; return render() }
@@ -2800,11 +2800,12 @@ document.addEventListener('input', e => {
   const t = e.target
   if (t.id === 'q') { S.q = t.value; return render() }
   if (t.id === 'pn-other') {
-    // a typed number replaces the chips; 1–6 lights up its chip, empty means any
+    // the typed text stays as typed (so "10" can be typed through "1"); its number is used, empty means any
     const n = parseInt(t.value, 10), f = filt()
+    S.pnText = t.value.replace(/\D/g, '')
     f.pn = n >= 1 && n <= 99 ? n : null
     refreshSheet(); render()
-    const i = $('#pn-other'); if (i) { if (n >= 1 && n <= 6) i.value = ''; i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
+    const i = $('#pn-other'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
     return
   }
   if (t.dataset.rng) {
@@ -2829,7 +2830,7 @@ function start() {
   const s = $('#start').value
   clearInterval(S?.timer)
   S = { list: s === 'preview' ? 'preview' : s === 'shop' ? 'shop' : 'status', screen: s === 'config' ? 'config' : 'list', q: '', offline: $('#offline').checked,
-    limits: [30, 60, 120], draftLimits: [30, 60, 120], filters: { status: F0(), preview: F0(), shop: F0() }, showAll: {}, fq: {},
+    limits: [30, 60, 120], draftLimits: [30, 60, 120], filters: { status: F0(), preview: F0(), shop: F0() }, showAll: {}, fq: {}, pnText: '',
     read: new Set(s === 'preview' ? [1, 2, 3, 4] : G.map(g => g.id)), reading: 0, timer: null }
   S.reading = games().filter(known).length
   closeSheet()
