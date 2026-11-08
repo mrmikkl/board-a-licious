@@ -3,6 +3,7 @@ import { type CSSProperties, type PointerEvent, useRef, useState } from 'react'
 import type { Game, StoredListEntry } from '../../client/types.ts'
 import { publisherOf } from '../../domain/game-info.ts'
 import type { SwipeDirection } from '../../domain/swipe.ts'
+import { BggBadges } from './BggBadges.tsx'
 import { InfoList } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
 import { ImageViewer } from './ImageViewer.tsx'
@@ -11,7 +12,7 @@ import { ImageViewer } from './ImageViewer.tsx'
 const THRESHOLD = 90
 
 /**
- * The swipe card (docs/design.md §7, §9): cover, name, "publisher · year", the game info box, then the
+ * The swipe card (docs/design.md §7, §9): cover, name, "publisher · year", the BGG status badges, the game info box, then the
  * full description (the card scrolls, no clamp). The top
  * card follows the finger with tilt and growing ADD/NOPE stamps, springs back when let go early and
  * decides past the threshold. `leaving` flings it out; with reduced motion nothing tilts or flies.
@@ -116,6 +117,7 @@ export function SwipeCard({
       )}
       <h2 className="swipe-name">{details?.name ?? game.name}</h2>
       <p className="swipe-year">{[publisher, details?.year].filter(Boolean).join(' · ') || '\u00a0'}</p>
+      <BggBadges bggId={game.bggId} />
       <div className="facts-box">
         <InfoList facts={game.facts} details={info} publisher={publisher} />
       </div>
