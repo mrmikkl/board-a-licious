@@ -108,13 +108,13 @@ describe('bgg-status', () => {
         item(1, 'Azul', { prevOwned: true }),
       ])
       expect(merged.map(i => i.bggId)).toEqual([1, 2])
-      expect(merged[0].status).toEqual(status({ own: true, prevOwned: true }))
-      expect(merged[1].status).toEqual(status({ forTrade: true }))
+      expect(merged[0]!.status).toEqual(status({ own: true, prevOwned: true }))
+      expect(merged[1]!.status).toEqual(status({ forTrade: true }))
     })
 
     it('takes the most wanted wishlist priority', () => {
-      expect(mergeCopies([item(1, 'A', { wishlist: 4 }), item(1, 'A'), item(1, 'A', { wishlist: 2 })])[0].status.wishlist).toBe(2)
-      expect(mergeCopies([item(1, 'A'), item(1, 'A')])[0].status.wishlist).toBeNull()
+      expect(mergeCopies([item(1, 'A', { wishlist: 4 }), item(1, 'A'), item(1, 'A', { wishlist: 2 })])[0]!.status.wishlist).toBe(2)
+      expect(mergeCopies([item(1, 'A'), item(1, 'A')])[0]!.status.wishlist).toBeNull()
     })
 
     it('does not change the input items', () => {
