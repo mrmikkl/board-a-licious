@@ -1,5 +1,8 @@
 import { type FormEvent, type MouseEvent, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 
+import { DEFAULT_BADGE_COLOURS, STATUS_KEYS, STATUS_NAMES, type StatusKey } from '../../domain/bgg-status.ts'
+import { Badge, useBgg } from '../components/BggBadges.tsx'
+import { ColourSheet, SAMPLE } from '../components/ColourSheet.tsx'
 import { Header } from '../components/Header.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
@@ -56,6 +59,8 @@ export function Config() {
       <main className="screen config">
         <ShareHint />
         <BggSection />
+        <hr className="separator" />
+        <BadgeColours />
         <hr className="separator" />
         <SoundSetting />
         <hr className="separator" />
@@ -170,6 +175,43 @@ function BggSection() {
           Save username
         </button>
       </form>
+    </section>
+  )
+}
+
+/** F008 (docs/design.md "Badge colours"): one row per status opening its colour sheet; Reset colours. */
+function BadgeColours() {
+  const { store } = useServices()
+  const toast = useToast()
+  const { colours } = useBgg()
+  const [open, setOpen] = useState<StatusKey>()
+  const isDefault = STATUS_KEYS.every(key => colours[key] === DEFAULT_BADGE_COLOURS[key])
+  const reset = async () => {
+    await store.setMeta('badgeColours', DEFAULT_BADGE_COLOURS)
+    toast('Badge colours reset')
+  }
+  return (
+    <section aria-labelledby="colours-title">
+      <h2 id="colours-title" className="section-title">
+        Badge colours
+      </h2>
+      <p className="lead">How your BGG statuses look on games. Tap one to change its colour.</p>
+      <ul className="colour-rows">
+        {STATUS_KEYS.map(key => (
+          <li key={key}>
+            <button type="button" aria-label={`Change the colour of ${STATUS_NAMES[key]}`} onClick={() => setOpen(key)}>
+              <Badge statusKey={key} status={SAMPLE} colours={colours} />
+              <span className="chg" aria-hidden="true">
+                Change
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button type="button" className="btn btn-block" disabled={isDefault} onClick={() => void reset()}>
+        Reset colours
+      </button>
+      {open && <ColourSheet status={open} onClose={() => setOpen(undefined)} />}
     </section>
   )
 }

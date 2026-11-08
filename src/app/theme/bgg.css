@@ -179,10 +179,8 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 10px 8px;
   margin: 8px 0 14px;
-  padding: 0;
-  list-style: none;
 }
-.swatches li {
+.swatches > div {
   display: grid;
   justify-items: center;
   gap: 4px;
