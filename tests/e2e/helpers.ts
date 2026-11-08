@@ -43,38 +43,48 @@ export async function expectAccessible(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
 }
 
-/** F003 navigation (contracts/navigation.md): the four places live in the app bar's menu. */
-export type Place = 'Collections' | 'BGG lists' | 'Search' | 'Config'
+/** F008 places (contracts/ui.md): Buy, Lists and Config in the app bar's menu; Buy and Lists have tabs. */
+export type Place = 'Buy' | 'Lists' | 'Config'
+export type Tab = 'Search' | 'Shopping lists' | 'Status lists' | 'Previews' | 'Geeklists'
 
 export async function openMenu(page: Page) {
   await page.getByRole('button', { name: 'Menu' }).click()
   await expect(page.getByRole('navigation', { name: 'Menu' })).toBeVisible()
 }
 
-export async function goTo(page: Page, place: Place) {
+/** Opens a place from the menu and, when given, one of its tabs. */
+export async function goTo(page: Page, place: Place, tab?: Tab) {
   await openMenu(page)
   await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: place, exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: place, exact: true })).toBeVisible()
+  if (tab) await openTab(page, tab)
+}
+
+/** A tab of the place on screen; waits until it is selected. */
+export async function openTab(page: Page, tab: Tab) {
+  const button = page.getByRole('tab', { name: tab, exact: true })
+  await button.click()
+  await expect(button).toHaveAttribute('aria-selected', 'true')
 }
 
 /** The big hexagon in the action bar; its accessible name says what it does on the screen. */
 export const mainButton = (page: Page) => page.getByRole('navigation', { name: 'Actions' }).locator('.main-btn')
 
-/** Collections → main ＋ → New collection sheet → Create collection; ends in the new collection. */
+/** Buy › Shopping lists → main ＋ → New shopping list sheet → Create shopping list; ends in the new list. */
 export async function createCollection(page: Page, name: string) {
-  if (page.url() === 'about:blank') await page.goto('/#/collections')
-  await goTo(page, 'Collections')
+  if (page.url() === 'about:blank') await page.goto('/#/buy/lists')
+  await goTo(page, 'Buy', 'Shopping lists')
   await mainButton(page).click()
-  const sheet = page.getByRole('dialog', { name: 'New collection' })
+  const sheet = page.getByRole('dialog', { name: 'New shopping list' })
   await sheet.getByLabel('Name').fill(name)
-  await sheet.getByRole('button', { name: 'Create collection' }).click()
+  await sheet.getByRole('button', { name: 'Create shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 }
 
-/** BGG lists → main ＋ → Load a BGG list sheet → Load list; ends in the list. */
+/** Lists → main ＋ → Load a BGG list sheet → Load list; ends in the list. */
 export async function loadList(page: Page, link: string) {
   if (page.url() === 'about:blank') await page.goto('/#/lists')
-  await goTo(page, 'BGG lists')
+  await goTo(page, 'Lists')
   await mainButton(page).click()
   const sheet = page.getByRole('dialog', { name: 'Load a BGG list' })
   await sheet.getByLabel(/link/i).fill(link)
@@ -142,13 +152,13 @@ export async function seedCollection(page: Page, name: string, games: SeedGame[]
     })
     await route.fulfill({ json: { games } })
   })
-  if (page.url() === 'about:blank') await page.goto('/#/collections')
+  if (page.url() === 'about:blank') await page.goto('/#/buy/lists')
   const response = await page.request.post('/api/sync', { data: { collections: [{ id, name, updatedAt: now, deleted: false }], entries } })
   expect(response.ok()).toBe(true)
   // the app pulls the new collection with its sync on start: reload, and wait for that pull to
   // answer before looking (and before anything else navigates: an aborted request can leave the local
   // database's one connection stuck)
-  await page.goto(`/#/collections/${id}`)
+  await page.goto(`/#/buy/lists/${id}`)
   const pulled = page.waitForResponse(r => r.url().includes('/api/sync') && r.request().method() === 'GET')
   await page.reload()
   await pulled
