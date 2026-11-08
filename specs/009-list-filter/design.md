@@ -19,12 +19,18 @@
   - **Players** "BGG's player poll": segment Any | Best for | Recommended; with Best for or
     Recommended, number chips 1 … the largest count in the list's polls (at least 6), one chosen
     (default 3), and a muted line "7 games best for 2" / "… recommended for 3 (best counts too)".
-  - **Rating** "BGG average" and **Geek rating**: from – to dropdowns (0.0, 5.0, 5.5 … 9.0, 10.0);
-    0–10 does not filter. A muted line names games without a rating.
+  - **Rating** "BGG average" and **Geek rating**: a **two-handle slider** each (owner, 2026-11-08):
+    one track 0–10 in steps of 0.1, the range between the handles filled hot, hexagon handles
+    (26×30 px, 44 px tall touch row), the chosen range at the right of the title ("7.5 – 10.0", "any"
+    at full width), a muted scale 0 · 5 · 10 below. Each handle is its own slider for screen readers
+    and keys ("Rating from", "Rating to"); the handles cannot cross. 0–10 does not filter. A muted
+    line names games without a rating.
   - **Mechanisms** and **Designers** "every ticked one": checkbox rows with counts, the 8 most common
     first, "Show all (n)"; above 8 values a find field narrows the rows. Ticked values no longer in
     the list stay with count 0.
-  - **Clear filters** (disabled at the default) and **Done · n games**.
+  - **Clear filters** at the top right beside the sheet's title (owner, 2026-11-08) and again at the
+    bottom beside **Done · n games**; both disabled at the default and both reset every section of the
+    sheet (in shopping lists also Bought, Price, BGG status and Categories).
 - **Reading details**: while missing details are read, a framed line at the top of the sheet with the
   spinning hexagon: "Reading game details from BoardGameGeek… **12 of 16**"; sections and counts grow
   as details arrive; the list behind updates. Offline or BGG failing: a red-bordered line
@@ -35,6 +41,8 @@
 
 ## Decisions taken in the prototype
 
+- Players segment with uneven widths (Any narrow, Recommended wide) so "Recommended" fits one line at
+  360 px.
 - Chips for Length (multi-choice) and the player count (one choice) instead of segments: four or six
   options with counts do not fit one segment row at 360 px.
 - The sheet's Done names the result count, so the person sees the effect without closing it.

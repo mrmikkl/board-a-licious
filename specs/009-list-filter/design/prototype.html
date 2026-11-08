@@ -2523,6 +2523,19 @@ body:has(.actionbar) .toast {
 .len-row .span { color: var(--muted); font-size: 13px; }
 .len-row .field { margin: 0; }
 .len-row .field input { text-align: right; }
+.slider { position: relative; height: 44px; margin: 0 10px; }
+.slider .track { position: absolute; left: 0; right: 0; top: 20px; height: 4px; border-radius: 2px; background: var(--border); }
+.slider .fill { position: absolute; top: 20px; height: 4px; border-radius: 2px; background: var(--grad-hot); }
+.slider input { position: absolute; left: -10px; width: calc(100% + 20px); top: 0; height: 44px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.slider input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 26px; height: 30px; border: 0; clip-path: var(--hex); background: var(--grad-hot); cursor: grab; }
+.slider input::-moz-range-thumb { pointer-events: auto; width: 26px; height: 30px; border: 0; border-radius: 0; clip-path: var(--hex); background: var(--grad-hot); cursor: grab; }
+.slider input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--orange); outline-offset: 2px; }
+.slider-scale { display: flex; justify-content: space-between; margin: 0 0 0; font-size: 11px; color: var(--muted); }
+.f-head .val { margin-left: auto; font: 700 14px var(--font-display, var(--font-body)); color: var(--text); }
+.seg.players { grid-auto-columns: auto; grid-template-columns: 0.7fr 1fr 1.5fr; }
+.sheet-head { display: flex; align-items: center; gap: 8px; }
+.sheet-head .sheet-title { flex: 1; }
+.sheet-head .btn { min-height: 44px; padding: 0 14px; font-size: 13px; }
 .actionbar.no-main { grid-template-columns: 1fr 1fr 1fr; }
 /* design rules 3.3.0: the main button carries a short label inside the hexagon, under its icon */
 .main-btn.has-label { width: 68px; height: 76px; margin-top: -30px; align-content: center; gap: 1px; }
@@ -2683,20 +2696,29 @@ function pickList(key, title, set, act) {
     ${all.length > 8 ? `<div class="field f-search">${ICON.search18}<input type="search" data-fq="${key}" placeholder="Find ${title.toLowerCase().slice(0, -1)}" value="${esc(S.fq[key] || '')}" aria-label="Find in ${title}"></div>` : ''}
     <div role="group" aria-label="${title}">${[...chosenMissing.map(v => [v, 0]), ...list].map(([v, n]) => `<label class="filter-row"><input type="checkbox" data-${act}="${esc(v)}" ${set.has(v) ? 'checked' : ''}><span>${esc(v)}</span><small>${n}</small></label>`).join('') || '<p class="missing">None yet.</p>'}</div></section>`
 }
+const fmt = v => v.toFixed(1)
+// two handles on one track, 0–10 in steps of 0.1; the full width does not filter
+function slider(title, note, key, from, to) {
+  const pct = v => v * 10
+  const full = from === 0 && to === 10
+  return `<section class="f-sec"><div class="f-head"><h3>${title}</h3>${note ? `<small>${note}</small>` : ''}<span class="val" aria-hidden="true">${full ? 'any' : `${fmt(from)} – ${fmt(to)}`}</span></div>
+    <div class="slider"><span class="track"></span><span class="fill" style="left:${pct(from)}%;right:${100 - pct(to)}%"></span>
+      <input type="range" min="0" max="10" step="0.1" value="${from}" data-rng="${key}From" aria-label="${title} from" aria-valuetext="${fmt(from)}">
+      <input type="range" min="0" max="10" step="0.1" value="${to}" data-rng="${key}To" aria-label="${title} to" aria-valuetext="${fmt(to)}"></div>
+    <div class="slider-scale" aria-hidden="true"><span>0</span><span>5</span><span>10</span></div></section>`
+}
 function sheetHTML() {
   const f = filt(), all = games(), kn = all.filter(known)
   const missing = k => all.filter(g => known(g) && (k === 'len' ? g.len == null : k === 'r' ? g.r == null : g.best.length === 0)).length
   const reading = S.reading < all.length && S.list === 'preview'
   const lenCount = i => kn.filter(g => lenOf(g) === i).length
-  const steps = [0, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 10]
-  const sel = (id, v, label) => `<div class="field select"><select data-sel="${id}" aria-label="${label}">${steps.map(s => `<option value="${s}" ${s === v ? 'selected' : ''}>${s.toFixed(1)}</option>`).join('')}</select></div>`
   const maxN = Math.max(6, ...kn.flatMap(g => g.rec))
   const shop = S.list === 'shop'
   const shopPart = shop ? `<p class="seg-title">Bought</p><div class="seg" role="group" aria-label="Bought"><button type="button" aria-pressed="true">All</button><button type="button">Not bought</button><button type="button">Bought</button></div>
     <p class="seg-title">Price</p><div class="seg" role="group" aria-label="Price"><button type="button" aria-pressed="true">All</button><button type="button">≤ €30</button><button type="button">€30–60</button><button type="button">&gt; €60</button></div>
     <p class="seg-title">BGG status</p><div class="seg" role="group" aria-label="BGG status"><button type="button" aria-pressed="true">All</button><button type="button">Owned</button><button type="button">Not owned</button><button type="button">Wishlist</button></div>
     <p class="proto-note">… Categories and Group by as today …</p><p class="f-group-title">About the game</p>` : ''
-  return `<h2 class="sheet-title">${shop ? 'Filter and group' : 'Filter'}</h2>
+  return `<div class="sheet-head"><h2 class="sheet-title">${shop ? 'Filter and group' : 'Filter'}</h2><button type="button" class="btn" data-act="clear" ${isDefault(f) ? 'disabled' : ''}>Clear filters</button></div>
   ${shopPart}
   ${reading ? `<div class="reading" role="status"><span class="spin-hex"></span><span>Reading game details from BoardGameGeek… <b>${S.reading} of ${all.length}</b></span></div>` : ''}
   ${S.offline && S.reading < all.length ? `<div class="fail-line"><span>${all.length - S.reading} games are left out: their details need a connection.</span><button type="button" class="link-btn">Try again</button></div>` : ''}
@@ -2705,13 +2727,13 @@ function sheetHTML() {
     ${missing('len') ? `<p class="missing">${missing('len')} game has no length on BoardGameGeek.</p>` : ''}
   </section>
   <section class="f-sec"><div class="f-head"><h3>Players</h3><small>BGG's player poll</small></div>
-    <div class="seg" role="group" aria-label="Players"><button type="button" data-act="pmode" data-v="any" aria-pressed="${f.pmode === 'any'}">Any</button><button type="button" data-act="pmode" data-v="best" aria-pressed="${f.pmode === 'best'}">Best for</button><button type="button" data-act="pmode" data-v="rec" aria-pressed="${f.pmode === 'rec'}">Recommended</button></div>
+    <div class="seg players" role="group" aria-label="Players"><button type="button" data-act="pmode" data-v="any" aria-pressed="${f.pmode === 'any'}">Any</button><button type="button" data-act="pmode" data-v="best" aria-pressed="${f.pmode === 'best'}">Best for</button><button type="button" data-act="pmode" data-v="rec" aria-pressed="${f.pmode === 'rec'}">Recommended</button></div>
     ${f.pmode !== 'any' ? `<div class="chips" role="group" aria-label="Number of players" style="margin-top:8px">${Array.from({ length: maxN }, (_, i) => i + 1).map(n => `<button type="button" class="chip num" data-act="pn" data-n="${n}" aria-pressed="${f.pn === n}">${n}</button>`).join('')}</div>
     <p class="missing">${kn.filter(g => (f.pmode === 'best' ? g.best : g.rec).includes(f.pn)).length} games ${f.pmode === 'best' ? 'best' : 'recommended'} for ${f.pn}${f.pmode === 'rec' ? ' (best counts too)' : ''}.</p>` : ''}
   </section>
-  <section class="f-sec"><div class="f-head"><h3>Rating</h3><small>BGG average</small></div><div class="range">${sel('rFrom', f.rFrom, 'Rating from')}<span>to</span>${sel('rTo', f.rTo, 'Rating to')}</div></section>
-  <section class="f-sec"><div class="f-head"><h3>Geek rating</h3></div><div class="range">${sel('gFrom', f.gFrom, 'Geek rating from')}<span>to</span>${sel('gTo', f.gTo, 'Geek rating to')}</div>
-    ${missing('r') ? `<p class="missing">${missing('r')} game has no rating yet.</p>` : ''}</section>
+  ${slider('Rating', 'BGG average', 'r', f.rFrom, f.rTo)}
+  ${slider('Geek rating', '', 'g', f.gFrom, f.gTo)}
+  ${missing('r') ? `<p class="missing">${missing('r')} game has no rating yet.</p>` : ''}
   ${pickList('mech', 'Mechanisms', f.mech, 'mech')}
   ${pickList('des', 'Designers', f.des, 'des')}
   <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="clear" ${isDefault(f) ? 'disabled' : ''}>Clear filters</button><button type="button" class="btn btn-primary" data-act="close">Done · ${games().filter(g => matches(g, f)).length} games</button></div>
@@ -2768,6 +2790,18 @@ document.addEventListener('change', e => {
 document.addEventListener('input', e => {
   const t = e.target
   if (t.id === 'q') { S.q = t.value; return render() }
+  if (t.dataset.rng) {
+    const f = filt(), k = t.dataset.rng, v = Math.round(+t.value * 10) / 10
+    f[k] = v
+    if (k.endsWith('From') && f[k] > f[k.replace('From', 'To')]) f[k.replace('From', 'To')] = v
+    if (k.endsWith('To') && f[k] < f[k.replace('To', 'From')]) f[k.replace('To', 'From')] = v
+    const sec = t.closest('.f-sec'), base = k.slice(0, 1), from = f[base + 'From'], to = f[base + 'To']
+    sec.querySelector('.fill').style.cssText = `left:${from * 10}%;right:${100 - to * 10}%`
+    sec.querySelector('.val').textContent = from === 0 && to === 10 ? 'any' : `${fmt(from)} – ${fmt(to)}`
+    sec.querySelectorAll('input').forEach(i => { i.value = f[i.dataset.rng]; i.setAttribute('aria-valuetext', fmt(f[i.dataset.rng])) })
+    const done = $('[data-act="close"].btn-primary'); if (done) done.textContent = `Done · ${games().filter(g => matches(g, f)).length} games`
+    return render()
+  }
   if (t.dataset.fq) { S.fq[t.dataset.fq] = t.value; refreshSheet(); const i = $(`[data-fq="${t.dataset.fq}"]`); i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
   if (t.dataset.lim !== undefined) { S.draftLimits[+t.dataset.lim] = parseInt(t.value, 10) || 0; const id = t.dataset.lim; render(); const i = $(`[data-lim="${id}"]`); i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
 })
