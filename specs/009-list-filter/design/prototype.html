@@ -2538,6 +2538,7 @@ body:has(.actionbar) .toast {
 .num-field { width: 52px; min-height: 44px; margin: 0; padding: 0 6px; border-radius: 22px; }
 .num-field input { text-align: center; font-weight: 700; }
 .num-field.is-set { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+.main-dot { position: absolute; z-index: 2; top: 14px; right: 16px; width: 10px; height: 11px; background: var(--ink); }
 .seg.players { grid-auto-columns: auto; grid-template-columns: 0.7fr 1fr 1.5fr; }
 .sheet-head { display: flex; align-items: center; gap: 8px; }
 .sheet-head .sheet-title { flex: 1; }
@@ -2642,6 +2643,8 @@ const filt = () => S.filters[S.list]
 const appbar = () => `<header class="appbar"><span class="appbar-name">Board-a-licious</span><button type="button" class="menu-btn" aria-label="Menu">${ICON.menu}</button></header>`
 const heading = (title, back, extra = '') => `<div class="top">${back ? `<a class="icon-btn back" href="#" aria-label="Back">‹</a>` : ''}<div class="top-title"><h1>${esc(title)}</h1></div>${extra}</div>`
 const filterAct = () => { const on = !isDefault(filt()); return `<button type="button" class="act${on ? ' is-active' : ''}" data-act="filter" aria-label="Filter${on ? ' (active)' : ''}">${ICON.filter}<span>Filter</span></button>` }
+// a list whose only action is Filter: Filter is the main button (with a dot while a filter is set)
+const filterMain = () => { const on = !isDefault(filt()); return `<button type="button" class="main-btn hex hex-btn has-label" data-act="filter" aria-label="Filter${on ? ' (active)' : ''}">${ICON.filter}<span class="main-label" aria-hidden="true">${on ? 'Filter' : 'Filter'}</span>${on ? '<i class="main-dot hex" aria-hidden="true"></i>' : ''}</button>` }
 const row = g => `<li><div class="crow" data-mark="new"><button type="button" class="crow-open" aria-label="${esc(g.name)}, ${g.year}">${cover(g.name, 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${g.year}</span></span></button><div class="crow-acts"><button type="button" class="ract add" aria-label="Add ${esc(g.name)} to shopping lists"><span class="rhex" aria-hidden="true">+</span><span>Add</span></button></div></div></li>`
 
 function listScreen() {
@@ -2656,9 +2659,11 @@ function listScreen() {
     ${active || S.q ? `<p class="count-line" role="status"><span><b>${shown.length}</b> of ${all.length} games</span>${active ? '<button type="button" class="link-btn" data-act="clear">Clear filters</button>' : ''}</p>` : ''}
     <hr class="separator" />
     ${shown.length ? `<ul class="rows">${shown.map(row).join('')}</ul>` : '<p class="lead">No game on this list matches.</p>'}
-    <p class="proto-note">${S.list === 'preview' ? 'Open Filter: the app reads the missing details from BGG in batches (about one request per second for up to 20 games) and fills the sections as they arrive.' : 'Details are on the device already: Filter works at once, also offline.'}</p>
+    <p class="proto-note">${S.list === 'preview' ? 'Filter is the only action here, so it is the main button (a dot shows a filter is set). Open it: the app reads the missing details from BGG in batches (about one request per second for up to 20 games) and fills the sections as they arrive.' : 'Details are on the device already: Filter works at once, also offline.'}</p>
   </main>
-  <nav class="actionbar${L.own ? '' : ' no-main'}" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div>${L.own ? `<button type="button" class="main-btn hex hex-btn has-label" aria-label="Add a game to Owned">${ICON.plus}<span class="main-label" aria-hidden="true">Add game</span></button>` : ''}<div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
+  ${L.own
+    ? `<nav class="actionbar" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div><button type="button" class="main-btn hex hex-btn has-label" aria-label="Add a game to Owned">${ICON.plus}<span class="main-label" aria-hidden="true">Add game</span></button><div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
+    : `<nav class="actionbar" aria-label="Actions"><div class="actionbar-left"></div>${filterMain()}<div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`}`
 }
 
 function shopScreen() {

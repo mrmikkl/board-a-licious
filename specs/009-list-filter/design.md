@@ -7,8 +7,11 @@
 
 - **BGG list** (status list, preview, geeklist): the name field stays; the action bar gets the
   **Filter** action at the left (icon and label orange while a filter is set, as in shopping lists).
-  Own status lists keep their main button ＋ (Add a game to <status>); previews, geeklists and
-  friends' lists have no main button. With a filter or a name typed, a count line under the field:
+  Own status lists keep their main button ＋ (Add a game to <status>) with Filter at the left.
+  Previews, geeklists and friends' lists have no other action, so **Filter is their main button**
+  (owner, 2026-11-08): the hot hexagon with the filter icon and the label "Filter"; while a filter
+  is set a small dark hexagon dot sits at its top right and its name is "Filter (active)". No
+  separate Filter action there. With a filter or a name typed, a count line under the field:
   "**12** of 80 games" and, with a filter, **Clear filters**.
 - **Filter sheet** ("Filter"; in shopping lists "Filter and group" with the existing sections first
   and a small heading "About the game" before the new ones). Sections, each with a short muted note
@@ -52,7 +55,8 @@
 - Chips for Length (multi-choice) and the player count (one choice) instead of segments: four or six
   options with counts do not fit one segment row at 360 px.
 - The sheet's Done names the result count, so the person sees the effect without closing it.
-- No new main button: Filter is a screen action like in shopping lists.
+- Rule: a screen whose only action is Filter shows it as the main button; elsewhere Filter is a
+  screen action (as in shopping lists).
 - **Main button label** (owner, 2026-11-08): every main button carries a short label **inside the
   hexagon**, under its icon (Manrope 10px extra bold, dark text; the hexagon grows to 68×76 px and the
   icon shrinks to 24 px): **Tinder** (shopping list ♥), **New list**
