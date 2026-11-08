@@ -1,0 +1,66 @@
+/* F008: BGG status badges and badge colours (docs/design.md "BGG status badge", "Badge colours", §3 contrast) */
+
+/* the ten palette colours from the app's gradients: dark text on light ones, white on dark ones */
+[data-colour='cool'] { --bg: var(--grad-cool); --fg: var(--ink); }
+[data-colour='hot'] { --bg: var(--grad-hot); --fg: var(--ink); }
+[data-colour='mint'] { --bg: var(--grad-got); --fg: var(--ink); }
+[data-colour='pink'] { --bg: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%); --fg: var(--ink); }
+[data-colour='white'] { --bg: var(--grad-white); --fg: var(--ink); }
+[data-colour='violet'] { --bg: var(--grad-violet); --fg: #fff; }
+[data-colour='dusk'] { --bg: var(--grad-dusk); --fg: #fff; }
+[data-colour='red'] { --bg: var(--grad-red); --fg: #fff; }
+[data-colour='mud'] { --bg: var(--grad-mud); --fg: #fff; }
+[data-colour='grey'] { --bg: #3a4078; --fg: var(--text); }
+
+.bgg-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.bb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border-radius: var(--r-pill);
+  background: var(--bg, var(--raised));
+  color: var(--fg, var(--text));
+  font: 700 11px/18px var(--font-body);
+  white-space: nowrap;
+}
+
+/* a small hexagon bullet in the text colour */
+.bb::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 8px;
+  clip-path: var(--hex);
+  background: currentColor;
+}
+
+.bb.more {
+  border: 1px solid var(--border-2);
+  background: none;
+  color: var(--muted);
+  line-height: 16px;
+}
+
+.bb.more::before {
+  display: none;
+}
+
+/* in sheets: 12px text, 22px high */
+.bgg-badges.big .bb,
+.bb.big {
+  padding: 0 9px;
+  font-size: 12px;
+  line-height: 22px;
+}
+
+.swipe-card .bgg-badges {
+  justify-content: center;
+  margin: 0 0 10px;
+}

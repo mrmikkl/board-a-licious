@@ -98,10 +98,10 @@ export function SharedGameSheet({ bggId, suggestedName, collections, entries, pr
         )}
         {creating ? (
           <>
-            <p className="lead">A game goes into a collection, and you have none yet. Create one, and {gameName} goes straight into it.</p>
+            <p className="lead">A game goes into a shopping list, and you have none yet. Create one, and {gameName} goes straight into it.</p>
             <div>
               <label className="label" htmlFor={newNameId}>
-                Collection name
+                Shopping list name
               </label>
               <div className="field">
                 <input id={newNameId} value={newName} maxLength={NAME_MAX} autoComplete="off" onChange={e => setNewName(e.target.value)} />
@@ -111,7 +111,7 @@ export function SharedGameSheet({ bggId, suggestedName, collections, entries, pr
         ) : (
           <div>
             <label className="label" htmlFor={selectId}>
-              Collection
+              Shopping list
             </label>
             <div className="field select">
               <select id={selectId} value={collection?.id} aria-describedby={hintId} onChange={e => setChosen(e.target.value)}>
@@ -126,9 +126,9 @@ export function SharedGameSheet({ bggId, suggestedName, collections, entries, pr
             {/* one hint line, updated in place: the sheet does not slide up again */}
             <p className={`hint${already ? ' error' : ''}`} id={hintId}>
               {already && collection
-                ? `${gameName} is already in ${collection.name}. Pick another collection.`
+                ? `${gameName} is already in ${collection.name}. Pick another shopping list.`
                 : collection?.id === preselected
-                  ? 'Preselected: the collection you last shared into.'
+                  ? 'Preselected: the shopping list you last shared into.'
                   : ''}
             </p>
           </div>
@@ -138,7 +138,7 @@ export function SharedGameSheet({ bggId, suggestedName, collections, entries, pr
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={!ready}>
-            {creating ? 'Create and add' : 'Add to collection'}
+            {creating ? 'Create and add' : 'Add to shopping list'}
           </button>
         </div>
       </form>

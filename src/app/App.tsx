@@ -1,5 +1,6 @@
 import { AppProvider, SIGN_IN_URL, useServices, useSignedOut } from './context.tsx'
 import { AppBar } from './components/AppBar.tsx'
+import { BggProvider } from './components/BggBadges.tsx'
 import { Celebrate } from './components/Celebrate.tsx'
 import { HexBoard } from './components/HexBoard.tsx'
 import { TapPulse } from './components/TapPulse.tsx'
@@ -7,13 +8,11 @@ import { ToastProvider } from './components/Toast.tsx'
 import { useIntroOpen } from './intro.ts'
 import { type Route, href, useRoute } from './router.ts'
 import { Collection } from './screens/Collection.tsx'
-import { Collections } from './screens/Collections.tsx'
 import { Intro } from './screens/Intro.tsx'
 import { List } from './screens/List.tsx'
 import { Lists } from './screens/Lists.tsx'
 import { Buy } from './screens/Buy.tsx'
-import { Prices } from './screens/Prices.tsx'
-import { Search } from './screens/Search.tsx'
+import { StatusList } from './screens/StatusList.tsx'
 import { Config } from './screens/Config.tsx'
 import { Share } from './screens/Share.tsx'
 import { Shared } from './screens/Shared.tsx'
@@ -22,24 +21,22 @@ import { Swipe } from './screens/Swipe.tsx'
 
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
+    case 'buy':
+      return <Buy tab="search" game={route.game} />
     case 'collections':
-      return <Collections create={route.create} />
+      return <Buy tab="shopping" create={route.create} />
     case 'collection':
       return <Collection key={route.id} id={route.id} open={route.open} />
     case 'showoff':
       return <ShowOff key={route.id} id={route.id} groups={route.groups} />
     case 'swipe':
-      return <Swipe key={`${route.id}:${route.list?.kind}:${route.list?.id}`} id={route.id} list={route.list} />
+      return <Swipe key={href(route)} id={route.id} list={route.list} />
     case 'lists':
-      return <Lists load={route.load} />
+      return <Lists tab={route.tab} load={route.load} />
     case 'list':
       return <List key={`${route.kind}:${route.listId}`} kind={route.kind} listId={route.listId} />
-    case 'search':
-      return <Search />
-    case 'buy':
-      return <Buy />
-    case 'prices':
-      return <Prices key={route.bggId} bggId={route.bggId} />
+    case 'status-list':
+      return <StatusList key={href(route)} bggUser={route.bggUser} status={route.status} />
     case 'share':
       return <Share />
     case 'config':
@@ -65,11 +62,13 @@ function SignInBanner() {
 function Shell() {
   const route = useRoute()
   return (
-    <div className="app">
-      <SignInBanner />
-      <AppBar route={route} />
-      <Screen route={route} />
-    </div>
+    <BggProvider>
+      <div className="app">
+        <SignInBanner />
+        <AppBar route={route} />
+        <Screen route={route} />
+      </div>
+    </BggProvider>
   )
 }
 
@@ -80,7 +79,7 @@ function Boot({ message, signIn = false }: { message?: string; signIn?: boolean 
       <main className="screen">
         <div className="empty">
           <div className="hex" />
-          {message ? <p>{message}</p> : <p>Loading your collections…</p>}
+          {message ? <p>{message}</p> : <p>Loading your shopping lists…</p>}
           {signIn && (
             <div className="actions">
               <a className="btn btn-primary btn-block" href={SIGN_IN_URL}>

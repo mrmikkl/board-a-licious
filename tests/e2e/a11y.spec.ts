@@ -63,8 +63,8 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   await fakePreview(page)
   const name = unique('A11y')
 
-  await page.goto('/#/collections')
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await page.goto('/#/buy/lists')
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   await check(page, testInfo)
 
   // F003: the app bar's menu, open
@@ -75,7 +75,7 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
 
   // the sheets opened by the main buttons of Collections and BGG lists
   for (const [hash, sheet] of [
-    ['#/collections?new', 'New collection'],
+    ['#/buy/lists?new', 'New shopping list'],
     ['#/lists?load', 'Load a BGG list'],
   ]) {
     await page.goto(`/${hash}`)
@@ -84,18 +84,18 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   }
 
   // a new collection: empty state, add by link, a game in it, the game sheet
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await createCollection(page, name)
   await check(page, testInfo)
-  // F003: the pencil beside the name opens Edit collection
+  // F003: the pencil beside the name opens Edit shopping list
   await page.getByRole('button', { name: `Edit ${name}` }).click()
-  await expect(page.getByRole('dialog', { name: 'Edit collection' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Edit shopping list' })).toBeVisible()
   await check(page, testInfo)
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
   await check(page, testInfo)
-  await page.getByRole('button', { name: 'Add to collection' }).click()
+  await page.getByRole('button', { name: 'Add to shopping list' }).click()
   await page.getByRole('button', { name: /cascadia/i }).first().click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await check(page, testInfo)
@@ -130,7 +130,7 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
 
   // lists, a list, the list game sheet
   await page.goto('/#/lists')
-  await expect(page.getByRole('heading', { level: 1, name: 'BGG lists' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Lists' })).toBeVisible()
   await check(page, testInfo)
   await page.goto('/#/lists/preview/9093')
   await expect(page.getByRole('button', { name: /^kalypso/i })).toBeVisible()
@@ -140,8 +140,8 @@ test('every screen and sheet: axe clean, no horizontal scroll, sensible focus, s
   await check(page, testInfo)
   await page.keyboard.press('Escape')
 
-  await page.goto('/#/search')
-  await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+  await page.goto('/#/buy')
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   await check(page, testInfo)
 
   await page.goto('/#/config')
@@ -178,9 +178,10 @@ test('F005: rows with actions, quick filters and the new sheets: axe clean, sens
   await check(page, testInfo)
   await page.keyboard.press('Escape')
 
-  // the details: honeycomb, ratings, copy and move
+  // the details: Category section, ratings, copy and move
   await page.getByRole('button', { name: /^cascadia,/i }).click()
-  await expect(page.getByRole('dialog', { name: 'Cascadia' }).getByRole('group', { name: 'Category' })).toBeVisible()
+  await page.getByRole('dialog', { name: 'Cascadia' }).getByRole('button', { name: /^Category/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Cascadia' }).locator('.cat-list')).toBeVisible()
   await check(page, testInfo)
   await page.getByRole('button', { name: 'Move', exact: true }).click()
   await expect(page.getByRole('dialog', { name: 'Move Cascadia' })).toBeVisible()

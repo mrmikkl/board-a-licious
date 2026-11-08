@@ -19,6 +19,8 @@ export type AppServices = {
   lists: ListLoader
   /** Dice sound, chime and vibration; muted by the header toggle (FR-026). */
   feedback: Feedback
+  /** F008 (FR-014): signs out of BoardGameGeek on this device first, then out of the app (Access). */
+  signOut: () => Promise<void>
 }
 
 const Services = createContext<AppServices | null>(null)
@@ -26,6 +28,8 @@ const SignedOut = createContext(false)
 
 /** Where the app sends people to sign in: an /api path, so the service worker lets it through to Access. */
 export const SIGN_IN_URL = '/api/signin'
+/** Cloudflare Access ends its session here. */
+export const SIGN_OUT_URL = '/cdn-cgi/access/logout'
 const LAST_EMAIL = 'bal-last-email'
 
 type Boot = { state: 'loading' } | { state: 'ready'; services: AppServices } | { state: 'signed-out' } | { state: 'error'; message: string }
@@ -91,7 +95,14 @@ export function AppProvider({ children, fallback }: { children: ReactNode; fallb
         previousStop?.()
         lists.dispose()
       }
-      setBoot({ state: 'ready', services: { store, api, sync, email, bggSearch, completeDetails: details, lists, feedback } })
+      const ready = store
+      const signOut = async () => {
+        // the BGG session cookie belongs to this app person: clear it before the app's own sign-out
+        await api.signOut().catch(() => undefined)
+        await ready.setMeta('bggSignedInAs', null)
+        window.location.assign(SIGN_OUT_URL)
+      }
+      setBoot({ state: 'ready', services: { store, api, sync, email, bggSearch, completeDetails: details, lists, feedback, signOut } })
     })().catch(error => setBoot({ state: 'error', message: String(error) }))
     return () => {
       cancelled = true

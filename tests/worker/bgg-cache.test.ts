@@ -52,7 +52,7 @@ const THING = 'https://boardgamegeek.com/xmlapi2/thing?id=1&stats=1'
 
 describe('BGG client', () => {
   it('has the cache times of research R9/R10: lists 1 h, games 7 days, companies 30 days', () => {
-    expect(TTL).toEqual({ list: 3600, game: 7 * 86400, company: 30 * 86400, search: 86400 })
+    expect(TTL).toEqual({ list: 3600, game: 7 * 86400, company: 30 * 86400, search: 86400, collection: 900 })
   })
 
   it('serves a repeated request from the cache until it expires', async () => {
@@ -104,6 +104,15 @@ describe('BGG client', () => {
     expect(await statusOf(() => new Response('<html>', { status: 200 }))).toEqual(['bgg_unavailable', undefined])
   })
 
+  it('fresh skips the cache for one call and stores the new answer', async () => {
+    let n = 0
+    const { f, client } = setup(() => Response.json({ n: ++n }))
+    expect(await client.getJson('https://api.geekdo.com/a', TTL.list)).toEqual({ n: 1 })
+    expect(await client.getJson('https://api.geekdo.com/a', TTL.list, { fresh: true })).toEqual({ n: 2 })
+    expect(await client.getJson('https://api.geekdo.com/a', TTL.list)).toEqual({ n: 2 })
+    expect(f.calls).toHaveLength(2)
+  })
+
   it('does not cache failures', async () => {
     let fail = true
     const { f, client } = setup(() => (fail ? new Response('', { status: 500 }) : Response.json({ ok: 1 })))
@@ -122,6 +131,27 @@ describe('BGG client', () => {
       expect(f.calls[0]?.userAgent).toMatch(/^board-a-licious\//)
       expect(f.calls[0]?.url).not.toContain(TOKEN)
       expect(f.calls[1]?.authorization).toBeNull()
+    })
+
+    it('sends the token only to /xmlapi and /xmlapi2 paths on boardgamegeek.com (F008 research R5)', async () => {
+      const { f, client } = setup(xml('<items/>'), TOKEN)
+      const urls = [
+        'https://boardgamegeek.com/xmlapi/geeklist/1',
+        'https://boardgamegeek.com/xmlapi2/collection?username=anna',
+        'https://boardgamegeek.com/geekcollection.php?ajax=1',
+        'https://boardgamegeek.com/api/collectionitems',
+        'https://boardgamegeek.com/xmlapifake',
+        'https://boardgamegeek.com.evil.example/xmlapi2/thing?id=1',
+        'https://www.boardgamegeek.com/xmlapi2/thing?id=1',
+      ]
+      for (const url of urls) await client.getXml(url, TTL.game)
+      expect(f.calls.map(c => c.authorization)).toEqual([`Bearer ${TOKEN}`, `Bearer ${TOKEN}`, null, null, null, null, null])
+    })
+
+    it('answers bgg_preparing instead of bgg_rate_limited when asked to (collections)', async () => {
+      const { client } = setup(() => new Response('<message>accepted</message>', { status: 202 }), TOKEN)
+      const error = await client.getXml('https://boardgamegeek.com/xmlapi2/collection?username=a', TTL.collection, { preparing: true }).catch((e: BggError) => e)
+      expect(error).toMatchObject({ code: 'bgg_preparing', retryAfter: 5 })
     })
 
     it('sends no Authorization header without a token', async () => {

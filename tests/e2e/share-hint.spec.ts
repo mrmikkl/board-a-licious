@@ -37,17 +37,17 @@ test('Config in the installed app (standalone) has no Share hint (T019)', async 
 // Enabled by the coordinator after the merge: the share sheet (worker A, T011) calls markJustAdded.
 test('the game just added from a share keeps the hover highlight until the user scrolls or taps (T010)', async ({ page }) => {
   await fakeBgg(page)
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   const name = unique('Essen 2026')
-  await page.goto('/#/collections?new')
+  await page.goto('/#/buy/lists?new')
   await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await page.getByRole('button', { name: 'Create shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 
   await page.goto(`/share-target?${new URLSearchParams({ text: `Cascadia ${CASCADIA}` })}`)
   const sheet = page.getByRole('dialog')
-  await sheet.getByLabel('Collection').selectOption({ label: name })
-  await sheet.getByRole('button', { name: 'Add to collection' }).click()
+  await sheet.getByLabel('Shopping list').selectOption({ label: name })
+  await sheet.getByRole('button', { name: 'Add to shopping list' }).click()
 
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   // F005: the highlight sits on the row's tile, around its open button and actions

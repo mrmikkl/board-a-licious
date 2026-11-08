@@ -25,6 +25,9 @@ import './theme/intro.css'
 import './theme/celebrate.css'
 import './theme/search.css'
 import './theme/prices.css'
+import './theme/tabs.css'
+import './theme/badges.css'
+import './theme/bgg.css'
 
 const root = document.getElementById('root')
 if (root) {

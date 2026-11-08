@@ -18,19 +18,19 @@ async function drag(page: Page, target: Locator, dx: number) {
   await page.mouse.up()
 }
 
-test('intro: shown on first start, Skip lands on Collections, not shown again until asked for', async ({ page }) => {
+test('intro: shown on first start, Skip lands on Shopping lists, not shown again until asked for', async ({ page }) => {
   await page.goto('/')
   const intro = introOf(page)
   await expect(intro.getByRole('group', { name: '1 of 3' })).toBeVisible()
-  await expect(intro.getByRole('heading', { name: 'Collections' })).toBeVisible()
+  await expect(intro.getByRole('heading', { name: 'Shopping lists' })).toBeVisible()
   await expectAccessible(page)
 
   await intro.getByRole('button', { name: 'Skip' }).click()
   await expect(intro).toBeHidden()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
 
   await page.reload()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   await expect(intro).toBeHidden()
 
   // the intro can be shown again from Config
@@ -38,7 +38,7 @@ test('intro: shown on first start, Skip lands on Collections, not shown again un
   await page.getByRole('button', { name: 'Show the intro again' }).click()
   await expect(intro.getByRole('group', { name: '1 of 3' })).toBeVisible()
   await intro.getByRole('button', { name: 'Skip' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
 })
 
 test('intro: keyboard, buttons and swipe move through the cards', async ({ page }) => {
@@ -66,7 +66,7 @@ test('intro: keyboard, buttons and swipe move through the cards', async ({ page 
   await expect(go).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(intro).toBeHidden()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
 })
 
 test('intro: the floating hexagons stand still with reduced motion', async ({ page }) => {
@@ -88,6 +88,6 @@ test('intro: never blocks when the device keeps no storage', async ({ page }) =>
   await page.goto('/')
   const intro = introOf(page)
   await intro.getByRole('button', { name: 'Skip' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   await expect(intro).toBeHidden()
 })

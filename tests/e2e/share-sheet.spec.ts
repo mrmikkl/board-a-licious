@@ -9,7 +9,7 @@ import { createCollection, expectAccessible, fakeBgg, unique } from './helpers.t
 const CASCADIA = 'https://boardgamegeek.com/boardgame/295947/cascadia'
 const share = (page: Page) => page.goto(`/share-target?text=${encodeURIComponent(`Cascadia ${CASCADIA}`)}`)
 const sheet = (page: Page) => page.getByRole('dialog', { name: 'Add game' })
-const collectionSelect = (page: Page) => sheet(page).getByLabel('Collection', { exact: true })
+const collectionSelect = (page: Page) => sheet(page).getByLabel('Shopping list', { exact: true })
 
 /** Picks a collection by its name; the option text may carry "(last used)" or "(already in it)". */
 async function choose(page: Page, name: string) {
@@ -35,9 +35,9 @@ test('share a game: preselected last used collection, add, toast, and the next s
 
   // choose the first collection and add: that collection opens, history replaced
   await choose(page, first)
-  await sheet(page).getByRole('button', { name: 'Add to collection' }).click()
+  await sheet(page).getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name: first })).toBeVisible()
-  await expect(page).toHaveURL(/#\/collections\//)
+  await expect(page).toHaveURL(/#\/buy\/lists\//)
   await expect(page.getByRole('status').filter({ hasText: `Added Cascadia to ${first}` })).toBeVisible()
   await expect(notYetMarked(page).getByRole('button', { name: /^cascadia,/i })).toBeVisible()
 
@@ -47,7 +47,7 @@ test('share a game: preselected last used collection, add, toast, and the next s
   await expect(optionText(page, first)).toHaveText(`${first} (already in it)`)
   await choose(page, second)
   await expect(optionText(page, second)).toHaveText(second)
-  await sheet(page).getByRole('button', { name: 'Add to collection' }).click()
+  await sheet(page).getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name: second })).toBeVisible()
 
   // a share of another game: the collection shared into last is preselected and marked
@@ -55,7 +55,7 @@ test('share a game: preselected last used collection, add, toast, and the next s
   await expect(sheet(page)).toBeVisible()
   await expect(collectionSelect(page)).toHaveValue((await optionText(page, second).getAttribute('value'))!)
   await expect(optionText(page, second)).toHaveText(`${second} (last used)`)
-  await expect(sheet(page)).toContainText('Preselected: the collection you last shared into.')
+  await expect(sheet(page)).toContainText('Preselected: the shopping list you last shared into.')
 })
 
 test('a game already in the chosen collection: marked, red hint, Add disabled until another is chosen; the sheet stays (T009, T011)', async ({ page }) => {
@@ -66,7 +66,7 @@ test('a game already in the chosen collection: marked, red hint, Add disabled un
   await createCollection(page, holding)
   await share(page)
   await choose(page, holding)
-  await sheet(page).getByRole('button', { name: 'Add to collection' }).click()
+  await sheet(page).getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name: holding })).toBeVisible()
 
   await share(page)
@@ -74,18 +74,18 @@ test('a game already in the chosen collection: marked, red hint, Add disabled un
   // the same sheet element throughout: changing the dropdown does not re-mount (or re-slide) it
   await sheet(page).evaluate(el => ((window as unknown as { sharedSheet: Element }).sharedSheet = el))
   await expect(optionText(page, holding)).toHaveText(`${holding} (already in it)`)
-  await expect(sheet(page)).toContainText(`Cascadia is already in ${holding}. Pick another collection.`)
-  await expect(sheet(page).getByRole('button', { name: 'Add to collection' })).toBeDisabled()
+  await expect(sheet(page)).toContainText(`Cascadia is already in ${holding}. Pick another shopping list.`)
+  await expect(sheet(page).getByRole('button', { name: 'Add to shopping list' })).toBeDisabled()
   await expectAccessible(page)
 
   await choose(page, other)
   await expect(sheet(page)).not.toContainText('is already in')
-  await expect(sheet(page).getByRole('button', { name: 'Add to collection' })).toBeEnabled()
+  await expect(sheet(page).getByRole('button', { name: 'Add to shopping list' })).toBeEnabled()
   expect(await sheet(page).evaluate(el => el === (window as unknown as { sharedSheet: Element }).sharedSheet)).toBe(true)
 
   // an edited name is what gets added
   await sheet(page).getByLabel('Name', { exact: true }).fill('  Cascadia (2021)  ')
-  await sheet(page).getByRole('button', { name: 'Add to collection' }).click()
+  await sheet(page).getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name: other })).toBeVisible()
   await expect(page.getByRole('status').filter({ hasText: `Added Cascadia (2021) to ${other}` })).toBeVisible()
 })
@@ -98,7 +98,7 @@ test('Cancel adds nothing (T009, T011)', async ({ page }) => {
   await choose(page, name)
   await sheet(page).getByRole('button', { name: 'Cancel' }).click()
   await expect(sheet(page)).toHaveCount(0)
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await page.getByRole('link', { name: new RegExp(name) }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await expect(page.getByRole('button', { name: /^cascadia,/i })).toHaveCount(0)
@@ -114,8 +114,8 @@ test('no collection yet: "Create and add" creates one with the game in it (T009,
   )
   await share(page)
   await expect(sheet(page)).toBeVisible()
-  await expect(sheet(page)).toContainText('A game goes into a collection, and you have none yet. Create one, and Cascadia goes straight into it.')
-  const name = sheet(page).getByLabel('Collection name')
+  await expect(sheet(page)).toContainText('A game goes into a shopping list, and you have none yet. Create one, and Cascadia goes straight into it.')
+  const name = sheet(page).getByLabel('Shopping list name')
   await expect(name).toHaveValue('SPIEL 2026')
   await expectAccessible(page)
 

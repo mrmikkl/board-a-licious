@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { fakeBgg, unique } from './helpers.ts'
+import { chooseCategory, fakeBgg, unique } from './helpers.ts'
 
 /**
  * SC-004 / FR-022: with no connection the app still opens (service worker), shows the collections
@@ -9,25 +9,25 @@ import { fakeBgg, unique } from './helpers.ts'
  */
 test('offline: mark and buy in airplane mode, reload, then sync when back online', async ({ page, context }) => {
   await fakeBgg(page)
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await page.evaluate(() => navigator.serviceWorker.ready)
   await page.reload()
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
 
   const name = unique('Offline')
-  await page.goto('/#/collections?new')
+  await page.goto('/#/buy/lists?new')
   await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await page.getByRole('button', { name: 'Create shopping list' }).click()
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill('https://boardgamegeek.com/boardgame/295947/cascadia')
-  await page.getByRole('button', { name: 'Add to collection' }).click()
+  await page.getByRole('button', { name: 'Add to shopping list' }).click()
   const game = () => page.getByRole('button', { name: /cascadia/i }).first()
   await expect(game()).toBeVisible()
 
   // airplane mode
   await context.setOffline(true)
   await game().click()
-  await page.getByRole('dialog').getByRole('button', { name: /must have/i }).click()
+  await chooseCategory(page, /must have/i)
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
   await game().click()

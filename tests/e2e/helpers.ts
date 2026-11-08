@@ -43,38 +43,57 @@ export async function expectAccessible(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
 }
 
-/** F003 navigation (contracts/navigation.md): the four places live in the app bar's menu. */
-export type Place = 'Collections' | 'BGG lists' | 'Search' | 'Config'
+/** F008 places (contracts/ui.md): Buy, Lists and Config in the app bar's menu; Buy and Lists have tabs. */
+export type Place = 'Buy' | 'Lists' | 'Config'
+export type Tab = 'Search' | 'Shopping lists' | 'Status lists' | 'Previews' | 'Geeklists'
 
 export async function openMenu(page: Page) {
   await page.getByRole('button', { name: 'Menu' }).click()
   await expect(page.getByRole('navigation', { name: 'Menu' })).toBeVisible()
 }
 
-export async function goTo(page: Page, place: Place) {
+/** Opens a place from the menu and, when given, one of its tabs. */
+export async function goTo(page: Page, place: Place, tab?: Tab) {
   await openMenu(page)
   await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: place, exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: place, exact: true })).toBeVisible()
+  if (tab) await openTab(page, tab)
+}
+
+/** A tab of the place on screen; waits until it is selected. */
+export async function openTab(page: Page, tab: Tab) {
+  const button = page.getByRole('tab', { name: tab, exact: true })
+  await button.click()
+  await expect(button).toHaveAttribute('aria-selected', 'true')
+}
+
+/** F008: in the open game sheet, unfold the Category section and choose a category (it folds again). */
+export async function chooseCategory(page: Page, category: RegExp) {
+  const sheet = page.getByRole('dialog')
+  const section = sheet.getByRole('button', { name: /^Category/ })
+  if ((await section.getAttribute('aria-expanded')) !== 'true') await section.click()
+  await sheet.locator('.cat-list').getByRole('button', { name: category }).click()
+  await expect(section).toHaveAttribute('aria-expanded', 'false')
 }
 
 /** The big hexagon in the action bar; its accessible name says what it does on the screen. */
 export const mainButton = (page: Page) => page.getByRole('navigation', { name: 'Actions' }).locator('.main-btn')
 
-/** Collections → main ＋ → New collection sheet → Create collection; ends in the new collection. */
+/** Buy › Shopping lists → main ＋ → New shopping list sheet → Create shopping list; ends in the new list. */
 export async function createCollection(page: Page, name: string) {
-  if (page.url() === 'about:blank') await page.goto('/#/collections')
-  await goTo(page, 'Collections')
+  if (page.url() === 'about:blank') await page.goto('/#/buy/lists')
+  await goTo(page, 'Buy', 'Shopping lists')
   await mainButton(page).click()
-  const sheet = page.getByRole('dialog', { name: 'New collection' })
+  const sheet = page.getByRole('dialog', { name: 'New shopping list' })
   await sheet.getByLabel('Name').fill(name)
-  await sheet.getByRole('button', { name: 'Create collection' }).click()
+  await sheet.getByRole('button', { name: 'Create shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 }
 
-/** BGG lists → main ＋ → Load a BGG list sheet → Load list; ends in the list. */
+/** Lists → main ＋ → Load a BGG list sheet → Load list; ends in the list. */
 export async function loadList(page: Page, link: string) {
   if (page.url() === 'about:blank') await page.goto('/#/lists')
-  await goTo(page, 'BGG lists')
+  await goTo(page, 'Lists')
   await mainButton(page).click()
   const sheet = page.getByRole('dialog', { name: 'Load a BGG list' })
   await sheet.getByLabel(/link/i).fill(link)
@@ -142,13 +161,13 @@ export async function seedCollection(page: Page, name: string, games: SeedGame[]
     })
     await route.fulfill({ json: { games } })
   })
-  if (page.url() === 'about:blank') await page.goto('/#/collections')
+  if (page.url() === 'about:blank') await page.goto('/#/buy/lists')
   const response = await page.request.post('/api/sync', { data: { collections: [{ id, name, updatedAt: now, deleted: false }], entries } })
   expect(response.ok()).toBe(true)
   // the app pulls the new collection with its sync on start: reload, and wait for that pull to
   // answer before looking (and before anything else navigates: an aborted request can leave the local
   // database's one connection stuck)
-  await page.goto(`/#/collections/${id}`)
+  await page.goto(`/#/buy/lists/${id}`)
   const pulled = page.waitForResponse(r => r.url().includes('/api/sync') && r.request().method() === 'GET')
   await page.reload()
   await pulled
@@ -240,4 +259,130 @@ export async function fakePrices(page: Page, answer: Partial<typeof CASCADIA_PRI
     if (options.delayMs) await new Promise(resolve => setTimeout(resolve, options.delayMs))
     await route.fulfill({ json: { ...CASCADIA_PRICES, ...answer } })
   })
+}
+
+/** F008: a status in the shape of `/api/bgg/collection` (contracts/api.md), all off unless given. */
+export const bggStatus = (s: Record<string, unknown> = {}) => ({
+  own: false, prevOwned: false, forTrade: false, wantInTrade: false, wantToBuy: false, wantToPlay: false, preordered: false, wishlist: null, ...s,
+})
+
+export type FakeCollectionItem = { bggId: number; name: string; year?: number | null; kind?: 'boardgame' | 'expansion'; status?: Record<string, unknown> }
+
+/**
+ * F008: `GET /api/bgg/collection?user=` without BGG: `collections[user]` answers, unknown users 404;
+ * `preparingFor` answers `202 bgg_preparing` until that many ms passed since the first request.
+ * `asked` collects the requested URLs (to check `fresh=1`).
+ */
+export async function fakeBggCollection(
+  page: Page,
+  collections: Record<string, FakeCollectionItem[]>,
+  options: { preparingFor?: number; asked?: string[]; loadedAt?: string } = {},
+) {
+  let first: number | undefined
+  await page.route('**/api/bgg/collection?**', async route => {
+    const url = new URL(route.request().url())
+    options.asked?.push(url.toString())
+    const user = (url.searchParams.get('user') ?? '').toLowerCase()
+    first ??= Date.now()
+    if (options.preparingFor && Date.now() - first < options.preparingFor)
+      return route.fulfill({ status: 202, headers: { 'Retry-After': '5' }, json: { error: 'bgg_preparing', message: 'BoardGameGeek is preparing this collection.', retryable: true } })
+    const items = collections[user]
+    if (!items) return route.fulfill({ status: 404, json: { error: 'not_found', message: 'BoardGameGeek has no such user.', retryable: false } })
+    await route.fulfill({
+      json: {
+        bggUser: user,
+        loadedAt: options.loadedAt ?? new Date().toISOString(),
+        items: items.map(i => ({ year: null, thumbnailUrl: null, kind: 'boardgame', ...i, status: bggStatus(i.status) })),
+      },
+    })
+  })
+}
+
+/**
+ * F008: the BGG account routes without BGG (contracts/api.md): sign-in state, sign-in (password
+ * "wrong" fails), sign-out and saves. `saves` collects the bodies of `POST …/collection/<bggId>`;
+ * `saveStatus` makes saves fail; `priceConflict` answers 409 until `replacePrice` is sent.
+ */
+export async function fakeBggAccount(
+  page: Page,
+  options: {
+    signedIn?: boolean
+    bggUser?: string
+    saves?: unknown[]
+    saveStatus?: number
+    priceConflict?: { amount: number; currency: string }
+    /** What BGG holds before the saves, by game (a save merges into it, as the Worker does). */
+    statuses?: Record<number, Record<string, unknown>>
+  } = {},
+) {
+  const state = { signedIn: options.signedIn ?? false, bggUser: options.bggUser ?? 'mrmikkl' }
+  const statuses = new Map<number, Record<string, unknown>>(Object.entries(options.statuses ?? {}).map(([id, s]) => [Number(id), s]))
+  await page.route('**/api/bgg/account', route => route.fulfill({ json: state.signedIn ? state : { signedIn: false } }))
+  await page.route('**/api/bgg/account/signin', async route => {
+    const body = route.request().postDataJSON() as { username: string; password: string }
+    if (body.password === 'wrong')
+      return route.fulfill({ status: 401, json: { error: 'bgg_signed_out', message: 'BoardGameGeek did not accept this username or password.', retryable: false } })
+    Object.assign(state, { signedIn: true, bggUser: body.username.toLowerCase() })
+    await route.fulfill({ json: state })
+  })
+  await page.route('**/api/bgg/account/signout', async route => {
+    state.signedIn = false
+    await route.fulfill({ json: { signedIn: false } })
+  })
+  await page.route('**/api/bgg/account/collection/*', async route => {
+    const bggId = Number(new URL(route.request().url()).pathname.split('/').pop())
+    const body = route.request().postDataJSON() as { status?: Record<string, unknown>; replacePrice?: boolean }
+    options.saves?.push(body)
+    if (!state.signedIn) return route.fulfill({ status: 401, json: { error: 'bgg_signed_out', message: 'Sign in to BoardGameGeek.', retryable: false } })
+    if (options.saveStatus) return route.fulfill({ status: options.saveStatus, json: { error: 'bgg_refused', message: 'BoardGameGeek did not take the change.', retryable: true } })
+    if (options.priceConflict && body.replacePrice === undefined && 'privateInfo' in body)
+      return route.fulfill({ status: 409, json: { error: 'price_conflict', message: 'BoardGameGeek already has a price paid.', retryable: false, current: options.priceConflict } })
+    const next = { ...bggStatus(statuses.get(bggId)), ...body.status }
+    statuses.set(bggId, next)
+    await route.fulfill({ json: { bggId, status: next } })
+  })
+}
+
+/**
+ * F008: keeps the BGG username and followed friends on this test's device. All tests share one dev
+ * user, so a synced username would reach every other test running at the same time: pushes drop
+ * `settings` and `follows`, pulls leave them out.
+ */
+export async function keepBggSettingsLocal(page: Page) {
+  await page.route('**/api/sync**', async route => {
+    const request = route.request()
+    try {
+      if (request.method() === 'POST') {
+        const body = request.postDataJSON() as Record<string, unknown>
+        delete body.settings
+        delete body.follows
+        // nothing else in it: the server would refuse an empty push, so it is answered here
+        const empty = ['collections', 'entries', 'lists'].every(key => !Array.isArray(body[key]) || (body[key] as unknown[]).length === 0)
+        if (empty) return await route.fulfill({ json: { applied: 0, ignored: 0 } })
+        return await route.continue({ postData: JSON.stringify(body) })
+      }
+      const response = await route.fetch()
+      if (!response.ok()) return await route.fulfill({ response })
+      const json = (await response.json()) as Record<string, unknown>
+      delete json.settings
+      delete json.follows
+      await route.fulfill({ response, json })
+    } catch {
+      // the test ended while the request was on its way
+    }
+  })
+}
+
+/** F008: Config › BoardGameGeek › "Your BGG username" and Save username (call `keepBggSettingsLocal` first). */
+export async function setBggUsername(page: Page, name: string) {
+  await page.goto('/#/config')
+  const field = page.getByLabel('Your BGG username')
+  await field.fill(name)
+  await page.getByRole('button', { name: 'Save username' }).click()
+  await expect(page.getByRole('status').filter({ hasText: name ? 'Saved your BGG username' : 'Removed your BGG username' })).toBeVisible()
+}
+
+/** F008: `/api/bgg/games` without BGG for games the test does not know: an empty answer. */
+export async function fakeNoGameDetails(page: Page) {
+  await page.route('**/api/bgg/games?**', route => route.fulfill({ json: { games: [] } }))
 }

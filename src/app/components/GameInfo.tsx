@@ -37,9 +37,15 @@ const Rating = ({ value, geek }: { value: string; geek: boolean }) => (
   </span>
 )
 
-/** The publisher, then every info a game has in the order of FR-010: game details, swipe card. */
-export function InfoList({ facts, details, publisher }: Source & { publisher?: string | null }) {
-  const infos = gameInfos(facts, details)
+/** BGG's player poll summary: in the game sheet these live in the Players section, not the info box. */
+const PLAYER_KEYS = new Set(['bestWith', 'recommendedWith'])
+
+/**
+ * The publisher, then every info a game has in the order of FR-010: game details, swipe card.
+ * `players={false}` leaves out Best with, Recommended and the votes (the game sheet's Players section).
+ */
+export function InfoList({ facts, details, publisher, players = true }: Source & { publisher?: string | null; players?: boolean }) {
+  const infos = gameInfos(facts, details).filter(i => players || !PLAYER_KEYS.has(i.key))
   if (infos.length === 0 && !publisher) return null
   return (
     <dl className="info-list">
@@ -79,8 +85,9 @@ export function InfoList({ facts, details, publisher }: Source & { publisher?: s
  * F006 FR-006b: "Show details" unfolds BGG's player poll as a table: per player count the share of
  * Best, Recommended and Not recommended votes; the highest share of each column bold.
  */
-function PlayerPoll({ poll, voters }: { poll?: PlayerVotes[] | null; voters?: number | null }) {
-  const [open, setOpen] = useState(false)
+export function PlayerPoll({ poll, voters, shown = false }: { poll?: PlayerVotes[] | null; voters?: number | null; shown?: boolean }) {
+  const [toggled, setOpen] = useState(false)
+  const open = shown || toggled
   const tableId = useId()
   const table = pollTable(poll)
   if (!table) return null
@@ -89,9 +96,11 @@ function PlayerPoll({ poll, voters }: { poll?: PlayerVotes[] | null; voters?: nu
     <div className="poll-row">
       <dt className="visually-hidden">Player votes</dt>
       <dd>
-        <button type="button" className="link-btn poll-toggle" aria-expanded={open} aria-controls={tableId} onClick={() => setOpen(o => !o)}>
-          {open ? 'Hide details' : 'Show details'}
-        </button>
+        {!shown && (
+          <button type="button" className="link-btn poll-toggle" aria-expanded={open} aria-controls={tableId} onClick={() => setOpen(o => !o)}>
+            {open ? 'Hide details' : 'Show details'}
+          </button>
+        )}
         <table id={tableId} className="poll-table" hidden={!open}>
           <caption className="visually-hidden">Votes on BoardGameGeek per number of players, in percent</caption>
           <thead>
@@ -116,5 +125,71 @@ function PlayerPoll({ poll, voters }: { poll?: PlayerVotes[] | null; voters?: nu
         {open && voters ? <p className="poll-voters">{`${voters.toLocaleString('en')} ${voters === 1 ? 'vote' : 'votes'} on BoardGameGeek`}</p> : null}
       </dd>
     </div>
+  )
+}
+
+/** F008 feedback: the first 200 characters of BGG's description, cut at a word, with "…". */
+export function shortText(text: string, max = 200): string {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const space = cut.lastIndexOf(' ')
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).trimEnd()}…`
+}
+
+/**
+ * F008 feedback (docs/design.md "Game sheet"): the game's description at the end of the info box, in
+ * small text: the first 200 characters with "…" and Show more / Show less for the full text.
+ */
+export function Description({ text, note }: { text?: string | null; note?: string }) {
+  const [open, setOpen] = useState(false)
+  const id = useId()
+  if (!text) return note ? <p className="info-desc muted">{note}</p> : null
+  const long = text.length > 200
+  return (
+    <div className="info-desc">
+      <p id={id}>{open || !long ? text : shortText(text)}</p>
+      {long && (
+        <button type="button" className="link-btn" aria-expanded={open} aria-controls={id} onClick={() => setOpen(o => !o)}>
+          {open ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  )
+}
+
+/**
+ * F008 feedback (docs/design.md "Players section"): a folded block like Prices: Best with,
+ * Recommended and BGG's votes per number of players. Nothing when BGG has no poll for the game.
+ */
+export function PlayersSection({ details }: { details?: Partial<GameDetails> | null }) {
+  const [open, setOpen] = useState(false)
+  const bodyId = useId()
+  const infos = gameInfos(null, details).filter(i => PLAYER_KEYS.has(i.key))
+  if (infos.length === 0) return null
+  const best = infos.find(i => i.key === 'bestWith')
+  return (
+    <section className="prices-sec players-sec">
+      <button type="button" className="prices-toggle" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(o => !o)}>
+        <span aria-hidden="true">👥</span>
+        Players
+        {best && <span className="cat-now">Best {best.text.replace(/ players?$/, '')}</span>}
+        <span className="chev" aria-hidden="true">
+          ›
+        </span>
+      </button>
+      <div className="prices-body" id={bodyId} hidden={!open}>
+        {open && (
+          <dl className="info-list">
+            {infos.map(i => (
+              <div key={i.key}>
+                <dt>{i.label}</dt>
+                <dd>{i.text}</dd>
+              </div>
+            ))}
+            <PlayerPoll poll={details?.playerPoll} voters={details?.playerPollVoters} shown />
+          </dl>
+        )}
+      </div>
+    </section>
   )
 }

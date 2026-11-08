@@ -1,8 +1,11 @@
+import { useId } from 'react'
+
 import type { Game } from '../../client/types.ts'
 import type { Entry } from '../../domain/collection.ts'
 import { publisherOf } from '../../domain/game-info.ts'
 import { markInfo } from '../../domain/marks.ts'
 import { formatMoney } from '../../domain/money.ts'
+import { BggBadges, useHasBadges } from './BggBadges.tsx'
 import { InfoLine } from './GameInfo.tsx'
 import { HexCover } from './HexCover.tsx'
 import { IconBag, IconBagCheck, IconCategory } from './icons.tsx'
@@ -32,6 +35,8 @@ export function GameRow({
   const category = markInfo(entry.mark).label
   const publisher = publisherOf(entry.facts, game)
   const waiting = entry.detailsPending && !game?.year
+  const badgesId = useId()
+  const hasBadges = useHasBadges(entry.bggId)
   const paid = entry.paidCents != null ? formatMoney(entry.paidCents, entry.paidCurrency) : 'Bought'
   return (
     <div className={`row${entry.mark === 'skip' ? ' skip' : ''}${justAdded ? ' is-just-added' : ''}`} data-mark={entry.mark}>
@@ -39,7 +44,7 @@ export function GameRow({
       <span className="row-cat" aria-hidden="true">
         {category}
       </span>
-      <button type="button" className="row-open" onClick={onOpen} aria-label={`${name}, ${category}${entry.bought ? ', bought' : ''}`}>
+      <button type="button" className="row-open" onClick={onOpen} aria-label={`${name}, ${category}${entry.bought ? ', bought' : ''}`} aria-describedby={hasBadges ? badgesId : undefined}>
         <HexCover game={game} name={name} pending={entry.detailsPending && !game?.thumbnailUrl} bought={entry.bought} />
         <span className="row-meta">
           <span className="row-name">
@@ -48,6 +53,7 @@ export function GameRow({
           </span>
           {publisher ? <span className="row-sub">{publisher}</span> : waiting && <span className="row-sub">Details follow from BoardGameGeek</span>}
           <InfoLine facts={entry.facts} details={game} />
+          <BggBadges bggId={entry.bggId} max={2} id={badgesId} />
         </span>
       </button>
       <div className="row-acts">

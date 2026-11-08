@@ -1,12 +1,12 @@
 import { type Page, expect, test } from '@playwright/test'
 
-import { expectAccessible, fakeBgg, unique } from './helpers.ts'
+import { chooseCategory, expectAccessible, fakeBgg, unique } from './helpers.ts'
 
 async function createCollection(page: Page, name: string) {
-  await page.goto('/#/collections')
-  await page.goto('/#/collections?new')
+  await page.goto('/#/buy/lists')
+  await page.goto('/#/buy/lists?new')
   await page.getByLabel('Name').fill(name)
-  await page.getByRole('button', { name: 'Create collection' }).click()
+  await page.getByRole('button', { name: 'Create shopping list' }).click()
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 }
 
@@ -14,7 +14,7 @@ async function addByLink(page: Page, collection: string, link: string, game: str
   await page.getByRole('button', { name: /^add game$/i }).click()
   await page.getByLabel(/boardgamegeek link/i).fill(link)
   await expect(page.getByLabel(/^name$/i)).toHaveValue(game)
-  await page.getByRole('button', { name: 'Add to collection' }).click()
+  await page.getByRole('button', { name: 'Add to shopping list' }).click()
   await expect(page.getByRole('button', { name: new RegExp(`^${game},`, 'i') })).toBeVisible()
 }
 
@@ -33,8 +33,9 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
 
   // Must Have: ~20 hexagons burst out of the tapped button, without blocking taps
   await openGame(page, 'Cascadia')
-  const button = await sheet.getByRole('button', { name: /must have/i }).boundingBox()
-  await sheet.getByRole('button', { name: /must have/i }).click()
+  await sheet.getByRole('button', { name: /^Category/ }).click()
+  const button = await sheet.locator('.cat-list').getByRole('button', { name: /must have/i }).boundingBox()
+  await sheet.locator('.cat-list').getByRole('button', { name: /must have/i }).click()
   await page.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
   await expect(mustHaveCount).toHaveAccessibleName(/Must Have 1/)
@@ -53,7 +54,7 @@ test('celebrations: a burst for Must Have, a stamp for Bought, rolling counters;
 
   // a second Must Have: the count rolls from 1 to 2, the final value is in the name right away
   await openGame(page, 'Ark Nova')
-  await sheet.getByRole('button', { name: /must have/i }).click()
+  await chooseCategory(page, /must have/i)
   await page.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
   await expect(mustHaveCount).toHaveAccessibleName(/Must Have 2/)

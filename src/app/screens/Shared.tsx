@@ -6,7 +6,7 @@ import { SharedGameSheet } from '../components/SharedGameSheet.tsx'
 import { useStoreData } from '../context.tsx'
 import { type Route, navigate } from '../router.ts'
 import { Collection } from './Collection.tsx'
-import { Collections } from './Collections.tsx'
+import { Buy } from './Buy.tsx'
 
 /**
  * F002: something shared to the app (contracts/share-target.md). A game opens the "Add game" sheet
@@ -40,7 +40,7 @@ export function Shared({ title, text, url }: { title?: string; text?: string; ur
   if (result.kind === 'list' || !data) return null
   return (
     <>
-      {preselected ? <Collection key={preselected} id={preselected} /> : <Collections />}
+      {preselected ? <Collection key={preselected} id={preselected} /> : <Buy tab="shopping" />}
       {result.kind === 'game' ? (
         <SharedGameSheet
           bggId={result.bggId}

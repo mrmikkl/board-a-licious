@@ -1,4 +1,4 @@
-import type { StoredList, StoredListEntry } from '../client/types.ts'
+import type { StoredListEntry } from '../client/types.ts'
 import type { Collection } from '../domain/collection.ts'
 import { type SwipeDirection, swipeDecision } from '../domain/swipe.ts'
 import type { AppServices } from './context.tsx'
@@ -8,7 +8,7 @@ import type { AppServices } from './context.tsx'
  * this device has no details for yet stands in with the list's name and cover and is completed in the
  * background (FR-017), like a game added by link.
  */
-export async function decideSwipe(services: AppServices, collection: Collection, list: StoredList, game: StoredListEntry, direction: SwipeDirection) {
+export async function decideSwipe(services: AppServices, collection: Collection, game: StoredListEntry, direction: SwipeDirection) {
   const { store } = services
   services.feedback.swipe()
   const known = await store.game(game.bggId)

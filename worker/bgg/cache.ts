@@ -1,7 +1,7 @@
 import { createSlots } from '../throttle.ts'
 
 /** Cache times in seconds (research R9/R10, FR-025). */
-export const TTL = { list: 3600, game: 7 * 86400, company: 30 * 86400, search: 86400 } as const
+export const TTL = { list: 3600, game: 7 * 86400, company: 30 * 86400, search: 86400, collection: 900 } as const
 
 export const USER_AGENT = 'board-a-licious/0.5 (private app for a small group of friends; SPIEL Essen planner)'
 const MIN_GAP_MS = 1000
@@ -9,7 +9,16 @@ const TIMEOUT_MS = 10_000
 
 export class BggError extends Error {
   constructor(
-    readonly code: 'bgg_unavailable' | 'bgg_rate_limited' | 'bgg_search_unavailable' | 'not_found',
+    readonly code:
+      | 'bgg_unavailable'
+      | 'bgg_rate_limited'
+      | 'bgg_search_unavailable'
+      | 'bgg_preparing'
+      | 'not_found'
+      /** F008: no, an expired or a rejected BGG session (or sign-in) */
+      | 'bgg_signed_out'
+      /** F008: BGG did not take a change */
+      | 'bgg_refused',
     message: string,
     readonly retryAfter?: number,
   ) {
@@ -55,14 +64,34 @@ export function edgeCache(cache: Cache): BggCache {
   }
 }
 
-export type BggClient = {
-  getJson<T = unknown>(url: string, ttlSeconds: number): Promise<T>
-  /** F006: the official XML API's answer as text (parsed by worker/bgg/xml.ts). */
-  getXml(url: string, ttlSeconds: number): Promise<string>
+export type GetOptions = {
+  /** F008: skip the cache for this one call (a person's Refresh); the answer is still stored. */
+  fresh?: boolean
+  /** F008: a 202 still queued after the retries is `bgg_preparing` (collections), not `bgg_rate_limited`. */
+  preparing?: boolean
+  /** F008: do not store the answer either (a person's own item, read right before a save). */
+  noStore?: boolean
 }
 
-/** Only the official API gets the token (research R1); the website JSON never does. */
-const OFFICIAL = 'https://boardgamegeek.com/'
+export type BggClient = {
+  getJson<T = unknown>(url: string, ttlSeconds: number, options?: GetOptions): Promise<T>
+  /** F006: the official XML API's answer as text (parsed by worker/bgg/xml.ts). */
+  getXml(url: string, ttlSeconds: number, options?: GetOptions): Promise<string>
+  /**
+   * F008 (ADR 0009): a request to BGG's website for worker/bgg/account.ts: through the same 1 request/s slot,
+   * never cached, never with the token, redirects not followed. The caller adds the person's cookies.
+   */
+  website(url: string, init: { method: 'GET' | 'POST'; headers?: Record<string, string>; body?: string }): Promise<Response>
+}
+
+/**
+ * Only the official API gets the token (F006 research R1, F008 research R5): `/xmlapi` and `/xmlapi2` on
+ * boardgamegeek.com, never the website JSON or other boardgamegeek.com pages.
+ */
+const isOfficialApi = (url: string) => {
+  const { protocol, hostname, pathname } = new URL(url)
+  return protocol === 'https:' && hostname === 'boardgamegeek.com' && /^\/xmlapi2?(\/|$)/.test(pathname)
+}
 /** BGG answers 202 while it prepares a big geeklist (research R6). */
 const QUEUED_RETRIES = 3
 const QUEUED_WAIT_MS = 2000
@@ -99,8 +128,7 @@ export function createBggClient(deps: {
   const send = async (url: string, accept: string): Promise<Response> => {
     await waitForSlot()
     const headers: Record<string, string> = { 'User-Agent': USER_AGENT, Accept: accept }
-    const official = url.startsWith(OFFICIAL)
-    if (official && deps.token) headers.Authorization = `Bearer ${deps.token}`
+    if (deps.token && isOfficialApi(url)) headers.Authorization = `Bearer ${deps.token}`
     try {
       return await deps.fetch(url, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) })
     } catch {
@@ -108,8 +136,8 @@ export function createBggClient(deps: {
     }
   }
 
-  const getText = async (url: string, ttlSeconds: number, accept: string, valid: (text: string) => boolean): Promise<string> => {
-    const cached = await deps.cache.get(url)
+  const getText = async (url: string, ttlSeconds: number, accept: string, valid: (text: string) => boolean, options: GetOptions = {}): Promise<string> => {
+    const cached = options.fresh ? undefined : await deps.cache.get(url)
     if (cached !== undefined) return cached
 
     const body = await (async () => {
@@ -118,8 +146,11 @@ export function createBggClient(deps: {
         await sleep(QUEUED_WAIT_MS)
         res = await send(url, accept)
       }
-      if (res.status === 202) throw new BggError('bgg_rate_limited', 'BoardGameGeek is preparing this list.', 5)
-      if ((res.status === 401 || res.status === 403) && url.startsWith(OFFICIAL) && deps.token) {
+      if (res.status === 202) {
+        if (options.preparing) throw new BggError('bgg_preparing', 'BoardGameGeek is preparing this collection.', 5)
+        throw new BggError('bgg_rate_limited', 'BoardGameGeek is preparing this list.', 5)
+      }
+      if ((res.status === 401 || res.status === 403) && deps.token && isOfficialApi(url)) {
         log(`bgg token rejected ${res.status}`)
         throw new BggError('bgg_unavailable', 'BoardGameGeek is not reachable.')
       }
@@ -133,16 +164,31 @@ export function createBggClient(deps: {
       if (!valid(text)) throw new BggError('bgg_unavailable', 'BoardGameGeek sent something unexpected.')
       return text
     })()
-    await deps.cache.put(url, body, ttlSeconds)
+    if (!options.noStore) await deps.cache.put(url, body, ttlSeconds)
     return body
   }
 
   return {
-    async getJson<T>(url: string, ttlSeconds: number): Promise<T> {
-      return JSON.parse(await getText(url, ttlSeconds, 'application/json', looksLikeJson)) as T
+    async getJson<T>(url: string, ttlSeconds: number, options?: GetOptions): Promise<T> {
+      return JSON.parse(await getText(url, ttlSeconds, 'application/json', looksLikeJson, options)) as T
     },
-    getXml(url: string, ttlSeconds: number): Promise<string> {
-      return getText(url, ttlSeconds, 'application/xml, text/xml', looksLikeXml)
+    getXml(url: string, ttlSeconds: number, options?: GetOptions): Promise<string> {
+      return getText(url, ttlSeconds, 'application/xml, text/xml', looksLikeXml, options)
+    },
+    async website(url, init) {
+      if (isOfficialApi(url)) throw new Error('website requests never go to the official API')
+      await waitForSlot()
+      try {
+        return await deps.fetch(url, {
+          method: init.method,
+          headers: { 'User-Agent': USER_AGENT, ...init.headers },
+          body: init.body,
+          redirect: 'manual',
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        })
+      } catch {
+        throw new BggError('bgg_unavailable', 'BoardGameGeek is not reachable.')
+      }
     },
   }
 }

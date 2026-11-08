@@ -1,0 +1,313 @@
+/* F008: status lists, Config › BoardGameGeek and Badge colours (docs/design.md 3.0.0) */
+
+/* a person's group in Lists › Status lists */
+.person {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 18px 0 8px;
+  font: 700 16px var(--font-display);
+}
+.screen > .person:first-child,
+.screen > section:first-child > .person {
+  margin-top: 6px;
+}
+.person small {
+  color: var(--muted);
+  font: 600 12px var(--font-body);
+}
+
+/* Status list card: a solid 60px tile */
+.status-cards {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: 700 16px var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s var(--spring);
+}
+.status-card:active {
+  transform: scale(0.98);
+}
+.status-hex {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 34px;
+  clip-path: var(--hex);
+  background: var(--bg, var(--grad-dusk));
+  font-size: 15px;
+}
+.status-name {
+  flex: 1;
+  min-width: 0;
+}
+.status-name small {
+  display: block;
+  color: var(--muted);
+  font: 500 12px var(--font-body);
+}
+.status-count {
+  font: 700 18px var(--font-display);
+}
+.status-chev {
+  color: var(--orange);
+  font-size: 20px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .status-card:hover {
+    border-color: var(--orange);
+    box-shadow: var(--glow);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-card:active {
+    transform: none;
+  }
+}
+
+/* a status list: source line, Wishlist priority groups */
+.list-sub {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.status-group {
+  margin-bottom: 16px;
+}
+.status-group h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font: 700 16px var(--font-display);
+}
+.status-group h2 i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--bg, var(--grad-dusk));
+}
+.status-group .group-count {
+  font-family: var(--font-body);
+}
+.skel-rows {
+  display: grid;
+  gap: var(--gap);
+}
+
+/* Config › BoardGameGeek */
+.cfg-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.cfg-card .hint {
+  margin: 0;
+}
+
+/* Config › Badge colours */
+.colour-rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.colour-rows button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: 600 15px var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+.colour-rows .chg {
+  margin-left: auto;
+  color: var(--orange-2);
+  font-size: 13px;
+  font-weight: 700;
+}
+@media (hover: hover) and (pointer: fine) {
+  .colour-rows button:hover {
+    border-color: var(--orange);
+    box-shadow: var(--glow);
+  }
+}
+
+/* Colour sheet: ten hexagon swatches in a 5×2 grid, names below */
+.colour-preview {
+  margin: 0 0 8px;
+}
+.colour-preview .bb {
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 24px;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px 8px;
+  margin: 8px 0 14px;
+}
+.swatches > div {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.swatches button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  clip-path: var(--hex);
+  background: var(--bg);
+  color: var(--fg);
+  font: 800 18px var(--font-body);
+  cursor: pointer;
+}
+.swatches button[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 3px var(--orange);
+  filter: drop-shadow(0 0 6px rgba(255, 122, 26, 0.6));
+}
+.swatches .ring {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  clip-path: var(--hex);
+  background: transparent;
+}
+.swatches .ring.on {
+  background: var(--orange);
+}
+
+/* Config › Change statuses on BGG: signed-in line with a mint hexagon */
+.cfg-card p {
+  margin: 0;
+}
+.signed-in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.signed-in::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 16px;
+  clip-path: var(--hex);
+  background: var(--grad-got);
+}
+
+/* Game sheet › BGG status section (folded like Prices) */
+.st-sec .st-head {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.st-sec .st-head small {
+  color: var(--muted);
+  font: 600 12px var(--font-body);
+}
+.st-sec .st-head + .chev {
+  margin-left: 0;
+}
+.st-body {
+  padding: 0 14px 12px;
+}
+.st-body .lead {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.st-item + .st-item {
+  border-top: 1px solid var(--rim);
+}
+.st-line .changed {
+  margin-left: 6px;
+  color: var(--orange-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+.st-body .switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.prio {
+  margin: 2px 0 8px;
+}
+.prio p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.st-body .sheet-actions {
+  margin-top: 8px;
+}
+
+/* Mark as owned sheet: what is written to BGG */
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 8px 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  font-size: 14px;
+}
+.kv dt {
+  color: var(--muted);
+}
+.kv dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.kv .old {
+  margin-right: 6px;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: line-through;
+}
+.private-note {
+  margin: -4px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}

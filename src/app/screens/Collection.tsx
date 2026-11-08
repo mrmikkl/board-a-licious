@@ -7,6 +7,7 @@ import { matchesName } from '../../domain/search.ts'
 import { deleteCollection, renameCollection, saveFilter, saveGroupBy, unbuyGame } from '../actions.ts'
 import { Action, ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { AddGameSheet } from '../components/AddGameSheet.tsx'
+import { useBgg } from '../components/BggBadges.tsx'
 import { BuySheet } from '../components/BuySheet.tsx'
 import { CategorySheet } from '../components/CategorySheet.tsx'
 import { Counter } from '../components/Counter.tsx'
@@ -62,6 +63,8 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
   const closeRowSheet = useCallback(() => setRowSheet(undefined), [])
   const closeEdit = useCallback(() => setEditing(false), [])
   const justAdded = useJustAdded(id)
+  // F008: the own BGG statuses for the BGG status filter
+  const bgg = useBgg()
   const data = useStoreData(
     async store => {
       const collection = (await store.collections()).find(c => c.id === id && !c.deleted)
@@ -80,15 +83,15 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
   if (!collection) {
     return (
       <>
-        <Header title="Collection" />
+        <Header title="Shopping list" back={back} />
         <main className="screen">
           <div className="empty">
             <div className="hex" />
-            <h2>This collection does not exist anymore</h2>
+            <h2>This shopping list does not exist anymore</h2>
             <p>It may have been deleted on another device.</p>
             <div className="actions">
               <a className="btn btn-primary" href={back}>
-                Go to your collections
+                Go to your shopping lists
               </a>
             </div>
           </div>
@@ -102,7 +105,8 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
     setChosen({ id, filter: next })
     void saveFilter(services, id, next)
   }
-  const filtered = applyFilter(entries, filter)
+  const statusOf = (bggId: number) => bgg.statuses.get(bggId)
+  const filtered = applyFilter(entries, filter, statusOf)
   const query = search?.id === id ? search.query : ''
   const nameOf = (e: { bggId: number }) => games.get(e.bggId)?.name ?? ''
   const displayName = (bggId: number) => games.get(bggId)?.name ?? `Game ${bggId}`
@@ -156,6 +160,7 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
       {/* the name runs as a ticker when too long; the pencil right after it opens Edit collection */}
       <Header
         title={collection.name}
+        back={back}
         heading={<Ticker text={collection.name} />}
         trailing={
           <button type="button" className="icon-btn edit-btn" aria-label={`Edit ${collection.name}`} aria-haspopup="dialog" onClick={() => setEditing(true)}>
@@ -234,18 +239,19 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
       </main>
       {/* Add game · ♥ · Filter · Show-off (F003 FR-015, F004 FR-007); Filter says "(active)" and turns orange away from the default view (FR-016) */}
       <ActionBar
-        main={<MainButton icon={<IconHeart />} label="BG-Tinder: swipe a BGG list into this collection" href={href({ name: 'collection', id, open: 'list' })} />}
+        main={<MainButton icon={<IconHeart />} label="BG-Tinder: swipe a BGG list into this shopping list" href={href({ name: 'collection', id, open: 'list' })} />}
         left={<Action icon={<IconPlus />} label="Add game" onClick={addGame} />}
         right={<Action icon={<IconFilter />} label="Filter" active={!isDefault} onClick={() => setViewOpen(true)} />}
         outer={<Action icon={<IconShowOff />} label="Show-off" onClick={showOff} />}
       />
-      {current && <GameSheet entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
-      {rowEntry && rowSheet?.kind === 'buy' && <BuySheet entry={rowEntry} name={displayName(rowEntry.bggId)} onClose={closeRowSheet} />}
+      {current && <GameSheet context="shopping" entry={current} game={games.get(current.bggId)} collection={collection} onClose={closeGame} />}
+      {rowEntry && rowSheet?.kind === 'buy' && <BuySheet entry={rowEntry} bggId={rowEntry.bggId} name={displayName(rowEntry.bggId)} game={games.get(rowEntry.bggId)} onClose={closeRowSheet} />}
       {rowEntry && rowSheet?.kind === 'category' && <CategorySheet entry={rowEntry} name={displayName(rowEntry.bggId)} onClose={closeRowSheet} />}
       <FilterSheet
         open={viewOpen}
         filter={filter}
-        counts={groupCounts(entries, filter.bought, filter.price)}
+        counts={groupCounts(entries, filter.bought, filter.price, filter.bgg, statusOf)}
+        bgg={Boolean(bgg.username)}
         groupBy={groupBy}
         onChange={changeFilter}
         onGroupBy={sheetGroupBy}
@@ -303,7 +309,7 @@ function EditCollectionSheet({ collection, gameCount, onClose }: { collection: C
         <p className="lead">Marks, bought games and prices in it are deleted too, on all your devices.</p>
         <div className="sheet-actions">
           <button type="button" className="btn btn-block btn-danger" onClick={() => void remove()}>
-            Delete collection
+            Delete shopping list
           </button>
           <button type="button" className="btn btn-block" onClick={onClose}>
             Cancel
@@ -313,7 +319,7 @@ function EditCollectionSheet({ collection, gameCount, onClose }: { collection: C
     )
   }
   return (
-    <Sheet open title="Edit collection" onClose={onClose}>
+    <Sheet open title="Edit shopping list" onClose={onClose}>
       <form className="form" onSubmit={rename}>
         <div>
           <label className="label" htmlFor={nameId}>
@@ -329,7 +335,7 @@ function EditCollectionSheet({ collection, gameCount, onClose }: { collection: C
       </form>
       <div className="sheet-actions">
         <button type="button" className="btn btn-block btn-danger" onClick={() => setConfirm(true)}>
-          Delete collection…
+          Delete shopping list…
         </button>
         <button type="button" className="btn btn-block" onClick={onClose}>
           Cancel

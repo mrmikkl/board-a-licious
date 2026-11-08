@@ -143,6 +143,12 @@ and sign in again: the collection appears there, so the way through Hyperdrive t
   galleries stay on the website data. Locally, `BGG_TOKEN=…` in the git-ignored `.dev.vars` does the
   same. A rejected token shows as "bgg token rejected 401" in `npx wrangler tail`; renew it with the
   same command. `node --env-file=.dev.vars scripts/record-bgg-xml.mjs` re-records the XML test fixtures.
+- **BGG statuses** (feature 008, ADR 0009): migration `0007_bgg_user.sql` (BGG username and followed
+  friends; `npm run db:migrate:neon` before deploying) and the secret `BGG_SESSION_KEY`, which
+  encrypts each person's BGG sign-in in their device's HttpOnly cookie `bal_bgg`. Create it with
+  `openssl rand -base64 32 | npx wrangler secret put BGG_SESSION_KEY` (the value never appears on
+  screen or in a file). Changing it signs everyone out of BGG; nothing else is lost. Locally,
+  `BGG_SESSION_KEY=…` (any 32-byte base64 value) goes into `.dev.vars`.
 - **Prices** (feature 007) need no secret: brettspielpreise.de's API is free (with a link back and at least
   one hour of caching). eBay offers would need eBay developer keys (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`),
   a later step; until then eBay is a search link. `node --env-file=.dev.vars scripts/record-prices.mjs`

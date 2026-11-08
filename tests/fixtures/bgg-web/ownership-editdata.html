@@ -1,0 +1,118 @@
+<div class='select-free' id='editownership221'>
+	<div class='collection_handle' id='handle221'>
+		<span style='float:left;'>
+			Edit Private Info Faraway: People From Below
+		</span>
+		<span style='float:right;'>
+			<a href="javascript://" onclick="CE_CancelEditData( '221', 'ownership' );"><img class='icon' title='' alt='' style=''  src='https://cf.geekdo-static.com/images/icons/silkicons/cross.png' /></a>
+		</span>		
+		<div class='clear'></div>
+	</div>
+
+	<div style='padding:1em;'>
+		<form autocomplete=off  id='form_ownership221' onsubmit="CE_SaveData( '221', '123456789', 'ownership' ); return false;">
+		<input type='hidden' name='fieldname'  value='ownership'>
+		<input type='hidden' name='collid' 	   value='123456789'>
+		<input type='hidden' name='objecttype' value='thing'>
+		<input type='hidden' name='objectid' 	value='425029'>
+			
+		<table width='100%' cellpadding=1 cellspacing=0 border="1" class='pt5 border-light'>
+			<tr>
+				<td width='100'>Price&nbsp;Paid:</td>
+				<td style='white-space:nowrap;'>
+					<select name='pp_currency' id='pp_currency221'>
+						<option></option>
+						<option  value='USD'>USD $</option>					
+						<option SELECTED value='EUR'>EUR &euro;</option>
+						<option  value='GBP'>GBP &pound;</option>
+						<option  value='CAD'>CAD</option>										
+						<option  value='AUD'>AUD</option>
+						<option  value='YEN'>YEN &yen;</option>
+					</select>
+					<input class='geekinput_medium' type='text' name='pricepaid' id='pricepaid' value='45' size=10>
+				</td>
+			</tr>
+	
+			<tr>
+				<td width='100'>Current&nbsp;Value:</td>
+				<td style='white-space:nowrap;'>
+					<select name='cv_currency'>
+						<option></option>
+						<option  value='USD'>USD $</option>
+						<option  value='EUR'>EUR &euro;</option>
+						<option  value='GBP'>GBP &pound;</option>
+						<option  value='CAD'>CAD</option>										
+						<option  value='AUD'>AUD</option>
+						<option  value='YEN'>YEN &yen;</option>
+					</select>
+					<input class='geekinput_medium' type='text' name='currvalue' id='currvalue' value='' size=10>
+				</td>
+			</tr>
+	
+			<tr>
+				<td>Quantity</td>
+				<td>
+					<input class='geekinput_medium' type='text' name='quantity' id='quantity123456789' value=''>
+				</td>
+			</tr>		
+	
+			<tr>
+				<td valign='top'>Acquisition&nbsp;Date:</td>
+				<td valign='top'>
+					<input type='hidden' name='acquisitiondate' id='acquisitiondate221' value=''>
+<label class="sr-only" for="acquisitiondateinput221">Input Date</label>
+<input name="dateinput" onchange="parseDate( this, $('acquisitiondate221'), $('acquisitiondatestatus221') );" class="geekinput_medium" autocomplete="off" type="date" id='acquisitiondateinput221' value='' />
+
+<div id='acquisitiondatestatus221' class='sf' style="font-style:italic; border:none; background:none;"></div>
+ 
+				</td>
+			</tr>
+			
+			<tr>
+				<td>Acquired&nbsp;From:</td>
+				<td><input class='geekinput_medium' type='text' name='acquiredfrom' value=''></td>
+			</tr>		
+	
+			<tr>
+				<td>Comments:</td>
+				<td><textarea style='width:100%' name='privatecomment' id='privatecomment221'></textarea></td>
+			</tr>
+
+			<tr>
+				<td valign='top'>Inventory&nbsp;Date:</td>
+				<td valign='top'>
+					<input type='hidden' name='invdate' id='invdate221' value=''>
+<label class="sr-only" for="invdateinput221">Input Date</label>
+<input name="dateinput" onchange="parseDate( this, $('invdate221'), $('invdatestatus221') );" class="geekinput_medium" autocomplete="off" type="date" id='invdateinput221' value='' />
+
+<div id='invdatestatus221' class='sf' style="font-style:italic; border:none; background:none;"></div>
+				</td>
+			</tr>
+
+			<tr>
+				<td>Inventory&nbsp;Location:</td>
+				<td><input class='geekinput_medium' type='text' name='invlocation' value=''></td>
+			</tr>
+
+		</table>
+		
+	
+		<div style='margin-top:1em; white-space:nowrap; font-size:10px;'>
+			<input class='geekinput' type='submit' name='B1' value='Save'>
+			&nbsp;&nbsp;
+			<input class='geekinput' type='button' name='B1' value='Cancel' onclick="CE_CancelEditData( '221', 'ownership' );">
+		<div>
+		</form>
+	</div>
+</div>
+
+<script language="Javascript">
+	
+ddcount++;	
+dd[ddcount] = new YAHOO.example.DDOnTop( 'editownership221', '', { cont:'maincontent' } );
+dd[ddcount].setHandleElId( "handle221" );
+dd[ddcount].myfocus = 	function() { $('pp_currency221').focus(); }
+;
+		
+$('pp_currency221').focus();
+</script>

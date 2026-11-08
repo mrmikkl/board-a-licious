@@ -5,12 +5,17 @@ import { type FakeResult, CASCADIA_PRICES, expectAccessible, fakePrices, fakeSea
 const CASCADIA: FakeResult = { bggId: 295947, name: 'Cascadia', year: 2021, kind: 'boardgame' }
 const LANDMARKS: FakeResult = { bggId: 385318, name: 'Cascadia: Landmarks', year: 2023, kind: 'expansion' }
 
+/** F008: a Buy › Search result opens the game sheet; its Prices section unfolds the offers (the price screen is gone). */
 async function openPrices(page: Page) {
   await page.goto('/#/buy')
-  await page.getByRole('searchbox', { name: "Find a game's prices" }).fill('cascad')
+  await page.getByRole('searchbox', { name: 'Find a game' }).fill('cascad')
   await page.getByRole('button', { name: 'Cascadia, 2021', exact: true }).click()
-  await expect(page).toHaveURL(/#\/buy\/295947$/)
-  await expect(page.getByRole('heading', { level: 1, name: 'Prices' })).toBeVisible()
+  await expect(page).toHaveURL(/#\/buy\?game=295947$/)
+  await unfoldPrices(page)
+}
+/** F008 feedback: Buy › Search is about one game's prices, so its sheet opens with Prices open (also after a reload). */
+async function unfoldPrices(page: Page) {
+  await expect(page.getByRole('dialog', { name: 'Cascadia' }).getByRole('button', { name: 'Prices' })).toHaveAttribute('aria-expanded', 'true')
 }
 const newOffers = (page: Page) => page.getByRole('list', { name: 'New offers' }).getByRole('link')
 const usedOffers = (page: Page) => page.getByRole('list', { name: 'Used offers' }).getByRole('link')
@@ -19,24 +24,24 @@ const tab = (page: Page, name: 'New' | 'Used') => page.getByRole('tablist', { na
 test.describe('F007 US1: find the best price for a game', () => {
   test('Buy is the first place in the menu', async ({ page }) => {
     await fakeSearch(page, { results: { cascad: [CASCADIA, LANDMARKS] } })
-    await page.goto('/#/collections')
+    await page.goto('/#/buy/lists')
     await openMenu(page)
     await expect(page.getByRole('navigation', { name: 'Menu' }).getByRole('link').first()).toHaveAccessibleName('Buy')
   })
 
-  test('Buy searches BoardGameGeek; results have no + and open the prices', async ({ page }) => {
+  test('Buy searches BoardGameGeek; results have no Add and open the game sheet', async ({ page }) => {
     await fakeSearch(page, { results: { cascad: [CASCADIA, LANDMARKS] } })
     await fakePrices(page)
     await page.goto('/#/buy')
     await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Actions' })).toHaveCount(0)
-    await page.getByRole('searchbox', { name: "Find a game's prices" }).fill('cascad')
+    await page.getByRole('searchbox', { name: 'Find a game' }).fill('cascad')
     await expect(page.getByRole('button', { name: 'Cascadia: Landmarks, 2023, expansion' })).toBeVisible()
-    await expect(page.getByRole('button', { name: /to a collection$/ })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Add Cascadia: Landmarks to shopping lists' })).toHaveCount(0)
     await expectAccessible(page)
   })
 
-  test('the price screen lists new offers cheapest first and used ones below, each a link to the shop', async ({ page }) => {
+  test('the Prices section lists new offers cheapest first and used ones below, each a link to the shop', async ({ page }) => {
     await fakeSearch(page, { results: { cascad: [CASCADIA] } })
     await fakePrices(page)
     await openPrices(page)
@@ -60,15 +65,6 @@ test.describe('F007 US1: find the best price for a game', () => {
     await expectAccessible(page)
   })
 
-  test('new offers of unknown language show on request', async ({ page }) => {
-    await fakeSearch(page, { results: { cascad: [CASCADIA] } })
-    await fakePrices(page)
-    await openPrices(page)
-    await page.getByRole('checkbox', { name: 'Show offers with unknown language (1)' }).check()
-    // unknown shipping: after the offers with known shipping
-    await expect(newOffers(page).nth(2)).toHaveAccessibleName('Shop in Belgium, €27.99, language unknown')
-  })
-
   test('New shows the 5 cheapest; Show more adds 5 until all are shown; a reload starts over', async ({ page }) => {
     const many = Array.from({ length: 12 }, (_, i) => ({ ...CASCADIA_PRICES.offers[0]!, price: { amount: 20 + i, currency: 'EUR' }, shipping: 0, euroTotal: 20 + i, link: `https://brettspielpreise.de/item/go?storeitemid=${i}` }))
     await fakeSearch(page, { results: { cascad: [CASCADIA] } })
@@ -84,6 +80,7 @@ test.describe('F007 US1: find the best price for a game', () => {
     await expect(newOffers(page)).toHaveCount(12)
     await expect(more).toHaveCount(0)
     await page.reload()
+    await unfoldPrices(page)
     await expect(newOffers(page)).toHaveCount(5)
   })
 
@@ -97,6 +94,7 @@ test.describe('F007 US1: find the best price for a game', () => {
     await page.unroute('**/api/prices?**')
     await fakePrices(page, { offers: [] })
     await page.reload()
+    await unfoldPrices(page)
     await expect(page.getByRole('heading', { name: 'No offers in English or German found' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Open on brettspielpreise.de' })).toHaveAttribute('href', CASCADIA_PRICES.siteSearch)
   })
@@ -120,6 +118,7 @@ test.describe('F007 US3: choose which editions count', () => {
     await tab(page, 'Used').click()
     await expect(usedOffers(page)).toHaveCount(2)
     await page.reload()
+    await unfoldPrices(page)
     await expect(page.getByRole('group', { name: 'Language' }).getByRole('button', { name: 'German' })).toHaveAttribute('aria-pressed', 'true')
     await page.getByRole('group', { name: 'Language' }).getByRole('button', { name: 'Both' }).click()
   })

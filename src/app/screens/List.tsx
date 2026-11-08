@@ -2,15 +2,17 @@ import { useCallback, useEffect, useId, useState } from 'react'
 
 import { ApiError } from '../../client/api.ts'
 import { LIST_ERROR, RESYNC_BUSY } from '../../client/lists.ts'
-import type { ListKind, StoredList, StoredListEntry } from '../../client/types.ts'
+import type { Game, ListKind, StoredList, StoredListEntry } from '../../client/types.ts'
 import type { Conflict } from '../../domain/facts.ts'
+import { inText } from '../../domain/membership.ts'
 import { matchesName } from '../../domain/search.ts'
 import { ConflictsSheet } from '../components/ConflictsSheet.tsx'
 import { InfoLine } from '../components/GameInfo.tsx'
 import { Header } from '../components/Header.tsx'
-import { HexCover } from '../components/HexCover.tsx'
 import { IconResync } from '../components/icons.tsx'
-import { MembershipSheet } from '../components/MembershipSheet.tsx'
+import { AddToCollectionsSheet } from '../components/AddToCollectionsSheet.tsx'
+import { GameSheet } from '../components/GameSheet.tsx'
+import { ListGameRow } from '../components/ListGameRow.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
 import { href } from '../router.ts'
@@ -39,8 +41,8 @@ export function ListProgress({ list, onRetry, resyncing = false }: { list: Store
 }
 
 /**
- * A loaded BGG list (FR-013): name filter, rows with facts (Essen lists) and "in a collection", + per
- * row. Opening the screen lets the loader fetch further pages; leaving it pauses them.
+ * A loaded BGG list (FR-013): name filter, list game rows with facts (Essen lists), "in …" and Add; a
+ * row opens the game sheet. Opening the screen lets the loader fetch further pages; leaving it pauses them.
  */
 export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   const services = useServices()
@@ -48,7 +50,8 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   const [failure, setFailure] = useState<ApiError>()
   const [attempt, setAttempt] = useState(0)
   const [filter, setFilter] = useState('')
-  const [openGame, setOpenGame] = useState<number>()
+  // the game sheet or the add to shopping lists sheet of one game
+  const [openGame, setOpenGame] = useState<{ kind: 'sheet' | 'add'; bggId: number }>()
   const closeGame = useCallback(() => setOpenGame(undefined), [])
   const online = useOnline()
   const toast = useToast()
@@ -77,13 +80,21 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   const data = useStoreData(
     async store => {
       const list = await store.list(kind, listId)
-      const inCollection = new Set((await store.allEntries()).filter(e => !e.deleted).map(e => e.bggId))
       const collections = new Map((await store.collections()).map(c => [c.id, c.name]))
-      return { key: `${kind}:${listId}`, list, inCollection, collections }
+      const live = new Map((await store.collections()).filter(c => !c.deleted).map(c => [c.id, c.name]))
+      // where the person already has each game: the names of its shopping lists
+      const listNames = new Map<number, string[]>()
+      for (const e of await store.allEntries()) {
+        const name = live.get(e.collectionId)
+        if (e.deleted || !name) continue
+        listNames.set(e.bggId, [...(listNames.get(e.bggId) ?? []), name])
+      }
+      const games = new Map((await store.games((list?.entries ?? []).map(e => e.bggId))).map(g => [g.bggId, g]))
+      return { key: `${kind}:${listId}`, list, listNames, collections, games }
     },
     [kind, listId],
   )
-  const back = href({ name: 'lists' })
+  const back = href({ name: 'lists', tab: kind === 'preview' ? 'previews' : 'geeklists' })
   const list = data?.key === `${kind}:${listId}` ? data.list : undefined
 
   if (!list) {
@@ -98,7 +109,7 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   }
 
   const shown = list.entries.filter(e => matchesName(e.name, filter))
-  const current = list.entries.find(e => e.bggId === openGame)
+  const current = list.entries.find(e => e.bggId === openGame?.bggId)
   // US5: read the list again from BGG, then reconcile the games' facts; a busy BGG changes nothing
   const runResync = async () => {
     setResyncing(true)
@@ -151,14 +162,23 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
         ) : (
           <ul className="rows">
             {shown.map(entry => (
-              <li key={entry.bggId} className="list-item">
-                <ListRow entry={entry} inCollection={data!.inCollection.has(entry.bggId)} onOpen={() => setOpenGame(entry.bggId)} />
+              <li key={entry.bggId}>
+                <ListRow
+                  entry={entry}
+                  game={data!.games.get(entry.bggId)}
+                  inText={inText(data!.listNames.get(entry.bggId) ?? [])}
+                  onOpen={() => setOpenGame({ kind: 'sheet', bggId: entry.bggId })}
+                  onAdd={() => setOpenGame({ kind: 'add', bggId: entry.bggId })}
+                />
               </li>
             ))}
           </ul>
         )}
       </main>
-      {current && <MembershipSheet list={list} item={current} onClose={closeGame} />}
+      {current && openGame?.kind === 'sheet' && (
+        <GameSheet context="browse" item={{ ...current, info: current.info ?? {} }} game={data!.games.get(current.bggId)} onClose={closeGame} />
+      )}
+      {current && openGame?.kind === 'add' && <AddToCollectionsSheet item={current} game={data!.games.get(current.bggId)} onClose={closeGame} />}
       {conflicts.length > 0 && <ConflictsSheet conflicts={conflicts} names={names} collections={data!.collections} onClose={() => setConflicts([])} />}
     </>
   )
@@ -180,26 +200,26 @@ function useOnline() {
   return online
 }
 
-/** A list game like a collection row: name, publisher ("…" while its name is looked up), three infos. */
-function ListRow({ entry, inCollection, onOpen }: { entry: StoredListEntry; inCollection: boolean; onOpen: () => void }) {
+/** A list game (docs/design.md "List game row"): name, year once known, the list's infos, "in …", Add. */
+function ListRow({ entry, game, inText, onOpen, onAdd }: { entry: StoredListEntry; game?: Game; inText: string; onOpen: () => void; onAdd: () => void }) {
   const sub = entry.facts?.publisher ?? (entry.facts?.publisherId != null ? '…' : null)
   return (
-    <>
-      <button type="button" className="row" onClick={onOpen}>
-        <HexCover game={{ ...entry, year: null, description: null, kind: 'boardgame' }} name={entry.name} />
-        <span className="row-meta">
-          <span className="row-name">{entry.name}</span>
+    <ListGameRow
+      name={entry.name}
+      year={game?.year ?? undefined}
+      expansion={game?.kind === 'expansion'}
+      game={game?.thumbnailUrl ? game : undefined}
+      cover={entry}
+      inText={inText}
+      info={
+        <>
           {sub && <span className="row-sub">{sub}</span>}
           <InfoLine facts={entry.facts} details={entry.info} />
-          {inCollection && <span className="in-mark">in a collection</span>}
-        </span>
-      </button>
-      <button type="button" className="add-mini hex-btn" aria-label={`Add ${entry.name} to a collection`} onClick={onOpen}>
-        <span className="hex" aria-hidden="true">
-          +
-        </span>
-      </button>
-    </>
+        </>
+      }
+      onOpen={onOpen}
+      onAdd={onAdd}
+    />
   )
 }
 

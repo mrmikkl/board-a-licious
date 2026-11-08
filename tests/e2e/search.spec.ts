@@ -11,24 +11,24 @@ const HARMONIES: FakeResult = { bggId: BASE + 4, name: 'Harmonies', year: 2024, 
 const MANY = Array.from({ length: 50 }, (_, i): FakeResult => ({ bggId: BASE + 10 + i, name: `The Game ${i + 1}`, year: 2000 + (i % 26), kind: 'boardgame' }))
 const results = { cascad: [CASCADIA, LANDMARKS, PROMO], harmon: [HARMONIES], the: MANY }
 
-const field = (page: import('@playwright/test').Page) => page.getByRole('searchbox', { name: 'Search BoardGameGeek' })
+const field = (page: import('@playwright/test').Page) => page.getByRole('searchbox', { name: 'Find a game' })
 
 test.describe('F006 US1: find a game by its name', () => {
   test('the field is ready, with the hint and no action bar', async ({ page }) => {
     await fakeSearch(page, { results })
-    await page.goto('/#/search')
-    await expect(field(page)).toBeFocused()
+    await page.goto('/#/buy')
+    await expect(field(page)).toBeEnabled()
     await expect(field(page)).toHaveAttribute('placeholder', 'Game name, e.g. Cascadia')
     await expect(page.getByText('Type at least 2 letters.')).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Actions' })).toHaveCount(0)
     await expectAccessible(page)
   })
 
-  test('results show year, Expansion and where the game already is; the + adds it with a category', async ({ page }) => {
+  test('results show year, Expansion and where the game already is; no Add (Buy › Search is about prices)', async ({ page }) => {
     await fakeSearch(page, { results })
     const name = unique('Essen 2026')
     await seedCollection(page, name, [{ bggId: CASCADIA.bggId, name: 'Cascadia', mark: 'interested' }])
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await field(page).fill('cascad')
     await expect(page.getByRole('status').filter({ hasText: '3 games · exact matches first' })).toBeVisible()
     const cascadia = page.getByRole('button', { name: 'Cascadia, 2021', exact: true })
@@ -38,15 +38,7 @@ test.describe('F006 US1: find a game by its name', () => {
     await expect(page.getByRole('button', { name: 'Cascadia: Promo Cards, Year unknown, expansion' })).toBeVisible()
     await expectAccessible(page)
 
-    await page.getByRole('button', { name: 'Add Cascadia: Landmarks to a collection' }).click()
-    const sheet = page.getByRole('dialog', { name: 'Add Cascadia: Landmarks' })
-    await expect(sheet.getByRole('checkbox', { name })).toBeVisible()
-    await expectAccessible(page)
-    await sheet.getByRole('checkbox', { name }).check()
-    await sheet.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Must Have/ }).click()
-    await sheet.getByRole('button', { name: 'Done' }).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Added Cascadia: Landmarks to 1 collection' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Cascadia: Landmarks, 2023, expansion' })).toHaveAccessibleDescription(/in /)
+    await expect(page.getByRole('button', { name: 'Add Cascadia: Landmarks to shopping lists' })).toHaveCount(0)
   })
 
   test('results load no details; opening a game loads only its own', async ({ page }) => {
@@ -59,19 +51,19 @@ test.describe('F006 US1: find a game by its name', () => {
       const ids = (new URL(r.url()).searchParams.get('ids') ?? '').split(',').filter(id => mine.has(id))
       if (ids.length) asked.push(ids.join(','))
     })
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await field(page).fill('harmon')
     await expect(page.getByRole('button', { name: 'Harmonies, 2024' })).toBeVisible()
     await page.waitForTimeout(500)
     expect(asked).toEqual([])
     await page.getByRole('button', { name: 'Harmonies, 2024' }).click()
-    await expect(page.getByRole('dialog', { name: 'Harmonies' }).getByText('From BoardGameGeek')).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Harmonies' }).getByText('From BoardGameGeek', { exact: true })).toBeVisible()
     expect(asked).toEqual([String(HARMONIES.bggId)])
   })
 
-  test('tapping a game shows only its info', async ({ page }) => {
+  test('tapping a game opens its game sheet: info, no shopping list ticks, no category', async ({ page }) => {
     await fakeSearch(page, { results })
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await field(page).fill('cascad')
     await page.getByRole('button', { name: 'Cascadia, 2021', exact: true }).click()
     const sheet = page.getByRole('dialog', { name: 'Cascadia' })
@@ -79,17 +71,19 @@ test.describe('F006 US1: find a game by its name', () => {
     await expect(sheet.getByText('2021 · Flatout Games')).toBeVisible()
     await expect(sheet.getByRole('link', { name: 'Open on BoardGameGeek' })).toBeVisible()
     await expect(sheet.getByText('From BoardGameGeek')).toBeVisible()
+    // F008 feedback: Best with, Recommended and the votes are the folded Players section, not in the info box
+    await expect(sheet.locator('.facts-box').getByRole('term').filter({ hasText: /^Best with$/ })).toHaveCount(0)
+    const players = sheet.getByRole('button', { name: /^Players/ })
+    await expect(players).toHaveAttribute('aria-expanded', 'false')
+    await expect(players).toContainText('Best 2–3')
+    await expect(sheet.getByRole('table')).toBeHidden()
+    await players.click()
     await expect(sheet.getByRole('definition').filter({ hasText: '2–3 players' })).toBeVisible()
     await expect(sheet.getByRole('term').filter({ hasText: /^Best with$/ })).toBeVisible()
     await expect(sheet.getByRole('term').filter({ hasText: /^Recommended$/ })).toBeVisible()
-    // FR-006b: the votes unfold as a table in percent, the highest of each column bold
-    const toggle = sheet.getByRole('button', { name: 'Show details' })
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    await expect(sheet.getByRole('table')).toBeHidden()
-    await toggle.click()
+    // FR-006b: the votes as a table in percent, the highest of each column bold
     const table = sheet.getByRole('table', { name: /votes on boardgamegeek per number of players/i })
     await expect(table).toBeVisible()
-    await expect(sheet.getByRole('button', { name: 'Hide details' })).toHaveAttribute('aria-expanded', 'true')
     await expect(table.getByRole('row', { name: /^2 / })).toContainText('63%')
     await expect(table.locator('b')).toHaveText(['63%', '67%', '92%'])
     await expect(sheet.getByText('1,043 votes on BoardGameGeek')).toBeVisible()
@@ -103,7 +97,7 @@ test.describe('F006 US1: find a game by its name', () => {
 
   test('no match, and 50 results with the note to narrow it down', async ({ page }) => {
     await fakeSearch(page, { results })
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await field(page).fill('zzz')
     await expect(page.getByRole('heading', { name: 'No game called “zzz” on BoardGameGeek' })).toBeVisible()
     await expect(page.getByText('Check the spelling, or try a shorter part of the name.')).toBeVisible()
@@ -115,14 +109,14 @@ test.describe('F006 US1: find a game by its name', () => {
 
   test('one letter asks for more', async ({ page }) => {
     await fakeSearch(page, { results })
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await field(page).fill('c')
     await expect(page.getByRole('status').filter({ hasText: 'Type at least 2 letters.' })).toBeVisible()
   })
 
   test('BoardGameGeek not reachable shows a note with Try again', async ({ page }) => {
     await fakeSearch(page, { results, status: 502 })
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await field(page).fill('cascad')
     await expect(page.getByText('BoardGameGeek is not reachable. Try again in a moment.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
@@ -131,7 +125,7 @@ test.describe('F006 US1: find a game by its name', () => {
 
   test('offline shows a note with Try again', async ({ page, context }) => {
     await fakeSearch(page, { results })
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await context.setOffline(true)
     await field(page).fill('cascad')
     await expect(page.getByText("You're offline. Searching needs a connection.")).toBeVisible()
@@ -142,7 +136,7 @@ test.describe('F006 US1: find a game by its name', () => {
 
   test('an older answer arriving late does not replace the newer one (US1-7)', async ({ page }) => {
     await fakeSearch(page, { results, delayMs: { cascad: 2500 } })
-    await page.goto('/#/search')
+    await page.goto('/#/buy')
     await field(page).fill('cascad')
     await page.waitForRequest(r => r.url().includes('/api/bgg/search?q=cascad'))
     await field(page).fill('harmon')
@@ -152,11 +146,11 @@ test.describe('F006 US1: find a game by its name', () => {
     await expect(page.getByRole('button', { name: 'Cascadia, 2021', exact: true })).toHaveCount(0)
   })
 
-  test('without the token Search says it comes soon, still without an action bar', async ({ page }) => {
+  test('without the token the field is disabled and says why, still without an action bar', async ({ page }) => {
     await fakeSearch(page, { token: false })
-    await page.goto('/#/search')
-    await expect(page.getByRole('heading', { name: 'Searching all of BoardGameGeek comes soon' })).toBeVisible()
-    await expect(page.getByRole('searchbox', { name: 'Search BoardGameGeek' })).toBeDisabled()
+    await page.goto('/#/buy')
+    await expect(page.getByText(/Searching all of BoardGameGeek needs official access/)).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Find a game' })).toBeDisabled()
     await expect(page.getByRole('navigation', { name: 'Actions' })).toHaveCount(0)
   })
 })

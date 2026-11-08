@@ -1,27 +1,73 @@
 import { useEffect, useState } from 'react'
 
+import type { StatusKey } from '../domain/bgg-status.ts'
 import { type Mark, isMark } from '../domain/marks.ts'
+
+/** F008: the tabs of the Lists place (contracts/ui.md "Routes"). */
+export type ListsTab = 'status' | 'previews' | 'geeklists'
+const LISTS_TABS: ListsTab[] = ['status', 'previews', 'geeklists']
+
+/** F008: a status in an address: BGG's own lower-case names (contracts/ui.md "Routes"). */
+const STATUS_SLUGS: Record<StatusKey, string> = {
+  own: 'own',
+  preordered: 'preordered',
+  wishlist: 'wishlist',
+  wantToPlay: 'wanttoplay',
+  forTrade: 'fortrade',
+  wantInTrade: 'want',
+  wantToBuy: 'wanttobuy',
+  prevOwned: 'prevowned',
+}
+const statusOf = (slug: string | undefined) => (Object.keys(STATUS_SLUGS) as StatusKey[]).find(k => STATUS_SLUGS[k] === slug)
+
+/** F008: what BG-Tinder swipes: a loaded BGG list, or a status list of a BGG user. */
+export type SwipeSource = { kind: 'preview' | 'geeklist'; id: number } | { kind: 'status'; bggUser: string; status: StatusKey }
 
 /** Hash routes, so deep links work offline from the precached app shell. */
 export type Route =
-  /** F003: `create` opens the New collection sheet (`#/collections?new`) */
+  /** Buy › Shopping lists (code still says collections); `create` opens the New shopping list sheet (`#/buy/lists?new`) */
   | { name: 'collections'; create?: true }
   /** F003: `open` opens Add game or BG-Tinder (`?add=game|list`); F004: the Show-off sheet (`?show-off`) */
   | { name: 'collection'; id: string; open?: 'game' | 'list' | 'showoff' }
   /** F004: the Show-off screen of a collection for the chosen groups (research R7) */
   | { name: 'showoff'; id: string; groups: Mark[] }
-  | { name: 'swipe'; id: string; list?: { kind: 'preview' | 'geeklist'; id: number } }
-  /** F003: `load` opens the Load a BGG list sheet (`#/lists?load`) */
-  | { name: 'lists'; load?: true }
+  | { name: 'swipe'; id: string; list?: SwipeSource }
+  /** F008: Lists on a tab (none: the last used one); `load` opens the Load a BGG list sheet */
+  | { name: 'lists'; tab?: ListsTab; load?: true }
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
-  | { name: 'search' }
-  /** F007: the Buy place (search) and a game's price screen */
-  | { name: 'buy' }
-  | { name: 'prices'; bggId: number }
+  /** F008: one status list of a BGG user */
+  | { name: 'status-list'; bggUser: string; status: StatusKey }
+  /** F008: Buy › Search, `game` with that game's sheet open */
+  | { name: 'buy'; game?: number }
   | { name: 'config' }
   | { name: 'share' }
   /** F002: something shared to the app (contracts/share-target.md) */
   | { name: 'shared'; title?: string; text?: string; url?: string }
+
+const positive = (value: string | null | undefined) => (Number.isSafeInteger(Number(value)) && Number(value) > 0 ? Number(value) : undefined)
+
+/** A shopping list and its sub-screens: `parts` after the list's id, as in `#/buy/lists/<id>/…`. */
+function shoppingList(id: string, parts: string[], params: URLSearchParams): Route {
+  const [sub, kind, listId] = parts
+  if (sub === 'swipe') {
+    const status = statusOf(parts[3])
+    if (kind === 'status') return listId && status ? { name: 'swipe', id, list: { kind, bggUser: listId, status } } : { name: 'swipe', id }
+    return (kind === 'preview' || kind === 'geeklist') && positive(listId) ? { name: 'swipe', id, list: { kind, id: Number(listId) } } : { name: 'swipe', id }
+  }
+  if (sub === 'show-off') {
+    // unknown marks are dropped; without a valid one the address is the collection itself
+    const groups = (kind ?? '').split(',').filter(isMark)
+    return groups.length > 0 ? { name: 'showoff', id, groups } : { name: 'collection', id }
+  }
+  if (params.has('show-off')) return { name: 'collection', id, open: 'showoff' }
+  const open = params.get('add')
+  return open === 'game' || open === 'list' ? { name: 'collection', id, open } : { name: 'collection', id }
+}
+
+function shoppingLists(id: string | undefined, rest: string[], params: URLSearchParams): Route {
+  if (id) return shoppingList(id, rest, params)
+  return params.has('new') ? { name: 'collections', create: true } : { name: 'collections' }
+}
 
 export function parseRoute(hash: string): Route {
   const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?')
@@ -29,34 +75,27 @@ export function parseRoute(hash: string): Route {
   const [first, second, third] = parts
   const params = new URLSearchParams(query)
   switch (first) {
-    case 'collections':
-      if (second && third === 'swipe') {
-        const [, , , kind, listId] = parts
-        return (kind === 'preview' || kind === 'geeklist') && Number(listId) > 0
-          ? { name: 'swipe', id: second, list: { kind, id: Number(listId) } }
-          : { name: 'swipe', id: second }
+    case 'buy':
+      if (second === 'lists') return shoppingLists(third, parts.slice(3), params)
+      // old: `#/buy/<bggId>` was the price screen of feature 007
+      {
+        const game = positive(second) ?? positive(params.get('game'))
+        return game ? { name: 'buy', game } : { name: 'buy' }
       }
-      if (second && third === 'show-off') {
-        // unknown marks are dropped; without a valid one the address is the collection itself
-        const groups = (parts[3] ?? '').split(',').filter(isMark)
-        return groups.length > 0 ? { name: 'showoff', id: second, groups } : { name: 'collection', id: second }
-      }
-      if (second) {
-        if (params.has('show-off')) return { name: 'collection', id: second, open: 'showoff' }
-        const open = params.get('add')
-        return open === 'game' || open === 'list' ? { name: 'collection', id: second, open } : { name: 'collection', id: second }
-      }
-      return params.has('new') ? { name: 'collections', create: true } : { name: 'collections' }
-    case 'lists':
-      if ((second === 'preview' || second === 'geeklist') && Number(third) > 0)
-        return { name: 'list', kind: second, listId: Number(third) }
-      return params.has('load') ? { name: 'lists', load: true } : { name: 'lists' }
+    case 'collections': // old address of the shopping lists
+      return shoppingLists(second, parts.slice(2), params)
+    case 'lists': {
+      if ((second === 'preview' || second === 'geeklist') && positive(third)) return { name: 'list', kind: second, listId: Number(third) }
+      const status = statusOf(parts[3])
+      if (second === 'status' && third && status) return { name: 'status-list', bggUser: third, status }
+      const tab = LISTS_TABS.find(t => t === second)
+      const load = params.has('load') ? { load: true as const } : {}
+      return tab && (!third || second === 'status') ? { name: 'lists', tab, ...load } : { name: 'lists', ...load }
+    }
     case 'add': // the add screen of 001/002 is gone; its old addresses open the matching sheet
       return second === 'collection' ? { name: 'collections', create: true } : second === 'list' ? { name: 'lists', load: true } : { name: 'collections' }
-    case 'search':
-      return { name: 'search' }
-    case 'buy':
-      return Number.isSafeInteger(Number(second)) && Number(second) > 0 ? { name: 'prices', bggId: Number(second) } : { name: 'buy' }
+    case 'search': // the Search place of feature 006 is Buy › Search now
+      return { name: 'buy' }
     case 'config':
       return second === 'share' ? { name: 'share' } : { name: 'config' }
     case 'share': // old links
@@ -70,26 +109,30 @@ export function parseRoute(hash: string): Route {
   }
 }
 
+/** Addresses from before F008 (and older), which the app rewrites to their new form. */
+export function isOldAddress(hash: string): boolean {
+  return /^#\/(collections|search|add|share)(?=[/?]|$)|^#\/buy\/(?!lists(?=[/?]|$))/.test(hash)
+}
+
 export function href(route: Route): string {
+  const list = (id: string) => `#/buy/lists/${encodeURIComponent(id)}`
   switch (route.name) {
     case 'collections':
-      return route.create ? '#/collections?new' : '#/collections'
+      return route.create ? '#/buy/lists?new' : '#/buy/lists'
     case 'collection':
-      return `#/collections/${encodeURIComponent(route.id)}${route.open === 'showoff' ? '?show-off' : route.open ? `?add=${route.open}` : ''}`
+      return `${list(route.id)}${route.open === 'showoff' ? '?show-off' : route.open ? `?add=${route.open}` : ''}`
     case 'showoff':
-      return `#/collections/${encodeURIComponent(route.id)}/show-off/${route.groups.join(',')}`
+      return `${list(route.id)}/show-off/${route.groups.join(',')}`
     case 'swipe':
-      return `#/collections/${encodeURIComponent(route.id)}/swipe${route.list ? `/${route.list.kind}/${route.list.id}` : ''}`
+      return `${list(route.id)}/swipe${!route.list ? '' : route.list.kind === 'status' ? `/status/${encodeURIComponent(route.list.bggUser)}/${STATUS_SLUGS[route.list.status]}` : `/${route.list.kind}/${route.list.id}`}`
     case 'lists':
-      return route.load ? '#/lists?load' : '#/lists'
+      return `#/lists${route.tab ? `/${route.tab}` : ''}${route.load ? '?load' : ''}`
     case 'list':
       return `#/lists/${route.kind}/${route.listId}`
-    case 'search':
-      return '#/search'
+    case 'status-list':
+      return `#/lists/status/${encodeURIComponent(route.bggUser)}/${STATUS_SLUGS[route.status]}`
     case 'buy':
-      return '#/buy'
-    case 'prices':
-      return `#/buy/${route.bggId}`
+      return route.game ? `#/buy?game=${route.game}` : '#/buy'
     case 'config':
       return '#/config'
     case 'share':
@@ -111,9 +154,19 @@ export function navigate(route: Route, options: { replace?: boolean } = {}) {
 export function useRoute(): Route {
   const [route, setRoute] = useState(() => parseRoute(window.location.hash))
   useEffect(() => {
+    // F008: an old address (bookmark, link) shows its new form in the address bar
+    const rewrite = () => {
+      if (isOldAddress(window.location.hash)) window.history.replaceState(window.history.state, '', href(parseRoute(window.location.hash)))
+    }
+    rewrite()
+    // a new screen starts at the top; a sheet opened by the query (`?game=`, `?add=`) keeps the scroll position
+    let path = window.location.hash.split('?')[0]
     const onChange = () => {
+      rewrite()
       setRoute(parseRoute(window.location.hash))
-      window.scrollTo(0, 0)
+      const next = window.location.hash.split('?')[0]
+      if (next !== path) window.scrollTo(0, 0)
+      path = next
     }
     window.addEventListener('hashchange', onChange)
     return () => window.removeEventListener('hashchange', onChange)

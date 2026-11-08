@@ -10,7 +10,7 @@ const apiFixture = (name: string) => JSON.parse(readFileSync(new URL(`../fixture
 const shareUrl = (params: Record<string, string>) => `/share-target?${new URLSearchParams(params)}`
 
 test('a share lands on #/shared once; Back and reload do not share again (T004)', async ({ page }) => {
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await page.goto(shareUrl({ text: `Cascadia ${CASCADIA}` }))
   await expect(page).toHaveURL(/\/#\/shared\?/)
   expect(new URL(page.url()).pathname).toBe('/')
@@ -29,7 +29,7 @@ const BLOG = 'https://boardgamegeek.com/blog/1/blogpost/171234/spiel-essen-2026-
 
 async function createCollection(page: Page, name: string): Promise<string> {
   await newCollection(page, name)
-  return decodeURIComponent(new URL(page.url()).hash.replace('#/collections/', ''))
+  return decodeURIComponent(new URL(page.url()).hash.replace('#/buy/lists/', ''))
 }
 
 /** Writes a meta value into this device's store (the share sheet sets lastShareCollection on add). */
@@ -88,7 +88,7 @@ test('a shared game opens over the collection shared into last (T009, T014)', as
   const other = await createCollection(page, unique('Other'))
   const last = unique('Shared last')
   const lastId = await createCollection(page, last)
-  await page.goto(`/#/collections/${encodeURIComponent(other)}`)
+  await page.goto(`/#/buy/lists/${encodeURIComponent(other)}`)
   await setMeta(page, 'lastShareCollection', lastId)
   await page.goto(shareUrl({ text: `Cascadia ${CASCADIA}` }))
   await expect(page.getByRole('heading', { level: 1, name: last })).toBeVisible()
@@ -108,7 +108,7 @@ test('with no collection the shared game opens over the collections screen (T014
   await fakeBgg(page)
   await noCollections(page)
   await page.goto(shareUrl({ url: CASCADIA }))
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
 })
 
 test('a shared page that is no game: "Not a BoardGameGeek game", Close goes to the collection behind (T009, T013)', async ({ page }) => {
@@ -126,11 +126,11 @@ test('a shared page that is no game: "Not a BoardGameGeek game", Close goes to t
 
   await sheet.getByRole('button', { name: 'Close' }).click()
   await expect(sheet).toBeHidden()
-  await expect(page).toHaveURL(new RegExp(`#/collections/${id}$`))
+  await expect(page).toHaveURL(new RegExp(`#/buy/lists/${id}$`))
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   // the share was replaced in the history: Back does not reopen it
   await page.goBack()
-  await expect(page).toHaveURL(/#\/search$/)
+  await expect(page).toHaveURL(/#\/buy$/)
 })
 
 test('"Add game by link" opens Add game with an empty link (T013)', async ({ page }) => {
@@ -141,21 +141,21 @@ test('"Add game by link" opens Add game with an empty link (T013)', async ({ pag
   await expect(sheet.getByText('https://example.com/not-bgg')).toBeVisible()
   await sheet.getByRole('button', { name: 'Add game by link' }).click()
   // F003: the collection behind opens with its Add game sheet (contracts/navigation.md)
-  await expect(page).toHaveURL(new RegExp(`#/collections/${id}\\?add=game$`))
+  await expect(page).toHaveURL(new RegExp(`#/buy/lists/${id}\\?add=game$`))
   await expect(page.getByRole('dialog', { name: 'Add game' }).getByLabel(/boardgamegeek link/i)).toHaveValue('')
   // Back from Add game goes to the collection, not to the share
   await page.goBack()
-  await expect(page).toHaveURL(new RegExp(`#/collections/${id}$`))
+  await expect(page).toHaveURL(new RegExp(`#/buy/lists/${id}$`))
 })
 
 test('with no collection, a shared page that is no game shows the sheet over the collections screen (T013)', async ({ page }) => {
   await noCollections(page)
   await page.goto(shareUrl({ text: 'just some words' }))
-  await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Buy' })).toBeVisible()
   const sheet = page.getByRole('dialog', { name: 'Not a BoardGameGeek game' })
   await expect(sheet.getByText('just some words')).toBeVisible()
   await sheet.getByRole('button', { name: 'Close' }).click()
-  await expect(page).toHaveURL(/#\/collections$/)
+  await expect(page).toHaveURL(/#\/buy\/lists$/)
 })
 
 test('a shared preview opens that list, loading (T017)', async ({ page }) => {
@@ -165,13 +165,13 @@ test('a shared preview opens that list, loading (T017)', async ({ page }) => {
     await route.fulfill({ json: apiFixture(`preview-93-page-${n}.json`) })
   })
   await page.route('**/api/bgg/companies?**', route => route.fulfill({ json: { companies: [] } }))
-  await page.goto('/#/collections')
+  await page.goto('/#/buy/lists')
   await page.goto(shareUrl({ url: 'https://boardgamegeek.com/geekpreview/93/spiel-essen-2026' }))
   await expect(page).toHaveURL(/#\/lists\/preview\/93$/)
   await expect(page.getByText(/loading/i).first()).toBeVisible()
   // the share was replaced: Back goes to where the person was
   await page.goBack()
-  await expect(page).toHaveURL(/#\/collections$/)
+  await expect(page).toHaveURL(/#\/buy\/lists$/)
 })
 
 test('a shared geeklist opens that list (T017)', async ({ page }) => {

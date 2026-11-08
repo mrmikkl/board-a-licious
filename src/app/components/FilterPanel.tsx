@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-import { type Bought, type Filter, PRESETS, type Price, dropBuy, isDefaultView } from '../../domain/filter.ts'
+import { type BggFilter, type Bought, type Filter, PRESETS, type Price, dropBuy, isDefaultView } from '../../domain/filter.ts'
 import { MARKS, type Mark } from '../../domain/marks.ts'
 import { Sheet } from './Sheet.tsx'
 import { useToast } from './Toast.tsx'
@@ -20,6 +20,14 @@ const PRICE: { key: Price; label: string }[] = [
   { key: 'expensive', label: '> €60' },
 ]
 
+/** F008: the BGG status segment (docs/design.md "Filter and group"). */
+const BGG: { key: BggFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'own', label: 'Owned' },
+  { key: 'notOwn', label: 'Not owned' },
+  { key: 'wishlist', label: 'Wishlist' },
+]
+
 /**
  * "Filter and group" (docs/design.md v2.2.0 "Filter and group", F005 R5): a sheet opened from the
  * Filter action, so the collection stays in focus. Bought, Price (listed price), a checkbox per category
@@ -31,6 +39,7 @@ export function FilterSheet({
   filter,
   counts,
   groupBy,
+  bgg = false,
   onChange,
   onGroupBy,
   onClear,
@@ -40,6 +49,8 @@ export function FilterSheet({
   filter: Filter
   counts: Record<Mark, number>
   groupBy: GroupBy
+  /** F008: offer the BGG status segment (only with a BGG username). */
+  bgg?: boolean
   onChange: (filter: Filter) => void
   onGroupBy: (groupBy: GroupBy) => void
   onClear: () => void
@@ -82,6 +93,20 @@ export function FilterSheet({
             </button>
           ))}
         </div>
+        {bgg && (
+          <>
+            <p className="seg-title" aria-hidden="true">
+              BGG status
+            </p>
+            <div className="seg" role="group" aria-label="BGG status">
+              {BGG.map(b => (
+                <button key={b.key} type="button" aria-pressed={(filter.bgg ?? 'all') === b.key} onClick={() => onChange({ ...plain, bgg: b.key })}>
+                  {b.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         <div className="seg-head">
           <p className="seg-title" aria-hidden="true">
             Categories

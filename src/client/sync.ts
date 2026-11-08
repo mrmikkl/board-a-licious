@@ -1,6 +1,7 @@
 import type { Collection, Entry } from '../domain/collection.ts'
 import type { LoadedList } from '../domain/lists.ts'
 import type { Api } from './api.ts'
+import type { FollowedBggUser, UserSetting } from './types.ts'
 import type { Store } from './store.ts'
 
 const CHUNK = 500
@@ -21,12 +22,23 @@ export function createSync(deps: { store: Store; api: Api; events?: EventTarget;
       const collections: Collection[] = []
       const entries: Entry[] = []
       const lists: LoadedList[] = []
+      const settings: UserSetting[] = []
+      const follows: FollowedBggUser[] = []
       for (const change of chunk) {
         if (change.kind === 'collection') collections.push(change.row)
         else if (change.kind === 'entry') entries.push(change.row)
-        else lists.push(change.row)
+        else if (change.kind === 'list') lists.push(change.row)
+        else if (change.kind === 'setting') settings.push(change.row)
+        else follows.push(change.row)
       }
-      await api.push(lists.length > 0 ? { collections, entries, lists } : { collections, entries })
+      // the optional arrays only when they hold something, so the body stays as small as before
+      await api.push({
+        collections,
+        entries,
+        ...(lists.length > 0 && { lists }),
+        ...(settings.length > 0 && { settings }),
+        ...(follows.length > 0 && { follows }),
+      })
       await store.acknowledge(chunk.map(c => c.key))
     }
     const since = await store.meta('lastSyncAt')

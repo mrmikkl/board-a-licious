@@ -14,7 +14,18 @@ export type Game = {
   kind: 'boardgame' | 'expansion'
 } & GameDetails
 
-export type Changes = { collections: Collection[]; entries: Entry[]; lists?: LoadedList[] }
+/** F008: the person's BGG username (null = none). */
+export type UserSetting = { bggUsername: string | null; updatedAt: string }
+/** F008: a friend's BGG user, lower-cased; `deleted` is the tombstone. */
+export type FollowedBggUser = { bggUser: string; updatedAt: string; deleted: boolean }
+
+export type Changes = {
+  collections: Collection[]
+  entries: Entry[]
+  lists?: LoadedList[]
+  settings?: UserSetting[]
+  follows?: FollowedBggUser[]
+}
 
 /** An entry points at a collection that does not exist for this user. */
 export class ForeignCollectionError extends Error {}
@@ -95,10 +106,21 @@ export async function listChanges(db: Db, email: string, since?: string): Promis
      WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
+  const settings = await db.query<{ bgg_username: string | null; updated_at: Date | string }>(
+    `SELECT bgg_username, updated_at FROM user_setting WHERE user_email = $1 AND synced_at > $2`,
+    [email, after],
+  )
+  const follows = await db.query<{ bgg_user: string; updated_at: Date | string; deleted: boolean }>(
+    `SELECT bgg_user, updated_at, deleted FROM followed_bgg_user
+     WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at, bgg_user`,
+    [email, after],
+  )
   return {
     collections: collections.map(toCollection),
     entries: entries.map(toEntry),
     lists: lists.map(r => ({ kind: r.kind, id: r.list_id, title: r.title, updatedAt: iso(r.updated_at), deleted: r.deleted })),
+    settings: settings.map(r => ({ bggUsername: r.bgg_username, updatedAt: iso(r.updated_at) })),
+    follows: follows.map(r => ({ bggUser: r.bgg_user, updatedAt: iso(r.updated_at), deleted: r.deleted })),
   }
 }
 
@@ -177,7 +199,34 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
     )
     applied += rows.length
   }
-  const total = changes.collections.length + changes.entries.length + (changes.lists?.length ?? 0)
+  for (const setting of changes.settings ?? []) {
+    const rows = await db.query(
+      `INSERT INTO user_setting AS t (user_email, bgg_username, updated_at) VALUES ($1, $2, $3)
+       ON CONFLICT (user_email) DO UPDATE SET bgg_username = excluded.bgg_username,
+         updated_at = excluded.updated_at, synced_at = now()
+       WHERE excluded.updated_at > t.updated_at
+       RETURNING user_email`,
+      [email, setting.bggUsername, setting.updatedAt],
+    )
+    applied += rows.length
+  }
+  for (const f of changes.follows ?? []) {
+    const rows = await db.query(
+      `INSERT INTO followed_bgg_user AS t (user_email, bgg_user, updated_at, deleted) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_email, bgg_user) DO UPDATE SET updated_at = excluded.updated_at,
+         deleted = excluded.deleted, synced_at = now()
+       WHERE excluded.updated_at > t.updated_at
+       RETURNING bgg_user`,
+      [email, f.bggUser.toLowerCase(), f.updatedAt, f.deleted],
+    )
+    applied += rows.length
+  }
+  const total =
+    changes.collections.length +
+    changes.entries.length +
+    (changes.lists?.length ?? 0) +
+    (changes.settings?.length ?? 0) +
+    (changes.follows?.length ?? 0)
   return { applied, ignored: total - applied }
 }
 
