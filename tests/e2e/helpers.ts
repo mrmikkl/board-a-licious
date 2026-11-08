@@ -334,3 +334,40 @@ export async function fakeBggAccount(
     await route.fulfill({ json: { bggId, status: next } })
   })
 }
+
+/**
+ * F008: keeps the BGG username and followed friends on this test's device. All tests share one dev
+ * user, so a synced username would reach every other test running at the same time: pushes drop
+ * `settings` and `follows`, pulls leave them out.
+ */
+export async function keepBggSettingsLocal(page: Page) {
+  await page.route('**/api/sync**', async route => {
+    const request = route.request()
+    if (request.method() === 'POST') {
+      const body = request.postDataJSON() as Record<string, unknown>
+      delete body.settings
+      delete body.follows
+      return route.continue({ postData: JSON.stringify(body) })
+    }
+    const response = await route.fetch()
+    if (!response.ok()) return route.fulfill({ response })
+    const json = (await response.json()) as Record<string, unknown>
+    delete json.settings
+    delete json.follows
+    await route.fulfill({ response, json })
+  })
+}
+
+/** F008: Config › BoardGameGeek › "Your BGG username" and Save username (call `keepBggSettingsLocal` first). */
+export async function setBggUsername(page: Page, name: string) {
+  await page.goto('/#/config')
+  const field = page.getByLabel('Your BGG username')
+  await field.fill(name)
+  await page.getByRole('button', { name: 'Save username' }).click()
+  await expect(page.getByRole('status').filter({ hasText: name ? 'Saved your BGG username' : 'Removed your BGG username' })).toBeVisible()
+}
+
+/** F008: `/api/bgg/games` without BGG for games the test does not know: an empty answer. */
+export async function fakeNoGameDetails(page: Page) {
+  await page.route('**/api/bgg/games?**', route => route.fulfill({ json: { games: [] } }))
+}
