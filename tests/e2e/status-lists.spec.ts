@@ -160,7 +160,7 @@ test("BG-Tinder's list choice offers the status lists and swipes one", async ({ 
   await mainButton(page).click()
   const picker = page.getByRole('dialog', { name: '❤️ BG-Tinder ❤️' })
   await picker.getByRole('button', { name: /^Wishlist/ }).click()
-  await picker.getByRole('button', { name: 'Select' }).click()
+  await picker.getByRole('button', { name: 'Select', exact: true }).click()
   await expect(page).toHaveURL(/\/swipe\/status\/mrmikkl\/wishlist$/)
   const top = page.getByRole('group', { name: /^game:/i })
   await expect(top.getByRole('heading', { name: 'Dune: Imperium' })).toBeVisible()
@@ -179,7 +179,9 @@ test('offline, a status list shows the stored copy with its time', async ({ page
   await page.goto('/#/lists/status')
   await expect(card(page, 'Owned, 2 games')).toBeVisible()
 
+  // offline: the faked route would still answer, so the request fails as without a connection
   await context.setOffline(true)
+  await page.route('**/api/bgg/collection?**', route => route.abort('internetdisconnected'))
   await card(page, 'Owned, 2 games').click()
   await expect(page.getByRole('button', { name: 'Ark Nova, 2021' })).toBeVisible()
   await expect(page.getByText(/loaded 2 h ago · offline/)).toBeVisible()

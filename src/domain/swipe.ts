@@ -1,3 +1,4 @@
+import { type BggCollectionItem, type StatusKey, statusList } from './bgg-status.ts'
 import { type Collection, type Entry, newEntry } from './collection.ts'
 import { type ListFacts, factsFromList } from './facts.ts'
 
@@ -7,6 +8,12 @@ export type SwipeGame = { position: number; bggId: number; facts?: ListFacts }
 export type SwipeList<G extends SwipeGame> = { loadedPages: number; pageCount: number; entries: G[] }
 
 export type SwipeDirection = 'right' | 'left'
+
+/** F008: a status list as a list to swipe (FR-003): its games in list order, always fully loaded. */
+export function statusSwipeList(items: BggCollectionItem[], key: StatusKey) {
+  const entries = statusList(items, key).map((item, position) => ({ position, bggId: item.bggId, name: item.name, thumbnailUrl: item.thumbnailUrl }))
+  return { loadedPages: 1, pageCount: 1, entries }
+}
 
 /**
  * The cards still to decide (FR-015): the list's games in list order, without games already in the

@@ -20,6 +20,9 @@ const STATUS_SLUGS: Record<StatusKey, string> = {
 }
 const statusOf = (slug: string | undefined) => (Object.keys(STATUS_SLUGS) as StatusKey[]).find(k => STATUS_SLUGS[k] === slug)
 
+/** F008: what BG-Tinder swipes: a loaded BGG list, or a status list of a BGG user. */
+export type SwipeSource = { kind: 'preview' | 'geeklist'; id: number } | { kind: 'status'; bggUser: string; status: StatusKey }
+
 /** Hash routes, so deep links work offline from the precached app shell. */
 export type Route =
   /** Buy › Shopping lists (code still says collections); `create` opens the New shopping list sheet (`#/buy/lists?new`) */
@@ -28,7 +31,7 @@ export type Route =
   | { name: 'collection'; id: string; open?: 'game' | 'list' | 'showoff' }
   /** F004: the Show-off screen of a collection for the chosen groups (research R7) */
   | { name: 'showoff'; id: string; groups: Mark[] }
-  | { name: 'swipe'; id: string; list?: { kind: 'preview' | 'geeklist'; id: number } }
+  | { name: 'swipe'; id: string; list?: SwipeSource }
   /** F008: Lists on a tab (none: the last used one); `load` opens the Load a BGG list sheet */
   | { name: 'lists'; tab?: ListsTab; load?: true }
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
@@ -47,6 +50,8 @@ const positive = (value: string | null | undefined) => (Number.isSafeInteger(Num
 function shoppingList(id: string, parts: string[], params: URLSearchParams): Route {
   const [sub, kind, listId] = parts
   if (sub === 'swipe') {
+    const status = statusOf(parts[3])
+    if (kind === 'status') return listId && status ? { name: 'swipe', id, list: { kind, bggUser: listId, status } } : { name: 'swipe', id }
     return (kind === 'preview' || kind === 'geeklist') && positive(listId) ? { name: 'swipe', id, list: { kind, id: Number(listId) } } : { name: 'swipe', id }
   }
   if (sub === 'show-off') {
@@ -119,7 +124,7 @@ export function href(route: Route): string {
     case 'showoff':
       return `${list(route.id)}/show-off/${route.groups.join(',')}`
     case 'swipe':
-      return `${list(route.id)}/swipe${route.list ? `/${route.list.kind}/${route.list.id}` : ''}`
+      return `${list(route.id)}/swipe${!route.list ? '' : route.list.kind === 'status' ? `/status/${encodeURIComponent(route.list.bggUser)}/${STATUS_SLUGS[route.list.status]}` : `/${route.list.kind}/${route.list.id}`}`
     case 'lists':
       return `#/lists${route.tab ? `/${route.tab}` : ''}${route.load ? '?load' : ''}`
     case 'list':
