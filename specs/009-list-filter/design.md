@@ -23,7 +23,10 @@
     one track 0–10 in steps of 0.1, the range between the handles filled hot, hexagon handles
     (26×30 px, 44 px tall touch row), the chosen range at the right of the title ("7.5 – 10.0", "any"
     at full width), a muted scale 0 · 5 · 10 below. Each handle is its own slider for screen readers
-    and keys ("Rating from", "Rating to"); the handles cannot cross. 0–10 does not filter. A muted
+    and keys ("Rating from", "Rating to"); the handles cannot cross. **Whole numbers stick**
+    (owner, 2026-11-08): while dragging, a handle within 0.2 of a whole number rests on it (6.85 →
+    7.0, 6.6 stays 6.6); arrow keys still step by 0.1. Small tick marks on the track at every whole
+    number. 0–10 does not filter. A muted
     line names games without a rating.
   - **Mechanisms** and **Designers** "every ticked one": checkbox rows with counts, the 8 most common
     first, "Show all (n)"; above 8 values a find field narrows the rows. Ticked values no longer in
