@@ -1,4 +1,5 @@
 import { type Collection, type Entry, validateCollection, validateEntry } from '../../src/domain/collection.ts'
+import { validLengthLimits } from '../../src/domain/game-filter.ts'
 import { type LoadedList, validateLoadedList } from '../../src/domain/lists.ts'
 import type { Db } from '../db/db.ts'
 import { type FollowedBggUser, ForeignCollectionError, type UserSetting, applyChanges, listChanges, syncCursor } from '../db/repository.ts'
@@ -24,6 +25,9 @@ function validateSetting(value: unknown): string | null {
   if (typeof s !== 'object' || s === null) return 'must be an object.'
   if (s.bggUsername !== null && (typeof s.bggUsername !== 'string' || !BGG_NAME.test(s.bggUsername)))
     return 'bggUsername must be null or a BGG username of 1–50 letters, digits, spaces, _ . or -.'
+  // F009: absent keeps the stored limits, null resets them
+  if (s.lengthLimits !== undefined && s.lengthLimits !== null && !validLengthLimits(s.lengthLimits))
+    return 'lengthLimits must be null or three increasing whole numbers of minutes, each 1–600.'
   if (!isTime(s.updatedAt)) return 'updatedAt must be a timestamp.'
   return null
 }
@@ -93,7 +97,11 @@ export async function postSync(db: Db, email: string, request: Request, now: Dat
 
   try {
     const lowerFollows = follows.map(f => ({ bggUser: f.bggUser.toLowerCase(), updatedAt: f.updatedAt, deleted: f.deleted }))
-    const clean = settings.map(s => ({ bggUsername: s.bggUsername, updatedAt: s.updatedAt }))
+    const clean = settings.map(s => ({
+      bggUsername: s.bggUsername,
+      ...(s.lengthLimits !== undefined && { lengthLimits: s.lengthLimits }),
+      updatedAt: s.updatedAt,
+    }))
     return Response.json(await applyChanges(db, email, { collections, entries, lists, settings: clean, follows: lowerFollows }))
   } catch (error) {
     if (error instanceof ForeignCollectionError) throw new HttpError('bad_request', error.message)

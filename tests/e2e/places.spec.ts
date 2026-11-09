@@ -26,10 +26,10 @@ async function fakeLists(page: Page) {
   return { previewId, geeklistId }
 }
 
-test('the menu holds Buy, Lists and Config with the current place marked', async ({ page }) => {
+test('the menu holds Buy, Lists, Search and Config with the current place marked', async ({ page }) => {
   await page.goto('/#/buy')
   await openMenu(page)
-  await expect(menu(page).getByRole('link')).toHaveText(['Buy', 'Lists', 'Config'])
+  await expect(menu(page).getByRole('link')).toHaveText(['Buy', 'Lists', 'Search', 'Config'])
   await expect(menu(page).locator('[aria-current="page"]')).toHaveText('Buy')
   await menu(page).getByRole('link', { name: 'Lists' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Lists' })).toBeVisible()
@@ -183,9 +183,6 @@ test('old addresses open the new places', async ({ page }) => {
   await page.goto(`/#/collections/${id}`)
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await expect(page).toHaveURL(new RegExp(`#/buy/lists/${id}$`))
-  await page.goto('/#/search')
-  await expect(tab(page, 'Search')).toHaveAttribute('aria-selected', 'true')
-  await expect(page).toHaveURL(/#\/buy$/)
   await fakeSearch(page, { results: {} })
   await page.goto('/#/buy/295947')
   await expect(page).toHaveURL(/#\/buy\?game=295947$/)

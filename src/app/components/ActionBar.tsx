@@ -17,11 +17,19 @@ function Control({ href, onClick, className, label, disabled, children }: Target
   )
 }
 
-/** The big hot hexagon, the screen's one orange action; disabled = raised grey, no shimmer (docs/design.md "Main button"). */
-export function MainButton({ icon, label, disabled, ...target }: Target & { icon: ReactNode; label: string; disabled?: boolean }) {
+/**
+ * The big hot hexagon, the screen's one orange action; disabled = raised grey, no shimmer. A short
+ * caption under the icon (aria-hidden, the name stays the sentence); `active` adds a small dark
+ * hexagon dot at the top right and says so in the name (docs/design.md 3.3.0 "Main button").
+ */
+export function MainButton({ icon, label, caption, active, disabled, ...target }: Target & { icon: ReactNode; label: string; caption: string; active?: boolean; disabled?: boolean }) {
   return (
-    <Control {...target} className="main-btn hex hex-btn" label={label} disabled={disabled}>
+    <Control {...target} className="main-btn hex hex-btn" label={active ? `${label} (active)` : label} disabled={disabled}>
       {icon}
+      <span className="main-label" aria-hidden="true">
+        {caption}
+      </span>
+      {active && <i className="main-dot hex" aria-hidden="true" />}
     </Control>
   )
 }

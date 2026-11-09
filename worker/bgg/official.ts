@@ -26,6 +26,7 @@ type ThingItem = {
   yearpublished?: Value
   minplayers?: Value
   maxplayers?: Value
+  playingtime?: Value
   link?: Link[]
   statistics?: { ratings?: { average?: Value; bayesaverage?: Value } }
   'poll-summary'?: PollSummary | PollSummary[]
@@ -98,6 +99,8 @@ function toGame(item: ThingItem, kind: Game['kind']): Game {
     kind,
     minPlayers: positive(item.minplayers?.value),
     maxPlayers: positive(item.maxplayers?.value),
+    // F009 research R2: minutes; BGG's 0 means unknown
+    playingTime: positive(item.playingtime?.value),
     designers: linked(item.link, 'boardgamedesigner'),
     mechanisms: linked(item.link, 'boardgamemechanic'),
     publisher: linked(item.link, 'boardgamepublisher')[0] ?? null,

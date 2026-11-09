@@ -149,6 +149,9 @@ and sign in again: the collection appears there, so the way through Hyperdrive t
   `openssl rand -base64 32 | npx wrangler secret put BGG_SESSION_KEY` (the value never appears on
   screen or in a file). Changing it signs everyone out of BGG; nothing else is lost. Locally,
   `BGG_SESSION_KEY=…` (any 32-byte base64 value) goes into `.dev.vars`.
+- **List filter** (feature 009): migration `0008_list_filter.sql` adds the games' playing time (games
+  stored before are re-read from BGG when next asked for) and the person's game length limits;
+  `npm run db:migrate:neon` before deploying. No secret.
 - **Prices** (feature 007) need no secret: brettspielpreise.de's API is free (with a link back and at least
   one hour of caching). eBay offers would need eBay developer keys (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`),
   a later step; until then eBay is a search link. `node --env-file=.dev.vars scripts/record-prices.mjs`

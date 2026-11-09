@@ -147,6 +147,6 @@ test('Filter › BGG status narrows a shopping list', async ({ page }) => {
   await sheet.getByRole('button', { name: 'Done' }).click()
   await expect(page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: 'Filter (active)' })).toBeVisible()
   await filter.click()
-  await sheet.getByRole('button', { name: 'Clear filters' }).click()
+  await sheet.getByRole('button', { name: 'Clear filters' }).first().click()
   await expect(names).toHaveCount(4)
 })

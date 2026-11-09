@@ -39,6 +39,8 @@ export type Route =
   | { name: 'status-list'; bggUser: string; status: StatusKey }
   /** F008: Buy › Search, `game` with that game's sheet open */
   | { name: 'buy'; game?: number }
+  /** The Search place: look a game up on BGG, `game` with its sheet open (`#/search?game=`) */
+  | { name: 'search'; game?: number }
   | { name: 'config' }
   | { name: 'share' }
   /** F002: something shared to the app (contracts/share-target.md) */
@@ -94,8 +96,10 @@ export function parseRoute(hash: string): Route {
     }
     case 'add': // the add screen of 001/002 is gone; its old addresses open the matching sheet
       return second === 'collection' ? { name: 'collections', create: true } : second === 'list' ? { name: 'lists', load: true } : { name: 'collections' }
-    case 'search': // the Search place of feature 006 is Buy › Search now
-      return { name: 'buy' }
+    case 'search': {
+      const game = positive(params.get('game'))
+      return game ? { name: 'search', game } : { name: 'search' }
+    }
     case 'config':
       return second === 'share' ? { name: 'share' } : { name: 'config' }
     case 'share': // old links
@@ -111,7 +115,7 @@ export function parseRoute(hash: string): Route {
 
 /** Addresses from before F008 (and older), which the app rewrites to their new form. */
 export function isOldAddress(hash: string): boolean {
-  return /^#\/(collections|search|add|share)(?=[/?]|$)|^#\/buy\/(?!lists(?=[/?]|$))/.test(hash)
+  return /^#\/(collections|add|share)(?=[/?]|$)|^#\/buy\/(?!lists(?=[/?]|$))/.test(hash)
 }
 
 export function href(route: Route): string {
@@ -133,6 +137,8 @@ export function href(route: Route): string {
       return `#/lists/status/${encodeURIComponent(route.bggUser)}/${STATUS_SLUGS[route.status]}`
     case 'buy':
       return route.game ? `#/buy?game=${route.game}` : '#/buy'
+    case 'search':
+      return route.game ? `#/search?game=${route.game}` : '#/search'
     case 'config':
       return '#/config'
     case 'share':

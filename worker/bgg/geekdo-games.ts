@@ -60,6 +60,8 @@ const toGame = (item: GeekItem, ratings: Ratings): Game => {
     recommendedWith: null,
     playerPoll: null,
     playerPollVoters: null,
+    // F009 research R2: the playing time is read through the official API only
+    playingTime: null,
   }
 }
 

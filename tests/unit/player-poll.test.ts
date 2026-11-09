@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { type PlayerVotes, pollTable } from '../../src/domain/player-poll.ts'
+import { type PlayerVotes, pollKind, pollTable } from '../../src/domain/player-poll.ts'
 
 /** Cascadia's poll from tests/fixtures/bgg-xml/thing-295947-385318.xml */
 const cascadia: PlayerVotes[] = [
@@ -44,5 +44,32 @@ describe('player poll table (F006 FR-006b)', () => {
     expect(pollTable(null)).toBeNull()
     expect(pollTable(undefined)).toBeNull()
     expect(pollTable([...cascadia, { players: '5', best: 0, recommended: 0, notRecommended: 0 }])?.rows).toHaveLength(5)
+  })
+})
+
+describe('pollKind: best or recommended with n (F009 research R3)', () => {
+  it('is best when best votes are the largest, recommended when best + recommended beat not recommended', () => {
+    expect([1, 2, 3, 4].map(n => pollKind(cascadia, n))).toEqual(['rec', 'best', 'best', 'rec'])
+  })
+
+  it('is null when not recommended wins, and when nobody voted for n', () => {
+    expect(pollKind(cascadia, 5)).toBeNull()
+    expect(pollKind([{ players: '2', best: 0, recommended: 0, notRecommended: 0 }], 2)).toBeNull()
+    expect(pollKind([{ players: '2', best: 5, recommended: 1, notRecommended: 0 }], 3)).toBeNull()
+    expect(pollKind([], 2)).toBeNull()
+    expect(pollKind(null, 2)).toBeNull()
+    expect(pollKind(undefined, 2)).toBeNull()
+  })
+
+  it("uses the poll's largest row (4+) for any larger n", () => {
+    const poll: PlayerVotes[] = [
+      { players: '3', best: 1, recommended: 5, notRecommended: 0 },
+      { players: '4', best: 2, recommended: 3, notRecommended: 1 },
+      { players: '4+', best: 1, recommended: 6, notRecommended: 2 },
+    ]
+    expect(pollKind(poll, 4)).toBe('rec')
+    expect(pollKind(poll, 5)).toBe('rec')
+    expect(pollKind(poll, 12)).toBe('rec')
+    expect(pollKind(poll, 2)).toBeNull()
   })
 })

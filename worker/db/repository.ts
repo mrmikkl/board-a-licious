@@ -1,4 +1,5 @@
 import type { Collection, Entry } from '../../src/domain/collection.ts'
+import type { LengthLimits } from '../../src/domain/game-filter.ts'
 import type { GameDetails } from '../../src/domain/game-info.ts'
 import type { PlayerVotes } from '../../src/domain/player-poll.ts'
 import type { LoadedList } from '../../src/domain/lists.ts'
@@ -14,8 +15,11 @@ export type Game = {
   kind: 'boardgame' | 'expansion'
 } & GameDetails
 
-/** F008: the person's BGG username (null = none). */
-export type UserSetting = { bggUsername: string | null; updatedAt: string }
+/**
+ * F008: the person's BGG username (null = none). F009: their length limits (null = the defaults); a
+ * setting without the key keeps the stored limits (older apps).
+ */
+export type UserSetting = { bggUsername: string | null; lengthLimits?: LengthLimits | null; updatedAt: string }
 /** F008: a friend's BGG user, lower-cased; `deleted` is the tombstone. */
 export type FollowedBggUser = { bggUser: string; updatedAt: string; deleted: boolean }
 
@@ -106,8 +110,9 @@ export async function listChanges(db: Db, email: string, since?: string): Promis
      WHERE user_email = $1 AND synced_at > $2 ORDER BY updated_at`,
     [email, after],
   )
-  const settings = await db.query<{ bgg_username: string | null; updated_at: Date | string }>(
-    `SELECT bgg_username, updated_at FROM user_setting WHERE user_email = $1 AND synced_at > $2`,
+  await ensureSettingColumns(db)
+  const settings = await db.query<{ bgg_username: string | null; length_limits: LengthLimits | string | null; updated_at: Date | string }>(
+    `SELECT bgg_username, length_limits, updated_at FROM user_setting WHERE user_email = $1 AND synced_at > $2`,
     [email, after],
   )
   const follows = await db.query<{ bgg_user: string; updated_at: Date | string; deleted: boolean }>(
@@ -119,7 +124,12 @@ export async function listChanges(db: Db, email: string, since?: string): Promis
     collections: collections.map(toCollection),
     entries: entries.map(toEntry),
     lists: lists.map(r => ({ kind: r.kind, id: r.list_id, title: r.title, updatedAt: iso(r.updated_at), deleted: r.deleted })),
-    settings: settings.map(r => ({ bggUsername: r.bgg_username, updatedAt: iso(r.updated_at) })),
+    settings: settings.map(r => ({
+      bggUsername: r.bgg_username,
+      // jsonb: text from the production driver, parsed by PGlite
+      lengthLimits: typeof r.length_limits === 'string' ? (JSON.parse(r.length_limits) as LengthLimits | null) : r.length_limits,
+      updatedAt: iso(r.updated_at),
+    })),
     follows: follows.map(r => ({ bggUser: r.bgg_user, updatedAt: iso(r.updated_at), deleted: r.deleted })),
   }
 }
@@ -199,14 +209,17 @@ export async function applyChanges(db: Db, email: string, changes: Changes) {
     )
     applied += rows.length
   }
+  if ((changes.settings ?? []).length > 0) await ensureSettingColumns(db)
   for (const setting of changes.settings ?? []) {
+    // F009: without the key the stored limits stay ($5 false), null resets them to the defaults
     const rows = await db.query(
-      `INSERT INTO user_setting AS t (user_email, bgg_username, updated_at) VALUES ($1, $2, $3)
+      `INSERT INTO user_setting AS t (user_email, bgg_username, length_limits, updated_at) VALUES ($1, $2, $3::jsonb, $4)
        ON CONFLICT (user_email) DO UPDATE SET bgg_username = excluded.bgg_username,
+         length_limits = CASE WHEN $5::boolean THEN excluded.length_limits ELSE t.length_limits END,
          updated_at = excluded.updated_at, synced_at = now()
        WHERE excluded.updated_at > t.updated_at
        RETURNING user_email`,
-      [email, setting.bggUsername, setting.updatedAt],
+      [email, setting.bggUsername, setting.lengthLimits == null ? null : JSON.stringify(setting.lengthLimits), setting.updatedAt, setting.lengthLimits !== undefined],
     )
     applied += rows.length
   }
@@ -250,6 +263,7 @@ type GameRow = {
   recommended_with: string | null
   player_poll: PlayerVotes[] | string | null
   player_poll_voters: number | null
+  playing_time: number | null
 }
 
 /** A numeric column: the production driver hands it over as text, PGlite as a number. */
@@ -277,7 +291,24 @@ async function ensureRatingColumns(db: Db): Promise<void> {
   await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS recommended_with text')
   await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll jsonb')
   await db.query('ALTER TABLE game ADD COLUMN IF NOT EXISTS player_poll_voters integer')
+  // F009: as migration 0008: old games are marked stale only when the column is added
+  await db.query(`DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'game' AND column_name = 'playing_time') THEN
+        ALTER TABLE game ADD COLUMN playing_time integer;
+        UPDATE game SET fetched_at = '1970-01-01T00:00:00Z';
+      END IF;
+    END
+    $$`)
   gameColumnsReady = true
+}
+
+/** F009: the length limits column of migration 0008, added by the Worker itself like the game columns. */
+let settingColumnsReady = false
+async function ensureSettingColumns(db: Db): Promise<void> {
+  if (settingColumnsReady) return
+  await db.query('ALTER TABLE user_setting ADD COLUMN IF NOT EXISTS length_limits jsonb')
+  settingColumnsReady = true
 }
 
 /** Cached games fetched after `freshAfter` (older ones are refreshed from BGG). */
@@ -285,7 +316,7 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
   if (ids.length === 0) return []
   await ensureRatingColumns(db)
   const rows = await db.query<GameRow>(
-    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll, player_poll_voters FROM game
+    `SELECT bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers, mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll, player_poll_voters, playing_time FROM game
      WHERE bgg_id = ANY($1::int[]) AND fetched_at > $2`,
     [pgArray(ids), freshAfter],
   )
@@ -308,6 +339,7 @@ export async function getCachedGames(db: Db, ids: number[], freshAfter: string):
     // jsonb: text from the production driver, parsed by PGlite
     playerPoll: typeof r.player_poll === 'string' ? (JSON.parse(r.player_poll) as PlayerVotes[]) : r.player_poll,
     playerPollVoters: r.player_poll_voters,
+    playingTime: r.playing_time,
   }))
 }
 
@@ -316,13 +348,14 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
   for (const g of games) {
     await db.query(
       `INSERT INTO game (bgg_id, name, year, thumbnail_url, description, kind, min_players, max_players, designers,
-         mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll, player_poll_voters, fetched_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14, $15, $16::jsonb, $17, $18)
+         mechanisms, publisher, rating, geek_rating, best_with, recommended_with, player_poll, player_poll_voters, playing_time, fetched_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12, $13, $14, $15, $16::jsonb, $17, $18, $19)
        ON CONFLICT (bgg_id) DO UPDATE SET name = excluded.name, year = excluded.year,
          thumbnail_url = excluded.thumbnail_url, description = excluded.description, kind = excluded.kind,
          min_players = excluded.min_players, max_players = excluded.max_players, designers = excluded.designers,
          mechanisms = excluded.mechanisms, publisher = excluded.publisher, rating = excluded.rating,
          geek_rating = excluded.geek_rating, best_with = excluded.best_with, recommended_with = excluded.recommended_with, player_poll = excluded.player_poll, player_poll_voters = excluded.player_poll_voters,
+         playing_time = excluded.playing_time,
          fetched_at = excluded.fetched_at`,
       [
         g.bggId,
@@ -342,6 +375,7 @@ export async function upsertGames(db: Db, games: Game[], fetchedAt: string) {
         g.recommendedWith ?? null,
         g.playerPoll == null ? null : JSON.stringify(g.playerPoll),
         g.playerPollVoters ?? null,
+        g.playingTime ?? null,
         fetchedAt,
       ],
     )

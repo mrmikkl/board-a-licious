@@ -1,0 +1,2850 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>F009 List filter – prototype</title>
+<!-- Prototype for feature 009 (Spec Kit extended, Ext 2). Styles: the F008 prototype CSS (the app theme), plus F009 additions at the end. Games and BGG details are stand-ins; no network. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ---- src/app/theme/tokens.css ---- */
+/* Design tokens: docs/design.md §3–§6, one-to-one */
+:root {
+  --ink: #0d0f1f;
+  --deck: #151831;
+  --deck-2: #1d2142;
+  --rim: #2c3160;
+  --border: #3a4078;
+  --border-2: #4a5196;
+  --raised: #232852;
+  --text: #eceeff;
+  --muted: #9aa0c8;
+  --placeholder: #6e74a0;
+  --orange: #ff7a1a;
+  --orange-2: #ffb020;
+  --indigo: #4c5bff;
+  --teal: #14c8c8;
+  --violet: #8b5cf6;
+  --danger: #ff4d5e;
+  --got: #0fb98f;
+
+  --grad-hot: linear-gradient(135deg, #ff7a1a 0%, #ffb020 100%);
+  --grad-cool: linear-gradient(135deg, #4c5bff 0%, #14c8c8 100%);
+  --grad-violet: linear-gradient(135deg, #6d4ae0 0%, #a78bfa 100%);
+  --grad-mud: linear-gradient(135deg, #7a6046 0%, #b0916e 100%);
+  --grad-red: linear-gradient(135deg, #c2183a 0%, #ff4d5e 100%);
+  --grad-got: linear-gradient(135deg, #0fb98f 0%, #7cf0c5 100%);
+  --grad-dusk: linear-gradient(135deg, #8b5cf6 0%, #4c5bff 55%, #14c8c8 100%);
+  --grad-white: linear-gradient(135deg, #ffffff 0%, #c9cdf0 100%);
+  --grad-separator: linear-gradient(90deg, #ff7a1a 0%, #8b5cf6 100%);
+
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --lift: 0 8px 22px rgba(3, 4, 12, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glow: 0 0 0 1px var(--orange), 0 0 18px rgba(255, 122, 26, 0.45);
+
+  --font-display: 'Chakra Petch', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --tap: 44px;
+  --gutter: 16px;
+  --column: 440px;
+  --gap: 8px;
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- src/app/theme/base.css ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--ink);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+a {
+  color: var(--orange-2);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Layout: the phone column (docs/design.md §6) */
+.app {
+  position: relative;
+  max-width: var(--column);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.screen {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--gutter);
+}
+.lead {
+  color: var(--muted);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.hex {
+  clip-path: var(--hex);
+}
+.separator {
+  height: 2px;
+  border: 0;
+  margin: 16px 0;
+  background: var(--grad-separator);
+  border-radius: 2px;
+}
+
+/* Surfaces */
+.card {
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift);
+  padding: 16px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--deck);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  padding: 0 14px;
+  min-height: 50px;
+}
+.field:focus-within {
+  border-color: var(--orange);
+}
+.field input,
+.field select {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  padding: 12px 0;
+}
+.field input::placeholder {
+  color: var(--placeholder);
+}
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+/* Buttons (docs/design.md §7): text on gradients follows the contrast rule of §3 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  font-weight: 700;
+  box-shadow: var(--lift);
+  text-decoration: none;
+  color: var(--text);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--grad-hot);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-bought {
+  background: var(--grad-got);
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-danger {
+  /* --danger itself reaches only 4.4:1 on the raised surface; text needs 4.5:1 (docs/design.md §3) */
+  color: #ff6b78;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Badges and pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Empty state */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 8px;
+}
+.empty .hex {
+  width: 72px;
+  height: 82px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.empty h2 {
+  font-size: 18px;
+}
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+.empty .actions {
+  display: grid;
+  gap: var(--gap);
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---- src/app/theme/shell.css ---- */
+/* App shell: app bar, menu, screen heading, sheet, toast (docs/design.md §6, §7) */
+
+/* App bar: its own sticky band on every screen; above the menu's scrim, so ☰ closes it again */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 28;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 2px var(--gutter);
+  background: var(--grad-hot);
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(255, 122, 26, 0.25);
+}
+.appbar-logo {
+  width: 34px;
+  height: auto;
+}
+.appbar-name {
+  grid-column: 2;
+  text-align: center;
+  font: 700 19px/1 var(--font-display);
+  letter-spacing: 0.02em;
+}
+/* a 38px translucent circle inside a 44px touch area */
+.menu-btn {
+  grid-column: 3;
+  justify-self: end;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(13, 15, 31, 0.14);
+  border: 1px solid rgba(13, 15, 31, 0.25);
+  transition: background 0.2s;
+}
+.menu-btn svg {
+  position: relative;
+}
+.menu-btn[aria-expanded='true']::before {
+  background: rgba(13, 15, 31, 0.28);
+}
+.menu-btn:focus-visible {
+  outline-color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu-btn:hover::before {
+    background: rgba(13, 15, 31, 0.24);
+  }
+}
+
+/* Menu: a solid panel just below the app bar at the right; between the action bar and sheets */
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  background: rgba(5, 6, 14, 0.5);
+  animation: fade-in 0.18s ease-out;
+}
+.menu {
+  position: fixed;
+  z-index: 27;
+  right: max(var(--gutter), calc(50% - var(--column) / 2 + var(--gutter)));
+  width: min(260px, calc(100% - 2 * var(--gutter)));
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+  transform-origin: top right;
+  animation: menu-in 0.18s ease-out;
+}
+.menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.menu a svg {
+  color: var(--muted);
+}
+.menu a[aria-current='page'] {
+  background: var(--raised);
+}
+.menu a[aria-current='page'] svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu a:hover {
+    background: var(--raised);
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menu-scrim {
+    animation: none;
+  }
+}
+
+/* Screen heading: back (only where it belongs), title, an element right after it */
+.top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--gutter) 10px;
+}
+.top-title {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.top h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  /* at most two lines, then "…" */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.top-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .top h1 {
+    font-size: 26px;
+  }
+}
+.back {
+  font-size: 26px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* the light passing over the main button every 5 s */
+@keyframes shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 6, 14, 0.6);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 31;
+  width: 100%;
+  max-width: var(--column);
+  max-height: 88dvh;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #1a1e3e 0%, var(--deck) 40%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-top: 1px solid var(--rim);
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-grip {
+  /* a 5px bar with a 44px tall touch area around it */
+  width: 88px;
+  height: 25px;
+  margin: -10px auto 2px;
+  background: linear-gradient(var(--rim), var(--rim)) center / 44px 5px no-repeat;
+  border-radius: 3px;
+}
+.sheet-title {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+@keyframes sheet-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+  background: var(--deck-2);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+}
+/* above the action bar, near the bottom where there is none (research R7) */
+body:has(.actionbar) .toast {
+  bottom: calc(100px + env(safe-area-inset-bottom));
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast i {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: var(--orange);
+}
+
+/* Expired sign-in: above the screen, solid like every interactive surface */
+.signin-banner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  margin: 12px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--deck-2);
+  border: 1px solid var(--orange);
+  border-radius: var(--r-md);
+  box-shadow: var(--lift);
+}
+.signin-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* Tablets and laptops use more of the screen (docs/design.md §6): a wider column, cards and game
+   rows in a grid; sheets and the swipe card keep a readable width. */
+@media (min-width: 768px) {
+  :root {
+    --column: 1040px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .rows {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .sheet {
+    max-width: 560px;
+  }
+  .hexboard {
+    max-width: none;
+  }
+  .swipe-screen,
+  .intro {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .form,
+  .share {
+    max-width: 640px;
+  }
+}
+
+/* Dragging a sheet down to close it follows the finger; it springs back if let go early */
+.sheet.is-dragging {
+  transition: none;
+  animation: none;
+}
+.sheet.is-settling {
+  transition: transform 0.2s ease-out;
+}
+.sheet-grip {
+  touch-action: none;
+}
+/* a heading that reacts to taps (Config: five taps show the developer section): no text selection,
+   no double-tap zoom swallowing taps, and the whole title width as target */
+.top h1.tappable {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  justify-self: stretch;
+}
+
+/* the page keeps room at the bottom only while an action bar is shown (research R7) */
+.app:not(:has(.actionbar)) {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+/* Collection heading (docs/design.md v2.0.0 "Collection screen", "Ticker"): the name runs as a
+   ticker before the pencil instead of wrapping to two lines; the pencil keeps its place after it */
+.top h1.ticker {
+  flex: 0 1 auto;
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow-wrap: normal;
+}
+.edit-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- src/app/theme/actionbar.css ---- */
+/* Action bar and main button (docs/design.md v2.0.0 "Action bar", "Main button"); F003 tasks T016 */
+
+/* Dock position, padding and safe area of the old tab bar (research R7) */
+.actionbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--column);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(13, 15, 31, 0.98) 70%, rgba(13, 15, 31, 0));
+}
+.actionbar-left,
+.actionbar-right,
+.actionbar-outer {
+  display: contents;
+}
+.actionbar-left > .act {
+  grid-column: 2;
+  grid-row: 1;
+}
+.actionbar-right > .act {
+  grid-column: 4;
+  grid-row: 1;
+}
+/* F004: the fourth action at the outer right (docs/design.md "Action bar") */
+.actionbar-outer > .act {
+  grid-column: 5;
+  grid-row: 1;
+}
+
+.act {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 600 11px var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+}
+.act svg {
+  transition:
+    transform 0.25s var(--spring),
+    color 0.2s;
+}
+.act:active svg {
+  transform: scale(0.85);
+}
+.act.is-active svg {
+  color: var(--orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .act:hover {
+    color: var(--text);
+  }
+  .act:hover svg {
+    color: var(--orange-2);
+  }
+}
+
+.main-btn {
+  position: relative;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  background: var(--grad-hot);
+  color: var(--ink);
+  cursor: pointer;
+}
+.main-btn svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+/* a light shimmer passes over it every 5 s */
+.main-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-130%);
+  animation: main-shimmer 5s ease-in-out infinite;
+}
+@keyframes main-shimmer {
+  0%,
+  70% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+/* not available yet: raised grey, no shimmer, no hover or press */
+.main-btn.hex-btn:disabled {
+  background: var(--raised);
+  color: var(--placeholder);
+  cursor: not-allowed;
+  scale: none;
+  filter: none;
+}
+.main-btn:disabled::after {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-btn::after {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .actionbar {
+    max-width: 560px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+}
+
+/* ---- src/app/theme/components.css ---- */
+/* Feature components: docs/design.md §7 (collection card, game row, group heading, hexagon picker, forms) */
+
+/* Mark gradients (docs/design.md §4), used by pickers, pills and group dots */
+[data-mark='new'],
+[data-tone='new'] {
+  --tone: var(--grad-white);
+  --tone-text: var(--ink);
+}
+[data-mark='must_have'],
+[data-tone='must_have'],
+[data-tone='hot'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='interested'],
+[data-tone='interested'] {
+  --tone: var(--grad-cool);
+  --tone-text: var(--ink);
+}
+[data-mark='unsure'],
+[data-tone='unsure'] {
+  --tone: var(--grad-violet);
+  --tone-text: #fff;
+}
+[data-mark='poop'],
+[data-tone='poop'] {
+  --tone: var(--grad-mud);
+  --tone-text: #fff;
+}
+[data-mark='skip'],
+[data-tone='skip'] {
+  --tone: var(--grad-red);
+  --tone-text: #fff;
+}
+[data-mark='bought'] {
+  --tone: var(--grad-got);
+  --tone-text: var(--ink);
+}
+/* hall groups (group by booth): halls in the hot gradient, "No booth yet" muted */
+[data-mark='hall'] {
+  --tone: var(--grad-hot);
+  --tone-text: var(--ink);
+}
+[data-mark='none'] {
+  --tone: linear-gradient(135deg, #6e74a0, #9aa0c8);
+  --tone-text: var(--ink);
+}
+
+.section-title {
+  font-size: 18px;
+  margin: 20px 0 10px;
+}
+.section-title small {
+  font: 600 13px var(--font-body);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hint.error {
+  color: #ff8a95;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field.is-disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.field svg {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Dropdown: field look with an orange hexagon as arrow */
+.field.select {
+  position: relative;
+}
+.field.select select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.field.select select option {
+  background: var(--deck);
+}
+.field.select::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  width: 12px;
+  height: 14px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  pointer-events: none;
+}
+
+/* Switch ("Essen collection") */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.toggle-text {
+  flex: 1;
+  font-weight: 600;
+}
+.toggle-text small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 6px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-2);
+  background: var(--raised);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  clip-path: var(--hex);
+  background: var(--muted);
+  transition: transform 0.25s var(--spring);
+}
+.switch:checked {
+  background: var(--grad-hot);
+  border-color: transparent;
+}
+.switch:checked::after {
+  background: var(--ink);
+  transform: translateX(20px);
+}
+
+/* Hexagon picker: honeycomb, every second hexagon offset down */
+/* one straight, centred row of equal hexagons, whatever their labels and the phone's text scaling */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 84px));
+  justify-content: center;
+  align-items: start;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+.picker-btn {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+.picker-hex {
+  display: block;
+  aspect-ratio: 0.88;
+  padding: 2px;
+  background: var(--border-2);
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.picker-face {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.picker-emoji {
+  font-style: normal;
+  font-size: 22px;
+}
+.picker-btn[aria-pressed='true'] .picker-hex {
+  background: var(--orange);
+}
+.picker-btn[aria-pressed='true'] .picker-face {
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.picker-btn:is([data-tone='unsure'], [data-tone='poop'])[aria-pressed='true'] .picker-face {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Collection cards with the hexagon cluster in the top-right corner */
+.cards {
+  display: grid;
+  gap: var(--gap);
+}
+/* off-screen cards skip layout, paint and their cluster animation (long lists stay fast) */
+.cards > .card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  padding-right: 64px;
+}
+.card-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+/* the six counts always in one row; the text shrinks on narrow phones instead of wrapping */
+.counts {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 10px 0 0;
+  font: 700 clamp(12px, 3.7vw, 15px) var(--font-display);
+  white-space: nowrap;
+}
+.cluster {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 58px;
+  height: 52px;
+  animation: sway 6s ease-in-out infinite;
+}
+.cluster i {
+  position: absolute;
+  width: 22px;
+  height: 25px;
+  background: var(--grad-dusk);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+.cluster i:nth-child(1) {
+  top: 0;
+  right: 0;
+}
+.cluster i:nth-child(2) {
+  top: 0;
+  right: 24px;
+  opacity: 0.7;
+}
+.cluster i:nth-child(3) {
+  top: 20px;
+  right: 12px;
+  opacity: 0.85;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.soon-card {
+  margin-bottom: 16px;
+}
+.soon-card .card-title {
+  padding-right: 0;
+}
+/* F002 Share hint at the top of Config */
+.hint-card .card-title {
+  padding-right: 0;
+}
+
+.row-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.row-actions .btn {
+  padding-inline: 10px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.group-title i {
+  flex: none;
+  width: 12px;
+  height: 14px;
+  background: var(--tone);
+}
+.group-count {
+  color: var(--muted);
+  font-weight: 700;
+}
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.chev {
+  margin-left: auto;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.fold[aria-expanded='true'] .chev {
+  transform: rotate(90deg);
+}
+
+.rows {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows[hidden] {
+  display: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+.row-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-sub {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* F002 "Just added": the hover highlight, kept until the user scrolls or taps (not an animation) */
+.row.is-just-added {
+  border-color: var(--orange);
+  box-shadow: var(--lift), var(--glow);
+}
+.row.skip .row-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.row.skip .cover {
+  opacity: 0.5;
+}
+.row .pill,
+.detail-head .pill {
+  flex: none;
+  background: var(--tone);
+  color: var(--tone-text);
+}
+.mark-pill {
+  padding: 4px 8px;
+}
+
+/* Hexagon covers */
+.cover {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.cover-hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--grad-dusk);
+}
+.cover-hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-initials {
+  font: 700 17px var(--font-display);
+  color: var(--ink);
+}
+.cover-got {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--grad-got);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Game details sheet */
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.detail-sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+.sheet-actions {
+  display: grid;
+  gap: var(--gap);
+  margin-top: 12px;
+}
+
+/* "Group by" under the filter in a collection */
+.group-by {
+  margin-top: 12px;
+}
+
+/* Config → Developer: plain links, each a full-width 44px target */
+.dev-links {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dev-links a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Cancel and the main action side by side, the main action on the right */
+.sheet-actions-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Game info (docs/design.md §7 "Game info"): year beside the name, publisher, then three infos */
+.row-year {
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row-info > span:first-child {
+  flex: none;
+}
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.row-info .info-pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.info-pill {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.info-list > div {
+  display: contents;
+}
+.info-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.info-list dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* F003: the SPIEL preview suggestion above a BGG list link field */
+.list-suggestion {
+  margin-bottom: 10px;
+}
+
+/* ---- src/app/theme/fair.css ---- */
+/* At the fair (US4): filter button and panel, bought line, game description, facts, price question (docs/design.md §7) */
+
+/* Filter: one full-width button, a panel below it */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--raised);
+  box-shadow: var(--glow);
+}
+.seg-title {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg {
+  /* one column per option, all in one row */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.seg button {
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0 4px;
+  overflow-wrap: anywhere;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--grad-hot);
+  color: var(--ink);
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  border-top: 1px solid var(--rim);
+  cursor: pointer;
+}
+.filter-row:first-child {
+  border-top: 0;
+}
+.filter-row input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+}
+.filter-row span {
+  flex: 1;
+}
+.filter-row small {
+  font: 600 14px var(--font-display);
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+.chip:active,
+.seg button:active {
+  scale: 0.96;
+}
+
+/* "✅ 1 game bought, €52 spent" under the filter */
+.bought-line {
+  margin: 10px 2px 0;
+  font-weight: 700;
+  color: #7cf0c5;
+}
+
+/* Game details: description, facts, price question */
+.detail-head .pill {
+  margin-top: 4px;
+}
+.desc {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+.muted {
+  color: var(--muted);
+}
+.facts-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+}
+.facts-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.facts-by {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-2);
+}
+.link-btn {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--orange-2);
+  font-weight: 700;
+  text-align: left;
+}
+.facts-add {
+  margin-bottom: 8px;
+}
+.facts-form {
+  margin-bottom: 12px;
+}
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: var(--gap);
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.currency {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* "Groups" with Select all / Select none on the same line */
+.seg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.seg-actions {
+  display: flex;
+  gap: 4px;
+}
+.seg-actions .link-btn {
+  min-height: var(--tap);
+  padding: 0 8px;
+}
+
+/* filter icon in the collection header; a dot while a filter or the hall grouping is active */
+.filter-icon {
+  position: relative;
+}
+.filter-icon.is-active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 11px;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+}
+/* what is shown while narrowed; a tap opens "Filter and group" */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: var(--r-pill);
+  background: var(--deck);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* ---- src/app/theme/lists.css ---- */
+/* BGG lists: list cards, list rows with +, progress, list game sheet (docs/design.md §7) */
+
+.example {
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Loading progress: pages loaded so far */
+.progress {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: var(--r-pill);
+  background: var(--rim);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-hot);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .progress span {
+    transition: width 0.4s ease-out;
+  }
+}
+.list-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.list-status p {
+  margin: 0;
+}
+.list-status.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #ff8a95;
+}
+
+/* List rows: the row opens the game, the hexagon + next to it does the same */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-item .row {
+  flex: 1;
+  min-width: 0;
+}
+.in-mark {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.add-mini {
+  flex: none;
+  width: 48px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 10px rgba(3, 4, 12, 0.55));
+}
+.add-mini .hex {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--grad-hot);
+  color: var(--ink);
+  font: 700 26px var(--font-display);
+}
+
+/* List game sheet */
+.description {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Multi-choice list: a hexagon tick per collection; the ticks always show the current truth */
+.picks {
+  display: grid;
+  gap: var(--gap);
+}
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  box-shadow: var(--lift);
+  cursor: pointer;
+}
+.pick:has(.pick-input:focus-visible) {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+.pick-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.tick {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  background: var(--border-2);
+}
+.tick::before {
+  content: '';
+  width: 24px;
+  height: 28px;
+  clip-path: var(--hex);
+  background: var(--raised);
+}
+.pick-input:checked + .tick {
+  background: var(--orange);
+}
+.pick-input:checked + .tick::before {
+  background: var(--grad-hot);
+}
+.pick-input:checked + .tick::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 800;
+}
+.pick-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.pick-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.pick-text small {
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+}
+
+/* ---- src/app/theme/interaction.css ---- */
+/* Interaction states: docs/design.md §8. Nothing moves on hover; press squishes; focus is orange. */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn,
+.icon-btn,
+.card,
+.row,
+.tile {
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.25s,
+    color 0.2s,
+    scale 0.25s var(--spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not([aria-disabled='true']):hover,
+  .row:hover,
+  .tile:hover,
+  .field:hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .btn:not(:disabled):not(.btn-primary):not(.btn-bought):hover,
+  .icon-btn:hover {
+    background: var(--grad-hot);
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--grad-red);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover,
+  .btn-bought:not(:disabled):hover {
+    box-shadow: var(--lift), 0 0 22px rgba(255, 176, 32, 0.55);
+  }
+  .hex-btn:hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Press: a short squish that springs back (touch and pointer) */
+.card:active,
+.row:active,
+.tile:active {
+  scale: 0.98;
+  transition-duration: 0.08s;
+}
+.btn:not(:disabled):active,
+.icon-btn:active {
+  scale: 0.96;
+  transition-duration: 0.08s;
+}
+.hex-btn {
+  transition:
+    scale 0.25s var(--spring),
+    filter 0.2s;
+}
+.hex-btn:active {
+  scale: 0.9;
+  transition-duration: 0.08s;
+}
+
+/* Tap pulse: an orange hexagon expanding from the tap point */
+.tap-pulse {
+  position: fixed;
+  z-index: 60;
+  width: 56px;
+  height: 64px;
+  margin: -32px 0 0 -28px;
+  clip-path: var(--hex);
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.55), rgba(255, 122, 26, 0) 70%);
+  pointer-events: none;
+  animation: tap-pulse 0.5s ease-out forwards;
+}
+@keyframes tap-pulse {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion (docs/design.md §9): every animation and press squish off */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .card:active,
+  .row:active,
+  .tile:active,
+  .btn:active,
+  .icon-btn:active,
+  .hex-btn:active,
+  .hex-btn:hover {
+    scale: none;
+  }
+  .tap-pulse {
+    display: none;
+  }
+}
+
+/* ---- src/app/theme/ticker.css ---- */
+/* Ticker for headings too long for their row (docs/design.md v2.0.0 "Ticker"); F003 tasks T024 */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.ticker > span {
+  display: inline-block;
+}
+/* soft fades at both edges; the left padding keeps the first letter clear of the fade */
+.ticker.is-long {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 24px), transparent);
+  padding-left: 10px;
+  margin-left: -10px;
+}
+.ticker.is-long > span {
+  animation: ticker var(--ticker-time, 8s) linear infinite;
+}
+@keyframes ticker {
+  /* read the start */
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  /* the end is visible, then start over */
+  82%,
+  100% {
+    transform: translateX(calc(-1 * var(--ticker-shift)));
+  }
+}
+/* reduced motion: the text stands still and ends in "…" */
+@media (prefers-reduced-motion: reduce) {
+  .ticker {
+    text-overflow: ellipsis;
+  }
+  .ticker.is-long {
+    -webkit-mask-image: none;
+    mask-image: none;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  .ticker.is-long > span {
+    display: inline;
+    animation: none;
+  }
+}
+
+/* ---- src/app/theme/swipe.css ---- */
+/* Swipe screen and list picker: docs/design.md §7 (swipe card), §9 (swipe motion) */
+
+/* A card dragged or flung past the edge never scrolls the page sideways */
+.swipe-screen {
+  overflow-x: clip;
+}
+
+/* Source note: which list, whether facts are kept */
+.swipe-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.swipe-note b {
+  color: var(--text);
+}
+.swipe-note > .hex {
+  flex: none;
+  width: 14px;
+  height: 16px;
+  margin-top: 2px;
+  background: var(--grad-dusk);
+}
+
+/* Card stack */
+.deck {
+  position: relative;
+  height: min(400px, 54vh);
+  min-height: 340px;
+  margin: 0 0 14px;
+}
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #1f2350 0%, var(--deck) 70%);
+  box-shadow: var(--lift);
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-card > * {
+  flex-shrink: 0;
+}
+.swipe-card.behind {
+  transform: scale(0.95) translateY(14px);
+  opacity: 0.6;
+}
+.swipe-card.top {
+  touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.5s var(--spring);
+}
+.swipe-card.top.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.swipe-card.enter {
+  animation: swipe-card-in 0.45s var(--spring);
+}
+@keyframes swipe-card-in {
+  from {
+    transform: scale(0.94) translateY(16px);
+    opacity: 0.6;
+  }
+}
+.swipe-card.leaving {
+  pointer-events: none;
+  animation: swipe-fling 0.38s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes swipe-fling {
+  from {
+    transform: translateX(var(--from-x)) rotate(calc(var(--from-x) / 14px * 1deg));
+  }
+  to {
+    transform: translate(calc(var(--dir) * 520px), -40px) rotate(calc(var(--dir) * 30deg));
+    opacity: 0;
+  }
+}
+.swipe-card .cover {
+  margin-bottom: 12px;
+}
+.swipe-name {
+  margin: 0;
+  font: 700 24px/1.15 var(--font-display);
+}
+.swipe-year {
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+.swipe-desc {
+  display: -webkit-box;
+  margin: 0 0 10px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.swipe-wait {
+  justify-content: center;
+  gap: 12px;
+  cursor: default;
+}
+.swipe-wait .hex {
+  width: 56px;
+  height: 64px;
+  background: var(--grad-dusk);
+  opacity: 0.85;
+}
+.swipe-wait p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ADD / NOPE stamps grow while dragging; the leaving card shows its stamp in full */
+.swipe-stamp {
+  position: absolute;
+  top: 20px;
+  padding: 4px 10px;
+  border: 2px solid;
+  border-radius: 10px;
+  font: 700 18px var(--font-display);
+  opacity: 0;
+  scale: 0.7;
+}
+.swipe-stamp.add {
+  left: 16px;
+  color: var(--teal);
+  rotate: -12deg;
+}
+.swipe-stamp.nope {
+  right: 16px;
+  color: var(--danger);
+  rotate: 12deg;
+}
+.leaving-right .swipe-stamp.add,
+.leaving-left .swipe-stamp.nope {
+  opacity: 1;
+  scale: 1.2;
+}
+
+/* ✕ / ✓ hexagon buttons */
+.swipe-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+.swipe-btn {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 80px;
+  border: 0;
+  clip-path: var(--hex);
+  font: 700 28px var(--font-display);
+  cursor: pointer;
+}
+.swipe-btn.no {
+  background: var(--grad-red);
+  color: #fff;
+}
+.swipe-btn.yes {
+  background: var(--grad-cool);
+  color: #04161a;
+}
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.swipe-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* List picker */
+.pick-list {
+  display: grid;
+  gap: var(--gap);
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.pick {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck-2);
+  box-shadow: var(--lift);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pick:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pick-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.pick small {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not(:disabled):hover {
+    border-color: var(--orange);
+    box-shadow: var(--lift), var(--glow);
+  }
+  .swipe-btn:not(:disabled):hover {
+    scale: 1.07;
+    filter: brightness(1.15);
+  }
+}
+
+/* Reduced motion: no tilt, fling or pop-in; the card just changes */
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card.leaving {
+    display: none;
+  }
+}
+
+/* "Add by list": the chosen list is clearly marked (orange edge, glow and a tick) */
+.pick[aria-pressed='true'] {
+  position: relative;
+  border: 2px solid var(--orange);
+  box-shadow: var(--lift), var(--glow);
+  padding-right: 44px;
+}
+.pick[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 27px;
+  transform: translateY(-50%);
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  color: var(--ink);
+  font-weight: 700;
+}
+.pick-list,
+.pick-new,
+.pick-empty {
+  margin-top: 16px;
+}
+.pick-intro {
+  margin: 0 0 14px;
+}
+
+/* All game info on the card (FR-010): compact, left-aligned; a long card scrolls up and down
+   (pan-y), sideways stays the swipe */
+.swipe-card.top {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.swipe-card .info-list {
+  width: 100%;
+  margin: 4px 0 0;
+  gap: 4px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+.swipe-card .info-list dt {
+  font-size: 13px;
+}
+.swipe-card .info-list dd {
+  font-weight: 600;
+}
+
+/* ---- F005 prototype additions ---- */
+[data-mark='later'], [data-tone='later'] { --tone: linear-gradient(135deg, #d946ef 0%, #f9a8d4 100%); --tone-text: var(--ink); }
+.proto-later-teal [data-mark='later'], .proto-later-teal [data-tone='later'] { --tone: linear-gradient(135deg, #0ea5e9 0%, #a5f3fc 100%); }
+
+.proto-bar { position: relative; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 12px; background: #05060e; border-bottom: 1px solid var(--rim); font-size: 12px; color: var(--muted); }
+.proto-bar select { background: var(--deck-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; font: inherit; }
+.proto-note { margin: 8px 0; font-size: 12px; color: var(--placeholder); }
+
+/* Game row: category as the border colour, actions on the right */
+.crow { position: relative; display: flex; align-items: stretch; min-height: 68px; border-radius: var(--r-md); box-shadow: var(--lift);
+  border: 1px solid transparent; background: linear-gradient(var(--deck), var(--deck)) padding-box, var(--tone, linear-gradient(var(--border), var(--border))) border-box; }
+.crow[data-mark='new'] { --tone: linear-gradient(var(--border), var(--border)); }
+.crow[data-mark='skip'] { opacity: 0.75; }
+.crow[data-mark='skip'] .row-name { text-decoration: line-through; color: var(--muted); }
+.crow[data-mark='skip'] .cover { opacity: 0.5; }
+/* B: a coloured edge at the left instead of the whole border */
+.proto-edge .crow { border: 1px solid var(--border); background: var(--deck); padding-left: 6px; }
+.proto-edge .crow::before { content: ''; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 7px; border-radius: var(--r-md) 0 0 var(--r-md); background: var(--tone); }
+.proto-edge .crow[data-mark='new']::before { background: var(--border); }
+.crow-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px 4px 8px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: var(--r-md) 0 0 var(--r-md); }
+.crow-acts { flex: none; display: flex; align-items: center; gap: 2px; padding-right: 6px; }
+.ract { width: 46px; min-height: 52px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--muted); font: 600 10px var(--font-body); cursor: pointer; }
+.ract .rhex { width: 32px; height: 36px; display: grid; place-items: center; clip-path: var(--hex); background: var(--raised); color: var(--text); transition: background 0.2s, color 0.2s, scale 0.25s var(--spring); }
+.ract:active .rhex { scale: 0.85; }
+.ract.buy[aria-pressed='true'] { color: #7cf0c5; }
+.ract.buy[aria-pressed='true'] .rhex { background: var(--grad-got); color: var(--ink); }
+.ract.cat .rhex { background: var(--raised); }
+.proto-catemoji .ract.cat .rhex { background: var(--tone); color: var(--tone-text); font-size: 16px; }
+@media (hover: hover) and (pointer: fine) { .ract:hover .rhex { background: var(--grad-hot); color: var(--ink); } }
+.row-price { color: #7cf0c5; font-weight: 700; }
+
+/* Quick filters between the two lines */
+.quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qtoggle { display: inline-grid; grid-auto-flow: column; padding: 3px; min-height: var(--tap); border: 1px solid var(--border); border-radius: var(--r-pill); background: var(--deck); cursor: pointer; font: 700 14px var(--font-body); }
+.qtoggle span { display: grid; place-items: center; padding: 0 14px; border-radius: var(--r-pill); color: var(--muted); transition: background 0.2s, color 0.2s; }
+.qtoggle span.on { background: var(--grad-hot); color: var(--ink); }
+.quick .chip { gap: 6px; cursor: pointer; }
+.quick .chip[aria-pressed='true'] { background: var(--grad-hot); color: var(--ink); border-color: transparent; }
+.quick-count { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; }
+.search { margin-top: 10px; }
+.search svg { color: var(--muted); flex: none; }
+.no-match { text-align: center; color: var(--muted); padding: 24px 0; }
+
+/* filter action highlighted while not default: orange icon and label, hexagon dot */
+.act.is-active { color: var(--text); }
+.act.is-active svg { color: var(--orange); }
+.act { position: relative; }
+.act.is-active::after { content: ''; position: absolute; top: 4px; left: calc(50% + 8px); width: 10px; height: 11px; clip-path: var(--hex); background: var(--grad-hot); }
+
+/* hall-only booths */
+.hall-only { color: var(--orange-2); font-weight: 700; }
+
+/* Category sheet (list) */
+.cat-list { display: grid; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+.cat-list button { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--deck-2); color: var(--text); font: 600 16px var(--font-body); text-align: left; cursor: pointer; }
+.cat-list .chex { width: 22px; height: 25px; flex: none; clip-path: var(--hex); background: var(--tone); }
+.cat-list button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.cat-list button[aria-pressed='true']::after { content: 'current'; margin-left: auto; font-size: 12px; color: var(--muted); }
+.cat-list .sep { height: 1px; background: var(--rim); margin: 4px 0; }
+
+/* Zigzag category picker */
+.zz { position: relative; margin: 6px auto 4px; }
+.zz .picker-btn { position: absolute; padding: 0; }
+.zz.flat .picker-hex, .zz.flat .picker-face { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.zz .picker-hex { aspect-ratio: auto; width: 100%; height: 100%; }
+.zz .picker-face { font-size: 11px; }
+.zz .picker-face b { font-size: 20px; line-height: 1; font-weight: 400; }
+.not-int { display: flex; justify-content: center; margin: 0 0 6px; }
+
+/* Ratings in the info box */
+.rating { display: inline-flex; align-items: center; gap: 6px; }
+.rating i { font-style: normal; display: inline-grid; place-items: center; width: 26px; height: 29px; clip-path: var(--hex); background: var(--grad-cool); color: var(--ink); font: 700 11px var(--font-display); }
+.rating i.geek { background: var(--grad-dusk); color: #fff; }
+.rating small { color: var(--muted); font-weight: 600; }
+
+/* BGG list with resync */
+.lrow { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.lrow .in { margin-left: auto; font-size: 12px; color: var(--muted); }
+.resync-btn svg { display: block; }
+.resync-btn.spin svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .resync-btn.spin svg { animation: none; } }
+
+/* Conflicts sheet */
+.conflict { padding: 12px 0; border-top: 1px solid var(--rim); }
+.conflict:first-of-type { border-top: 0; }
+.conflict h3 { margin: 0 0 2px; font-size: 16px; }
+.conflict p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice button { min-height: 56px; padding: 6px 10px; display: grid; align-content: center; gap: 2px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck-2); color: var(--text); font: 700 15px var(--font-body); text-align: left; cursor: pointer; }
+.choice button small { font-size: 11px; font-weight: 700; color: var(--muted); }
+.choice button[aria-pressed='true'] { border-color: var(--orange); box-shadow: var(--glow); }
+.choice button[aria-pressed='true'] small { color: var(--orange-2); }
+.all-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 8px; }
+.sheet-lead-row { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* BG-Tinder card: the same info box as the details; full description */
+.swipe-card .facts-box { width: 100%; text-align: left; margin-top: 4px; }
+.swipe-card .desc { text-align: left; margin-top: 10px; }
+
+
+/* ---------- F006: search ---------- */
+.search-hint { margin: 6px 0 12px; font-size: 13px; color: var(--muted); }
+.result-status { display: flex; align-items: center; gap: 8px; min-height: 24px; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.result-status b { color: var(--text); }
+.srow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.srow:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.srow .in-mark { margin-left: auto; flex: none; max-width: 38%; text-align: right; }
+.srow .row-meta .in-mark { margin: 0; max-width: none; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sitem { display: flex; align-items: center; gap: 8px; }
+.sitem .srow { flex: 1; min-width: 0; }
+.sitem .add-mini { cursor: pointer; }
+.sitem .add-mini:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.srow.compact { min-height: 52px; padding: 6px 10px; box-shadow: none; background: var(--deck-2); }
+.kind { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid var(--violet); color: #c4b5fd; font-size: 11px; font-weight: 700; line-height: 18px; }
+.rows.is-stale { opacity: 0.45; }
+.skel { height: 64px; border-radius: var(--r-md); border: 1px solid var(--rim); background: linear-gradient(90deg, var(--deck) 0%, var(--deck-2) 50%, var(--deck) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.spin-hex { flex: none; width: 16px; height: 18px; clip-path: var(--hex); background: var(--grad-hot); animation: spin 1.2s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .skel, .spin-hex { animation: none; } }
+.notice { display: grid; gap: 10px; justify-items: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.notice p { margin: 0; }
+.notice.warn { border-color: var(--danger); }
+.notice small { color: var(--muted); }
+.more-note { margin: 12px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+.matches { display: grid; gap: 6px; margin: 8px 0 4px; padding: 0; list-style: none; }
+.found { display: flex; align-items: center; gap: 12px; margin: 4px 0 8px; padding: 10px 12px; border: 1px solid var(--orange); border-radius: var(--r-md); background: var(--deck); }
+.found .row-meta { flex: 1; }
+.picks { display: grid; gap: 8px; margin: 0 0 12px; }
+.picks .pick { position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); cursor: pointer; }
+.cover-zoom { padding: 0; border: 0; background: none; cursor: zoom-in; }
+.cover-zoom:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.viewer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(5, 6, 14, 0.94); }
+.viewer .big { width: min(78vw, 340px); aspect-ratio: 120 / 134; clip-path: var(--hex); }
+.viewer .big img { width: 100%; height: 100%; display: block; }
+.viewer .icon-btn { position: absolute; top: 16px; right: 16px; }
+.viewer p { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 13px; }
+.proto-bar { flex-wrap: wrap; }
+
+/* ---------- F007: Buy ---------- */
+.proto-bar { flex-wrap: wrap; }
+.game-head { display: flex; align-items: center; gap: 14px; margin: 4px 0 12px; }
+.game-head .row-name { font: 700 20px/1.2 var(--font-display); white-space: normal; }
+.fair-line { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--got); border-radius: var(--r-md); background: var(--deck); font-weight: 700; }
+.fair-line small { color: var(--muted); font-weight: 600; }
+.lang-seg { margin: 0 0 8px; }
+.offer-group { margin: 14px 0 8px; }
+.offer-group h3 { margin: 0; }
+.group-fold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.group-fold small { margin-left: auto; color: var(--muted); font: 600 12px var(--font-body); }
+.group-fold .chev { color: var(--orange); transition: transform 0.2s; transform: rotate(90deg); }
+.group-fold[aria-expanded='false'] .chev { transform: none; }
+.offers[hidden] { display: none; }
+.offers { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.offer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); text-decoration: none; }
+.offer:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.offer.out { opacity: 0.6; }
+.offer-shop { font-weight: 700; overflow-wrap: anywhere; }
+.offer-shop .ext { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.offer-total { font: 700 18px var(--font-display); text-align: right; white-space: nowrap; }
+.offer-total small { display: block; font: 600 11px var(--font-body); color: var(--muted); }
+.offer-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.offer-note { grid-column: 1 / -1; margin: 2px 0 0; font-size: 12px; color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lang { display: inline-block; padding: 0 6px; border-radius: 6px; font-weight: 800; font-size: 11px; line-height: 18px; color: var(--ink); background: var(--grad-cool); }
+.lang.de { background: var(--grad-hot); }
+.lang.unknown { background: var(--raised); color: var(--muted); border: 1px solid var(--border-2); }
+.stock { display: inline-flex; align-items: center; gap: 4px; }
+.stock::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--got); }
+.stock.no::before { background: var(--danger); }
+.cond { display: inline-block; padding: 0 7px; border: 1px solid var(--violet); border-radius: var(--r-pill); color: #c4b5fd; font-weight: 700; font-size: 11px; line-height: 18px; }
+.unknown-switch { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; font-size: 14px; color: var(--muted); min-height: 44px; }
+.unknown-switch input { width: 20px; height: 20px; accent-color: var(--orange); }
+.sources-line { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+.fail-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; padding: 8px 12px; border: 1px solid var(--danger); border-radius: var(--r-md); font-size: 13px; }
+.result-status { display: flex; align-items: center; gap: 8px; min-height: 24px; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.spin-hex { flex: none; width: 16px; height: 18px; clip-path: var(--hex); background: var(--grad-hot); animation: spin 1.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.skel { height: 72px; border-radius: var(--r-md); border: 1px solid var(--rim); background: linear-gradient(90deg, var(--deck) 0%, var(--deck-2) 50%, var(--deck) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel, .spin-hex { animation: none; } }
+.srow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 68px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.kind { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid var(--violet); color: #c4b5fd; font-size: 11px; font-weight: 700; line-height: 18px; }
+.search-hint { margin: 6px 0 12px; font-size: 13px; color: var(--muted); }
+/* folded Prices section in a game's details */
+.prices-sec { margin: 12px 0; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.prices-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 14px; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.prices-toggle small { margin-left: auto; color: var(--muted); font: 600 12px var(--font-body); }
+.prices-toggle .chev { color: var(--orange); transition: transform 0.2s; }
+.prices-toggle[aria-expanded='true'] .chev { transform: rotate(90deg); }
+.prices-body { padding: 0 12px 12px; }
+.prices-body .offer { box-shadow: none; background: var(--deck-2); }
+.menu { top: 96px; } /* below the proto bar and the app bar */
+/* ---------- F008: Buy and Lists with tabs, BGG statuses ---------- */
+.menu { top: 96px; }
+/* Place tabs: directly under the screen heading, equal columns, active underlined orange */
+.tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 0 0 4px; border-bottom: 1px solid var(--rim); }
+.tab { position: relative; min-height: 48px; padding: 0 6px; border: 0; background: none; color: var(--muted); font: 700 15px var(--font-body); cursor: pointer; }
+.tab[aria-selected='true'] { color: var(--text); }
+.tab[aria-selected='true']::after { content: ''; position: absolute; left: 12%; right: 12%; bottom: -1px; height: 3px; border-radius: 3px; background: var(--grad-hot); }
+.tab:focus-visible { outline: 2px solid var(--orange); outline-offset: -2px; }
+.tab .n { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: var(--r-pill); background: var(--raised); color: var(--muted); font-size: 11px; line-height: 18px; }
+.tab[aria-selected='true'] .n { background: var(--grad-hot); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .tab:hover { color: var(--text); } }
+
+/* BGG status badges: text pills; Owned filled (cool), the rest teal outline; a small hexagon bullet */
+.bgg-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.bb { display: inline-flex; align-items: center; gap: 4px; padding: 0 7px; border-radius: var(--r-pill); border: 1px solid #14c8c8; color: #7de8e8; font-size: 11px; font-weight: 700; line-height: 18px; white-space: nowrap; }
+.bb::before { content: ''; width: 7px; height: 8px; clip-path: var(--hex); background: currentColor; }
+.bb.own { border-color: transparent; background: var(--grad-cool); color: var(--ink); }
+.bb.more { border-color: var(--border-2); color: var(--muted); }
+.bb.more::before { display: none; }
+.badges-big { margin: 2px 0 8px; }
+.badges-big .bb { font-size: 12px; line-height: 22px; padding: 0 9px; }
+
+/* Status list cards in Lists › Status lists */
+.slist { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.slist button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); box-shadow: var(--lift); color: var(--text); font: 700 16px var(--font-body); text-align: left; cursor: pointer; }
+.slist .shex { flex: none; width: 30px; height: 34px; display: grid; place-items: center; clip-path: var(--hex); background: var(--grad-dusk); font-size: 15px; }
+.slist .shex.own { background: var(--grad-cool); }
+.slist small { display: block; font: 500 12px var(--font-body); color: var(--muted); }
+.slist .label-t { flex: 1; min-width: 0; }
+.slist .count { font: 700 18px var(--font-display); color: var(--text); }
+.slist .chev { color: var(--orange); font-size: 20px; }
+@media (hover: hover) and (pointer: fine) { .slist button:hover { border-color: var(--orange); box-shadow: var(--glow); } }
+.person { display: flex; align-items: baseline; gap: 8px; margin: 18px 0 8px; font: 700 16px var(--font-display); }
+.person small { color: var(--muted); font: 600 12px var(--font-body); }
+.list-sub { margin: -4px 0 8px; font-size: 13px; color: var(--muted); }
+
+/* BGG status section in a game's sheet */
+.status-sec { margin: 12px 0; padding: 4px 14px 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.status-sec h3 { display: flex; align-items: center; gap: 8px; margin: 10px 0 2px; font: 700 16px var(--font-display); }
+.status-sec h3 small { margin-left: auto; font: 600 12px var(--font-body); color: var(--muted); }
+.status-sec .lead { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+.status-sec .toggle { border-top: 1px solid var(--rim); }
+.status-sec .toggle:first-of-type { border-top: 0; }
+.status-sec .toggle.changed .toggle-text::after { content: ' · changed'; color: var(--orange-2); font-size: 12px; font-weight: 700; }
+.status-sec .switch:disabled { opacity: 0.45; cursor: not-allowed; }
+.prio { margin: 2px 0 8px; }
+.prio .seg button { font-size: 13px; }
+.prio p { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.status-sec .sheet-actions { margin-top: 8px; }
+.status-sec .fail-line { margin-top: 10px; }
+
+/* What will be written to BGG (private info) */
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 8px 0 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.kv .old { color: var(--muted); text-decoration: line-through; font-weight: 600; margin-right: 6px; }
+.private-note { margin: -4px 0 8px; font-size: 12px; color: var(--muted); }
+
+/* Config: BoardGameGeek section */
+.cfg-sec { margin: 0 0 18px; }
+.cfg-sec .section-title { margin: 6px 0 6px; }
+.cfg-card { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); }
+.cfg-card p { margin: 0; font-size: 14px; }
+.cfg-card .muted { color: var(--muted); font-size: 13px; }
+.signed-in { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.signed-in::before { content: ''; flex: none; width: 14px; height: 16px; clip-path: var(--hex); background: var(--grad-got); }
+.form-row { display: grid; gap: 4px; }
+.field input[type='password'] { letter-spacing: 0.1em; }
+
+/* Prices screen: Bought action */
+.buy-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0 0 12px; }
+
+/* Swipe card (short) */
+.mini-swipe { margin: 8px auto; max-width: 340px; padding: 18px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--deck-2); box-shadow: var(--lift); text-align: center; }
+.mini-swipe .cover { margin: 0 auto 10px; }
+.mini-swipe h2 { margin: 0; font: 700 22px var(--font-display); }
+.mini-swipe .bgg-badges { justify-content: center; margin: 8px 0; }
+.mini-swipe .swipe-buttons { display: flex; justify-content: center; gap: 40px; margin-top: 14px; }
+.mini-swipe .swipe-buttons button { width: 60px; height: 68px; clip-path: var(--hex); border: 0; font-size: 24px; font-weight: 800; cursor: pointer; }
+.mini-swipe .nope { background: var(--grad-red); color: #fff; }
+.mini-swipe .yes { background: var(--grad-cool); color: var(--ink); }
+.proto-bar .chk { display: inline-flex; align-items: center; gap: 4px; }
+/* round 2: badges filled with the status colour (Config) */
+.bb { border: 0; background: var(--bg); color: var(--fg); }
+.bb.own { background: var(--bg); color: var(--fg); }
+.bb.more { border: 1px solid var(--border-2); background: none; color: var(--muted); }
+.slist .shex { background: var(--bg); }
+/* row action Add inside the row (lists and search) */
+.ract.add .rhex { background: var(--grad-hot); color: var(--ink); font: 700 20px var(--font-display); }
+.ract.add { color: var(--text); }
+.crow .row-sub .kind { margin-left: 6px; }
+.crow .in-mark { font-size: 12px; color: #5ee0e0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* colour sheet */
+.colour-rows { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.colour-rows button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck-2); color: var(--text); font: 600 15px var(--font-body); text-align: left; cursor: pointer; }
+.colour-rows .bb { font-size: 12px; line-height: 22px; padding: 0 9px; }
+.colour-rows .chg { margin-left: auto; color: var(--orange-2); font-size: 13px; font-weight: 700; }
+.swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 8px 0 14px; }
+.swatches button { aspect-ratio: 52 / 58; width: 100%; max-width: 60px; justify-self: center; clip-path: var(--hex); border: 0; background: var(--bg); color: var(--fg); font-weight: 800; cursor: pointer; }
+.swatches button[aria-pressed='true'] { outline: 3px solid var(--orange); outline-offset: -3px; }
+.swatches button[aria-pressed='true']::after { content: '✓'; }
+.swatch-names { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: -8px 0 12px; font-size: 11px; color: var(--muted); text-align: center; }
+/* full game sheet */
+.gs-head { display: flex; gap: 14px; align-items: center; margin: 4px 0 8px; }
+.gs-head .detail-sub { margin: 0 0 2px; }
+.gs-facts { display: grid; gap: 6px; min-width: 0; }
+.gs-facts .bgg-badges { margin: 0; }
+.gs-facts .detail-sub { margin: 0; }
+.gs-in { justify-self: start; min-height: 32px; padding: 0; border: 0; background: none; color: #5ee0e0; font: 600 13px var(--font-body); text-align: left; cursor: pointer; }
+.gs-none { margin: 0; font-size: 12px; color: var(--muted); }
+.gs-bgg { margin: 0 0 6px; }
+.cpick { display: grid; grid-template-columns: repeat(6, 1fr); width: min(100%, 300px); margin: 6px auto 0; row-gap: 0; }
+.cpick button { grid-column: span 2; aspect-ratio: 88 / 98; margin: 0 2px; clip-path: var(--hex); border: 0; background: var(--raised); color: var(--text); font: 700 11px var(--font-body); display: grid; place-content: center; gap: 2px; cursor: pointer; }
+.cpick button b { font-size: 20px; font-weight: 400; line-height: 1; }
+.cpick button:nth-child(4) { grid-column: 2 / span 2; margin-top: -14%; }
+.cpick button:nth-child(5) { grid-column: 4 / span 2; margin-top: -14%; }
+.cpick button[aria-pressed='true'] { background: var(--tone); color: var(--tone-text, var(--ink)); }
+.not-int-link { display: flex; justify-content: center; margin: 4px 0 8px; }
+.ibox { margin: 10px 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); display: grid; gap: 6px; font-size: 14px; }
+.ibox .ln { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ibox .k { color: var(--muted); }
+.ibox .mech { display: inline-block; padding: 0 8px; border: 1px solid var(--border-2); border-radius: var(--r-pill); font-size: 12px; line-height: 20px; color: var(--muted); }
+.ibox .src { font-size: 12px; color: var(--muted); }
+.gs-desc { margin: 12px 0 0; font-size: 14px; color: var(--text); }
+.gs-desc h3 { margin: 0 0 4px; font: 700 16px var(--font-display); }
+.status-sec.folded { padding: 0; }
+.status-sec .st-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 14px; border: 0; background: none; color: var(--text); font: 700 16px var(--font-display); text-align: left; cursor: pointer; }
+.status-sec .st-toggle .bgg-badges { margin: 0 0 0 auto; justify-content: flex-end; }
+.status-sec .st-toggle .chev { color: var(--orange); transition: transform 0.2s; }
+.status-sec .st-toggle[aria-expanded='true'] .chev { transform: rotate(90deg); }
+.status-sec .st-body { padding: 0 14px 12px; }
+.cat-sec { margin-top: 8px; }
+.cat-now { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font: 700 14px var(--font-body); color: var(--text); }
+.cat-now i { width: 12px; height: 14px; background: var(--tone); }
+.cat-sec .cat-list { margin-top: 4px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.prices-body .offer { margin-bottom: 8px; }
+/* ---------- F009 additions ---------- */
+.count-line { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.count-line b { color: var(--text); }
+.count-line .link-btn { margin-left: auto; min-height: 32px; }
+.reading { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--deck); font-size: 13px; color: var(--muted); }
+.reading b { color: var(--text); }
+.reading .bar { flex: 1; height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.reading .bar i { display: block; height: 100%; background: var(--grad-hot); transition: width 0.4s; }
+.f-sec { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--border); }
+.f-sec:first-of-type { border-top: 0; padding-top: 0; }
+.f-head { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; }
+.f-head h3 { margin: 0; font: 700 14px var(--font-body); }
+.f-head small { color: var(--muted); font-size: 12px; }
+.f-head .link-btn { margin-left: auto; min-height: 32px; font-size: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 44px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 22px; background: var(--deck); color: var(--text); font: 600 13px var(--font-body); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.chip small { color: var(--muted); font-weight: 500; font-size: 11px; }
+.chip[aria-pressed='true'] { border-color: var(--orange); background: var(--grad-hot); color: var(--ink); }
+.chip[aria-pressed='true'] small { color: var(--ink); }
+.chip:disabled { opacity: 0.4; cursor: default; }
+.chip.num { min-width: 44px; justify-content: center; padding: 6px 0; }
+.range { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.range .field { margin: 0; }
+.range span { color: var(--muted); font-size: 13px; }
+.missing { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.f-search { margin: 0 0 6px; }
+.f-group-title { margin: 18px 0 2px; font: 700 12px var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.len-rows { display: grid; gap: 8px; margin: 0 0 8px; }
+.len-row { display: grid; grid-template-columns: 84px 1fr 96px; align-items: center; gap: 8px; min-height: 48px; }
+.len-row b { font-size: 14px; }
+.len-row .span { color: var(--muted); font-size: 13px; }
+.len-row .field { margin: 0; }
+.len-row .field input { text-align: right; }
+.slider { position: relative; height: 44px; margin: 0 10px; }
+.slider .track { position: absolute; left: 0; right: 0; top: 20px; height: 4px; border-radius: 2px; background: var(--border); }
+.slider .fill { position: absolute; top: 20px; height: 4px; border-radius: 2px; background: var(--grad-hot); }
+.slider input { position: absolute; left: -10px; width: calc(100% + 20px); top: 0; height: 44px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.slider input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 26px; height: 30px; border: 0; clip-path: var(--hex); background: var(--grad-hot); cursor: grab; }
+.slider input::-moz-range-thumb { pointer-events: auto; width: 26px; height: 30px; border: 0; border-radius: 0; clip-path: var(--hex); background: var(--grad-hot); cursor: grab; }
+.slider input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--orange); outline-offset: 2px; }
+.slider .ticks { position: absolute; left: 0; right: 0; top: 17px; height: 10px; background: repeating-linear-gradient(to right, var(--muted) 0 1px, transparent 1px 10%); background-size: calc(100% + 1px) 100%; opacity: 0.5; pointer-events: none; }
+.slider-scale { position: relative; height: 14px; margin: 0 10px; font-size: 11px; color: var(--muted); }
+.slider-scale span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+.f-head .val { margin-left: auto; font: 700 14px var(--font-display, var(--font-body)); color: var(--text); }
+.chips.counts { flex-wrap: nowrap; gap: 2px; justify-content: space-between; }
+.num-field { width: 52px; min-height: 44px; margin: 0; padding: 0 6px; border-radius: 22px; }
+.num-field input { text-align: center; font-weight: 700; }
+.num-field.is-set { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+.main-dot { position: absolute; z-index: 2; top: 14px; right: 16px; width: 10px; height: 11px; background: var(--ink); }
+.seg.players { grid-auto-columns: auto; grid-template-columns: 0.7fr 1fr 1.5fr; }
+.sheet-head { display: flex; align-items: center; gap: 8px; }
+.sheet-head .sheet-title { flex: 1; }
+.sheet-head .btn { min-height: 44px; padding: 0 14px; font-size: 13px; }
+.actionbar.no-main { grid-template-columns: 1fr 1fr 1fr; }
+/* design rules 3.3.0: the main button carries a short label inside the hexagon, under its icon */
+.main-btn.has-label { width: 68px; height: 76px; margin-top: -30px; align-content: center; gap: 1px; }
+.main-btn.has-label svg { width: 24px; height: 24px; }
+.main-label { position: relative; z-index: 1; font: 800 10px/1 var(--font-body); letter-spacing: 0.01em; color: var(--ink); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <label for="start">Start</label>
+  <select id="start">
+    <option value="status">Status list “Owned” (details on the device)</option>
+    <option value="preview">SPIEL preview, details still to read</option>
+    <option value="sheet">Filter sheet, set: cooperative, up to 60 min, 4 players</option>
+    <option value="shop">Shopping list › Filter and group</option>
+    <option value="config">Config › Game length</option>
+  </select>
+  <label class="chk"><input type="checkbox" id="offline"> Offline</label>
+</div>
+<div id="root"></div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const svgI = (body, w = 2, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`
+const ICON = {
+  menu: svgI('<path d="M4 7h16M4 12h16M4 17h16"/>', 2.4),
+  plus: svgI('<path d="M12 5v14M5 12h14"/>'),
+  heart: svgI('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>', 2.6),
+  filter: svgI('<path d="M3 5h18l-7 8v5l-4 2v-7z"/>'),
+  search18: svgI('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>', 2, 18),
+  resync: svgI('<path d="M20 11a8 8 0 0 0-14.5-4.5L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.5L20 16"/><path d="M20 20v-4h-4"/>', 2, 20),
+  pencil: svgI('<path d="M4 20h4L19 9l-4-4L4 16z"/>'),
+}
+const $ = s => document.querySelector(s)
+const root = $('#root'), layer = $('#layer')
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const initials = n => n.split(/\s+/).filter(w => /\w/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+const cover = (name, size) => `<span class="cover" style="width:${size}px;height:${Math.round(size * 1.12)}px" aria-hidden="true"><span class="cover-hex hex"><span class="cover-initials" style="font-size:${Math.round(size / 3.2)}px">${esc(initials(name))}</span></span></span>`
+function toast(t) { const el = $('#toast'); el.innerHTML = '<i class="hex"></i>' + esc(t); el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600) }
+
+/* ---------- data (stand-ins) ---------- */
+// len: BGG playing time in minutes; best / rec: BGG player poll (rec includes best)
+const G = [
+  { id: 1, name: 'Cascadia', year: 2021, len: 45, mech: ['Tile Placement', 'Drafting', 'Pattern Building'], des: ['Randy Flynn'], r: 7.9, gr: 7.7, best: [2, 3], rec: [1, 2, 3, 4] },
+  { id: 2, name: 'Arcs', year: 2024, len: 120, mech: ['Trick-taking', 'Area Majority', 'Hand Management'], des: ['Cole Wehrle'], r: 8.1, gr: 7.4, best: [3], rec: [2, 3, 4] },
+  { id: 3, name: 'Spirit Island', year: 2017, len: 120, mech: ['Cooperative Game', 'Area Control', 'Variable Player Powers'], des: ['R. Eric Reuss'], r: 8.3, gr: 8.1, best: [2], rec: [1, 2, 3] },
+  { id: 4, name: 'The Gang', year: 2024, len: 20, mech: ['Cooperative Game', 'Communication Limits'], des: ['John Cooper', 'Kory Heath'], r: 7.6, gr: 7.0, best: [4, 5], rec: [3, 4, 5, 6] },
+  { id: 5, name: 'Harmonies', year: 2024, len: 35, mech: ['Tile Placement', 'Pattern Building'], des: ['Johan Benvenuto'], r: 7.8, gr: 7.4, best: [2], rec: [1, 2, 3, 4] },
+  { id: 6, name: 'Daybreak', year: 2023, len: 60, mech: ['Cooperative Game', 'Hand Management', 'Drafting'], des: ['Matteo Menapace', 'Matt Leacock'], r: 7.7, gr: 7.1, best: [3], rec: [2, 3, 4] },
+  { id: 7, name: 'Forest Shuffle', year: 2023, len: 50, mech: ['Hand Management', 'Set Collection'], des: ['Kosch'], r: 7.6, gr: 7.3, best: [2, 3], rec: [2, 3, 4] },
+  { id: 8, name: 'Ark Nova', year: 2021, len: 150, mech: ['Hand Management', 'Action Drafting', 'Tile Placement'], des: ['Mathias Wigge'], r: 8.5, gr: 8.4, best: [2], rec: [1, 2, 3] },
+  { id: 9, name: 'Sky Team', year: 2023, len: 20, mech: ['Cooperative Game', 'Dice Placement', 'Communication Limits'], des: ['Luc Rémond'], r: 7.9, gr: 7.6, best: [2], rec: [2] },
+  { id: 10, name: 'Faraway', year: 2023, len: 30, mech: ['Hand Management', 'Set Collection'], des: ['Johannes Goupy', 'Corentin Lebrat'], r: 7.4, gr: 7.0, best: [3, 4], rec: [2, 3, 4, 5, 6] },
+  { id: 11, name: 'Brass: Birmingham', year: 2018, len: 120, mech: ['Hand Management', 'Network Building', 'Loans'], des: ['Gavan Brown', 'Matt Tolman', 'Martin Wallace'], r: 8.6, gr: 8.4, best: [3, 4], rec: [2, 3, 4] },
+  { id: 12, name: 'Pandemic', year: 2008, len: 45, mech: ['Cooperative Game', 'Hand Management', 'Set Collection'], des: ['Matt Leacock'], r: 7.5, gr: 7.4, best: [4], rec: [2, 3, 4] },
+  { id: 13, name: 'Lacuna', year: 2025, len: null, mech: ['Area Majority'], des: ['Mathew Dunstan'], r: null, gr: null, best: [], rec: [] },
+  { id: 14, name: 'Bohnanza', year: 1997, len: 45, mech: ['Trading', 'Hand Management', 'Set Collection'], des: ['Uwe Rosenberg'], r: 7.0, gr: 6.9, best: [5], rec: [3, 4, 5, 6] },
+  { id: 15, name: 'Azul', year: 2017, len: 45, mech: ['Tile Placement', 'Pattern Building', 'Drafting'], des: ['Michael Kiesling'], r: 7.7, gr: 7.6, best: [2], rec: [2, 3, 4] },
+  { id: 16, name: 'Mycelia', year: 2023, len: 60, mech: ['Deck Building', 'Cooperative Game'], des: ['Ralph Bienert', 'Daniel Greiner'], r: 7.2, gr: 6.6, best: [2], rec: [1, 2, 3] },
+]
+const byId = id => G.find(g => g.id === id)
+const LISTS = {
+  status: { title: 'Owned', sub: 'mrmikkl on BoardGameGeek · loaded 12 min ago', ids: [1, 3, 5, 7, 8, 11, 12, 14, 15, 9], own: true },
+  preview: { title: 'SPIEL Essen 2026 Preview', sub: 'Geekpreview · 16 games', ids: G.map(g => g.id), own: false },
+}
+const CAT = { must_have: ['⭐', 'Must Have'], interested: ['👀', 'Interested'], unsure: ['🤔', 'Unsure'], new: ['⬡', 'No category yet'] }
+const SHOP = [[1, 'must_have'], [2, 'must_have'], [4, 'interested'], [6, 'interested'], [9, 'unsure'], [10, 'new'], [16, 'new']]
+const LEN_NAMES = ['Short', 'Middle', 'Long', 'Very long']
+const F0 = () => ({ len: new Set(), pn: null, pkinds: new Set(['best', 'rec']), rFrom: 0, rTo: 10, gFrom: 0, gTo: 10, mech: new Set(), des: new Set() })
+
+/* ---------- state ---------- */
+let S
+const lenRange = (i, lim = S.limits) => [i === 0 ? 0 : lim[i - 1] + 1, i < 3 ? lim[i] : null]
+const lenLabel = (i, lim = S.limits) => { const [a, b] = lenRange(i, lim); return b == null ? `${a} min and more` : `${a}–${b} min` }
+const lenOf = g => { if (g.len == null) return null; const i = S.limits.findIndex(x => g.len <= x); return i === -1 ? 3 : i }
+const known = g => S.read.has(g.id)
+const isDefault = f => !f.len.size && f.pn == null && f.rFrom === 0 && f.rTo === 10 && f.gFrom === 0 && f.gTo === 10 && !f.mech.size && !f.des.size
+// sections combine with AND; Length with OR inside; Mechanisms and Designers with AND inside (FR-003)
+function matches(g, f) {
+  if (isDefault(f)) return true
+  if (!known(g)) return false
+  if (f.len.size && !f.len.has(lenOf(g))) return false
+  if (f.pn != null && !playersMatch(g, f)) return false
+  if ((f.rFrom > 0 || f.rTo < 10) && (g.r == null || g.r < f.rFrom || g.r > f.rTo)) return false
+  if ((f.gFrom > 0 || f.gTo < 10) && (g.gr == null || g.gr < f.gFrom || g.gr > f.gTo)) return false
+  for (const m of f.mech) if (!g.mech.includes(m)) return false
+  for (const d of f.des) if (!g.des.includes(d)) return false
+  return true
+}
+// BGG's poll per player count: Best, or Recommended (not best); ticking both means best or recommended
+const pollOf = (g, n) => g.best.includes(n) ? 'best' : g.rec.includes(n) ? 'rec' : null
+const playersMatch = (g, f) => f.pkinds.has(pollOf(g, f.pn))
+const games = () => S.list === 'shop' ? SHOP.map(([id]) => byId(id)) : LISTS[S.list].ids.map(byId)
+const filt = () => S.filters[S.list]
+
+/* ---------- screens ---------- */
+const appbar = () => `<header class="appbar"><span class="appbar-name">Board-a-licious</span><button type="button" class="menu-btn" aria-label="Menu">${ICON.menu}</button></header>`
+const heading = (title, back, extra = '') => `<div class="top">${back ? `<a class="icon-btn back" href="#" aria-label="Back">‹</a>` : ''}<div class="top-title"><h1>${esc(title)}</h1></div>${extra}</div>`
+const filterAct = () => { const on = !isDefault(filt()); return `<button type="button" class="act${on ? ' is-active' : ''}" data-act="filter" aria-label="Filter${on ? ' (active)' : ''}">${ICON.filter}<span>Filter</span></button>` }
+// a list whose only action is Filter: Filter is the main button (with a dot while a filter is set)
+const filterMain = () => { const on = !isDefault(filt()); return `<button type="button" class="main-btn hex hex-btn has-label" data-act="filter" aria-label="Filter${on ? ' (active)' : ''}">${ICON.filter}<span class="main-label" aria-hidden="true">${on ? 'Filter' : 'Filter'}</span>${on ? '<i class="main-dot hex" aria-hidden="true"></i>' : ''}</button>` }
+const row = g => `<li><div class="crow" data-mark="new"><button type="button" class="crow-open" aria-label="${esc(g.name)}, ${g.year}">${cover(g.name, 48)}<span class="row-meta"><span class="row-name">${esc(g.name)}</span><span class="row-sub">${g.year}</span></span></button><div class="crow-acts"><button type="button" class="ract add" aria-label="Add ${esc(g.name)} to shopping lists"><span class="rhex" aria-hidden="true">+</span><span>Add</span></button></div></div></li>`
+
+function listScreen() {
+  const L = LISTS[S.list], all = games(), f = filt()
+  const shown = all.filter(g => matches(g, f) && g.name.toLowerCase().includes(S.q.toLowerCase()))
+  const resync = `<button type="button" class="icon-btn resync-btn" aria-label="Read again from BGG">${ICON.resync}</button>`
+  const active = !isDefault(f)
+  return `${heading(L.own ? L.title : L.title, true, resync)}<main class="screen">
+    <p class="list-sub">${esc(L.sub)}</p>
+    <label class="visually-hidden" for="q">Filter this list</label>
+    <div class="field">${ICON.search18}<input id="q" type="search" placeholder="Filter by name" value="${esc(S.q)}" autocomplete="off"></div>
+    ${active || S.q ? `<p class="count-line" role="status"><span><b>${shown.length}</b> of ${all.length} games</span>${active ? '<button type="button" class="link-btn" data-act="clear">Clear filters</button>' : ''}</p>` : ''}
+    <hr class="separator" />
+    ${shown.length ? `<ul class="rows">${shown.map(row).join('')}</ul>` : '<p class="lead">No game on this list matches.</p>'}
+    <p class="proto-note">${S.list === 'preview' ? 'Filter is the only action here, so it is the main button (a dot shows a filter is set). Open it: the app reads the missing details from BGG in batches (about one request per second for up to 20 games) and fills the sections as they arrive.' : 'Details are on the device already: Filter works at once, also offline.'}</p>
+  </main>
+  ${L.own
+    ? `<nav class="actionbar" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div><button type="button" class="main-btn hex hex-btn has-label" aria-label="Add a game to Owned">${ICON.plus}<span class="main-label" aria-hidden="true">Add game</span></button><div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
+    : `<nav class="actionbar" aria-label="Actions"><div class="actionbar-left"></div>${filterMain()}<div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`}`
+}
+
+function shopScreen() {
+  const all = games(), f = filt()
+  const shown = SHOP.filter(([id]) => matches(byId(id), f))
+  const groups = Object.keys(CAT).map(k => { const gs = shown.filter(([, c]) => c === k); return gs.length ? `<section class="group"><h3 class="group-title">${CAT[k][0]} ${CAT[k][1]} <span class="group-count">${gs.length}</span></h3><ul class="rows">${gs.map(([id]) => row(byId(id))).join('')}</ul></section>` : '' }).join('')
+  return `${heading('Essen 2026', true)}<main class="screen">
+    ${!isDefault(f) ? `<p class="count-line" role="status"><span><b>${shown.length}</b> of ${all.length} games</span><button type="button" class="link-btn" data-act="clear">Clear filters</button></p>` : ''}
+    <hr class="separator" />${groups || '<p class="lead">No game matches the filter.</p>'}
+    <p class="proto-note">A shopping list as today (rows simplified here). “Filter and group” gains the new sections below the existing ones.</p>
+    <p class="proto-note">New for every main button: a short label inside the hexagon, under its icon: Tinder (shopping list), New list (Buy › Shopping lists), Load list (Lists), Add game (own status list).</p>
+  </main>
+  <nav class="actionbar" aria-label="Actions"><div class="actionbar-left">${filterAct()}</div><button type="button" class="main-btn hex hex-btn has-label" aria-label="BG-Tinder: swipe a BGG list into this shopping list">${ICON.heart}<span class="main-label" aria-hidden="true">Tinder</span></button><div class="actionbar-right"></div><div class="actionbar-outer"></div></nav>`
+}
+
+function configScreen() {
+  const lim = S.draftLimits, ok = lim[0] < lim[1] && lim[1] < lim[2] && lim[0] > 0
+  const isDef = lim[0] === 30 && lim[1] === 60 && lim[2] === 120
+  const rows = LEN_NAMES.map((n, i) => `<div class="len-row"><b>${n}</b><span class="span">${ok || i === 0 ? lenLabel(i, lim) : '…'}</span>${i < 3 ? `<div class="field"><input inputmode="numeric" data-lim="${i}" value="${lim[i]}" aria-label="${n} ends at minutes"></div>` : '<span></span>'}</div>`).join('')
+  return `${heading('Config')}<main class="screen">
+    <p class="proto-note">… BoardGameGeek, Badge colours as in F008 …</p>
+    <section class="cfg-sec"><h2 class="section-title">Game length</h2>
+      <p class="hint" style="margin:0 0 8px">The four lengths for the Filter in lists, from BoardGameGeek's playing time. Type where each one ends; the next starts one minute later.</p>
+      <div class="len-rows">${rows}</div>
+      ${ok ? '' : '<p class="hint error" role="alert">Each length must end after the one before.</p>'}
+      <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="lim-reset" ${isDef ? 'disabled' : ''}>Reset</button><button type="button" class="btn btn-primary" data-act="lim-save" ${ok ? '' : 'disabled'}>Save game length</button></div>
+      <p class="proto-note">Synced to your other devices, like the BGG username.</p>
+    </section>
+  </main>`
+}
+
+/* ---------- filter sheet ---------- */
+function counted(key) {
+  const m = new Map()
+  for (const g of games()) if (known(g)) for (const v of g[key]) m.set(v, (m.get(v) || 0) + 1)
+  return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+}
+function pickList(key, title, set, act) {
+  const all = counted(key), open = S.showAll[key], q = (S.fq[key] || '').toLowerCase()
+  const list = (q ? all.filter(([v]) => v.toLowerCase().includes(q)) : open ? all : all.slice(0, 8))
+  const chosenMissing = [...set].filter(v => !all.some(([x]) => x === v))
+  return `<section class="f-sec"><div class="f-head"><h3>${title}</h3><small>every ticked one</small>${all.length > 8 && !q ? `<button type="button" class="link-btn" data-act="showall" data-k="${key}">${open ? 'Show fewer' : `Show all (${all.length})`}</button>` : ''}</div>
+    ${all.length > 8 ? `<div class="field f-search">${ICON.search18}<input type="search" data-fq="${key}" placeholder="Find ${title.toLowerCase().slice(0, -1)}" value="${esc(S.fq[key] || '')}" aria-label="Find in ${title}"></div>` : ''}
+    <div role="group" aria-label="${title}">${[...chosenMissing.map(v => [v, 0]), ...list].map(([v, n]) => `<label class="filter-row"><input type="checkbox" data-${act}="${esc(v)}" ${set.has(v) ? 'checked' : ''}><span>${esc(v)}</span><small>${n}</small></label>`).join('') || '<p class="missing">None yet.</p>'}</div></section>`
+}
+const fmt = v => v.toFixed(1)
+// two handles on one track, 0–10 in steps of 0.1; the full width does not filter
+function slider(title, note, key, from, to) {
+  const pct = v => v * 10
+  const full = from === 0 && to === 10
+  return `<section class="f-sec"><div class="f-head"><h3>${title}</h3>${note ? `<small>${note}</small>` : ''}<span class="val" aria-hidden="true">${full ? 'any' : `${fmt(from)} – ${fmt(to)}`}</span></div>
+    <div class="slider"><span class="track"></span><span class="ticks"></span><span class="fill" style="left:${pct(from)}%;right:${100 - pct(to)}%"></span>
+      <input type="range" min="0" max="10" step="0.1" value="${from}" data-rng="${key}From" aria-label="${title} from" aria-valuetext="${fmt(from)}">
+      <input type="range" min="0" max="10" step="0.1" value="${to}" data-rng="${key}To" aria-label="${title} to" aria-valuetext="${fmt(to)}"></div>
+    <div class="slider-scale" aria-hidden="true">${Array.from({ length: 11 }, (_, n) => `<span style="left:${n * 10}%">${n}</span>`).join('')}</div></section>`
+}
+function sheetHTML() {
+  const f = filt(), all = games(), kn = all.filter(known)
+  const missing = k => all.filter(g => known(g) && (k === 'len' ? g.len == null : k === 'r' ? g.r == null : g.best.length === 0)).length
+  const reading = S.reading < all.length && S.list === 'preview'
+  const lenCount = i => kn.filter(g => lenOf(g) === i).length
+    const shop = S.list === 'shop'
+  const shopPart = shop ? `<p class="seg-title">Bought</p><div class="seg" role="group" aria-label="Bought"><button type="button" aria-pressed="true">All</button><button type="button">Not bought</button><button type="button">Bought</button></div>
+    <p class="seg-title">Price</p><div class="seg" role="group" aria-label="Price"><button type="button" aria-pressed="true">All</button><button type="button">≤ €30</button><button type="button">€30–60</button><button type="button">&gt; €60</button></div>
+    <p class="seg-title">BGG status</p><div class="seg" role="group" aria-label="BGG status"><button type="button" aria-pressed="true">All</button><button type="button">Owned</button><button type="button">Not owned</button><button type="button">Wishlist</button></div>
+    <p class="proto-note">… Categories and Group by as today …</p><p class="f-group-title">About the game</p>` : ''
+  return `<div class="sheet-head"><h2 class="sheet-title">${shop ? 'Filter and group' : 'Filter'}</h2><button type="button" class="btn" data-act="clear" ${isDefault(f) ? 'disabled' : ''}>Clear filters</button></div>
+  ${shopPart}
+  ${reading ? `<div class="reading" role="status"><span class="spin-hex"></span><span>Reading game details from BoardGameGeek… <b>${S.reading} of ${all.length}</b></span></div>` : ''}
+  ${S.offline && S.reading < all.length ? `<div class="fail-line"><span>${all.length - S.reading} games are left out: their details need a connection.</span><button type="button" class="link-btn">Try again</button></div>` : ''}
+  <section class="f-sec"><div class="f-head"><h3>Length</h3><small>any ticked one</small></div>
+    <div class="chips" role="group" aria-label="Length">${LEN_NAMES.map((n, i) => `<button type="button" class="chip" data-act="len" data-i="${i}" aria-pressed="${f.len.has(i)}">${n} · ${lenLabel(i).replace(' min and more', '+ min')}<small>${lenCount(i)}</small></button>`).join('')}</div>
+    ${missing('len') ? `<p class="missing">${missing('len')} game has no length on BoardGameGeek.</p>` : ''}
+  </section>
+  <section class="f-sec"><div class="f-head"><h3>Players</h3><small>BGG's player poll</small></div>
+    <div class="chips counts" role="group" aria-label="Number of players">${[1, 2, 3, 4, 5, 6].map(n => `<button type="button" class="chip num" data-act="pn" data-n="${n}" aria-pressed="${f.pn === n && !S.pnText}">${n}</button>`).join('')}<label class="field num-field${S.pnText ? ' is-set' : ''}"><span class="visually-hidden">Other number of players</span><input id="pn-other" inputmode="numeric" maxlength="2" placeholder="7+" value="${esc(S.pnText)}"></label></div>
+    ${f.pn != null ? `<div class="chips" role="group" aria-label="With ${f.pn} players the game is" style="margin-top:8px">${[['best', 'Best'], ['rec', 'Recommended']].map(([k, l]) => `<button type="button" class="chip" data-act="pkind" data-k="${k}" aria-pressed="${f.pkinds.has(k)}">${l}<small>${kn.filter(g => pollOf(g, f.pn) === k).length}</small></button>`).join('')}</div>
+    <p class="missing">${kn.filter(g => playersMatch(g, f)).length} games ${[...f.pkinds].map(k => k === 'best' ? 'best' : 'recommended').join(' or ') || '…'} with ${f.pn} players. ${S.pnText ? 'Clear the field' : 'Tap the number again'} for any.</p>` : '<p class="missing">Pick a number of players.</p>'}
+  </section>
+  ${slider('Rating', 'BGG average', 'r', f.rFrom, f.rTo)}
+  ${slider('Geek rating', '', 'g', f.gFrom, f.gTo)}
+  ${missing('r') ? `<p class="missing">${missing('r')} game has no rating yet.</p>` : ''}
+  ${pickList('mech', 'Mechanisms', f.mech, 'mech')}
+  ${pickList('des', 'Designers', f.des, 'des')}
+  <div class="sheet-actions sheet-actions-row"><button type="button" class="btn" data-act="clear" ${isDefault(f) ? 'disabled' : ''}>Clear filters</button><button type="button" class="btn btn-primary" data-act="close">Done · ${games().filter(g => matches(g, f)).length} games</button></div>
+  <p class="proto-note">Changes apply at once; the list behind shows the result. Sections combine (every set one must match); Length widens with each tick; Mechanisms and Designers narrow with each tick.</p>`
+}
+const openSheet = () => { layer.innerHTML = `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Filter" tabindex="-1"><div class="sheet-grip"></div><div id="sheet-body">${sheetHTML()}</div></div>`; $('.sheet').focus() }
+const refreshSheet = () => { const b = $('#sheet-body'); if (b) { const top = $('.sheet').scrollTop; b.innerHTML = sheetHTML(); $('.sheet').scrollTop = top } }
+const closeSheet = () => { layer.innerHTML = '' }
+
+/* ---------- details reading (stand-in for the batched BGG reads) ---------- */
+function readDetails() {
+  clearInterval(S.timer)
+  S.timer = setInterval(() => {
+    if (S.offline) return clearInterval(S.timer)
+    const ids = games().map(g => g.id).filter(id => !S.read.has(id)).slice(0, 4)
+    ids.forEach(id => S.read.add(id))
+    S.reading = games().filter(known).length
+    if (!ids.length) clearInterval(S.timer)
+    refreshSheet(); render(false)
+  }, 900)
+}
+
+/* ---------- shell ---------- */
+function render(full = true) {
+  const body = S.screen === 'config' ? configScreen() : S.list === 'shop' ? shopScreen() : listScreen()
+  const focus = document.activeElement?.id
+  root.innerHTML = `<div class="app">${appbar()}${body}</div>`
+  if (focus === 'q') { const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length) }
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return
+  e.preventDefault()
+  const a = t.dataset.act, f = S.screen === 'config' ? null : filt()
+  if (a === 'filter') { openSheet(); if (S.list === 'preview') readDetails(); return }
+  if (a === 'close') return closeSheet()
+  if (a === 'clear') { S.filters[S.list] = F0(); S.pnText = ''; refreshSheet(); return render() }
+  if (a === 'len') { const i = +t.dataset.i; f.len.has(i) ? f.len.delete(i) : f.len.add(i) }
+  if (a === 'pn') { f.pn = f.pn === +t.dataset.n && !S.pnText ? null : +t.dataset.n; S.pnText = '' }
+  if (a === 'pkind') { const k = t.dataset.k; f.pkinds.has(k) ? f.pkinds.delete(k) : f.pkinds.add(k); if (!f.pkinds.size) f.pkinds.add(k === 'best' ? 'rec' : 'best') }
+  if (a === 'showall') S.showAll[t.dataset.k] = !S.showAll[t.dataset.k]
+  if (a === 'lim-reset') { S.draftLimits = [30, 60, 120]; return render() }
+  if (a === 'lim-save') { S.limits = [...S.draftLimits]; toast('Saved the game length'); return render() }
+  refreshSheet(); render()
+})
+document.addEventListener('change', e => {
+  const t = e.target, f = S.screen === 'config' ? null : filt()
+  if (t.dataset.mech !== undefined) { t.checked ? f.mech.add(t.dataset.mech) : f.mech.delete(t.dataset.mech) }
+  else if (t.dataset.des !== undefined) { t.checked ? f.des.add(t.dataset.des) : f.des.delete(t.dataset.des) }
+  else if (t.dataset.sel) { f[t.dataset.sel] = +t.value; if (f.rFrom > f.rTo) f.rTo = f.rFrom; if (f.gFrom > f.gTo) f.gTo = f.gFrom }
+  else if (t.id === 'offline') { S.offline = t.checked; if (!S.offline && layer.innerHTML) readDetails(); refreshSheet(); return }
+  else return
+  refreshSheet(); render()
+})
+document.addEventListener('pointerdown', e => { if (e.target.dataset?.rng) S.dragging = true })
+document.addEventListener('pointerup', () => { S.dragging = false })
+document.addEventListener('input', e => {
+  const t = e.target
+  if (t.id === 'q') { S.q = t.value; return render() }
+  if (t.id === 'pn-other') {
+    // the typed text stays as typed (so "10" can be typed through "1"); its number is used, empty means any
+    const n = parseInt(t.value, 10), f = filt()
+    S.pnText = t.value.replace(/\D/g, '')
+    f.pn = n >= 1 && n <= 99 ? n : null
+    refreshSheet(); render()
+    const i = $('#pn-other'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
+    return
+  }
+  if (t.dataset.rng) {
+    const f = filt(), k = t.dataset.rng, raw = Math.round(+t.value * 10) / 10
+    // dragging: whole numbers hold the handle a little (±0.2), so 7.0 is easy to hit; keys step 0.1 freely
+    const v = S.dragging && Math.abs(raw - Math.round(raw)) <= 0.2 ? Math.round(raw) : raw
+    if (v !== raw) t.value = v
+    f[k] = v
+    if (k.endsWith('From') && f[k] > f[k.replace('From', 'To')]) f[k.replace('From', 'To')] = v
+    if (k.endsWith('To') && f[k] < f[k.replace('To', 'From')]) f[k.replace('To', 'From')] = v
+    const sec = t.closest('.f-sec'), base = k.slice(0, 1), from = f[base + 'From'], to = f[base + 'To']
+    sec.querySelector('.fill').style.cssText = `left:${from * 10}%;right:${100 - to * 10}%`
+    sec.querySelector('.val').textContent = from === 0 && to === 10 ? 'any' : `${fmt(from)} – ${fmt(to)}`
+    sec.querySelectorAll('input').forEach(i => { i.value = f[i.dataset.rng]; i.setAttribute('aria-valuetext', fmt(f[i.dataset.rng])) })
+    const done = $('[data-act="close"].btn-primary'); if (done) done.textContent = `Done · ${games().filter(g => matches(g, f)).length} games`
+    return render()
+  }
+  if (t.dataset.fq) { S.fq[t.dataset.fq] = t.value; refreshSheet(); const i = $(`[data-fq="${t.dataset.fq}"]`); i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
+  if (t.dataset.lim !== undefined) { S.draftLimits[+t.dataset.lim] = parseInt(t.value, 10) || 0; const id = t.dataset.lim; render(); const i = $(`[data-lim="${id}"]`); i.focus(); i.setSelectionRange(i.value.length, i.value.length) }
+})
+function start() {
+  const s = $('#start').value
+  clearInterval(S?.timer)
+  S = { list: s === 'preview' ? 'preview' : s === 'shop' ? 'shop' : 'status', screen: s === 'config' ? 'config' : 'list', q: '', offline: $('#offline').checked,
+    limits: [30, 60, 120], draftLimits: [30, 60, 120], filters: { status: F0(), preview: F0(), shop: F0() }, showAll: {}, fq: {}, pnText: '',
+    read: new Set(s === 'preview' ? [1, 2, 3, 4] : G.map(g => g.id)), reading: 0, timer: null }
+  S.reading = games().filter(known).length
+  closeSheet()
+  if (s === 'sheet') { const f = S.filters.status; f.mech.add('Cooperative Game'); f.len.add(1); f.len.add(0); f.pn = 4 }
+  render()
+  if (s === 'sheet' || s === 'shop') openSheet()
+}
+$('#start').onchange = start
+start()
+</script>
+</body>
+</html>

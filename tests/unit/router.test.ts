@@ -46,6 +46,13 @@ describe('Buy (F008 contracts/ui.md "Routes")', () => {
   })
 })
 
+describe('Search place', () => {
+  it.each<[string, Route]>([
+    ['#/search', { name: 'search' }],
+    ['#/search?game=13', { name: 'search', game: 13 }],
+  ])('%s', both)
+})
+
 describe('Lists (F008 contracts/ui.md "Routes")', () => {
   it.each<[string, Route]>([
     ['#/lists', { name: 'lists' }],
@@ -103,7 +110,6 @@ describe('old addresses map to the new places (FR: US0 scenario 7)', () => {
     ['#/collections/c1/swipe/preview/1', '#/buy/lists/c1/swipe/preview/1'],
     ['#/buy/295947', '#/buy?game=295947'],
     ['#/buy/abc', '#/buy'],
-    ['#/search', '#/buy'],
     ['#/add', '#/buy/lists'],
     ['#/add/collection', '#/buy/lists?new'],
     ['#/add/list', '#/lists?load'],

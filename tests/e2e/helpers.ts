@@ -44,7 +44,7 @@ export async function expectAccessible(page: Page) {
 }
 
 /** F008 places (contracts/ui.md): Buy, Lists and Config in the app bar's menu; Buy and Lists have tabs. */
-export type Place = 'Buy' | 'Lists' | 'Config'
+export type Place = 'Buy' | 'Lists' | 'Search' | 'Config'
 export type Tab = 'Search' | 'Shopping lists' | 'Status lists' | 'Previews' | 'Geeklists'
 
 export async function openMenu(page: Page) {
@@ -385,4 +385,33 @@ export async function setBggUsername(page: Page, name: string) {
 /** F008: `/api/bgg/games` without BGG for games the test does not know: an empty answer. */
 export async function fakeNoGameDetails(page: Page) {
   await page.route('**/api/bgg/games?**', route => route.fulfill({ json: { games: [] } }))
+}
+
+/**
+ * F009: the length limits on this test's device, written straight into the store's meta `bggSetting`
+ * (as `store.setLengthLimits` keeps them, without queuing a push); reloads so the app reads them. Call
+ * `keepBggSettingsLocal` first, so no pull replaces them.
+ */
+export async function setLengthLimitsOnDevice(page: Page, limits: [number, number, number]) {
+  await page.evaluate(async limits => {
+    const { email } = (await (await fetch('/api/me')).json()) as { email: string }
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const open = indexedDB.open(`board-a-licious-${email.toLowerCase()}`)
+      open.onsuccess = () => resolve(open.result)
+      open.onerror = () => reject(open.error)
+    })
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('meta', 'readwrite')
+      const meta = tx.objectStore('meta')
+      const read = meta.get('bggSetting')
+      read.onsuccess = () => {
+        const current = (read.result ?? { bggUsername: null }) as Record<string, unknown>
+        meta.put({ ...current, lengthLimits: limits, updatedAt: new Date().toISOString() }, 'bggSetting')
+      }
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+    })
+    db.close()
+  }, limits)
+  await page.reload()
 }

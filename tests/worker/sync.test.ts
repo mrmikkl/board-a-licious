@@ -92,7 +92,7 @@ describe('/api/sync', () => {
     const follow = { bggUser: 'Anna_Meeple', updatedAt: T1, deleted: false }
     expect(await (await call('/api/sync', json({ settings: [setting], follows: [follow] }))).json()).toEqual({ applied: 2, ignored: 0 })
     const pulled = await (await call('/api/sync')).json()
-    expect(pulled.settings).toEqual([setting])
+    expect(pulled.settings).toEqual([{ ...setting, lengthLimits: null }])
     expect(pulled.follows).toEqual([{ ...follow, bggUser: 'anna_meeple' }])
     // last write wins: an older change is ignored, a newer one (a tombstone, a cleared name) wins
     expect(await (await call('/api/sync', json({ settings: [{ bggUsername: 'old', updatedAt: '2026-10-17T08:00:00.000Z' }] }))).json()).toEqual({
@@ -102,8 +102,44 @@ describe('/api/sync', () => {
     const T2 = '2026-10-17T10:00:00.000Z'
     await call('/api/sync', json({ settings: [{ bggUsername: null, updatedAt: T2 }], follows: [{ ...follow, deleted: true, updatedAt: T2 }] }))
     const after = await (await call('/api/sync')).json()
-    expect(after.settings).toEqual([{ bggUsername: null, updatedAt: T2 }])
+    expect(after.settings).toEqual([{ bggUsername: null, lengthLimits: null, updatedAt: T2 }])
     expect(after.follows).toEqual([{ bggUser: 'anna_meeple', updatedAt: T2, deleted: true }])
+  })
+
+  it('F009: syncs the length limits; absent keeps them, null resets them', async () => {
+    const call = testApp(db)
+    const pull = async () => (await (await call('/api/sync')).json()).settings
+    expect(await (await call('/api/sync', json({ settings: [{ bggUsername: 'mrmikkl', lengthLimits: [20, 45, 90], updatedAt: T1 }] }))).json()).toEqual({
+      applied: 1,
+      ignored: 0,
+    })
+    expect(await pull()).toEqual([{ bggUsername: 'mrmikkl', lengthLimits: [20, 45, 90], updatedAt: T1 }])
+    // an older app sends the setting without lengthLimits: the limits stay
+    await call('/api/sync', json({ settings: [{ bggUsername: 'anna', updatedAt: '2026-10-17T10:00:00.000Z' }] }))
+    expect(await pull()).toEqual([{ bggUsername: 'anna', lengthLimits: [20, 45, 90], updatedAt: '2026-10-17T10:00:00.000Z' }])
+    // an older change is ignored
+    await call('/api/sync', json({ settings: [{ bggUsername: 'anna', lengthLimits: [10, 20, 30], updatedAt: T1 }] }))
+    expect((await pull())[0].lengthLimits).toEqual([20, 45, 90])
+    await call('/api/sync', json({ settings: [{ bggUsername: 'anna', lengthLimits: null, updatedAt: '2026-10-17T11:00:00.000Z' }] }))
+    expect(await pull()).toEqual([{ bggUsername: 'anna', lengthLimits: null, updatedAt: '2026-10-17T11:00:00.000Z' }])
+  })
+
+  it.each([
+    ['two limits', [30, 60]],
+    ['four limits', [30, 60, 120, 240]],
+    ['limits that do not increase', [60, 30, 120]],
+    ['equal limits', [30, 30, 120]],
+    ['a limit of 0', [0, 60, 120]],
+    ['a limit above 600', [30, 60, 601]],
+    ['a limit that is not whole', [30.5, 60, 120]],
+    ['a limit as text', ['30', 60, 120]],
+    ['limits that are not a list', 'short'],
+  ])('F009: rejects %s with a clear 400', async (_, lengthLimits) => {
+    const res = await testApp(db)('/api/sync', json({ settings: [{ bggUsername: null, lengthLimits, updatedAt: T1 }] }))
+    expect(res.status).toBe(400)
+    const answer = await res.json()
+    expect(answer).toMatchObject({ error: 'bad_request', retryable: false })
+    expect(answer.message).toMatch(/lengthLimits/)
   })
 
   it('F008: older apps that send no settings or follows keep working', async () => {

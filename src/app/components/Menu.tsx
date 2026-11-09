@@ -2,14 +2,15 @@ import { type ReactNode, useEffect, useRef } from 'react'
 
 import { useServices, useStoreData } from '../context.tsx'
 import { type Route, href, navigate } from '../router.ts'
-import { IconBuy, IconConfig, IconLists } from './icons.tsx'
+import { IconBuy, IconConfig, IconLists, IconSearch } from './icons.tsx'
 
-type Place = 'buy' | 'lists' | 'config'
+type Place = 'buy' | 'lists' | 'search' | 'config'
 
 const PLACES: { name: Place; label: string; icon: ReactNode }[] = [
   // F007: Buy is the first place
   { name: 'buy', label: 'Buy', icon: <IconBuy /> },
   { name: 'lists', label: 'Lists', icon: <IconLists /> },
+  { name: 'search', label: 'Search', icon: <IconSearch /> },
   { name: 'config', label: 'Config', icon: <IconConfig /> },
 ]
 
@@ -27,6 +28,8 @@ function place(route: Route): Place {
     case 'list':
     case 'status-list':
       return 'lists'
+    case 'search':
+      return 'search'
     case 'config':
     case 'share':
       return 'config'

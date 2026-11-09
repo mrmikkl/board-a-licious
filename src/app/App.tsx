@@ -12,6 +12,7 @@ import { Intro } from './screens/Intro.tsx'
 import { List } from './screens/List.tsx'
 import { Lists } from './screens/Lists.tsx'
 import { Buy } from './screens/Buy.tsx'
+import { Search } from './screens/Search.tsx'
 import { StatusList } from './screens/StatusList.tsx'
 import { Config } from './screens/Config.tsx'
 import { Share } from './screens/Share.tsx'
@@ -23,6 +24,8 @@ function Screen({ route }: { route: Route }) {
   switch (route.name) {
     case 'buy':
       return <Buy tab="search" game={route.game} />
+    case 'search':
+      return <Search game={route.game} />
     case 'collections':
       return <Buy tab="shopping" create={route.create} />
     case 'collection':

@@ -58,7 +58,7 @@ test('US2: Show-off sheet, honeycomb of the chosen groups, viewer from a hexagon
   await createCollection(page, name)
 
   // FR-007: the action bar order is Add game · ♥ · Filter · Show-off
-  await expect(actions(page).locator('a, button')).toHaveText(['Add game', '', 'Filter', 'Show-off'])
+  await expect(actions(page).locator('a, button')).toHaveText(['Add game', 'Tinder', 'Filter', 'Show-off'])
 
   await addGame(page, GAMES.cascadia, 'Cascadia')
   await addGame(page, GAMES.arkNova, 'Ark Nova')

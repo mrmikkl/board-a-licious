@@ -130,7 +130,7 @@ test('a shared page that is no game: "Not a BoardGameGeek game", Close goes to t
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   // the share was replaced in the history: Back does not reopen it
   await page.goBack()
-  await expect(page).toHaveURL(/#\/buy$/)
+  await expect(page).toHaveURL(/#\/search$/)
 })
 
 test('"Add game by link" opens Add game with an empty link (T013)', async ({ page }) => {
