@@ -96,12 +96,12 @@ before its implementation.
 
 ## Phase 6: User Story 3 - Set the length ranges in Config (Priority: P2)
 
-- [ ] T016 [P] [US3] Write failing Playwright tests in `tests/e2e/game-length.spec.ts`: Config
+- [x] T016 [P] [US3] Write failing Playwright tests in `tests/e2e/game-length.spec.ts`: Config
   "Game length" with the four rows and defaults; "Short ends at minutes" 45 → the range texts follow,
   Save game length toasts "Saved the game length"; not increasing → error line and Save disabled;
   Reset disabled at 30 / 60 / 120; a list's Length chips use the new ranges; the limits are pushed with
   sync
-- [ ] T017 [US3] Create `src/app/components/LengthSettings.tsx` and add it to
+- [x] T017 [US3] Create `src/app/components/LengthSettings.tsx` and add it to
   `src/app/screens/Config.tsx` (T016 green)
 
 ## Phase 7: User Story 5 - The same filter in shopping lists (Priority: P2)
