@@ -1,0 +1,246 @@
+/* F009 "List filter" (docs/design.md 3.3.0): the Filter sheet of BGG lists, its sections and the count line */
+
+/* "12 of 80 games" under a list's name field, with Clear filters */
+.count-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.count-line b {
+  color: var(--text);
+}
+.count-line .link-btn {
+  margin-left: auto;
+}
+
+/* Clear filters at the top right beside the sheet's title (the sheet is its containing block) */
+.sheet-clear-top {
+  position: absolute;
+  top: 16px;
+  right: var(--gutter);
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+/* reading the missing details: a framed line with the spinning hexagon */
+.reading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--deck);
+  font-size: 13px;
+  color: var(--muted);
+}
+.reading b {
+  color: var(--text);
+}
+.game-filter-sheet .fail-line {
+  margin: 0 0 10px;
+}
+
+/* sections: thin lines between, title with a short muted note */
+.f-sec {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.game-filter > .f-sec:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.f-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.f-head h3 {
+  margin: 0;
+  font: 700 14px var(--font-body);
+}
+.f-head small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.f-head .link-btn {
+  margin-left: auto;
+  font-size: 12px;
+}
+.f-head .val {
+  margin-left: auto;
+  font: 700 14px var(--font-display, var(--font-body));
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.missing {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.f-search {
+  margin: 0 0 6px;
+}
+.f-group-title {
+  margin: 18px 0 2px;
+  font: 700 12px var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* chips: Length (multi-choice), the player count (one choice), Best / Recommended; ticked = hot fill */
+.game-filter .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.game-filter .chip {
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--deck);
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+}
+.game-filter .chip small {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+}
+.game-filter .chip[aria-pressed='true'] {
+  border-color: var(--orange);
+  background: var(--grad-hot);
+  box-shadow: none;
+  color: var(--ink);
+}
+.game-filter .chip[aria-pressed='true'] small {
+  color: var(--ink);
+}
+.game-filter .chip.num {
+  min-width: var(--tap);
+  justify-content: center;
+  padding: 6px 0;
+}
+.game-filter .player-chips {
+  flex-wrap: nowrap;
+  gap: 2px;
+  justify-content: space-between;
+}
+.game-filter .player-kinds {
+  margin-top: 8px;
+}
+.num-field {
+  flex: none;
+  width: 52px;
+  min-height: var(--tap);
+  margin: 0;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+}
+.num-field input {
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+}
+.num-field.is-set {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 1px var(--orange);
+}
+
+/* two-handle slider (Rating, Geek rating): native ranges stacked on one track, hexagon handles */
+.slider {
+  position: relative;
+  height: var(--tap);
+  margin: 0 13px;
+}
+.slider .track,
+.slider .fill {
+  position: absolute;
+  top: 20px;
+  height: 4px;
+  border-radius: 2px;
+}
+.slider .track {
+  left: 0;
+  right: 0;
+  background: var(--border);
+}
+.slider .fill {
+  background: var(--grad-hot);
+}
+.slider .ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 17px;
+  height: 10px;
+  background: repeating-linear-gradient(to right, var(--muted) 0 1px, transparent 1px 10%);
+  background-size: calc(100% + 1px) 100%;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.slider input {
+  position: absolute;
+  left: -13px;
+  top: 0;
+  width: calc(100% + 26px);
+  height: var(--tap);
+  margin: 0;
+  background: none;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.slider input::-webkit-slider-runnable-track {
+  background: none;
+}
+.slider input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 26px;
+  height: 30px;
+  border: 0;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  cursor: grab;
+}
+.slider input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 26px;
+  height: 30px;
+  border: 0;
+  border-radius: 0;
+  clip-path: var(--hex);
+  background: var(--grad-hot);
+  cursor: grab;
+}
+.slider input:focus-visible {
+  outline: none;
+}
+.slider input:focus-visible::-webkit-slider-thumb {
+  background: var(--orange-2);
+  box-shadow: inset 0 0 0 3px var(--ink);
+}
+.slider input:focus-visible::-moz-range-thumb {
+  background: var(--orange-2);
+  box-shadow: inset 0 0 0 3px var(--ink);
+}
+.slider-scale {
+  position: relative;
+  height: 14px;
+  margin: 0 13px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.slider-scale span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums;
+}
