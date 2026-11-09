@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Collection, Entry } from '../../src/domain/collection.ts'
 import type { Db } from '../../worker/db/db.ts'
@@ -211,9 +211,12 @@ describe('repository', () => {
   })
 
   it('F009: the Worker adds the playing time itself before the migration ran, marking old games stale', async () => {
+    // a fresh copy of the repository: the Worker checks its columns once per isolate
+    vi.resetModules()
+    const fresh = await import('../../worker/db/repository.ts')
     const old = await testDb({ before: '0008' })
     await old.query(`INSERT INTO game (bgg_id, name, kind, fetched_at) VALUES (1, 'Old', 'boardgame', '2026-11-08T00:00:00Z')`)
-    expect(await getCachedGames(old, [1], '2026-11-01T00:00:00.000Z')).toEqual([])
+    expect(await fresh.getCachedGames(old, [1], '2026-11-01T00:00:00.000Z')).toEqual([])
     await old.exec(migrationSql('0008_list_filter.sql'))
     const [row] = await old.query<{ fetched_at: Date }>('SELECT fetched_at FROM game WHERE bgg_id = 1')
     expect(row!.fetched_at.toISOString()).toBe('1970-01-01T00:00:00.000Z')

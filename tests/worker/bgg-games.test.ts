@@ -137,12 +137,14 @@ describe('GET /api/bgg/games', () => {
     const official = async (url: URL) =>
       url.pathname === '/xmlapi2/thing' ? xml(url.searchParams.get('id') === '477191' ? 'thing-477191.xml' : 'thing-295947-385318.xml') : new Response('', { status: 404 })
     const env = { BGG_TOKEN: 'test-token' }
-    const res = await testApp(db, { bgg: official, env })('/api/bgg/games?ids=295947,385318,477191')
-    expect((await res.json()).games.map((g: { bggId: number; playingTime: number | null }) => [g.bggId, g.playingTime])).toEqual([
+    const app = testApp(db, { bgg: official, env })
+    const times = async (ids: string) =>
+      (await (await app(`/api/bgg/games?ids=${ids}`)).json()).games.map((g: { bggId: number; playingTime: number | null }) => [g.bggId, g.playingTime])
+    expect(await times('295947,385318')).toEqual([
       [295947, 45],
       [385318, 45],
-      [477191, null],
     ])
+    expect(await times('477191')).toEqual([[477191, null]])
     const calls: string[] = []
     const again = await testApp(db, { bgg: official, bggCalls: calls, env })('/api/bgg/games?ids=295947,477191')
     expect(calls).toEqual([])
