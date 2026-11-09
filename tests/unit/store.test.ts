@@ -157,6 +157,46 @@ describe('browser store', () => {
     expect(await store.pending()).toHaveLength(2)
   })
 
+  it('F009: keeps the length limits with the BGG username, queued as a setting; default 30 / 60 / 120', async () => {
+    const store = await open()
+    expect(await store.lengthLimits()).toEqual([30, 60, 120])
+    await store.setBggUsername('mrmikkl', T1)
+    await store.setLengthLimits([20, 45, 90], T2)
+    expect(await store.lengthLimits()).toEqual([20, 45, 90])
+    expect(await store.bggUsername()).toBe('mrmikkl')
+    await store.setBggUsername('anna', '2026-10-17T11:00:00.000Z')
+    expect(await store.lengthLimits()).toEqual([20, 45, 90])
+    await store.setLengthLimits(null, '2026-10-17T12:00:00.000Z')
+    expect(await store.lengthLimits()).toEqual([30, 60, 120])
+    expect((await store.pending()).map(p => p.row)).toEqual([
+      { bggUsername: 'mrmikkl', updatedAt: T1 },
+      { bggUsername: 'mrmikkl', lengthLimits: [20, 45, 90], updatedAt: T2 },
+      { bggUsername: 'anna', lengthLimits: [20, 45, 90], updatedAt: '2026-10-17T11:00:00.000Z' },
+      { bggUsername: 'anna', lengthLimits: null, updatedAt: '2026-10-17T12:00:00.000Z' },
+    ])
+  })
+
+  it('F009: merges pulled length limits; a pulled setting without them keeps the ones here', async () => {
+    const store = await open()
+    await store.setLengthLimits([20, 45, 90], T1)
+    await store.applyRemote({ collections: [], entries: [], settings: [{ bggUsername: 'mrmikkl', updatedAt: T2 }] })
+    expect(await store.bggUsername()).toBe('mrmikkl')
+    expect(await store.lengthLimits()).toEqual([20, 45, 90])
+    await store.applyRemote({ collections: [], entries: [], settings: [{ bggUsername: 'mrmikkl', lengthLimits: [10, 20, 30], updatedAt: '2026-10-17T11:00:00.000Z' }] })
+    expect(await store.lengthLimits()).toEqual([10, 20, 30])
+    await store.applyRemote({ collections: [], entries: [], settings: [{ bggUsername: 'mrmikkl', lengthLimits: null, updatedAt: '2026-10-17T12:00:00.000Z' }] })
+    expect(await store.lengthLimits()).toEqual([30, 60, 120])
+  })
+
+  it('F009: remembers list filters per list key in device meta', async () => {
+    const store = await open()
+    expect(await store.meta('listFilters')).toBeUndefined()
+    await store.setMeta('listFilters', { 'preview:93': { length: ['short'] }, 'status:mrmikkl:own': { mechanisms: ['Drafting'] } })
+    expect((await store.meta('listFilters'))?.['preview:93']).toEqual({ length: ['short'] })
+    // device only: nothing queued
+    expect(await store.pending()).toEqual([])
+  })
+
   it('F008: keeps the data of a version 1 database when it is upgraded', async () => {
     const { openDB } = await import('idb')
     const name = 'board-a-licious-old@example.com'

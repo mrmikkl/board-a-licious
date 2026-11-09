@@ -195,6 +195,19 @@ describe('sync', () => {
     expect(await store.follows()).toEqual(['anna_meeple', 'ben'])
   })
 
+  it('F009: pushes the length limits with the setting and takes pulled ones', async () => {
+    store = await openStore('anna@example.com')
+    await store.setLengthLimits([20, 45, 90], T1)
+    const server = fakeServer((_, init) =>
+      init?.method === 'POST'
+        ? Response.json({ applied: 1, ignored: 0 })
+        : Response.json({ collections: [], entries: [], settings: [{ bggUsername: null, lengthLimits: [15, 50, 100], updatedAt: T2 }], follows: [], serverTime: T2 }),
+    )
+    await createSync({ store, api: createApi({ fetch: server.fetch }) }).syncNow()
+    expect(server.calls[0]?.body).toEqual({ collections: [], entries: [], settings: [{ bggUsername: null, lengthLimits: [20, 45, 90], updatedAt: T1 }] })
+    expect(await store.lengthLimits()).toEqual([15, 50, 100])
+  })
+
   it('F008: sends no settings or follows arrays when there are none (older servers)', async () => {
     store = await openStore('anna@example.com')
     await store.saveEntry(newEntry('c1', 1, T1))

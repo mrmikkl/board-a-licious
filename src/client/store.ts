@@ -2,6 +2,7 @@ import { type DBSchema, type IDBPDatabase, deleteDB, openDB } from 'idb'
 
 import { DEFAULT_BADGE_COLOURS, type PaletteName, type StatusKey } from '../domain/bgg-status.ts'
 import { type Collection, type Entry, entryKey, merge } from '../domain/collection.ts'
+import { DEFAULT_LENGTH_LIMITS, type LengthLimits, type StoredGameFilter, validLengthLimits } from '../domain/game-filter.ts'
 import type { LoadedList } from '../domain/lists.ts'
 import type { Mark } from '../domain/marks.ts'
 import type { PriceLanguage } from '../domain/offers.ts'
@@ -38,6 +39,8 @@ export type MetaValues = {
   lastTab: { buy: 'search' | 'shopping'; lists: 'status' | 'previews' | 'geeklists' }
   /** F008: who is signed in to BGG, a hint for the UI only (the cookie decides). */
   bggSignedInAs: string | null
+  /** F009: the filter of each BGG list on this device, by list key (`status:<bggUser lower>:<status>`, `preview:<id>`, `geeklist:<id>`). */
+  listFilters: Record<string, StoredGameFilter>
 }
 
 /** F008: device meta that has a default (data-model.md "Device meta"). */
@@ -98,6 +101,17 @@ export async function openStore(rawEmail: string) {
   async function saveFollow(row: FollowedBggUser) {
     const tx = db.transaction(['follows', 'outbox'], 'readwrite')
     await Promise.all([tx.objectStore('follows').put(row), tx.objectStore('outbox').add({ kind: 'follow', row }), tx.done])
+    changed()
+  }
+
+  /** The synced setting row with one part changed, stored and queued in one transaction. */
+  async function saveSetting(change: () => Partial<UserSetting>, updatedAt: string) {
+    const tx = db.transaction(['meta', 'outbox'], 'readwrite')
+    const current = (await tx.objectStore('meta').get('bggSetting')) as UserSetting | undefined
+    const next = { bggUsername: current?.bggUsername ?? null, ...(current?.lengthLimits !== undefined && { lengthLimits: current.lengthLimits }), ...change() }
+    // key order as the server sends it back: bggUsername, lengthLimits, updatedAt
+    const row: UserSetting = { bggUsername: next.bggUsername, ...(next.lengthLimits !== undefined && { lengthLimits: next.lengthLimits }), updatedAt }
+    await Promise.all([tx.objectStore('meta').put(row, 'bggSetting'), tx.objectStore('outbox').add({ kind: 'setting', row }), tx.done])
     changed()
   }
 
@@ -184,10 +198,16 @@ export async function openStore(rawEmail: string) {
     },
     /** F008: sets (or with null or blanks clears) the BGG username and queues it for the other devices. */
     async setBggUsername(name: string | null, updatedAt = new Date().toISOString()) {
-      const row: UserSetting = { bggUsername: name?.trim() || null, updatedAt }
-      const tx = db.transaction(['meta', 'outbox'], 'readwrite')
-      await Promise.all([tx.objectStore('meta').put(row, 'bggSetting'), tx.objectStore('outbox').add({ kind: 'setting', row }), tx.done])
-      changed()
+      await saveSetting(() => ({ bggUsername: name?.trim() || null }), updatedAt)
+    },
+    /** F009: where Short, Middle and Long end; the defaults when never set, reset or broken. */
+    async lengthLimits(): Promise<LengthLimits> {
+      const limits = ((await db.get('meta', 'bggSetting')) as UserSetting | undefined)?.lengthLimits
+      return validLengthLimits(limits) ? limits : [...DEFAULT_LENGTH_LIMITS]
+    },
+    /** F009: sets (or with null resets) the length limits and queues them for the other devices. */
+    async setLengthLimits(limits: LengthLimits | null, updatedAt = new Date().toISOString()) {
+      await saveSetting(() => ({ lengthLimits: limits }), updatedAt)
     },
     /** F008: the followed BGG users (lower-cased, sorted), without the removed ones. */
     async follows(): Promise<string[]> {
@@ -236,7 +256,10 @@ export async function openStore(rawEmail: string) {
       // F008: the username and the followed BGG users, tombstones kept so an older follow cannot revive them
       const meta = tx.objectStore('meta')
       for (const remote of changes.settings ?? []) {
-        if (newer((await meta.get('bggSetting')) as UserSetting | undefined, remote)) void meta.put(remote, 'bggSetting')
+        const local = (await meta.get('bggSetting')) as UserSetting | undefined
+        // F009: a setting from an older server or app without lengthLimits keeps the ones here
+        const row = remote.lengthLimits === undefined && local?.lengthLimits !== undefined ? { ...remote, lengthLimits: local.lengthLimits } : remote
+        if (newer(local, remote)) void meta.put(row, 'bggSetting')
       }
       const follows = tx.objectStore('follows')
       for (const remote of changes.follows ?? []) {

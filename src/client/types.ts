@@ -1,5 +1,6 @@
 import type { BggCollectionItem } from '../domain/bgg-status.ts'
 import type { Facts } from '../domain/collection.ts'
+import type { LengthLimits } from '../domain/game-filter.ts'
 import type { GameDetails } from '../domain/game-info.ts'
 
 export type Game = {
@@ -10,7 +11,8 @@ export type Game = {
   description: string | null
   kind: 'boardgame' | 'expansion'
 } & Partial<GameDetails>
-// (games stored before the game info existed lack these fields and are fetched again, FR-017)
+// (games stored before the game info existed lack these fields and are fetched again, FR-017;
+// F009: a game without the key `playingTime` was stored before it existed and counts as missing details)
 
 export type ListKind = 'preview' | 'geeklist'
 
@@ -46,8 +48,11 @@ export type StoredList = {
   error?: string
 }
 
-/** F008: the person's BGG username, synced (data-model.md "UserSetting"); null = none. */
-export type UserSetting = { bggUsername: string | null; updatedAt: string }
+/**
+ * F008: the person's BGG username, synced (data-model.md "UserSetting"); null = none. F009: their
+ * length limits, null = the defaults; without the key (older rows) the server keeps what it has.
+ */
+export type UserSetting = { bggUsername: string | null; lengthLimits?: LengthLimits | null; updatedAt: string }
 
 /** F008: a friend's BGG user whose lists were loaded by link, synced; lower-cased, `deleted` = tombstone. */
 export type FollowedBggUser = { bggUser: string; updatedAt: string; deleted: boolean }
