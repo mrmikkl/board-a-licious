@@ -117,10 +117,10 @@ before its implementation.
 
 ## Phase 8: Main button captions (design rule 3.3.0)
 
-- [ ] T020 [P] [MB] Write failing Playwright tests in `tests/e2e/main-button.spec.ts`: captions
+- [x] T020 [P] [MB] Write failing Playwright tests in `tests/e2e/main-button.spec.ts`: captions
   "Tinder" (shopping list), "New list" (Buy › Shopping lists), "Load list" (Lists), "Add game" (own
   status list), "Filter" (preview) inside the hexagon; accessible names unchanged; axe
-- [ ] T021 [MB] Add the required `caption` (and the active dot) to `MainButton` in
+- [x] T021 [MB] Add the required `caption` (and the active dot) to `MainButton` in
   `src/app/components/ActionBar.tsx` and `src/app/theme/actionbar.css` (68×76 px, icon 24 px, 10px
   caption); pass captions in `screens/Collection.tsx`, `screens/Collections.tsx`, `screens/Lists.tsx`,
   `screens/StatusList.tsx` (T020 green)
