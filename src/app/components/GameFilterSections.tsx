@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 
 import { type FilterDetails, type GameFilter, type LengthLimits, PLAYER_KINDS, lengthOf, lengthRanges, missingCounts, valueCounts } from '../../domain/game-filter.ts'
 import { type PollKind, pollKind } from '../../domain/player-poll.ts'
+import { RangeSlider, rangeText } from './RangeSlider.tsx'
 
 /** How many values a pick list shows before "Show all" (design.md "Mechanisms and Designers"). */
 const FIRST = 8
@@ -22,14 +23,11 @@ export function GameFilterSections({
   onChange,
   games: details,
   limits,
-  ratings,
 }: {
   filter: GameFilter
   onChange: (filter: GameFilter) => void
   games: FilterDetails[]
   limits: LengthLimits
-  /** The Rating and Geek rating sections (US2), between Players and Mechanisms. */
-  ratings?: ReactNode
 }) {
   const known = details.filter(Boolean)
   const missing = missingCounts(known, filter)
@@ -37,7 +35,8 @@ export function GameFilterSections({
     <div className="game-filter">
       <LengthSection filter={filter} onChange={onChange} known={known} limits={limits} missing={missing.length} />
       <PlayersSection filter={filter} onChange={onChange} known={known} missing={missing.players} />
-      {ratings}
+      <RatingSection title="Rating" note="BGG average" field="rating" filter={filter} onChange={onChange} missing={missing.rating} />
+      <RatingSection title="Geek rating" field="geekRating" filter={filter} onChange={onChange} missing={missing.geekRating} />
       <PickSection title="Mechanisms" singular="mechanism" field="mechanisms" filter={filter} onChange={onChange} known={known} />
       <PickSection title="Designers" singular="designer" field="designers" filter={filter} onChange={onChange} known={known} />
     </div>
@@ -140,6 +139,32 @@ function PlayersSection({ filter, onChange, known, missing }: SectionProps & { m
         </>
       ) : (
         <p className="missing">Pick a number of players.</p>
+      )}
+    </section>
+  )
+}
+
+/** Rating or Geek rating (US2): a two-handle slider 0–10; the full width does not filter. */
+function RatingSection({
+  title,
+  note,
+  field,
+  filter,
+  onChange,
+  missing,
+}: Omit<SectionProps, 'known'> & { title: string; note?: string; field: 'rating' | 'geekRating'; missing: number }) {
+  return (
+    <section className="f-sec">
+      <SectionHead title={title} note={note}>
+        <span className="val" aria-hidden="true">
+          {rangeText(filter[field])}
+        </span>
+      </SectionHead>
+      <RangeSlider label={title} value={filter[field]} onChange={value => onChange({ ...filter, [field]: value })} />
+      {missing > 0 && (
+        <p className="missing">
+          {have(missing)} no {title.toLowerCase()} on BoardGameGeek.
+        </p>
       )}
     </section>
   )

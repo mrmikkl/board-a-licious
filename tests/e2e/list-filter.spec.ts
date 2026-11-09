@@ -255,7 +255,7 @@ test('Rating and Geek rating: two-handle sliders; keys step 0.1, a drag near a w
   await expect(s.getByText('1 game has no rating on BoardGameGeek.')).toBeVisible()
 
   // Rating from 7.5: Cascadia, Pandemic, Spirit Island, Brass, Twilight Imperium
-  const from = s.getByRole('slider', { name: 'Rating from' })
+  const from = s.getByRole('slider', { name: 'Rating from', exact: true })
   await from.fill('7.5')
   await expect(ratingSection.locator('.f-head .val')).toHaveText('7.5 – 10.0')
   await expect(countLine(page)).toHaveText('5 of 9 games')
@@ -266,9 +266,9 @@ test('Rating and Geek rating: two-handle sliders; keys step 0.1, a drag near a w
   await from.press('ArrowLeft')
   await expect(countLine(page)).toHaveText('5 of 9 games')
   // the handles cannot cross
-  await s.getByRole('slider', { name: 'Rating to' }).fill('7')
-  await expect(s.getByRole('slider', { name: 'Rating to' })).toHaveValue('7.5')
-  await s.getByRole('slider', { name: 'Rating to' }).fill('10')
+  await s.getByRole('slider', { name: 'Rating to', exact: true }).fill('7')
+  await expect(s.getByRole('slider', { name: 'Rating to', exact: true })).toHaveValue('7.5')
+  await s.getByRole('slider', { name: 'Rating to', exact: true }).fill('10')
   await from.fill('0')
   await expect(countLine(page)).toHaveCount(0)
 
