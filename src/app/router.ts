@@ -4,8 +4,8 @@ import type { StatusKey } from '../domain/bgg-status.ts'
 import { type Mark, isMark } from '../domain/marks.ts'
 
 /** F008: the tabs of the Lists place (contracts/ui.md "Routes"). */
-export type ListsTab = 'status' | 'previews' | 'geeklists'
-const LISTS_TABS: ListsTab[] = ['status', 'previews', 'geeklists']
+export type ListsTab = 'status' | 'previews' | 'geeklists' | 'search'
+const LISTS_TABS: ListsTab[] = ['status', 'previews', 'geeklists', 'search']
 
 /** F008: a status in an address: BGG's own lower-case names (contracts/ui.md "Routes"). */
 const STATUS_SLUGS: Record<StatusKey, string> = {
@@ -32,8 +32,9 @@ export type Route =
   /** F004: the Show-off screen of a collection for the chosen groups (research R7) */
   | { name: 'showoff'; id: string; groups: Mark[] }
   | { name: 'swipe'; id: string; list?: SwipeSource }
-  /** F008: Lists on a tab (none: the last used one); `load` opens the Load a BGG list sheet */
-  | { name: 'lists'; tab?: ListsTab; load?: true }
+  /** F008: Lists on a tab (none: the last used one); `load` opens the Load a BGG list sheet; `game` a game
+   * of Lists › Search (`#/lists/search?game=`) */
+  | { name: 'lists'; tab?: ListsTab; load?: true; game?: number }
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
   /** F008: one status list of a BGG user */
   | { name: 'status-list'; bggUser: string; status: StatusKey }
@@ -90,6 +91,8 @@ export function parseRoute(hash: string): Route {
       if (second === 'status' && third && status) return { name: 'status-list', bggUser: third, status }
       const tab = LISTS_TABS.find(t => t === second)
       const load = params.has('load') ? { load: true as const } : {}
+      const game = tab === 'search' ? positive(params.get('game')) : undefined
+      if (tab === 'search' && !third) return game ? { name: 'lists', tab, game } : { name: 'lists', tab }
       return tab && (!third || second === 'status') ? { name: 'lists', tab, ...load } : { name: 'lists', ...load }
     }
     case 'add': // the add screen of 001/002 is gone; its old addresses open the matching sheet
@@ -126,7 +129,7 @@ export function href(route: Route): string {
     case 'swipe':
       return `${list(route.id)}/swipe${!route.list ? '' : route.list.kind === 'status' ? `/status/${encodeURIComponent(route.list.bggUser)}/${STATUS_SLUGS[route.list.status]}` : `/${route.list.kind}/${route.list.id}`}`
     case 'lists':
-      return `#/lists${route.tab ? `/${route.tab}` : ''}${route.load ? '?load' : ''}`
+      return `#/lists${route.tab ? `/${route.tab}` : ''}${route.load ? '?load' : route.game ? `?game=${route.game}` : ''}`
     case 'list':
       return `#/lists/${route.kind}/${route.listId}`
     case 'status-list':

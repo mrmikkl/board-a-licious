@@ -133,6 +133,9 @@ before its implementation.
   flakes with `main`, see memory "E2E on own port") — done 2026-11-09: `npm test` 830/830, tsc and build clean; `npm run test:e2e` 336/343: `navigation.spec.ts:205` (both projects) still expected no action bar on a list, updated to the Filter main button and green; `game-length:70`, `us2-lists:46`, `a11y:59` and `resync:73` time out under the full parallel load and pass alone (resync as on main).
 - [ ] T024 Apply migration 0008 (`npm run db:migrate:neon`), deploy (`npm run deploy`) and walk through
   `specs/009-list-filter/quickstart.md` with the user on the phone
+- [x] T025 Owner request 2026-11-09: Lists › Search, a BGG search to look a game up (game sheet `browse`:
+  Add to shopping lists, BGG status, Players); Buy › Search moved into `src/app/components/BggSearchPanel.tsx`
+  and shared; route `#/lists/search?game=`; tests `tests/e2e/lists-search.spec.ts`, router and places specs
 
 ## Dependencies & Execution Order
 

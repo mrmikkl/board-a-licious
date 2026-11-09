@@ -54,6 +54,8 @@ describe('Lists (F008 contracts/ui.md "Routes")', () => {
     ['#/lists/previews', { name: 'lists', tab: 'previews' }],
     ['#/lists/geeklists', { name: 'lists', tab: 'geeklists' }],
     ['#/lists/geeklists?load', { name: 'lists', tab: 'geeklists', load: true }],
+    ['#/lists/search', { name: 'lists', tab: 'search' }],
+    ['#/lists/search?game=13', { name: 'lists', tab: 'search', game: 13 }],
     ['#/lists/preview/93', { name: 'list', kind: 'preview', listId: 93 }],
     ['#/lists/geeklist/12', { name: 'list', kind: 'geeklist', listId: 12 }],
     ['#/lists/status/anna_meeple/own', { name: 'status-list', bggUser: 'anna_meeple', status: 'own' }],

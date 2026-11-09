@@ -32,7 +32,7 @@ function Screen({ route }: { route: Route }) {
     case 'swipe':
       return <Swipe key={href(route)} id={route.id} list={route.list} />
     case 'lists':
-      return <Lists tab={route.tab} load={route.load} />
+      return <Lists tab={route.tab} load={route.load} game={route.game} />
     case 'list':
       return <List key={`${route.kind}:${route.listId}`} kind={route.kind} listId={route.listId} />
     case 'status-list':

@@ -64,7 +64,7 @@ test('Buy has the tabs Search and Shopping lists; the last one is remembered aft
   await expect(tab(page, 'Search')).toHaveAttribute('aria-selected', 'true')
 })
 
-test('Lists has the tabs Status lists, Previews and Geeklists, Load a BGG list on each; the last one is remembered', async ({ page }) => {
+test('Lists has the tabs Status lists, Previews, Geeklists and Search, Load a BGG list on the list tabs; the last one is remembered', async ({ page }) => {
   const { previewId, geeklistId } = await fakeLists(page)
   await page.goto(`/#/lists/preview/${previewId}`)
   await expect(page.getByRole('heading', { level: 1, name: `Preview ${previewId}` })).toBeVisible()
@@ -74,7 +74,7 @@ test('Lists has the tabs Status lists, Previews and Geeklists, Load a BGG list o
   await expect(page.getByRole('link', { name: 'Back', exact: true })).toHaveAttribute('href', '#/lists/geeklists')
 
   await page.goto('/#/lists/status')
-  await expect(tablist(page, 'Lists').getByRole('tab')).toHaveText(['Status lists', 'Previews', 'Geeklists'])
+  await expect(tablist(page, 'Lists').getByRole('tab')).toHaveText(['Status lists', 'Previews', 'Geeklists', 'Search'])
   await expect(tab(page, 'Status lists')).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('heading', { name: 'What you own, wish for and want to play' })).toBeVisible()
   await expect(mainButton(page)).toHaveAccessibleName('Load a BGG list')

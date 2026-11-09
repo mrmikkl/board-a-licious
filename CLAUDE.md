@@ -81,7 +81,7 @@ node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigati
   passwords, sessions or cookie values; the app token goes only to `/xmlapi*`, never with a person's
   cookies. Statuses, badges, diffs and private info rules are in `src/domain/bgg-status.ts`.
 - UI places (F008): menu Buy (tabs Search, Shopping lists), Lists (tabs Status lists, Previews,
-  Geeklists) and Config; one `GameSheet` everywhere. On screen collections are "shopping lists";
+  Geeklists, Search; both searches are `BggSearchPanel`) and Config; one `GameSheet` everywhere. On screen collections are "shopping lists";
   in code and the database they stay collections.
 - List filter (F009): `src/domain/game-filter.ts` (length ranges from the synced limits, players with
   Best / Recommended from the poll, ratings, mechanisms, designers) used by `ListFilterSheet` (BGG lists)
