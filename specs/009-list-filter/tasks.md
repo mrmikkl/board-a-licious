@@ -53,17 +53,17 @@ before its implementation.
 
 ## Phase 3: User Story 4 - Details are read for the filter, gently (Priority: P1)
 
-- [ ] T008 [P] [US4] Write failing unit tests in `tests/unit/game-details-hook.test.ts` for the reader
+- [x] T008 [P] [US4] Write failing unit tests in `tests/unit/game-details-hook.test.ts` for the reader
   in `src/app/hooks/useGameDetails.ts` (pure part in `src/app/hooks/game-details-state.ts`): which ids
   are missing (not stored, or stored without the key `playingTime`), chunks of 40 one after the other,
   progress `n of N`, stops offline, Try again resumes, nothing asked when all are stored
-- [ ] T009 [US4] Implement `src/app/hooks/game-details-state.ts` and `useGameDetails(ids, active)`
+- [x] T009 [US4] Implement `src/app/hooks/game-details-state.ts` and `useGameDetails(ids, active)`
   (reads only while `active`, i.e. a filter sheet is open or a filter is set; stores answers with
   `putGames`) (T008 green)
 
 ## Phase 4: User Story 1 - Filter a BGG list by what the game is like (Priority: P1) 🎯 MVP
 
-- [ ] T010 [P] [US1] Write failing Playwright tests in `tests/e2e/list-filter.spec.ts` with faked
+- [x] T010 [P] [US1] Write failing Playwright tests in `tests/e2e/list-filter.spec.ts` with faked
   `/api/bgg/games` (details incl. `playingTime`, mechanisms, designers, poll): in a preview Filter is
   the main button ("Filter", caption); the sheet "Filter" with Length chips and counts, Players chips
   1–6 + field "Other number of players" (typing 10 uses 10), Best / Recommended both ticked by default,
@@ -73,24 +73,24 @@ before its implementation.
   at the left ("Filter (active)" when set), Add game as main button; friend's list: Filter as main
   button; reading progress "Reading game details from BoardGameGeek… n of N" while ids are answered in
   chunks; offline: the left-out line with Try again; axe at 360 px
-- [ ] T011 [P] [US1] Create `src/app/components/GameFilterSections.tsx` (Length, Players with the
+- [x] T011 [P] [US1] Create `src/app/components/GameFilterSections.tsx` (Length, Players with the
   typed field kept as typed, Mechanisms, Designers; Rating and Geek rating as slots for US2) and
   `src/app/theme/filter.css` (chips, num field, sections) after design.md and docs/design.md
   "List filter"
-- [ ] T012 [US1] Create `src/app/components/ListFilterSheet.tsx` ("Filter", Clear filters top and
+- [x] T012 [US1] Create `src/app/components/ListFilterSheet.tsx` ("Filter", Clear filters top and
   bottom, Done · n games, reading line, left-out line) using `useGameDetails` and `GameFilterSections`
-- [ ] T013 [US1] Wire the filter into `src/app/screens/List.tsx` and `src/app/screens/StatusList.tsx`:
+- [x] T013 [US1] Wire the filter into `src/app/screens/List.tsx` and `src/app/screens/StatusList.tsx`:
   stored filter per list key in meta `listFilters`, count line under the name field with Clear filters,
   Filter as main button (previews, geeklists, friends) or action (own status lists) (T010 green)
 
 ## Phase 5: User Story 2 - Filter by rating ranges (Priority: P2)
 
-- [ ] T014 [P] [US2] Write failing tests: `tests/unit/range-slider.test.ts` for the snapping rule
+- [x] T014 [P] [US2] Write failing tests: `tests/unit/range-slider.test.ts` for the snapping rule
   (`snap(value, dragging)`: within 0.2 of a whole number → that number while dragging; keys unchanged;
   handles cannot cross) and e2e in `tests/e2e/list-filter.spec.ts`: sliders "Rating from", "Rating to",
   "Geek rating from", "Geek rating to"; the title shows "7.5 – 10.0" / "any"; arrow keys step 0.1;
   a drag near 7 rests on 7.0; whole numbers 0…10 shown under the track; only games in range remain
-- [ ] T015 [US2] Create `src/app/components/RangeSlider.tsx` (two native ranges on one track, hexagon
+- [x] T015 [US2] Create `src/app/components/RangeSlider.tsx` (two native ranges on one track, hexagon
   handles, ticks and labels 0…10, snapping while a pointer drags) and put Rating and Geek rating into
   `GameFilterSections.tsx` (T014 green)
 
