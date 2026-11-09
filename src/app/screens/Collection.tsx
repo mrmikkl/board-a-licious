@@ -239,7 +239,7 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
       </main>
       {/* Add game · ♥ · Filter · Show-off (F003 FR-015, F004 FR-007); Filter says "(active)" and turns orange away from the default view (FR-016) */}
       <ActionBar
-        main={<MainButton icon={<IconHeart />} label="BG-Tinder: swipe a BGG list into this shopping list" href={href({ name: 'collection', id, open: 'list' })} />}
+        main={<MainButton icon={<IconHeart />} label="BG-Tinder: swipe a BGG list into this shopping list" caption="Tinder" href={href({ name: 'collection', id, open: 'list' })} />}
         left={<Action icon={<IconPlus />} label="Add game" onClick={addGame} />}
         right={<Action icon={<IconFilter />} label="Filter" active={!isDefault} onClick={() => setViewOpen(true)} />}
         outer={<Action icon={<IconShowOff />} label="Show-off" onClick={showOff} />}

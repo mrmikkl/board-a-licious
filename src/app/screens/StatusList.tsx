@@ -215,7 +215,7 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
         <hr className="separator" />
         {body}
       </main>
-      {own && <ActionBar main={<MainButton icon={<IconPlus />} label={`Add a game to ${name}`} onClick={() => setAdding(true)} />} />}
+      {own && <ActionBar main={<MainButton icon={<IconPlus />} label={`Add a game to ${name}`} caption="Add game" onClick={() => setAdding(true)} />} />}
       {adding && <AddToStatusSheet status={status} onClose={() => setAdding(false)} />}
       {item && openGame.kind === 'sheet' && <GameSheet context="browse" item={item} game={details?.bggId === item.bggId ? details : undefined} onClose={closeGame} />}
       {item && openGame.kind === 'add' && <AddToCollectionsSheet item={item} onClose={closeGame} />}

@@ -50,7 +50,7 @@ export function Lists({ tab, load }: { tab?: ListsTab; load?: boolean }) {
           <main className="screen" role="tabpanel" aria-labelledby={tabId('lists', current)}>
             {current === 'status' ? <StatusLists /> : <LoadedLists lists={lists?.filter(l => l.kind === (current === 'previews' ? 'preview' : 'geeklist'))} kind={current} />}
           </main>
-          <ActionBar main={<MainButton icon={<IconPlus />} label="Load a BGG list" href={href({ name: 'lists', tab: current, load: true })} />} />
+          <ActionBar main={<MainButton icon={<IconPlus />} label="Load a BGG list" caption="Load list" href={href({ name: 'lists', tab: current, load: true })} />} />
         </>
       )}
       {load && <LoadListSheet lists={lists ?? []} onClose={close} />}
