@@ -20,6 +20,8 @@ export type GameDetails = {
   playerPoll?: PlayerVotes[] | null
   /** How many people answered the poll (BGG's `totalvotes`); null without the official API. */
   playerPollVoters?: number | null
+  /** F009: BGG's playing time in minutes; null when BGG has none (or the website data was read). */
+  playingTime?: number | null
 }
 
 export type InfoKey = 'price' | 'players' | 'bestWith' | 'recommendedWith' | 'rating' | 'geekRating' | 'booth' | 'edition' | 'designer' | 'mechanisms'
