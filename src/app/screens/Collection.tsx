@@ -2,7 +2,7 @@ import { type FormEvent, Fragment, useCallback, useId, useState } from 'react'
 
 import { groupByHall } from '../../domain/booths.ts'
 import { type Collection as CollectionRow, type Entry, NAME_MAX, boughtLine, countMarks, groupByMark } from '../../domain/collection.ts'
-import { type Filter, PRESETS, applyFilter, buyOff, buyOn, dropBuy, fromStored, groupCounts, isDefaultView, presetOf } from '../../domain/filter.ts'
+import { type Filter, type GameDetailsOf, PRESETS, applyFilter, buyOff, buyOn, dropBuy, fromStored, groupCounts, isDefaultView, presetOf } from '../../domain/filter.ts'
 import { matchesName } from '../../domain/search.ts'
 import { deleteCollection, renameCollection, saveFilter, saveGroupBy, unbuyGame } from '../actions.ts'
 import { Action, ActionBar, MainButton } from '../components/ActionBar.tsx'
@@ -24,6 +24,8 @@ import { ShowOffSheet } from '../components/ShowOffSheet.tsx'
 import { Ticker } from '../components/Ticker.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
+import { hasFilterDetails } from '../hooks/game-details-state.ts'
+import { useGameDetails } from '../hooks/useGameDetails.ts'
 import { useJustAdded } from '../just-added.ts'
 import { href, navigate } from '../router.ts'
 
@@ -73,13 +75,18 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
       const storedFilter = (await store.meta('activeFilter'))?.[id]
       const storedGroupBy = (await store.meta('groupBy'))?.[id]
       const lists = await store.lists()
-      return { id, collection, entries, games, storedFilter, storedGroupBy, lists }
+      const limits = await store.lengthLimits()
+      return { id, collection, entries, games, storedFilter, storedGroupBy, lists, limits }
     },
     [id],
   )
+  // F009: the filter's missing game details are read only while the sheet is open or a game filter is set (FR-009)
+  const loaded = data?.id === id ? data : undefined
+  const gameFilterSet = Boolean((chosen?.id === id ? chosen.filter : fromStored(loaded?.storedFilter)).game)
+  const reading = useGameDetails(loaded?.entries.map(e => e.bggId) ?? [], viewOpen || gameFilterSet)
   const back = href({ name: 'collections' })
   if (!data || data.id !== id) return <Header title="" />
-  const { collection, entries, games, storedFilter, storedGroupBy, lists } = data
+  const { collection, entries, games, storedFilter, storedGroupBy, lists, limits } = data
   if (!collection) {
     return (
       <>
@@ -106,7 +113,8 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
     void saveFilter(services, id, next)
   }
   const statusOf = (bggId: number) => bgg.statuses.get(bggId)
-  const filtered = applyFilter(entries, filter, statusOf)
+  const gameOf: GameDetailsOf = { details: bggId => (hasFilterDetails(games.get(bggId)) ? games.get(bggId) : undefined), limits }
+  const filtered = applyFilter(entries, filter, statusOf, gameOf)
   const query = search?.id === id ? search.query : ''
   const nameOf = (e: { bggId: number }) => games.get(e.bggId)?.name ?? ''
   const displayName = (bggId: number) => games.get(bggId)?.name ?? `Game ${bggId}`
@@ -250,8 +258,11 @@ export function Collection({ id, open }: { id: string; open?: 'game' | 'list' | 
       <FilterSheet
         open={viewOpen}
         filter={filter}
-        counts={groupCounts(entries, filter.bought, filter.price, filter.bgg, statusOf)}
+        counts={groupCounts(entries, filter.bought, filter.price, filter.bgg, statusOf, filter.game, gameOf)}
         bgg={Boolean(bgg.username)}
+        games={entries.map(e => gameOf.details(e.bggId))}
+        limits={gameOf.limits}
+        reading={reading}
         groupBy={groupBy}
         onChange={changeFilter}
         onGroupBy={sheetGroupBy}
