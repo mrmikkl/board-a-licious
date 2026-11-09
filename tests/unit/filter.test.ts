@@ -18,6 +18,7 @@ import {
   priceBand,
   toStored,
 } from '../../src/domain/filter.ts'
+import { DEFAULT_GAME_FILTER, type FilterDetails, type GameFilter, type LengthLimits } from '../../src/domain/game-filter.ts'
 import type { Mark } from '../../src/domain/marks.ts'
 import { formatMoney, parsePrice, priceInput } from '../../src/domain/money.ts'
 
@@ -242,5 +243,64 @@ describe('filter by BGG status (F008 FR-010)', () => {
     expect(filterLabel(withBgg('wishlist'))).toBe('All categories, on BGG wishlist')
     expect(dropBuy(buyOn(withBgg('own'))).bgg ?? 'all').toBe('all')
     expect(dropBuy(withBgg('own')).bgg).toBe('own')
+  })
+})
+
+describe('filter by what BGG says about the game (F009 US5, FR-013)', () => {
+  const all = [...PRESETS.all.groups]
+  const limits: LengthLimits = [30, 60, 120]
+  const details = new Map<number, FilterDetails>([
+    [1, { playingTime: 45, mechanisms: ['Cooperative Game'], designers: ['A'], rating: 7.8, geekRating: 7.1 }],
+    [2, { playingTime: 20, mechanisms: ['Cooperative Game', 'Dice Rolling'], designers: ['B'], rating: 6.2, geekRating: 5.9 }],
+    [3, { playingTime: 150, mechanisms: ['Worker Placement'], designers: ['A'], rating: 8.1, geekRating: 7.6 }],
+  ])
+  const game = { details: (bggId: number) => details.get(bggId), limits }
+  const live = [entry(1, 'must_have'), entry(2, 'interested'), entry(3, 'must_have'), entry(4, 'must_have')]
+  const coop: GameFilter = { ...DEFAULT_GAME_FILTER, mechanisms: ['Cooperative Game'] }
+  const withGame = (g: GameFilter, groups: Mark[] = all): Filter => ({ ...filter(groups, 'all'), game: g })
+
+  it("uses each entry's game details through matchesGame", () => {
+    expect(ids(applyFilter(live, withGame(coop), undefined, game))).toEqual([1, 2])
+    expect(ids(applyFilter(live, withGame({ ...DEFAULT_GAME_FILTER, length: ['middle', 'veryLong'] }), undefined, game))).toEqual([1, 3])
+    expect(ids(applyFilter(live, withGame({ ...DEFAULT_GAME_FILTER, rating: [7.5, 10] }), undefined, game))).toEqual([1, 3])
+  })
+
+  it('a category and a mechanism must both match', () => {
+    expect(ids(applyFilter(live, withGame(coop, ['must_have']), undefined, game))).toEqual([1])
+  })
+
+  it('a game without details matches only the default game filter', () => {
+    expect(ids(applyFilter(live, withGame(DEFAULT_GAME_FILTER), undefined, game))).toEqual([1, 2, 3, 4])
+    expect(ids(applyFilter(live, withGame(coop)))).toEqual([])
+  })
+
+  it('counts groups within the game filter', () => {
+    expect(groupCounts(live, 'all', 'all', 'all', undefined, withGame(coop).game, game)).toMatchObject({ must_have: 1, interested: 1 })
+  })
+
+  it('is not the default view and not a preset when set', () => {
+    expect(isDefaultView(withGame(DEFAULT_GAME_FILTER), 'mark')).toBe(true)
+    expect(isDefaultView(withGame(coop), 'mark')).toBe(false)
+    expect(presetOf(withGame(coop))).toBeNull()
+    expect(presetOf({ ...PRESETS.hunt, game: coop })).toBeNull()
+  })
+
+  it('clearing resets it; the sheet keeps it when the Buy filter is dropped', () => {
+    expect(PRESETS.all.game).toBeUndefined()
+    expect(isDefaultView(PRESETS.all, 'mark')).toBe(true)
+    expect(dropBuy(withGame(coop)).game).toEqual(coop)
+    expect(buyOff(buyOn(withGame(coop))).game).toEqual(coop)
+  })
+
+  it('is kept in meta.activeFilter in its stored form and read back', () => {
+    const set: GameFilter = { ...coop, length: ['short'], players: { n: 3, kinds: ['best'] }, rating: [7, 10] }
+    const stored = toStored(withGame(set))
+    expect(stored.game).toEqual({ length: ['short'], players: { n: 3, kinds: ['best'] }, rating: [7, 10], mechanisms: ['Cooperative Game'] })
+    expect(JSON.parse(JSON.stringify(stored))).toEqual(stored)
+    expect(fromStored(stored).game).toEqual(set)
+    expect(toStored(withGame(DEFAULT_GAME_FILTER))).not.toHaveProperty('game')
+    expect(fromStored({ groups: all, bought: 'all' }).game).toBeUndefined()
+    expect(fromStored({ groups: all, bought: 'all', game: { mechanisms: 'bogus' } }).game).toBeUndefined()
+    expect(fromStored(toStored(buyOn(withGame(coop)))).buy?.before.game).toEqual(coop)
   })
 })
