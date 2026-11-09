@@ -118,7 +118,8 @@ test('a preview: Filter is the main button; the sheet reads details, filters at 
   const mechanisms = s.getByRole('group', { name: 'Mechanisms' })
   await expect(mechanisms.getByRole('checkbox')).toHaveCount(8)
   await expect(mechanisms.locator('.filter-row').first()).toHaveText('Cooperative Game4')
-  await s.getByRole('button', { name: 'Show all (13)' }).click()
+  // Designers have 13 too: the Mechanisms section's own button
+  await s.locator('section').filter({ has: page.getByRole('heading', { name: 'Mechanisms' }) }).getByRole('button', { name: 'Show all (13)' }).click()
   await expect(mechanisms.getByRole('checkbox')).toHaveCount(13)
   await s.getByRole('searchbox', { name: 'Find in Mechanisms' }).fill('coop')
   await expect(mechanisms.getByRole('checkbox')).toHaveCount(1)
@@ -134,7 +135,8 @@ test('a preview: Filter is the main button; the sheet reads details, filters at 
   await length.getByRole('button', { name: /^Short/ }).click()
   await expect(countLine(page)).toHaveText('3 of 9 games')
 
-  // Designers: a ticked designer narrows further
+  // Designers: found through the find field (beyond the first 8), a ticked designer narrows further
+  await s.getByRole('searchbox', { name: 'Find in Designers' }).fill('leac')
   await s.getByRole('group', { name: 'Designers' }).getByRole('checkbox', { name: 'Matt Leacock' }).check()
   await expect(countLine(page)).toHaveText('1 of 9 games')
   await expectAccessible(page)
