@@ -49,7 +49,7 @@ export function Collections({ create }: { create?: boolean }) {
           </>
         )}
       </main>
-      <ActionBar main={<MainButton icon={<IconPlus />} label="Create a shopping list" href={href({ name: 'collections', create: true })} />} />
+      <ActionBar main={<MainButton icon={<IconPlus />} label="Create a shopping list" caption="New list" href={href({ name: 'collections', create: true })} />} />
       <Sheet open={Boolean(create)} title="New shopping list" onClose={close}>
         <NewCollectionForm onCreated={c => navigate({ name: 'collection', id: c.id }, { replace: true })} onCancel={close} />
       </Sheet>
