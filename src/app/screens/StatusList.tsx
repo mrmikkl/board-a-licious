@@ -5,14 +5,15 @@ import type { Game } from '../../client/types.ts'
 import { type BggCollectionItem, PRIORITY_NAMES, STATUS_NAMES, type StatusKey, type WishlistPriority, statusList } from '../../domain/bgg-status.ts'
 import { inText } from '../../domain/membership.ts'
 import { matchesName } from '../../domain/search.ts'
-import { ActionBar, MainButton } from '../components/ActionBar.tsx'
+import { Action, ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { AddToCollectionsSheet } from '../components/AddToCollectionsSheet.tsx'
 import { AddToStatusSheet } from '../components/AddToStatusSheet.tsx'
 import { colourOf, useBgg } from '../components/BggBadges.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
 import { Header } from '../components/Header.tsx'
-import { IconPlus, IconResync } from '../components/icons.tsx'
+import { IconFilter, IconPlus, IconResync } from '../components/icons.tsx'
 import { ListGameRow } from '../components/ListGameRow.tsx'
+import { CountLine, useListFilter } from '../components/ListFilterSheet.tsx'
 import { useServices, useStoreData } from '../context.tsx'
 import { useBggCollection } from '../hooks/useBggCollection.ts'
 import { loadedAgo } from '../loaded-ago.ts'
@@ -74,7 +75,9 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
   const name = STATUS_NAMES[status]
   const loaded = collection?.loadedAt && !collection.error ? collection : undefined
   const all = loaded ? statusList(loaded.items, status) : []
-  const items = all.filter(item => matchesName(item.name, filter))
+  // F009: the list's own filter (list key `status:<bggUser lower>:<status>`)
+  const gameFilter = useListFilter(`status:${bggUser.toLowerCase()}:${status}`, all.map(item => item.bggId))
+  const items = all.filter(item => matchesName(item.name, filter) && gameFilter.matches(item.bggId))
   const source = [
     `${bggUser} on BoardGameGeek`,
     !own && 'read-only',
@@ -210,12 +213,24 @@ export function StatusList({ bggUser, status }: { bggUser: string; status: Statu
               </svg>
               <input id={filterId} type="search" value={filter} placeholder="Filter by name" autoComplete="off" onChange={e => setFilter(e.target.value)} />
             </div>
+            {(!gameFilter.isDefault || filter.trim()) && (
+              <CountLine shown={items.length} total={all.length} filtered={!gameFilter.isDefault} onClear={gameFilter.clear} />
+            )}
           </>
         )}
         <hr className="separator" />
         {body}
       </main>
-      {own && <ActionBar main={<MainButton icon={<IconPlus />} label={`Add a game to ${name}`} caption="Add game" onClick={() => setAdding(true)} />} />}
+      {/* F009: Filter at the left beside Add game in own lists; elsewhere it is the only action, so the main button */}
+      {own ? (
+        <ActionBar
+          main={<MainButton icon={<IconPlus />} label={`Add a game to ${name}`} caption="Add game" onClick={() => setAdding(true)} />}
+          left={<Action icon={<IconFilter />} label="Filter" active={!gameFilter.isDefault} onClick={gameFilter.openSheet} />}
+        />
+      ) : (
+        <ActionBar main={<MainButton icon={<IconFilter />} label="Filter" caption="Filter" active={!gameFilter.isDefault} onClick={gameFilter.openSheet} />} />
+      )}
+      {gameFilter.sheet}
       {adding && <AddToStatusSheet status={status} onClose={() => setAdding(false)} />}
       {item && openGame.kind === 'sheet' && <GameSheet context="browse" item={item} game={details?.bggId === item.bggId ? details : undefined} onClose={closeGame} />}
       {item && openGame.kind === 'add' && <AddToCollectionsSheet item={item} onClose={closeGame} />}

@@ -6,12 +6,14 @@ import type { Game, ListKind, StoredList, StoredListEntry } from '../../client/t
 import type { Conflict } from '../../domain/facts.ts'
 import { inText } from '../../domain/membership.ts'
 import { matchesName } from '../../domain/search.ts'
+import { ActionBar, MainButton } from '../components/ActionBar.tsx'
 import { ConflictsSheet } from '../components/ConflictsSheet.tsx'
 import { InfoLine } from '../components/GameInfo.tsx'
 import { Header } from '../components/Header.tsx'
-import { IconResync } from '../components/icons.tsx'
+import { IconFilter, IconResync } from '../components/icons.tsx'
 import { AddToCollectionsSheet } from '../components/AddToCollectionsSheet.tsx'
 import { GameSheet } from '../components/GameSheet.tsx'
+import { CountLine, useListFilter } from '../components/ListFilterSheet.tsx'
 import { ListGameRow } from '../components/ListGameRow.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
@@ -96,6 +98,8 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
   )
   const back = href({ name: 'lists', tab: kind === 'preview' ? 'previews' : 'geeklists' })
   const list = data?.key === `${kind}:${listId}` ? data.list : undefined
+  // F009: the list's own filter (list key `preview:<id>` / `geeklist:<id>`)
+  const gameFilter = useListFilter(`${kind}:${listId}`, list?.entries.map(e => e.bggId) ?? [])
 
   if (!list) {
     return (
@@ -108,7 +112,7 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
     )
   }
 
-  const shown = list.entries.filter(e => matchesName(e.name, filter))
+  const shown = list.entries.filter(e => matchesName(e.name, filter) && gameFilter.matches(e.bggId))
   const current = list.entries.find(e => e.bggId === openGame?.bggId)
   // US5: read the list again from BGG, then reconcile the games' facts; a busy BGG changes nothing
   const runResync = async () => {
@@ -156,9 +160,12 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
           </svg>
           <input id={filterId} type="search" value={filter} placeholder="Filter by name" autoComplete="off" onChange={e => setFilter(e.target.value)} />
         </div>
+        {(!gameFilter.isDefault || filter.trim()) && (
+          <CountLine shown={shown.length} total={list.entries.length} filtered={!gameFilter.isDefault} onClear={gameFilter.clear} />
+        )}
         <hr className="separator" />
         {shown.length === 0 ? (
-          <p className="lead">{filter.trim() ? 'No game on this list matches.' : 'This list has no games yet.'}</p>
+          <p className="lead">{filter.trim() || !gameFilter.isDefault ? 'No game on this list matches.' : 'This list has no games yet.'}</p>
         ) : (
           <ul className="rows">
             {shown.map(entry => (
@@ -175,6 +182,9 @@ export function List({ kind, listId }: { kind: ListKind; listId: number }) {
           </ul>
         )}
       </main>
+      {/* F009: Filter is this list's only action, so it is the main button */}
+      <ActionBar main={<MainButton icon={<IconFilter />} label="Filter" caption="Filter" active={!gameFilter.isDefault} onClick={gameFilter.openSheet} />} />
+      {gameFilter.sheet}
       {current && openGame?.kind === 'sheet' && (
         <GameSheet context="browse" item={{ ...current, info: current.info ?? {} }} game={data!.games.get(current.bggId)} onClose={closeGame} />
       )}
