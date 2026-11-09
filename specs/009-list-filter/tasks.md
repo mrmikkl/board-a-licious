@@ -15,9 +15,7 @@ before its implementation.
 
 ## Phase 1: Setup
 
-- [ ] T001 Record a `thing` answer that holds `playingtime` (Cascadia 295947 and a game with
-  `playingtime value="0"`) as `tests/fixtures/bgg-xml/thing-playingtime.xml` with `scripts/record-bgg-xml.mjs`
-  (token from `.dev.vars`, never printed)
+- [x] T001 Fixtures with `playingtime`: already recorded in F006 (`tests/fixtures/bgg-xml/thing-295947-385318.xml` has `playingtime value="45"`, `thing-477191.xml` has `value="0"`); use them, no new recording
 
 ## Phase 2: Foundational (blocking all stories)
 
@@ -35,7 +33,7 @@ before its implementation.
   and best + recommended > not recommended; null when nobody voted for n; n above the poll's largest
   row ("4+") uses that row
 - [ ] T004 [P] Write failing worker tests: `tests/worker/bgg-games.test.ts` maps `playingtime` to
-  `playingTime` (0 → null) from `thing-playingtime.xml` and the games route returns it;
+  `playingTime` (0 → null) from `thing-295947-385318.xml` (45) and `thing-477191.xml` (0 → null) and the games route returns it;
   `tests/worker/db.test.ts`: `playing_time` round trip and migration 0008 makes old rows stale;
   `tests/worker/sync.test.ts`: `settings[].lengthLimits` pushed and pulled, absent keeps, null resets,
   invalid (not three, not increasing, outside 1–600) → 400
