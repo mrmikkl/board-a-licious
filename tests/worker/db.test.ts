@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Collection, Entry } from '../../src/domain/collection.ts'
 import type { Db } from '../../worker/db/db.ts'
 import { applyChanges, getCachedGames, listChanges, syncCursor, upsertGames } from '../../worker/db/repository.ts'
-import { testDb } from './db-helpers.ts'
+import { migrationSql, testDb } from './db-helpers.ts'
 
 const T1 = '2026-10-17T09:00:00.000Z'
 const T2 = '2026-10-17T10:00:00.000Z'
@@ -151,11 +151,11 @@ describe('repository', () => {
   it('F008: keeps the BGG username per person, last write wins, null clears it', async () => {
     const empty = { collections: [], entries: [] }
     expect(await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: 'mrmikkl', updatedAt: T1 }] })).toEqual({ applied: 1, ignored: 0 })
-    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: 'mrmikkl', updatedAt: T1 }])
+    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: 'mrmikkl', lengthLimits: null, updatedAt: T1 }])
     expect((await listChanges(db, BEN)).settings).toEqual([])
     expect(await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: 'old', updatedAt: T1 }] })).toEqual({ applied: 0, ignored: 1 })
     await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: null, updatedAt: T2 }] })
-    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: null, updatedAt: T2 }])
+    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: null, lengthLimits: null, updatedAt: T2 }])
   })
 
   it('F008: keeps followed BGG users lower-cased, with tombstones and the synced_at cursor', async () => {
@@ -174,9 +174,48 @@ describe('repository', () => {
   })
 
   it('caches games and returns only fresh ones', async () => {
-    const game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: 'Tiles.', kind: 'boardgame' as const, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ["Tile Placement", 'Drafting'], publisher: 'Flatout Games', rating: null, geekRating: null, bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: [{ players: '2', best: 587, recommended: 334, notRecommended: 17 }], playerPollVoters: 1043 }
+    const game = { bggId: 295947, name: 'Cascadia', year: 2021, thumbnailUrl: null, description: 'Tiles.', kind: 'boardgame' as const, playingTime: 45, minPlayers: 1, maxPlayers: 4, designers: ['Randy Flynn'], mechanisms: ["Tile Placement", 'Drafting'], publisher: 'Flatout Games', rating: null, geekRating: null, bestWith: '2–3 players', recommendedWith: '1–4 players', playerPoll: [{ players: '2', best: 587, recommended: 334, notRecommended: 17 }], playerPollVoters: 1043 }
     await upsertGames(db, [game], '2026-10-01T00:00:00.000Z')
     expect(await getCachedGames(db, [295947], '2026-09-30T00:00:00.000Z')).toEqual([game])
     expect(await getCachedGames(db, [295947], '2026-10-02T00:00:00.000Z')).toEqual([])
+  })
+
+  it('F009: stores the playing time with the game; none is null', async () => {
+    const base = { bggId: 1, name: 'Mini', year: null, thumbnailUrl: null, description: null, kind: 'boardgame' as const, minPlayers: null, maxPlayers: null, designers: [], mechanisms: [], publisher: null }
+    await upsertGames(db, [{ ...base, playingTime: 90 }, { ...base, bggId: 2, playingTime: null }, { ...base, bggId: 3 }], '2026-10-01T00:00:00.000Z')
+    const games = await getCachedGames(db, [1, 2, 3], '2026-09-30T00:00:00.000Z')
+    expect(games.map(g => [g.bggId, g.playingTime])).toEqual([[1, 90], [2, null], [3, null]])
+  })
+
+  it('F009: keeps the length limits with the BGG username, last write wins; absent keeps, null resets', async () => {
+    const empty = { collections: [], entries: [] }
+    await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: 'mrmikkl', lengthLimits: [20, 45, 90], updatedAt: T1 }] })
+    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: 'mrmikkl', lengthLimits: [20, 45, 90], updatedAt: T1 }])
+    await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: 'anna', updatedAt: T2 }] })
+    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: 'anna', lengthLimits: [20, 45, 90], updatedAt: T2 }])
+    await applyChanges(db, ANNA, { ...empty, settings: [{ bggUsername: 'anna', lengthLimits: null, updatedAt: '2026-10-17T11:00:00.000Z' }] })
+    expect((await listChanges(db, ANNA)).settings).toEqual([{ bggUsername: 'anna', lengthLimits: null, updatedAt: '2026-10-17T11:00:00.000Z' }])
+  })
+
+  it('F009: 0008 adds the playing time and marks games stored before it stale, once', async () => {
+    const old = await testDb({ before: '0008' })
+    await old.query(`INSERT INTO game (bgg_id, name, kind, fetched_at) VALUES (1, 'Old', 'boardgame', '2026-11-08T00:00:00Z')`)
+    await old.exec(migrationSql('0008_list_filter.sql'))
+    const fetched = async () => (await old.query<{ fetched_at: Date }>('SELECT fetched_at FROM game WHERE bgg_id = 1'))[0]!.fetched_at.toISOString()
+    expect(await fetched()).toBe('1970-01-01T00:00:00.000Z')
+    // the files run again on every migrate: games read since then stay fresh
+    await old.query(`UPDATE game SET fetched_at = '2026-11-10T00:00:00Z', playing_time = 45`)
+    await old.exec(migrationSql('0008_list_filter.sql'))
+    expect(await fetched()).toBe('2026-11-10T00:00:00.000Z')
+    await old.query(`INSERT INTO user_setting (user_email, length_limits, updated_at) VALUES ($1, $2::jsonb, now())`, [ANNA, '[30, 60, 120]'])
+  })
+
+  it('F009: the Worker adds the playing time itself before the migration ran, marking old games stale', async () => {
+    const old = await testDb({ before: '0008' })
+    await old.query(`INSERT INTO game (bgg_id, name, kind, fetched_at) VALUES (1, 'Old', 'boardgame', '2026-11-08T00:00:00Z')`)
+    expect(await getCachedGames(old, [1], '2026-11-01T00:00:00.000Z')).toEqual([])
+    await old.exec(migrationSql('0008_list_filter.sql'))
+    const [row] = await old.query<{ fetched_at: Date }>('SELECT fetched_at FROM game WHERE bgg_id = 1')
+    expect(row!.fetched_at.toISOString()).toBe('1970-01-01T00:00:00.000Z')
   })
 })
