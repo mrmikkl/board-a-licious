@@ -19,7 +19,7 @@ before its implementation.
 
 ## Phase 2: Foundational (blocking all stories)
 
-- [ ] T002 [P] Write failing unit tests in `tests/unit/game-filter.test.ts` for `src/domain/game-filter.ts`
+- [x] T002 [P] Write failing unit tests in `tests/unit/game-filter.test.ts` for `src/domain/game-filter.ts`
   (data-model "GameFilter"): `lengthRanges([30, 60, 120])` → Short 0–30, Middle 31–60, Long 61–120,
   Very long 121+; `lengthOf(minutes, limits)`; `matchesGame(details, filter, limits)`: default filter
   matches everything (also without details); Length OR inside; players n with kinds best / rec (both =
@@ -28,23 +28,23 @@ before its implementation.
   `playingTime`, no rating, no poll for n) does not match that section; `valueCounts(games)` for
   mechanisms and designers sorted by count then name; `missingCounts(games)` per section;
   `isDefault`, `toStored` / `fromStored` round trip
-- [ ] T003 [P] Write failing unit tests in `tests/unit/player-poll.test.ts` for `pollKind(poll, n)` in
+- [x] T003 [P] Write failing unit tests in `tests/unit/player-poll.test.ts` for `pollKind(poll, n)` in
   `src/domain/player-poll.ts` (research R3): best when best votes are the largest; rec when not best
   and best + recommended > not recommended; null when nobody voted for n; n above the poll's largest
   row ("4+") uses that row
-- [ ] T004 [P] Write failing worker tests: `tests/worker/bgg-games.test.ts` maps `playingtime` to
+- [x] T004 [P] Write failing worker tests: `tests/worker/bgg-games.test.ts` maps `playingtime` to
   `playingTime` (0 → null) from `thing-295947-385318.xml` (45) and `thing-477191.xml` (0 → null) and the games route returns it;
   `tests/worker/db.test.ts`: `playing_time` round trip and migration 0008 makes old rows stale;
   `tests/worker/sync.test.ts`: `settings[].lengthLimits` pushed and pulled, absent keeps, null resets,
   invalid (not three, not increasing, outside 1–600) → 400
-- [ ] T005 Implement `src/domain/game-filter.ts` and `pollKind` in `src/domain/player-poll.ts`; add
+- [x] T005 Implement `src/domain/game-filter.ts` and `pollKind` in `src/domain/player-poll.ts`; add
   `playingTime?: number | null` to `GameDetails` in `src/domain/game-info.ts` (T002, T003 green)
-- [ ] T006 Add `migrations/0008_list_filter.sql` (`ALTER TABLE game ADD COLUMN IF NOT EXISTS
+- [x] T006 Add `migrations/0008_list_filter.sql` (`ALTER TABLE game ADD COLUMN IF NOT EXISTS
   playing_time integer`; `UPDATE game SET fetched_at = '1970-01-01'`; `ALTER TABLE user_setting ADD
   COLUMN IF NOT EXISTS length_limits jsonb`), map `playingtime` in `worker/bgg/official.ts`, read and
   write `playing_time` and `length_limits` in `worker/db/repository.ts`, validate `lengthLimits` in
   `worker/routes/sync.ts` (T004 green)
-- [ ] T007 Device side: `playingTime` in `src/client/types.ts`; meta `listFilters` and
+- [x] T007 Device side: `playingTime` in `src/client/types.ts`; meta `listFilters` and
   `bggSetting.lengthLimits` (with `lengthLimits()` defaulting to `[30, 60, 120]`) in
   `src/client/store.ts`; `lengthLimits` in the settings push / pull of `src/client/sync.ts`; tests in
   `tests/unit/store.test.ts` and `tests/unit/sync-client.test.ts`
