@@ -57,11 +57,11 @@ test('changing a segment in the Filter sheet turns the Buy chip off', async ({ p
 test('Clear filters is disabled at the default and resets everything', async ({ page }) => {
   await filterAction(page).click()
   const sheet = page.getByRole('dialog', { name: 'Filter and group' })
-  await expect(sheet.getByRole('button', { name: 'Clear filters' })).toBeDisabled()
+  await expect(sheet.getByRole('button', { name: 'Clear filters' }).first()).toBeDisabled()
   await sheet.getByRole('button', { name: 'Done' }).click()
   await buyChip(page).click()
   await page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: 'Filter (active)' }).click()
-  await page.getByRole('dialog', { name: 'Filter and group' }).getByRole('button', { name: 'Clear filters' }).click()
+  await page.getByRole('dialog', { name: 'Filter and group' }).getByRole('button', { name: 'Clear filters' }).first().click()
   await expect(page.getByRole('status')).toHaveText('Filters cleared')
   await expect(buyChip(page)).toHaveAttribute('aria-pressed', 'false')
   await expect(page.getByRole('navigation', { name: 'Actions' }).getByRole('button', { name: 'Filter', exact: true })).toBeVisible()
