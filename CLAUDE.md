@@ -83,6 +83,10 @@ node scripts/make-icons.mjs      # rebuild public/icons/ from specs/003-navigati
 - UI places (F008): menu Buy (tabs Search, Shopping lists), Lists (tabs Status lists, Previews,
   Geeklists) and Config; one `GameSheet` everywhere. On screen collections are "shopping lists";
   in code and the database they stay collections.
+- List filter (F009): `src/domain/game-filter.ts` (length ranges from the synced limits, players with
+  Best / Recommended from the poll, ratings, mechanisms, designers) used by `ListFilterSheet` (BGG lists)
+  and `FilterPanel` (shopping lists) through `GameFilterSections`; `useGameDetails` reads missing game
+  details in chunks of 40 through `/api/bgg/games` only while a filter needs them.
 - `worker/prices/` (F007, ADR 0008): price sources read only through official APIs or published feeds
   (brettspielpreise.de, the BGG marketplace through the official client, unknowns.de's feed, ECB rates);
   sites that forbid automated access are search links (`links.ts`). No scraping, also not "one request".

@@ -127,7 +127,7 @@ before its implementation.
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T022 [P] Update `CLAUDE.md` (code layout: `game-filter.ts`, `useGameDetails`) and
+- [x] T022 [P] Update `CLAUDE.md` (code layout: `game-filter.ts`, `useGameDetails`) and
   `docs/hosting/setup.md` (migration 0008)
 - [ ] T023 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here (compare
   flakes with `main`, see memory "E2E on own port")
