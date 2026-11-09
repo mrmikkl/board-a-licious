@@ -1,7 +1,10 @@
 import { useId } from 'react'
 
 import { type BggFilter, type Bought, type Filter, PRESETS, type Price, dropBuy, isDefaultView } from '../../domain/filter.ts'
+import { DEFAULT_GAME_FILTER, type FilterDetails, type GameFilter, type LengthLimits, isDefaultGameFilter } from '../../domain/game-filter.ts'
 import { MARKS, type Mark } from '../../domain/marks.ts'
+import type { DetailsReading } from '../hooks/useGameDetails.ts'
+import { GameFilterSections } from './GameFilterSections.tsx'
 import { Sheet } from './Sheet.tsx'
 import { useToast } from './Toast.tsx'
 
@@ -33,6 +36,8 @@ const BGG: { key: BggFilter; label: string }[] = [
  * Filter action, so the collection stays in focus. Bought, Price (listed price), a checkbox per category
  * with Select all / none, and Group by (Categories / Booths). Changes apply at once; any change turns
  * the Buy quick filter off. Clear filters (disabled at the default view) and Done at the bottom.
+ * F009 (3.3.0): below them "About the game" with the List filter's sections, the reading line while
+ * missing details arrive, and Clear filters also at the top; both reset everything.
  */
 export function FilterSheet({
   open,
@@ -40,6 +45,9 @@ export function FilterSheet({
   counts,
   groupBy,
   bgg = false,
+  games,
+  limits,
+  reading,
   onChange,
   onGroupBy,
   onClear,
@@ -51,6 +59,10 @@ export function FilterSheet({
   groupBy: GroupBy
   /** F008: offer the BGG status segment (only with a BGG username). */
   bgg?: boolean
+  /** F009: the BGG details of each game in the shopping list; undefined while not on the device. */
+  games: FilterDetails[]
+  limits: LengthLimits
+  reading: DetailsReading
   onChange: (filter: Filter) => void
   onGroupBy: (groupBy: GroupBy) => void
   onClear: () => void
@@ -70,8 +82,20 @@ export function FilterSheet({
     onClear()
     toast('Filters cleared')
   }
+  const game = filter.game ?? DEFAULT_GAME_FILTER
+  const changeGame = (next: GameFilter) => {
+    const { game: _, ...rest } = plain
+    onChange(isDefaultGameFilter(next) ? rest : { ...rest, game: next })
+  }
+  const left = reading.total - reading.known
+  const clearButton = (top: boolean) => (
+    <button type="button" className={top ? 'btn sheet-clear-top' : 'btn btn-block'} disabled={isDefault} onClick={clear}>
+      Clear filters
+    </button>
+  )
   return (
     <Sheet open={open} title="Filter and group" onClose={onClose}>
+      {clearButton(true)}
       <div className="filter-panel" role="group" aria-label="Filter">
         <p className="seg-title" aria-hidden="true">
           Bought
@@ -142,10 +166,33 @@ export function FilterSheet({
           <option value="booth">Booths</option>
         </select>
       </div>
-      <div className="sheet-actions">
-        <button type="button" className="btn btn-block" disabled={isDefault} onClick={clear}>
-          Clear filters
-        </button>
+      <div className="game-filter-sheet">
+        <h3 className="f-group-title">About the game</h3>
+        {reading.reading && (
+          <p className="reading" role="status">
+            <span className="spin-hex" aria-hidden="true" />
+            <span>
+              Reading game details from BoardGameGeek…{' '}
+              <b>
+                {reading.known} of {reading.total}
+              </b>
+            </span>
+          </p>
+        )}
+        {!reading.reading && reading.failure && left > 0 && (
+          <p className="fail-line">
+            <span>
+              {left} {left === 1 ? 'game is' : 'games are'} left out: their details need a connection.
+            </span>
+            <button type="button" className="link-btn" onClick={reading.retry}>
+              Try again
+            </button>
+          </p>
+        )}
+        <GameFilterSections filter={game} onChange={changeGame} games={games} limits={limits} />
+      </div>
+      <div className="sheet-actions sheet-actions-row">
+        {clearButton(false)}
         <button type="button" className="btn btn-primary btn-block" onClick={onClose}>
           Done
         </button>
