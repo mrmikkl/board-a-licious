@@ -36,7 +36,7 @@ export type MetaValues = {
   /** F008: badge colour per BGG status. */
   badgeColours: Record<StatusKey, PaletteName>
   /** F008: the tab last open in Buy and in Lists. */
-  lastTab: { buy: 'search' | 'shopping'; lists: 'status' | 'previews' | 'geeklists' | 'search' }
+  lastTab: { buy: 'search' | 'shopping'; lists: 'status' | 'previews' | 'geeklists' }
   /** F008: who is signed in to BGG, a hint for the UI only (the cookie decides). */
   bggSignedInAs: string | null
   /** F009: the filter of each BGG list on this device, by list key (`status:<bggUser lower>:<status>`, `preview:<id>`, `geeklist:<id>`). */

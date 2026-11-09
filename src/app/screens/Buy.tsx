@@ -22,7 +22,7 @@ export function Buy({ tab, game, create }: { tab: 'search' | 'shopping'; game?: 
           { key: 'shopping', label: 'Shopping lists', route: { name: 'collections' } },
         ]}
       />
-      {tab === 'search' ? <BggSearchPanel place="buy" game={game} route={buyRoute} sheet="buy" /> : <Collections create={create} />}
+      {tab === 'search' ? <BggSearchPanel tab="buy" game={game} route={buyRoute} sheet="buy" /> : <Collections create={create} />}
     </>
   )
 }

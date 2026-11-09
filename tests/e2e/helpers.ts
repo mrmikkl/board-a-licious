@@ -44,7 +44,7 @@ export async function expectAccessible(page: Page) {
 }
 
 /** F008 places (contracts/ui.md): Buy, Lists and Config in the app bar's menu; Buy and Lists have tabs. */
-export type Place = 'Buy' | 'Lists' | 'Config'
+export type Place = 'Buy' | 'Lists' | 'Search' | 'Config'
 export type Tab = 'Search' | 'Shopping lists' | 'Status lists' | 'Previews' | 'Geeklists'
 
 export async function openMenu(page: Page) {

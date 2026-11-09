@@ -39,7 +39,7 @@ async function expectCurrent(page: Page, place: Place) {
   await openMenu(page)
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'true')
   const links = menu(page).getByRole('link')
-  await expect(links).toHaveText(['Buy', 'Lists', 'Config'])
+  await expect(links).toHaveText(['Buy', 'Lists', 'Search', 'Config'])
   await expect(menu(page).locator('[aria-current="page"]')).toHaveText(place)
   await page.keyboard.press('Escape')
   await expect(menu(page)).toHaveCount(0)
@@ -59,6 +59,7 @@ test('US1: every screen has the app bar, the menu marks the current place, back 
     { hash: '#/lists', heading: 'Lists', place: 'Lists' },
     { hash: '#/lists/preview/9093', heading: /spiel/i, place: 'Lists', back: '#/lists/previews' },
     { hash: `${collection.hash}/swipe/preview/9093`, heading: `Add to ${collection.name}`, place: 'Buy', back: collection.hash },
+    { hash: '#/search', heading: 'Search', place: 'Search' },
     { hash: '#/config', heading: 'Config', place: 'Config' },
     { hash: '#/config/share', heading: 'Share and backup', place: 'Config', back: '#/config' },
   ]

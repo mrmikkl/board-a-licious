@@ -4,8 +4,8 @@ import type { StatusKey } from '../domain/bgg-status.ts'
 import { type Mark, isMark } from '../domain/marks.ts'
 
 /** F008: the tabs of the Lists place (contracts/ui.md "Routes"). */
-export type ListsTab = 'status' | 'previews' | 'geeklists' | 'search'
-const LISTS_TABS: ListsTab[] = ['status', 'previews', 'geeklists', 'search']
+export type ListsTab = 'status' | 'previews' | 'geeklists'
+const LISTS_TABS: ListsTab[] = ['status', 'previews', 'geeklists']
 
 /** F008: a status in an address: BGG's own lower-case names (contracts/ui.md "Routes"). */
 const STATUS_SLUGS: Record<StatusKey, string> = {
@@ -32,14 +32,15 @@ export type Route =
   /** F004: the Show-off screen of a collection for the chosen groups (research R7) */
   | { name: 'showoff'; id: string; groups: Mark[] }
   | { name: 'swipe'; id: string; list?: SwipeSource }
-  /** F008: Lists on a tab (none: the last used one); `load` opens the Load a BGG list sheet; `game` a game
-   * of Lists › Search (`#/lists/search?game=`) */
-  | { name: 'lists'; tab?: ListsTab; load?: true; game?: number }
+  /** F008: Lists on a tab (none: the last used one); `load` opens the Load a BGG list sheet */
+  | { name: 'lists'; tab?: ListsTab; load?: true }
   | { name: 'list'; kind: 'preview' | 'geeklist'; listId: number }
   /** F008: one status list of a BGG user */
   | { name: 'status-list'; bggUser: string; status: StatusKey }
   /** F008: Buy › Search, `game` with that game's sheet open */
   | { name: 'buy'; game?: number }
+  /** The Search place: look a game up on BGG, `game` with its sheet open (`#/search?game=`) */
+  | { name: 'search'; game?: number }
   | { name: 'config' }
   | { name: 'share' }
   /** F002: something shared to the app (contracts/share-target.md) */
@@ -91,14 +92,14 @@ export function parseRoute(hash: string): Route {
       if (second === 'status' && third && status) return { name: 'status-list', bggUser: third, status }
       const tab = LISTS_TABS.find(t => t === second)
       const load = params.has('load') ? { load: true as const } : {}
-      const game = tab === 'search' ? positive(params.get('game')) : undefined
-      if (tab === 'search' && !third) return game ? { name: 'lists', tab, game } : { name: 'lists', tab }
       return tab && (!third || second === 'status') ? { name: 'lists', tab, ...load } : { name: 'lists', ...load }
     }
     case 'add': // the add screen of 001/002 is gone; its old addresses open the matching sheet
       return second === 'collection' ? { name: 'collections', create: true } : second === 'list' ? { name: 'lists', load: true } : { name: 'collections' }
-    case 'search': // the Search place of feature 006 is Buy › Search now
-      return { name: 'buy' }
+    case 'search': {
+      const game = positive(params.get('game'))
+      return game ? { name: 'search', game } : { name: 'search' }
+    }
     case 'config':
       return second === 'share' ? { name: 'share' } : { name: 'config' }
     case 'share': // old links
@@ -114,7 +115,7 @@ export function parseRoute(hash: string): Route {
 
 /** Addresses from before F008 (and older), which the app rewrites to their new form. */
 export function isOldAddress(hash: string): boolean {
-  return /^#\/(collections|search|add|share)(?=[/?]|$)|^#\/buy\/(?!lists(?=[/?]|$))/.test(hash)
+  return /^#\/(collections|add|share)(?=[/?]|$)|^#\/buy\/(?!lists(?=[/?]|$))/.test(hash)
 }
 
 export function href(route: Route): string {
@@ -129,13 +130,15 @@ export function href(route: Route): string {
     case 'swipe':
       return `${list(route.id)}/swipe${!route.list ? '' : route.list.kind === 'status' ? `/status/${encodeURIComponent(route.list.bggUser)}/${STATUS_SLUGS[route.list.status]}` : `/${route.list.kind}/${route.list.id}`}`
     case 'lists':
-      return `#/lists${route.tab ? `/${route.tab}` : ''}${route.load ? '?load' : route.game ? `?game=${route.game}` : ''}`
+      return `#/lists${route.tab ? `/${route.tab}` : ''}${route.load ? '?load' : ''}`
     case 'list':
       return `#/lists/${route.kind}/${route.listId}`
     case 'status-list':
       return `#/lists/status/${encodeURIComponent(route.bggUser)}/${STATUS_SLUGS[route.status]}`
     case 'buy':
       return route.game ? `#/buy?game=${route.game}` : '#/buy'
+    case 'search':
+      return route.game ? `#/search?game=${route.game}` : '#/search'
     case 'config':
       return '#/config'
     case 'share':

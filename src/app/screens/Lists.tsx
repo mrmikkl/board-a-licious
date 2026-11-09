@@ -3,7 +3,6 @@ import { useCallback } from 'react'
 import type { StoredList } from '../../client/types.ts'
 import { STATUS_KEYS, counts } from '../../domain/bgg-status.ts'
 import { ActionBar, MainButton } from '../components/ActionBar.tsx'
-import { BggSearchPanel } from '../components/BggSearchPanel.tsx'
 import { Header } from '../components/Header.tsx'
 import { IconPlus } from '../components/icons.tsx'
 import { LoadListSheet } from '../components/LoadListSheet.tsx'
@@ -24,13 +23,11 @@ function progress(list: StoredList) {
 }
 
 /**
- * F008 (docs/design.md "Places and tabs"): Lists with the tabs Status lists, Previews, Geeklists and Search; without
- * a tab in the address it opens on the last used one. The main ＋ on every tab but Search opens the Load a BGG list
+ * F008 (docs/design.md "Places and tabs"): Lists with the tabs Status lists, Previews and Geeklists; without
+ * a tab in the address it opens on the last used one. The main ＋ on every tab opens the Load a BGG list
  * sheet (`?load`); a loaded list opens and its card lands in the tab of its kind.
  */
-const searchRoute = (game?: number) => (game ? { name: 'lists' as const, tab: 'search' as const, game } : { name: 'lists' as const, tab: 'search' as const })
-
-export function Lists({ tab, load, game }: { tab?: ListsTab; load?: boolean; game?: number }) {
+export function Lists({ tab, load }: { tab?: ListsTab; load?: boolean }) {
   const last = useStoreData(store => store.metaOrDefault('lastTab'))
   const lists = useStoreData(async store => (await store.lists()).sort((a, b) => b.openedAt.localeCompare(a.openedAt)))
   const current = tab ?? last?.lists
@@ -48,19 +45,12 @@ export function Lists({ tab, load, game }: { tab?: ListsTab; load?: boolean; gam
               { key: 'status', label: 'Status lists', route: { name: 'lists', tab: 'status' } },
               { key: 'previews', label: 'Previews', route: { name: 'lists', tab: 'previews' } },
               { key: 'geeklists', label: 'Geeklists', route: { name: 'lists', tab: 'geeklists' } },
-              { key: 'search', label: 'Search', route: { name: 'lists', tab: 'search' } },
             ]}
           />
-          {current === 'search' ? (
-            <BggSearchPanel place="lists" game={game} route={searchRoute} sheet="browse" />
-          ) : (
-            <>
-              <main className="screen" role="tabpanel" aria-labelledby={tabId('lists', current)}>
-                {current === 'status' ? <StatusLists /> : <LoadedLists lists={lists?.filter(l => l.kind === (current === 'previews' ? 'preview' : 'geeklist'))} kind={current} />}
-              </main>
-              <ActionBar main={<MainButton icon={<IconPlus />} label="Load a BGG list" caption="Load list" href={href({ name: 'lists', tab: current, load: true })} />} />
-            </>
-          )}
+          <main className="screen" role="tabpanel" aria-labelledby={tabId('lists', current)}>
+            {current === 'status' ? <StatusLists /> : <LoadedLists lists={lists?.filter(l => l.kind === (current === 'previews' ? 'preview' : 'geeklist'))} kind={current} />}
+          </main>
+          <ActionBar main={<MainButton icon={<IconPlus />} label="Load a BGG list" caption="Load list" href={href({ name: 'lists', tab: current, load: true })} />} />
         </>
       )}
       {load && <LoadListSheet lists={lists ?? []} onClose={close} />}

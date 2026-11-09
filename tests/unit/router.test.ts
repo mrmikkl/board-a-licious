@@ -46,6 +46,13 @@ describe('Buy (F008 contracts/ui.md "Routes")', () => {
   })
 })
 
+describe('Search place', () => {
+  it.each<[string, Route]>([
+    ['#/search', { name: 'search' }],
+    ['#/search?game=13', { name: 'search', game: 13 }],
+  ])('%s', both)
+})
+
 describe('Lists (F008 contracts/ui.md "Routes")', () => {
   it.each<[string, Route]>([
     ['#/lists', { name: 'lists' }],
@@ -54,8 +61,6 @@ describe('Lists (F008 contracts/ui.md "Routes")', () => {
     ['#/lists/previews', { name: 'lists', tab: 'previews' }],
     ['#/lists/geeklists', { name: 'lists', tab: 'geeklists' }],
     ['#/lists/geeklists?load', { name: 'lists', tab: 'geeklists', load: true }],
-    ['#/lists/search', { name: 'lists', tab: 'search' }],
-    ['#/lists/search?game=13', { name: 'lists', tab: 'search', game: 13 }],
     ['#/lists/preview/93', { name: 'list', kind: 'preview', listId: 93 }],
     ['#/lists/geeklist/12', { name: 'list', kind: 'geeklist', listId: 12 }],
     ['#/lists/status/anna_meeple/own', { name: 'status-list', bggUser: 'anna_meeple', status: 'own' }],
@@ -105,7 +110,6 @@ describe('old addresses map to the new places (FR: US0 scenario 7)', () => {
     ['#/collections/c1/swipe/preview/1', '#/buy/lists/c1/swipe/preview/1'],
     ['#/buy/295947', '#/buy?game=295947'],
     ['#/buy/abc', '#/buy'],
-    ['#/search', '#/buy'],
     ['#/add', '#/buy/lists'],
     ['#/add/collection', '#/buy/lists?new'],
     ['#/add/list', '#/lists?load'],

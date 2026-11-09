@@ -29,12 +29,12 @@ function useListNames() {
 }
 
 /**
- * Search BoardGameGeek (F006 search, docs/design.md "Search BoardGameGeek") as a place's tab: the field is
+ * Search BoardGameGeek (F006 search, docs/design.md "Search BoardGameGeek"), a tab or a place: the field is
  * the only control, no action bar. Results are list game rows without Add; a result opens the game sheet
  * by its address (`route(game)`). Buy › Search is about one game and its prices (sheet `buy`, prices
- * open); Lists › Search is for looking a game up (sheet `browse`: shopping lists, BGG status, players).
+ * open); the Search place is for looking a game up (sheet `browse`: shopping lists, BGG status, players).
  */
-export function BggSearchPanel({ place, game: openId, route, sheet }: { place: 'buy' | 'lists'; game?: number; route: (game?: number) => Route; sheet: 'buy' | 'browse' }) {
+export function BggSearchPanel({ tab, game: openId, route, sheet }: { tab?: 'buy'; game?: number; route: (game?: number) => Route; sheet: 'buy' | 'browse' }) {
   const { bggSearch } = useServices()
   const fieldId = useId()
   const hintId = useId()
@@ -64,7 +64,7 @@ export function BggSearchPanel({ place, game: openId, route, sheet }: { place: '
   const opened = openId ? sheetItem(openId, rows?.find(r => r.bggId === openId), games.get(openId) ?? stored ?? undefined) : undefined
 
   return (
-    <main className="screen" role="tabpanel" aria-labelledby={tabId(place, 'search')}>
+    <main className="screen" {...(tab ? { role: 'tabpanel', 'aria-labelledby': tabId(tab, 'search') } : {})}>
       <label className="label" htmlFor={fieldId}>
         Find a game
       </label>
