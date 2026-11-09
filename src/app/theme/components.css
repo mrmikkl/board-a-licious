@@ -692,3 +692,33 @@
 .gs-bgg {
   margin: 0 0 6px;
 }
+
+/* F009 Config › Game length (docs/design.md "Game length"): name, range text, the field where it ends */
+.len-hint {
+  margin: 0 2px 8px;
+}
+.len-rows {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.len-row {
+  display: grid;
+  grid-template-columns: 84px 1fr 96px;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+}
+.len-row b {
+  font-size: 14px;
+}
+.len-span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.len-row .field {
+  margin: 0;
+}
+.len-row .field input {
+  text-align: right;
+}

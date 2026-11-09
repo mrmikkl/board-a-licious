@@ -4,6 +4,7 @@ import { DEFAULT_BADGE_COLOURS, STATUS_KEYS, STATUS_NAMES, type StatusKey } from
 import { Badge, useBgg } from '../components/BggBadges.tsx'
 import { ColourSheet, SAMPLE } from '../components/ColourSheet.tsx'
 import { Header } from '../components/Header.tsx'
+import { LengthSettings } from '../components/LengthSettings.tsx'
 import { SignInSheet } from '../components/SignInSheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { useServices, useStoreData } from '../context.tsx'
@@ -63,6 +64,8 @@ export function Config() {
         <BggSection />
         <hr className="separator" />
         <BadgeColours />
+        <hr className="separator" />
+        <LengthSettings />
         <hr className="separator" />
         <SoundSetting />
         <hr className="separator" />

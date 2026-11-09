@@ -68,8 +68,8 @@ test('Config: sound is switched here and nowhere else, and stays switched', asyn
   await expect(page.getByRole('button', { name: /^sound (on|off)$/i })).toHaveCount(0)
   await expect(page.getByText('soon')).toHaveCount(0)
   await page.goto('/#/config')
-  // sections: (F002 share hint, in a browser tab) | F008 BoardGameGeek | badge colours | sound | introduction | share and backup
-  await expect(page.locator('main hr.separator')).toHaveCount(5)
+  // sections: (F002 share hint, in a browser tab) | F008 BoardGameGeek | badge colours | game length | sound | introduction | share and backup
+  await expect(page.locator('main hr.separator')).toHaveCount(6)
   await expectAccessible(page)
   await page.getByRole('link', { name: 'Share and backup' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Share and backup' })).toBeVisible()
