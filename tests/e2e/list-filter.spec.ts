@@ -244,6 +244,52 @@ test('Length uses the limits from Config; a ticked range keeps its name with the
   await expect(length.getByRole('button', { name: /^Short/ })).toHaveAttribute('aria-pressed', 'true')
 })
 
+test('Rating and Geek rating: two-handle sliders; keys step 0.1, a drag near a whole number rests on it', async ({ page }) => {
+  fakeDetails(page)
+  await fakePreview(page, IDS)
+  await mainButton(page).click()
+  const s = sheet(page)
+  const ratingSection = s.locator('section').filter({ has: page.getByRole('heading', { name: 'Rating', exact: true }) })
+  await expect(ratingSection.locator('.f-head .val')).toHaveText('any')
+  await expect(ratingSection.locator('.slider-scale span')).toHaveText(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
+  await expect(s.getByText('1 game has no rating on BoardGameGeek.')).toBeVisible()
+
+  // Rating from 7.5: Cascadia, Pandemic, Spirit Island, Brass, Twilight Imperium
+  const from = s.getByRole('slider', { name: 'Rating from' })
+  await from.fill('7.5')
+  await expect(ratingSection.locator('.f-head .val')).toHaveText('7.5 – 10.0')
+  await expect(countLine(page)).toHaveText('5 of 9 games')
+  // keys step 0.1 and do not snap
+  await from.press('ArrowRight')
+  await expect(from).toHaveValue('7.6')
+  await expect(countLine(page)).toHaveText('4 of 9 games')
+  await from.press('ArrowLeft')
+  await expect(countLine(page)).toHaveText('5 of 9 games')
+  // the handles cannot cross
+  await s.getByRole('slider', { name: 'Rating to' }).fill('7')
+  await expect(s.getByRole('slider', { name: 'Rating to' })).toHaveValue('7.5')
+  await s.getByRole('slider', { name: 'Rating to' }).fill('10')
+  await from.fill('0')
+  await expect(countLine(page)).toHaveCount(0)
+
+  // a drag of "Geek rating to" to about 6.85 rests on 7.0: Hanabi 6.9 and Mycelia 6.6 remain
+  const to = s.getByRole('slider', { name: 'Geek rating to' })
+  await to.scrollIntoViewIfNeeded()
+  const box = (await to.boundingBox())!
+  const x = (v: number) => box.x + 13 + (v / 10) * (box.width - 26)
+  const y = box.y + box.height / 2
+  await page.mouse.move(x(10), y)
+  await page.mouse.down()
+  await page.mouse.move(x(8), y, { steps: 4 })
+  await page.mouse.move(x(6.85), y, { steps: 4 })
+  await page.mouse.up()
+  await expect(to).toHaveValue('7')
+  const geekSection = s.locator('section').filter({ has: page.getByRole('heading', { name: 'Geek rating' }) })
+  await expect(geekSection.locator('.f-head .val')).toHaveText('0.0 – 7.0')
+  await expect(countLine(page)).toHaveText('2 of 9 games')
+  await expectAccessible(page)
+})
+
 const MINE: FakeCollectionItem[] = IDS.map(bggId => ({ bggId, name: GAMES[bggId]!.name, year: 2020, status: { own: true } }))
 
 async function withStatusLists(page: Page) {
