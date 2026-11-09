@@ -55,7 +55,8 @@ function fakeDetails(page: Page) {
   const state = { asked: [] as number[][], hold: undefined as Promise<void> | undefined, offline: false }
   void page.route('**/api/bgg/games?**', async route => {
     const ids = new URL(route.request().url()).searchParams.get('ids')?.split(',').map(Number) ?? []
-    state.asked.push(ids)
+    // shopping list games of the shared dev user are completed too: only this test's games (9000–9999) count
+    if (ids.every(id => id >= 9000 && id < 10000)) state.asked.push(ids)
     if (state.hold) await state.hold
     if (state.offline) return route.abort('internetdisconnected')
     await route.fulfill({ json: { games: ids.map(answer) } })
