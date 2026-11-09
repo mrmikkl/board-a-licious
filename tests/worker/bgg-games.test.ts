@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { Db } from '../../worker/db/db.ts'
@@ -40,6 +42,8 @@ describe('GET /api/bgg/games', () => {
           recommendedWith: null,
           playerPoll: null,
           playerPollVoters: null,
+          // the website data has no playing time (F009 research R2)
+          playingTime: null,
         },
       ],
     })
@@ -126,5 +130,24 @@ describe('GET /api/bgg/games', () => {
     const res = await testApp(db, { bgg: () => new Response('', { status: 500 }) })('/api/bgg/games?ids=295947')
     expect(res.status).toBe(502)
     expect(await res.json()).toMatchObject({ error: 'bgg_unavailable', retryable: true })
+  })
+
+  it('F009: maps BGG\'s playingtime to playingTime from the official API, 0 as null, and keeps it in the game table', async () => {
+    const xml = (name: string) => new Response(readFileSync(new URL(`../fixtures/bgg-xml/${name}`, import.meta.url), 'utf8'))
+    const official = async (url: URL) =>
+      url.pathname === '/xmlapi2/thing' ? xml(url.searchParams.get('id') === '477191' ? 'thing-477191.xml' : 'thing-295947-385318.xml') : new Response('', { status: 404 })
+    const env = { BGG_TOKEN: 'test-token' }
+    const app = testApp(db, { bgg: official, env })
+    const times = async (ids: string) =>
+      (await (await app(`/api/bgg/games?ids=${ids}`)).json()).games.map((g: { bggId: number; playingTime: number | null }) => [g.bggId, g.playingTime])
+    expect(await times('295947,385318')).toEqual([
+      [295947, 45],
+      [385318, 45],
+    ])
+    expect(await times('477191')).toEqual([[477191, null]])
+    const calls: string[] = []
+    const again = await testApp(db, { bgg: official, bggCalls: calls, env })('/api/bgg/games?ids=295947,477191')
+    expect(calls).toEqual([])
+    expect((await again.json()).games).toMatchObject([{ playingTime: 45 }, { playingTime: null }])
   })
 })
