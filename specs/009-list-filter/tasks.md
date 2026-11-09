@@ -106,11 +106,11 @@ before its implementation.
 
 ## Phase 7: User Story 5 - The same filter in shopping lists (Priority: P2)
 
-- [ ] T018 [P] [US5] Write failing tests: `tests/unit/filter.test.ts` (`applyFilter` with `game` set
+- [x] T018 [P] [US5] Write failing tests: `tests/unit/filter.test.ts` (`applyFilter` with `game` set
   uses the entry's game details; `isDefaultView` false when `game` is set; Clear resets `game`) and
   e2e in `tests/e2e/list-filter.spec.ts`: "Filter and group" › "About the game" with the same sections;
   a category plus a mechanism must both match; Clear filters at the top resets everything
-- [ ] T019 [US5] Extend `src/domain/filter.ts` (`Filter.game`, stored form) and
+- [x] T019 [US5] Extend `src/domain/filter.ts` (`Filter.game`, stored form) and
   `src/app/components/FilterPanel.tsx` ("About the game" heading, `GameFilterSections`, Clear filters at
   the top) and pass game details in `src/app/screens/Collection.tsx` (with `useGameDetails` for
   entries without details) (T018 green)
