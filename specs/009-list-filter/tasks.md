@@ -129,8 +129,8 @@ before its implementation.
 
 - [x] T022 [P] Update `CLAUDE.md` (code layout: `game-filter.ts`, `useGameDetails`) and
   `docs/hosting/setup.md` (migration 0008)
-- [ ] T023 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here (compare
-  flakes with `main`, see memory "E2E on own port")
+- [x] T023 Run `npm test`, `npm run build` and `npm run test:e2e`; record the results here (compare
+  flakes with `main`, see memory "E2E on own port") — done 2026-11-09: `npm test` 830/830, tsc and build clean; `npm run test:e2e` 336/343: `navigation.spec.ts:205` (both projects) still expected no action bar on a list, updated to the Filter main button and green; `game-length:70`, `us2-lists:46`, `a11y:59` and `resync:73` time out under the full parallel load and pass alone (resync as on main).
 - [ ] T024 Apply migration 0008 (`npm run db:migrate:neon`), deploy (`npm run deploy`) and walk through
   `specs/009-list-filter/quickstart.md` with the user on the phone
 

@@ -202,7 +202,7 @@ test.describe('US2', () => {
     await expect(page.getByRole('heading', { level: 1, name: /spiel/i })).toBeVisible()
   })
 
-  test('Buy › Search, Config, a list, Swipe and Share and backup have no action bar', async ({ page }) => {
+  test('Buy › Search, Config, Swipe and Share and backup have no action bar; a list has Filter as its main button', async ({ page }) => {
     await fakeBgg(page)
     await fakePreview(page)
     await page.goto('/#/buy')
@@ -214,13 +214,16 @@ test.describe('US2', () => {
     for (const [hash, heading] of [
       ['#/config', 'Config'],
       ['#/config/share', 'Share and backup'],
-      ['#/lists/preview/9093', /spiel/i],
       [`${collection.hash}/swipe/preview/9093`, `Add to ${collection.name}`],
     ] as const) {
       await page.goto(`/${hash}`)
       await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible()
       await expect(actions(page), `no action bar on ${hash}`).toHaveCount(0)
     }
+    // F009: a preview's only action is Filter, so it is the main button
+    await page.goto('/#/lists/preview/9093')
+    await expect(page.getByRole('heading', { level: 1, name: /spiel/i })).toBeVisible()
+    await expect(actions(page).getByRole('button', { name: 'Filter', exact: true })).toBeVisible()
   })
 
   test('old add addresses and links open the matching sheet', async ({ page }) => {
